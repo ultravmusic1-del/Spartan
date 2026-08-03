@@ -31,11 +31,13 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@playwright/test": "^1.62.1",
     "mupdf": "^1.26",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "sharp": "^0.35.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   }
 }
