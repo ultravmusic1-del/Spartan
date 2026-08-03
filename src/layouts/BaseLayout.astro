@@ -1,7 +1,21 @@
 ---
 import '../styles/global.css';
-interface Props { title: string; description: string; }
-const { title, description } = Astro.props;
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /**
+   * True (the default) for pages that open with a dark photographic hero: the
+   * header overlays it. False for pages with no hero, which get a solid black
+   * sticky header instead — the white wordmark needs a dark background either
+   * way.
+   */
+  darkHeader?: boolean;
+}
+
+const { title, description, darkHeader = true } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -15,7 +29,27 @@ const { title, description } = Astro.props;
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
   </head>
   <body>
-    <a href="#main" class="sr-only focus:not-sr-only">Skip to content</a>
+    <a href="#main" class="skip-link sr-only focus:not-sr-only">Skip to content</a>
+    <Header mode={darkHeader ? 'transparent' : 'solid'} />
     <slot />
+    <Footer />
   </body>
 </html>
+
+<style>
+  /* The header overlays the top of the page, so the skip link has to lift out
+     of flow when focused or it appears underneath it. */
+  .skip-link:focus {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 100;
+    padding: 12px 18px;
+    background: var(--color-red);
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+</style>

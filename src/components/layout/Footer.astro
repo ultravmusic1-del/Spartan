@@ -1,0 +1,399 @@
+---
+/**
+ * Footer — contact strip, main link block, socials, bottom bar.
+ *
+ * Category links are read through `getCategories()` so the footer follows the
+ * catalogue: no page or component may reach into `src/data/` for products,
+ * categories or divisions. (`site.json` is chrome, not catalogue content, and
+ * is exempt.)
+ *
+ * The newsletter field is deliberately inert. No endpoint exists until Task 14,
+ * so the form is a no-op that cannot navigate, and it never claims to have
+ * subscribed anyone.
+ *
+ * Dark surface, so this takes the **light** logo lockup (red helmet, white
+ * wordmark).
+ */
+import site from '../../data/site.json';
+import logoLight from '../../assets/brand/spartan-logo-light.svg';
+import { getCategories } from '../../lib/catalog';
+
+const electricals = await getCategories({ divisionId: 'electricals' });
+const safety = await getCategories({ divisionId: 'safety' });
+
+const company = [
+  { href: '/about', label: 'About Spartan' },
+  { href: '/why-spartan', label: 'Why Spartan' },
+  { href: '/industries', label: 'Industries' },
+  { href: '/contact', label: 'Contact' },
+];
+
+const socials = [
+  {
+    label: 'Spartan on Facebook',
+    path: 'M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.2-1.5 1.5-1.5h1.7V4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1V10H7.6v3h2.7v8h3.2Z',
+  },
+  {
+    label: 'Spartan on Instagram',
+    path: 'M12 7.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2Zm0 7.6a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm5.8-7.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0ZM21 8.9c-.1-1.4-.4-2.7-1.4-3.7s-2.3-1.3-3.7-1.4C14.5 3.7 9.5 3.7 8.1 3.8c-1.4.1-2.7.4-3.7 1.4S3.1 7.5 3 8.9c-.1 1.4-.1 6.4 0 7.8.1 1.4.4 2.7 1.4 3.7s2.3 1.3 3.7 1.4c1.4.1 6.4.1 7.8 0 1.4-.1 2.7-.4 3.7-1.4s1.3-2.3 1.4-3.7c.1-1.4.1-6.4 0-7.8Zm-1.9 9.3a3 3 0 0 1-1.7 1.7c-1.2.5-4 .4-5.4.4s-4.2.1-5.4-.4a3 3 0 0 1-1.7-1.7c-.5-1.2-.4-4-.4-5.4s-.1-4.2.4-5.4a3 3 0 0 1 1.7-1.7c1.2-.5 4-.4 5.4-.4s4.2-.1 5.4.4a3 3 0 0 1 1.7 1.7c.5 1.2.4 4 .4 5.4s.1 4.2-.4 5.4Z',
+  },
+  {
+    label: 'Spartan on LinkedIn',
+    path: 'M6.9 20.5V9.3H3.6v11.2h3.3ZM5.2 7.9a1.9 1.9 0 1 0 0-3.9 1.9 1.9 0 0 0 0 3.9Zm15.3 12.6h-3.3v-5.5c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.6H10V9.3h3.1v1.5h.1a3.5 3.5 0 0 1 3.1-1.7c3.3 0 3.9 2.2 3.9 5v6.4Z',
+  },
+];
+
+const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
+const year = new Date().getFullYear();
+---
+
+<footer class="f">
+  <div class="f-top">
+    <div class="wrap f-top__inner">
+      <div class="f-item">
+        <span class="f-item__ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"></path>
+            <circle cx="12" cy="10" r="2.6"></circle>
+          </svg>
+        </span>
+        <div>
+          <small>Head office</small>
+          <span class="f-item__value">{site.address}</span>
+        </div>
+      </div>
+
+      <div class="f-item">
+        <span class="f-item__ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path
+              d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"
+            ></path>
+          </svg>
+        </span>
+        <div>
+          <small>Trade enquiries</small>
+          <a class="f-item__value f-item__tel" href={telHref}>{site.phone}</a>
+        </div>
+      </div>
+
+      <!-- No endpoint until Task 14: this must not navigate and must not
+           pretend to have subscribed anyone. -->
+      <form class="f-form" onsubmit="return false">
+        <label class="sr-only" for="footer-email">Email address</label>
+        <input
+          id="footer-email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          placeholder="Enter email address"
+        />
+        <button type="button">Submit <span aria-hidden="true">›</span></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="f-main">
+    <div class="wrap f-main__inner">
+      <div>
+        <a class="f-logo" href="/">
+          <img
+            src={logoLight.src}
+            width={logoLight.width}
+            height={logoLight.height}
+            alt="Spartan"
+          />
+        </a>
+        <p>
+          Spartan Lighting &amp; Electrical Products. Brightening spaces and powering progress
+          since {site.established}, across two divisions and fifteen product categories.
+        </p>
+      </div>
+
+      <nav aria-labelledby="f-electricals">
+        <h2 class="f-head" id="f-electricals">Electricals</h2>
+        {electricals.map((c) => <a href={`/catalogue/${c.slug}`}>{c.name}</a>)}
+      </nav>
+
+      <nav aria-labelledby="f-safety">
+        <h2 class="f-head" id="f-safety">Safety</h2>
+        {safety.map((c) => <a href={`/catalogue/${c.slug}`}>{c.name}</a>)}
+      </nav>
+
+      <nav aria-labelledby="f-company">
+        <h2 class="f-head" id="f-company">Company</h2>
+        {company.map((l) => <a href={l.href}>{l.label}</a>)}
+      </nav>
+
+      <div class="f-soc">
+        {
+          socials.map((s) => (
+            <a href="#" aria-label={s.label}>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d={s.path} />
+              </svg>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="f-bot">
+    © {year} Spartan. All rights reserved. · Manufactured in India &amp; China
+  </div>
+</footer>
+
+<style>
+  .f {
+    /* Mockup values with no equivalent in tokens.css. The footer sits on pure
+       black, one step darker than the page's --color-black. */
+    --f-bg: #000;
+    --f-divider: #1a1a1f;
+    --f-circle: #26262c;
+    --f-input-bg: #131317;
+    --f-link: #c2c2c9;
+
+    background: var(--f-bg);
+  }
+
+  /* ---------- contact strip ---------- */
+  .f-top {
+    border-bottom: 1px solid var(--f-divider);
+    padding: 34px 0;
+  }
+
+  .f-top__inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 48px;
+  }
+
+  .f-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .f-item__ic {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--f-circle);
+    border-radius: 50%;
+    color: var(--color-red);
+  }
+
+  .f-item__ic svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .f-item small {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    /* 6.13:1 on black. */
+    color: var(--color-grey);
+  }
+
+  .f-item__value {
+    display: block;
+    font-size: 14px;
+    color: #fff;
+  }
+
+  /* 44px target for a phone number that is only 22px of text. */
+  .f-item__tel {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .f-item__tel:hover {
+    color: var(--color-red);
+  }
+
+  .f-form {
+    display: flex;
+    min-width: 330px;
+    margin-left: auto;
+  }
+
+  .f-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 13px 15px;
+    background: var(--f-input-bg);
+    border: 1px solid var(--f-circle);
+    border-right: none;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    color: #fff;
+  }
+
+  /* The mockup's #5C5C64 placeholder measures 3.2:1 — below AA. --color-grey
+     is 5.4:1 on the input's background and keeps the same recessive role. */
+  .f-form input::placeholder {
+    color: var(--color-grey);
+  }
+
+  .f-form button {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    padding: 13px 22px;
+    background: var(--color-red);
+    border: none;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: background var(--dur-base) var(--ease-out);
+  }
+
+  .f-form button:hover {
+    background: var(--color-red-dark);
+  }
+
+  /* ---------- main ---------- */
+  .f-main {
+    padding: 52px 0;
+  }
+
+  .f-main__inner {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr auto;
+    gap: 44px;
+  }
+
+  .f-logo {
+    display: inline-flex;
+    padding-block: 4px;
+  }
+
+  .f-logo img {
+    height: 36px;
+    width: auto;
+  }
+
+  .f-main p {
+    max-width: 38ch;
+    margin-top: 18px;
+    font-size: 13.5px;
+    /* 6.13:1 on black. */
+    color: var(--color-grey);
+  }
+
+  .f-head {
+    margin-bottom: 18px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    /* 4.65:1 on black — passes AA. */
+    color: var(--color-red);
+  }
+
+  .f-main a {
+    display: block;
+    padding: 6px 0;
+    font-size: 13.5px;
+    color: var(--f-link);
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .f-main a:hover {
+    color: var(--color-red);
+  }
+
+  /* ---------- socials ---------- */
+  .f-soc {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .f-soc a {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--f-circle);
+    border-radius: 50%;
+    color: #fff;
+    transition:
+      background var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+
+  /* Keeps the 38px circle the design asks for while giving it a 44px target. */
+  .f-soc a::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+  }
+
+  .f-soc a:hover {
+    border-color: var(--color-red);
+    background: var(--color-red);
+  }
+
+  .f-soc svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* ---------- bottom bar ---------- */
+  .f-bot {
+    padding: 20px 0;
+    border-top: 1px solid var(--f-divider);
+    text-align: center;
+    font-size: 12.5px;
+    /* The mockup's #5E5E66 measures 3.25:1 on black — below AA for body text.
+       --color-grey is 6.13:1 and reads as the same recessive grey. */
+    color: var(--color-grey);
+  }
+
+  @media (max-width: 1080px) {
+    .f-main__inner {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .f-soc {
+      flex-direction: row;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .f-main__inner {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .f-form {
+      min-width: 100%;
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .f-top__inner {
+      gap: 28px;
+    }
+
+    .f-main__inner {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+</style>

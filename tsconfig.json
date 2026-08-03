@@ -1,5 +1,12 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  "exclude": ["dist"],
+  "compilerOptions": {
+    // Required by @astrojs/preact so .tsx islands type-check against Preact's
+    // JSX namespace rather than the (absent) global one. Added with the first
+    // island, MobileNav.tsx.
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
 }

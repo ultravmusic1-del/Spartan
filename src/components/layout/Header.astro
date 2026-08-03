@@ -1,0 +1,305 @@
+---
+/**
+ * Header — utility bar plus the 84px nav, in two modes.
+ *
+ * `transparent` (default) overlays a dark photographic hero: the utility bar is
+ * `position: absolute; top: 0` and this nav is `position: absolute; top: 44px`,
+ * so the hero's own padding-top clears them. Neither may sit in normal flow
+ * inside a flex hero — they would be treated as flex items and drop to the
+ * bottom of the viewport.
+ *
+ * `solid` is for pages with no hero: the nav gets `--color-black` and sticks to
+ * the top of the viewport while the utility bar scrolls away above it.
+ *
+ * Both modes are dark surfaces, so this uses the **light** logo lockup
+ * (red helmet, white wordmark). The black-wordmark lockup would be invisible.
+ *
+ * The desktop menu and the mobile trigger are hidden by exactly complementary
+ * media queries — `(max-width: 1080px)` and `not all and (max-width: 1080px)` —
+ * so exactly one is visible at any width, fractional widths included. The same
+ * condition drives `client:media`, so the island hydrates precisely when its
+ * trigger is on screen.
+ *
+ * `site.json` is site chrome, not catalogue content: the `catalog.ts` seam rule
+ * covers products, categories and divisions only.
+ */
+import site from '../../data/site.json';
+import logoLight from '../../assets/brand/spartan-logo-light.svg';
+import UtilityBar from './UtilityBar.astro';
+import MobileNav, { type NavItem } from './MobileNav.tsx';
+
+interface Props {
+  mode?: 'transparent' | 'solid';
+}
+
+const { mode = 'transparent' } = Astro.props;
+
+const items: NavItem[] = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/electricals', label: 'Electricals' },
+  { href: '/safety', label: 'Safety' },
+  { href: '/industries', label: 'Industries' },
+  { href: '/contact', label: 'Contact' },
+];
+
+/** Trailing slashes are configuration-dependent; compare without them. */
+const normalise = (path: string) => path.replace(/\/+$/, '') || '/';
+const current = normalise(Astro.url.pathname);
+const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
+---
+
+<UtilityBar mode={mode} />
+
+<header class:list={['site-header', `site-header--${mode}`]}>
+  <div class="wrap nav">
+    <a class="nav__logo" href="/">
+      <img src={logoLight.src} width={logoLight.width} height={logoLight.height} alt="Spartan" />
+    </a>
+
+    <nav class="nav__menu" aria-label="Primary">
+      <ul>
+        {
+          items.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class:list={['nav__link', { 'nav__link--on': current === item.href }]}
+                aria-current={current === item.href ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <a class="nav__tel" href={telHref}>{site.phone}</a>
+
+    <div class="nav__mobile">
+      <MobileNav client:media="(max-width: 1080px)" items={items} current={current} />
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    /* Mockup greys with no equivalent in tokens.css. Also read by the mobile
+       panel, which inherits them through the DOM. */
+    --nav-link: #d6d6dc;
+
+    left: 0;
+    right: 0;
+    z-index: 25;
+  }
+
+  /* Over a hero: out of flow, clearing the 44px utility bar. */
+  .site-header--transparent {
+    position: absolute;
+    top: 44px;
+  }
+
+  /* No hero: opaque and pinned, so the white wordmark keeps its background. */
+  .site-header--solid {
+    position: sticky;
+    top: 0;
+    background: var(--color-black);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    height: 84px;
+  }
+
+  /* Padding takes the logo link to a 44px target without scaling the lockup.
+     38px rendered height clears the 28px minimum; the surrounding clear space
+     is 23px top and bottom and 32px+ to either side, all above the half-helmet
+     minimum. */
+  .nav__logo {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding-block: 3px;
+  }
+
+  .nav__logo img {
+    height: 38px;
+    width: auto;
+  }
+
+  .nav__menu {
+    margin-inline: auto;
+  }
+
+  .nav__menu ul {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+
+  .nav__link {
+    display: block;
+    padding-bottom: 3px;
+    border-bottom: 2px solid transparent;
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--nav-link);
+    transition:
+      color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+
+  .nav__link:hover,
+  .nav__link--on {
+    color: #fff;
+    border-color: var(--color-red);
+  }
+
+  .nav__tel {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    /* 44px target for a 20px line of text. */
+    min-height: 44px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .nav__mobile {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Desktop: the menu is on, the trigger is off. */
+  @media not all and (max-width: 1080px) {
+    .nav__mobile {
+      display: none;
+    }
+  }
+
+  /* Below the boundary: the trigger is on, the menu is off. */
+  @media (max-width: 1080px) {
+    .nav {
+      gap: 16px;
+    }
+
+    .nav__menu {
+      display: none;
+    }
+
+    .nav__tel {
+      margin-left: auto;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .nav__tel {
+      display: none;
+    }
+
+    .nav__mobile {
+      margin-left: auto;
+    }
+  }
+</style>
+
+<!-- The mobile nav is a Preact island: Astro's scoped styles never reach the
+     DOM a framework component renders, so its CSS is global and namespaced. -->
+<style is:global>
+  .mnav-trigger,
+  .mnav-panel {
+    --nav-link: #d6d6dc;
+  }
+
+  .mnav-trigger,
+  .mnav-close {
+    display: grid;
+    place-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    cursor: pointer;
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      background var(--dur-base) var(--ease-out);
+  }
+
+  .mnav-trigger:hover,
+  .mnav-close:hover {
+    border-color: var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 12%, transparent);
+  }
+
+  .mnav-trigger svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mnav-close svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mnav-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 0 var(--wrap-pad) 48px;
+    background: var(--color-black);
+  }
+
+  .mnav-panel__bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    height: 84px;
+  }
+
+  .mnav-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
+  }
+
+  .mnav-link {
+    display: flex;
+    align-items: center;
+    min-height: 60px;
+    padding-left: 14px;
+    border-left: 2px solid transparent;
+    border-bottom: 1px solid var(--color-line);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--nav-link);
+    transition:
+      color var(--dur-base) var(--ease-out),
+      border-color var(--dur-base) var(--ease-out);
+  }
+
+  .mnav-link:hover,
+  .mnav-link--on {
+    color: #fff;
+    border-left-color: var(--color-red);
+  }
+</style>

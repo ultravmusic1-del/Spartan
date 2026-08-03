@@ -1,0 +1,134 @@
+import { useEffect, useRef, useState } from 'preact/hooks';
+
+export interface NavItem {
+  href: string;
+  label: string;
+}
+
+interface Props {
+  items: NavItem[];
+  /** Normalised current pathname, used to mark the active item. */
+  current?: string;
+}
+
+/**
+ * MobileNav — the hamburger trigger and full-screen menu panel below 1081px.
+ *
+ * Hydrated with `client:media="(max-width: 1080px)"`, so desktop ships none of
+ * this JavaScript. The trigger is still server-rendered at every width; CSS in
+ * Header.astro hides it from 1081px up, where the desktop menu takes over.
+ *
+ * While the panel is open it is a modal dialog: focus moves into it, Tab and
+ * Shift+Tab cycle within it, the page behind cannot scroll, and Escape closes
+ * it and returns focus to the trigger.
+ */
+export default function MobileNav({ items, current }: Props) {
+  const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const close = () => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+      if (e.key !== 'Tab') return;
+      // Every focusable element in the panel is an anchor or a button, so this
+      // selector is exhaustive; nothing else in here can take focus.
+      const f = panelRef.current?.querySelectorAll<HTMLElement>('a,button');
+      if (!f?.length) return;
+      const first = f[0]!;
+      const last = f[f.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    panelRef.current?.querySelector<HTMLElement>('a')?.focus();
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        class="mnav-trigger"
+        aria-expanded={open}
+        aria-controls="mobile-nav"
+        aria-label="Open menu"
+        onClick={() => setOpen(true)}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          id="mobile-nav"
+          ref={panelRef}
+          class="mnav-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
+        >
+          <div class="mnav-panel__bar">
+            <button type="button" class="mnav-close" aria-label="Close menu" onClick={close}>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
+          <nav class="mnav-list" aria-label="Primary">
+            {items.map((i) => {
+              const isCurrent = current === i.href;
+              return (
+                <a
+                  key={i.href}
+                  href={i.href}
+                  class={isCurrent ? 'mnav-link mnav-link--on' : 'mnav-link'}
+                  aria-current={isCurrent ? 'page' : undefined}
+                >
+                  {i.label}
+                </a>
+              );
+            })}
+          </nav>
+        </div>
+      )}
+    </>
+  );
+}
