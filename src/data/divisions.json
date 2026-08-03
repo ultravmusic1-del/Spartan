@@ -1,0 +1,18 @@
+[
+  {
+    "id": "electricals",
+    "slug": "electricals",
+    "name": "Spartan Electricals",
+    "blurb": "Lighting, ventilation, water management and electrical controls for residential, commercial and industrial spaces.",
+    "heroImage": "electrical.jpg",
+    "order": 1
+  },
+  {
+    "id": "safety",
+    "slug": "safety",
+    "name": "Spartan Safety",
+    "blurb": "Certified personal protective equipment and workwear engineered for real working conditions on site.",
+    "heroImage": "safety.jpg",
+    "order": 2
+  }
+]

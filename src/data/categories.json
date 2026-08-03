@@ -1,0 +1,152 @@
+[
+  {
+    "id": "lighting",
+    "slug": "lighting",
+    "name": "Lighting",
+    "divisionId": "electricals",
+    "description": "Interior, industrial and outdoor LED — bulbs, panels, tubes, floodlights, highbays and solar.",
+    "heroProductSlug": "slim-led-panels",
+    "status": "active",
+    "order": 1
+  },
+  {
+    "id": "fans",
+    "slug": "fans-ventilation",
+    "name": "Fans & Ventilation",
+    "divisionId": "electricals",
+    "description": "Ventilation fans from 4 to 14 inch, with 100% copper motors and quiet operation.",
+    "heroProductSlug": "ventilation-fans-6-8-10-inch",
+    "status": "active",
+    "order": 2
+  },
+  {
+    "id": "pumps",
+    "slug": "water-pumps",
+    "name": "Water Pumps & Controls",
+    "divisionId": "electricals",
+    "description": "Aluminium die-cast pumps with thermal overload protection, plus float switch and automatic pump controller.",
+    "heroProductSlug": "pumps",
+    "status": "active",
+    "order": 3
+  },
+  {
+    "id": "insect",
+    "slug": "insect-killers",
+    "name": "Insect Killers",
+    "divisionId": "electricals",
+    "description": "Chemical-free insect killers in fire-retardant ABS housings, 20W to 40W.",
+    "heroProductSlug": "insect-killer",
+    "status": "active",
+    "order": 4
+  },
+  {
+    "id": "cables",
+    "slug": "cables",
+    "name": "Cables",
+    "divisionId": "electricals",
+    "description": "CAT.6 UTP indoor PVC network cable.",
+    "heroProductSlug": "premium-network-cable",
+    "status": "active",
+    "order": 5
+  },
+  {
+    "id": "accessories",
+    "slug": "electrical-accessories",
+    "name": "Electrical Accessories",
+    "divisionId": "electricals",
+    "description": "Our electrical accessories range is expanding. Contact us for current availability and lead times.",
+    "heroProductSlug": null,
+    "status": "expanding",
+    "order": 6
+  },
+  {
+    "id": "head",
+    "slug": "head-face-protection",
+    "name": "Head & Face Protection",
+    "divisionId": "safety",
+    "description": "Safety helmets, brow guards, chin straps, visors and welding masks for head and face.",
+    "heroProductSlug": "safety-helmets",
+    "status": "active",
+    "order": 7
+  },
+  {
+    "id": "eye",
+    "slug": "eye-protection",
+    "name": "Eye Protection",
+    "divisionId": "safety",
+    "description": "Polycarbonate safety glasses and over glasses, vented goggles and welding goggles.",
+    "heroProductSlug": "safety-glasses-lightweight",
+    "status": "active",
+    "order": 8
+  },
+  {
+    "id": "hearing",
+    "slug": "hearing-protection",
+    "name": "Hearing Protection",
+    "divisionId": "safety",
+    "description": "Ear muffs rated NRR 20-25dB, corded and uncorded ear plugs, and a 500-pair dispenser.",
+    "heroProductSlug": "ear-muff-nrr-25db",
+    "status": "active",
+    "order": 9
+  },
+  {
+    "id": "hand",
+    "slug": "hand-protection",
+    "name": "Hand Protection",
+    "divisionId": "safety",
+    "description": "Cut, chemical and impact rated gloves — PU, nitrile, latex and leather, sizes 7–12.",
+    "heroProductSlug": "grip-guard-gp5",
+    "status": "active",
+    "order": 10
+  },
+  {
+    "id": "foot",
+    "slug": "safety-footwear",
+    "name": "Safety Footwear",
+    "divisionId": "safety",
+    "description": "Steel and composite toe safety shoes, rigger boots, gum boots, shoe covers and welding leg guards.",
+    "heroProductSlug": "low-cut-safety-shoes-kpu",
+    "status": "active",
+    "order": 11
+  },
+  {
+    "id": "harness",
+    "slug": "fall-arrest",
+    "name": "Harnesses & Fall Arrest",
+    "divisionId": "safety",
+    "description": "Full body harness with shock-absorbing twin webbing, and lightweight web straps that reduce suspension trauma.",
+    "heroProductSlug": "full-body-harness",
+    "status": "active",
+    "order": 12
+  },
+  {
+    "id": "body",
+    "slug": "body-protection",
+    "name": "Body Protection",
+    "divisionId": "safety",
+    "description": "Hi-viz reflective safety vests, leather welding aprons and disposable nonwoven coveralls.",
+    "heroProductSlug": "safety-vests-velcro",
+    "status": "active",
+    "order": 13
+  },
+  {
+    "id": "workwear",
+    "slug": "workwear",
+    "name": "Workwear",
+    "divisionId": "safety",
+    "description": "Fire retardant cotton shirts, pants, coveralls and suits, plus winter jackets, welding jackets and rain suits.",
+    "heroProductSlug": "fire-retardant-workshop-suit",
+    "status": "active",
+    "order": 14
+  },
+  {
+    "id": "spill",
+    "slug": "spill-control",
+    "name": "Spill Control",
+    "divisionId": "safety",
+    "description": "Our spill control range is expanding. Contact us for current availability and lead times.",
+    "heroProductSlug": null,
+    "status": "expanding",
+    "order": 15
+  }
+]

@@ -10,6 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "test": "vitest run",
+    "normalise": "node tools/normalise-products.mjs",
     "extract:catalog": "node tools/extract-catalog.mjs",
     "extract:logo": "node tools/extract-logo.mjs",
     "extract:heroes": "node tools/extract-heroes.mjs"
