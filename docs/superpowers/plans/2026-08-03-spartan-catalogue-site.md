@@ -6,7 +6,9 @@
 
 **Architecture:** Astro 5 static output. Product data lives in JSON, is validated by Zod through Astro's Content Layer, and is read **exclusively** through a repository module (`src/lib/catalog.ts`) — that indirection is the seam a future admin plugs into. Interactive pieces (mobile nav, enquiry basket, catalogue filters) are Preact islands; everything else ships zero JS. The enquiry endpoint is the only server-rendered route.
 
-**Tech Stack:** Astro 5, TypeScript (strict), Tailwind CSS 4, Preact, nanostores, Zod, Resend, Vitest, Playwright.
+**Tech Stack:** Astro 7, TypeScript (strict), Tailwind CSS 4, Preact, nanostores, Zod, Resend, Vitest 4, Playwright.
+
+> **Revised 2026-08-03 during Task 1.** This plan originally specified Astro 5. `npm audit` on the installed tree reported 8 high-severity XSS advisories against `astro <= 7.0.9` (`define:vars`, unescaped slot names, spread attribute names, `transition:*` directives on hydrated islands), plus an unauthenticated path override in `@astrojs/vercel` via `x-astro-path`. 5.18.2 is the newest 5.x and there is no in-major fix — the advisories resolve only at `astro@7.1.6` / `@astrojs/vercel@11`. Everything this plan depends on (static output with per-route `prerender = false`, the Content Layer API with `file()` loaders, Tailwind 4 via the Vite plugin) is supported in Astro 7. Upgrading at one page is far cheaper than at 74.
 
 **Spec:** `docs/superpowers/specs/2026-08-03-spartan-catalogue-design.md`
 
@@ -121,9 +123,28 @@ If the CLI refuses because the directory is non-empty, answer yes to continue �
 - [ ] **Step 4: Install dependencies**
 
 ```bash
-npm install astro@^5 @astrojs/preact@^4 @astrojs/sitemap@^3 @astrojs/vercel@^8 preact@^10 nanostores@^0.11 @nanostores/persistent@^0.10 @nanostores/preact@^0.5 zod@^3 resend@^4 tailwindcss@^4 @tailwindcss/vite@^4
-npm install -D vitest@^2 @playwright/test@^1 prettier prettier-plugin-astro
+npm install astro@^7 @astrojs/preact@^6 @astrojs/sitemap@^3 @astrojs/vercel@^11 preact@^10 nanostores@^0.11 @nanostores/persistent@^0.10 @nanostores/preact@^0.5 zod@^3 resend@^4 tailwindcss@^4 @tailwindcss/vite@^4
+npm install -D vitest@^4 @playwright/test@^1 prettier prettier-plugin-astro
 ```
+
+After installing, `npm audit` must report **0 critical**. Three high findings are expected and accepted — see below. Any *other* high finding means stop and report rather than proceeding.
+
+#### Accepted risk: `path-to-regexp@6.1.0` (ReDoS, CVSS 7.5)
+
+Reached only via `@astrojs/vercel@11.0.4 → @vercel/routing-utils@5.3.3 → path-to-regexp@6.1.0`. The three high findings are this one chain re-reported.
+
+Accepted, because:
+
+- **No upstream fix exists at any version.** `@vercel/routing-utils` deliberately declares both copies — `"path-to-regexp-updated": "npm:path-to-regexp@6.3.0"` alongside `"path-to-regexp": "6.1.0"` — as of its newest release. Upgrading the adapter cannot resolve it.
+- **npm's only offered fix is a major downgrade** to `@astrojs/vercel@8`, which reintroduces the eight XSS advisories this upgrade cleared. Never run `npm audit fix --force` in this repo.
+- **Exposure is build-time and inputs are static.** The package converts *our own* authored route patterns into `.vercel/output/config.json`. ReDoS requires attacker-controlled patterns; no user input reaches it.
+- **An `overrides` pin to 6.3.0 was considered and rejected.** Vercel's deliberate dual-dependency implies something relies on 6.1.0 semantics, and 6.3.0 changed regex generation — risking silent route-matching breakage in production, a worse outcome than a theoretical build-time ReDoS.
+
+Re-evaluate if the adapter ever processes user-supplied route patterns, or if Vercel drops the 6.1.0 dependency.
+
+#### Note for any future dependency upgrade in this repo
+
+Installing over an existing tree can leave stale hoisted transitive packages that surface as phantom advisories. If an upgrade leaves findings that look upstream, delete `node_modules/` and `package-lock.json` and reinstall before investigating further.
 
 - [ ] **Step 5: Configure Astro**
 
