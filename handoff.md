@@ -1,0 +1,324 @@
+# Spartan Catalogue Website — Handoff
+
+**Last updated:** 2026-08-03
+**Branch:** `feat/catalogue-site` (all work lives here; `main` tracks it)
+**State:** 6 of 17 planned tasks complete, 1 partially complete and unverified.
+
+---
+
+## 1. What this project is
+
+A catalogue-style marketing website for **Spartan**, an industrial brand with two divisions:
+
+- **Spartan Electricals** — lighting, fans and ventilation, water pumps, cables, insect killers
+- **Spartan Safety** — helmets, eye and hearing protection, gloves, footwear, fall arrest, body protection, workwear
+
+**72 products across 15 categories.** It is a catalogue and lead-generation site — **not** e-commerce. No prices, no cart, no checkout, no accounts. The conversion mechanism is a multi-product **enquiry basket**: a buyer collects products while browsing and submits one RFQ.
+
+The client will add a **CMS-backed admin dashboard later**. The architecture is built around making that a one-module change (see §5).
+
+### The hard rule
+
+**Never invent product data.** No made-up specifications, certifications, ratings, dimensions or descriptions. Every value traces to the client's brochure PDF. Where data is missing, it stays missing and gets an honest empty state.
+
+This is safety equipment. A fabricated protection rating is a genuine hazard, not a cosmetic flaw. Two categories legitimately have zero products and say so.
+
+---
+
+## 2. Where everything is
+
+| Path | What it is |
+|---|---|
+| `docs/superpowers/specs/2026-08-03-spartan-catalogue-design.md` | **The spec.** Brand rules, content model, IA, accessibility contract. Read first. |
+| `docs/superpowers/plans/2026-08-03-spartan-catalogue-site.md` | **The implementation plan.** 17 tasks with full code, tests and commands. Tasks 8–17 remain. |
+| `design/direction-b-forge.html` | **The approved visual design**, fully rendered. Source of truth for every spacing, size and colour value. Open it in a browser. |
+| `design/direction-a-precision.html` | Rejected alternative. Kept for reference only. |
+| `design/previews/*.png` | Full-page renders of both directions. |
+| `design/assets/` | Reference copies of all extracted assets. Used for byte-comparison verification — **do not edit**. |
+| `src/assets/products/` | 72 transparent product PNGs (the live set). |
+| `src/assets/hero/` | 6 photographs — 5 section dividers + cover, text overlays removed. |
+| `src/assets/brand/` | Both logo lockups, SVG + PNG. |
+| `src/data/` | `divisions.json` (2), `categories.json` (15), `products.json` (72), `site.json`, `products.raw.json` (extractor output). |
+| `tools/` | PDF extraction scripts. Run only when the brochure is revised. |
+
+**Source brochure:** `C:\Users\Vivaan\Downloads\08012026-001 - Spartan Brochure.pdf` — 25 pages, ~163MB. Not committed (too large). Everything in `src/assets/` and `src/data/products.raw.json` derives from it. You do not need it unless regenerating assets.
+
+---
+
+## 3. Brand foundations
+
+### Logo — two lockups, not interchangeable
+
+Both extracted as **vector** from the brochure. Neither was redrawn, and neither may be recoloured, redrawn, distorted, rotated or re-proportioned.
+
+| Asset | Composition | Use on |
+|---|---|---|
+| `src/assets/brand/spartan-logo.svg` | Red helmet, **black** wordmark | Light backgrounds |
+| `src/assets/brand/spartan-logo-light.svg` | Red helmet, **white** wordmark | Dark backgrounds |
+
+The site is dark-first, so most surfaces need the **light** lockup. Using the dark one on a dark surface makes the wordmark invisible — that is a real bug that occurred during design.
+
+Minimum rendered height 28px. Clear space on all sides = half the helmet height.
+
+The brochure cover also carries an Arabic wordmark (**سبارتان**). Not used in this build; deferred.
+
+### Colour — measured, not chosen
+
+All values sampled from the brochure PDF. Tokens live in `src/styles/tokens.css`.
+
+```
+--color-red        #eb2927   brand red
+--color-red-dark   #b81c1b   hover on red fills
+--color-red-deep   #970000   small red text on light surfaces
+--color-black      #08080a   page background
+--color-panel      #0e0e11   alternating dark section
+--color-card       #151519   dark card surface
+--color-line       #232329   dark borders
+--color-paper      #f6f6f7   light section background
+--color-ink        #0e0e11   body text on light
+--color-ink-muted  #6a6a72   muted text on light
+--color-grey       #8a8a92   muted text on DARK ONLY
+--color-grey-lt    #b4b4bc   body text on dark
+```
+
+**The accessibility contract — enforced, not advisory.** Measured against the real surfaces:
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| red on black | 4.65:1 | passes AA at any size |
+| red on paper | **3.99:1** | **fails AA for normal text**; passes the 3:1 large-text bar |
+| red-deep on paper | 8.40:1 | passes AAA |
+| grey on paper | **3.17:1** | **never use grey on light** |
+| ink-muted on paper | 4.96:1 | passes AA |
+
+So: on dark, red is fine at any size. On light, red is permitted **only** for text ≥24px, or ≥18.66px bold, or non-text elements. Smaller red text on light must use `red-deep`. Muted body copy on light uses `ink-muted`.
+
+`Eyebrow`, `PillButton` and `SectionHeading` take an `onLight` prop that switches these automatically — that is how the rule is enforced in code rather than remembered.
+
+### Typography
+
+- **Display:** Archivo — headings, eyebrows, buttons, numerals, table headers
+- **Body:** Inter — paragraphs, specs, form fields
+
+Both self-hosted variable fonts at `public/fonts/`. **`@font-face` must declare `font-weight: 100 900`.** One file covers the whole range; declaring discrete weights against the same file collapses every weight to one. This was verified by measuring rendered text widths across the axis (772/781/810/887px at weights 100/400/700/900) — a visual check alone would not have caught it.
+
+---
+
+## 4. Stack
+
+| Concern | Choice |
+|---|---|
+| Framework | Astro 7.1.6, TypeScript strict |
+| Styling | Tailwind CSS 4 via the Vite plugin, tokens as CSS custom properties |
+| Content | Astro Content Layer + Zod |
+| Islands | Preact (`compat: false`) |
+| State | nanostores + `@nanostores/persistent` (Task 12) |
+| Email | Resend (Task 14) |
+| Rendering | `output: 'static'`; only `/api/enquiry` will set `prerender = false` |
+| Hosting | Vercel adapter |
+| Tests | Vitest (unit), Playwright + axe (Task 16) |
+
+### Commands
+
+```bash
+npm install
+npm run dev            # astro dev  (Astro 7: --background / astro dev stop)
+npm run build
+npm run test           # vitest run — 29 tests currently passing
+npx astro check        # 0 errors expected; 44 hints are pre-existing in tools/*.mjs
+
+npm run extract:catalog -- "path/to/brochure.pdf"   # regenerate products + PNGs
+npm run extract:logo    -- "path/to/brochure.pdf"
+npm run extract:heroes  -- "path/to/brochure.pdf"
+npm run normalise                                   # raw extraction -> products.json
+```
+
+### Version traps discovered the hard way
+
+**The plan originally specified Astro 5.** `npm audit` reported 8 high-severity XSS advisories against `astro <= 7.0.9` with no in-major fix — 5.18.2 is the newest 5.x. Upgraded to 7.1.6 at one page rather than at 72.
+
+**`npm audit` reports 3 high findings and that is expected.** All three are one chain: `@astrojs/vercel → @vercel/routing-utils → path-to-regexp@6.1.0` (ReDoS). Accepted because:
+- No upstream fix exists. `@vercel/routing-utils` deliberately declares *both* `"path-to-regexp-updated": "npm:path-to-regexp@6.3.0"` and `"path-to-regexp": "6.1.0"`.
+- npm's only offered fix is a major downgrade to `@astrojs/vercel@8`, which reintroduces the 8 XSS advisories. **Never run `npm audit fix --force` in this repo.**
+- Exposure is build-time with static, author-written route patterns. ReDoS needs attacker-controlled input; none reaches it.
+
+**Two zod instances coexist.** Top-level `zod@3.25.76`; `astro/zod` is **4.4.3** and backs the content schemas. For types, `import type { z } from 'astro/zod'` — `astro:content`'s `z` is a const value with no type namespace and is deprecated in Astro 7. Task 14's enquiry schema should `import { z } from 'zod/v4'` (verified to resolve) to stay on one major.
+
+**Astro 7 keeps two content stores.** `astro sync` writes the production copy; anything Vite *serves* — Vitest included — reads a different one that in practice only `astro dev` writes. Without a workaround every `getCollection` call in tests returns empty. `vitest.config.ts` calls Astro's `sync()` and mirrors the store. If content tests suddenly return nothing, this is why.
+
+---
+
+## 5. Architecture — the admin seam
+
+This is the single most important structural decision.
+
+```
+src/data/*.json          source of truth today
+      ↓
+src/content.config.ts    Content Layer collections + Zod schemas
+      ↓
+src/lib/catalog.ts       ← THE SEAM. Typed repository functions.
+      ↓
+pages & components       only ever call catalog.ts
+```
+
+**No page or component may import JSON from `src/data/` or call `getCollection` directly.** Task 17 enforces this with a grep that must print PASS twice:
+
+```bash
+grep -rn "from '.*data/.*json'" src/pages src/components || echo "PASS"
+grep -rn "getCollection" src/pages src/components || echo "PASS"
+```
+
+`site.json` is exempt — it is site chrome, not catalogue content.
+
+`src/lib/catalog.ts` exposes: `getDivisions`, `getDivision`, `getCategories`, `getCategory`, `getProducts`, `getProduct`, `getRelatedProducts`, `searchProducts`. All derived values (product counts, related products, filtering) are computed **inside** the module. Callers get plain typed data, never Astro's `{ id, data, collection }` wrappers.
+
+**Migration path:** Astro's Content Layer takes a custom `loader`. Replacing `file()` in `content.config.ts` with a `supabaseLoader()` moves the site onto a database with no changes to `catalog.ts`'s callers. The Zod schemas become the shared contract between loader, admin write-validation and pages.
+
+### Ordering caveat
+
+`product.order` is **per-category** and its values repeat across categories; `category.order` is globally unique 1–15. So unfiltered `getProducts({ limit: n })` returns a semi-arbitrary cross-category slice. Fine for filtered listings and `getRelatedProducts`. **Any curated "featured products" strip must name its products by slug.**
+
+---
+
+## 6. The data
+
+### Distribution — 72 products, verified
+
+| Category | id | Count | Brochure source |
+|---|---|---|---|
+| Lighting | `lighting` | 10 | p4 (7) + p5 (3) |
+| Fans & Ventilation | `fans` | 4 | p10 |
+| Water Pumps & Controls | `pumps` | 3 | p11 |
+| Insect Killers | `insect` | 1 | p6 |
+| Cables | `cables` | 1 | p8 |
+| **Electrical Accessories** | `accessories` | **0 — expanding** | — |
+| Head & Face Protection | `head` | 7 | p15 |
+| Eye Protection | `eye` | 6 | p13 |
+| Hearing Protection | `hearing` | 6 | p14 |
+| Hand Protection | `hand` | 11 | p16+p17+p18 |
+| Safety Footwear | `foot` | 8 | p20 (6) + p21 (2) |
+| Harnesses & Fall Arrest | `harness` | 2 | p19 |
+| Body Protection | `body` | 4 | p19 |
+| Workwear | `workwear` | 9 | p23 (6) + p24 (3) |
+| **Spill Control** | `spill` | **0 — expanding** | — |
+
+Electricals: 19. Safety: 53.
+
+> An earlier draft said **74**. That double-counted two "RESISTANCE SPECIFICATIONS" table headings as products. 72 is correct — if you see 74 anywhere, it is stale.
+
+### The two empty categories
+
+Both are `status: "expanding"` with `heroProductSlug: null`. They get real pages with an honest message and an enquiry CTA — no invented products.
+
+- **Spill Control** — the client's brief lists it; the brochure has nothing.
+- **Electrical Accessories** — the brochure's only controls (PC-10 pump controller, FS-15 float switch) sit inside its "Water Pumping & Flow Control" section and stay there. Splitting a brochure section across two site categories would invent structure. **Flagged to the client as reversible if they prefer those two moved across.**
+
+### Disambiguation
+
+Seven names repeat. `name` stays the brochure name; a `variantLabel` carries the difference and the UI appends it. All 16 mappings were verified against each record's own specs.
+
+Ventilation Fans ×4 (by size set) · Safety Glasses ×2 · Safety Goggles ×2 · Ear Muff ×2 (NRR 25dB / 20dB) · Safety Vests ×2 (velcro / zipper) · Construction Gum Boots ×2 (with / without steel toe) · Low Cut Safety Shoes ×2 (KPU / suede).
+
+One typo corrected: `"Ear Plugs dispsenser"` → `"Ear Plugs Dispenser"`.
+
+### EN 388 glove ratings
+
+6 products carry verified ratings; 66 do not. Page 16's four gloves and page 17's Chem Guard and Cut Flex were read off rendered pages and cross-checked against per-line PDF coordinates. Latex Coated Gloves and Impact Ultra D have **no printed row** — `en388` is absent rather than guessed.
+
+**Chem Guard's tear resistance is printed as `0`, not `X`.** Those mean different things — 0 is a tested result, X is untested. Render the literal printed value; do not normalise or hide it.
+
+### The extraction tooling — two behaviours that fail silently
+
+Documented in `tools/README.md`. If you regenerate assets, do not "simplify" either:
+
+1. **Clip forwarding.** Brochure product photos are rectangles with **opaque black backgrounds**, knocked out at render time by `clipImageMask`. Forward every clip/mask/group push *and its matching pop, unconditionally*; filter only fill operations. Dropping clips puts every product in a black box — which looks fine on a white page and is ruinous on this dark layout.
+
+2. **Same-column assignment.** Images *and spec lines* are matched within the product's own page column. Nearest-overall matching swaps content between columns on two-column pages. This bug shipped once: spec text bled across columns on **56 of 72 products** before it was caught.
+
+**Product image resolution is a real constraint.** Native sizes are 100–440px wide. Sharp at the sizes the design uses (~180px tiles, ~400px spotlight) but must never be upscaled beyond ~2×. Components should take `srcset` so higher-resolution supplier photography drops in later without markup changes.
+
+---
+
+## 7. Progress
+
+### Done and verified
+
+| # | Task | Notes |
+|---|---|---|
+| 1 | Astro scaffold and toolchain | Astro 7 upgrade; audit rationale recorded |
+| 2 | Design tokens, fonts, base layout | Variable-font axis verified by measurement |
+| 3 | Extraction tooling | All assets byte-identical to reference; spec-bleed fixed |
+| 4 | Content schemas and data | 7 tests; EN 388 independently verified |
+| 5 | Catalog repository | 20 tests; the admin seam |
+| 6 | Design system primitives | `ink-muted` token added; contrast switch confirmed |
+
+**29 unit tests passing. `astro check` 0 errors. `astro build` clean.**
+
+### ⚠ Task 7 — partially complete and UNVERIFIED
+
+Committed as `2272361` with an explicit WIP marker. **Do not treat it as done.**
+
+Exists and compiles: `src/components/layout/{UtilityBar,Header,Footer}.astro`, `MobileNav.tsx`, `src/data/site.json`, `BaseLayout` wiring, `tsconfig.json` Preact JSX config.
+
+**Never checked:**
+- No screenshots at 1440px or 375px
+- `MobileNav` focus trap never exercised — Tab cycling, Shift+Tab wrap, Escape-restores-focus
+- 1080/1081px desktop/mobile boundary unverified (exactly one of hamburger/desktop-menu must show either side)
+- Light lockup legibility on dark not visually confirmed
+- `aria-current="page"`, 44px touch targets, SVG-vs-text-glyph icons unaudited
+- Footer category links: confirm they come from `getCategories()`, not hard-coded
+- Solid (non-hero) header mode unverified
+
+**Resume by running Task 7's Step 6 verification in the plan before building anything on top.**
+
+### Remaining — Tasks 8–17
+
+Full code and tests are in the plan. Summary:
+
+| # | Task | Delivers |
+|---|---|---|
+| 8 | Catalogue components | `en388.ts` (TDD), ProductCard, CategoryTile, ProductGrid, SpecTable, En388Table |
+| 9 | Home page sections | Hero, About, ServiceCards, TrustBand, CategoryGrid, Spotlight, Faq, EnquiryCta |
+| 10 | Catalogue/category/product pages | 15 category pages + 72 product pages + filter island |
+| 11 | Editorial pages | Division landings, about, why-spartan, industries, contact, 404 |
+| 12 | Enquiry basket store | `stores/enquiry.ts`, 8 tests, persistent + corrupt-storage resilient |
+| 13 | Enquiry UI islands | EnquiryButton, EnquiryBadge, EnquiryDrawer (focus trap) |
+| 14 | Enquiry submission | Zod schema (6 tests), `/api/enquiry` with honeypot + rate limit + Resend |
+| 15 | SEO and structured data | JSON-LD (no `offers` — there are no prices), sitemap, favicon from the helmet mark |
+| 16 | End-to-end tests | Playwright + axe across 6 routes |
+| 17 | Launch readiness | Lighthouse ≥95, seam verification, README, content-editing guide |
+
+---
+
+## 8. Open items needing the client
+
+None block development — placeholders are in place and marked.
+
+1. **Real contact details** — address, phone, email, WhatsApp, hours. Currently placeholders in `src/data/site.json`.
+2. **Resend API key + destination sales address.** Until supplied, `/api/enquiry` logs to console and returns success without delivering, so the flow stays testable.
+3. **Deployment target** — Vercel assumed.
+4. **Domain** — `astro.config.mjs` has `site: 'https://spartan.example'`. Sitemap and canonical URLs depend on it.
+5. **Confirm the eight "Industries We Serve"** — currently inferred from the product mix, not stated in the brochure. Marked with an HTML comment where used.
+6. **Certifications** — none are claimed anywhere on the site until the client supplies them.
+
+Also worth raising: **higher-resolution product photography** would lift the design considerably (see the resolution constraint in §6), and the **brochure PDF needs compressing** before the "Download brochure" buttons can link to it — the source is ~163MB.
+
+---
+
+## 9. Working agreements that produced good results
+
+Worth keeping if you continue with agents:
+
+- **Verify against the real-world source, not the previous implementation.** Task 3's refactor was proven byte-identical to its source scripts and still shipped a defect, because the source scripts were themselves wrong. The bug only surfaced when the extracted *values* were inspected.
+- **Give ground truth, ask for independent verification.** EN 388 ratings were supplied as a table *and* the agent was told to re-read the rendered pages. It confirmed page 16 and corrected the brief's description of page 17.
+- **Absent beats guessed.** Repeatedly the right answer was to leave a field out.
+- **Name the specific failure mode.** "Confirm Archivo loaded rather than a fallback" produced width measurements across the weight axis; "check it looks right" would not have.
+
+---
+
+## 10. Known cleanup
+
+- `design/assets/products/` duplicates `src/assets/products/` (~10MB). Deliberate — the reference set enables byte-comparison verification after a re-extraction. Drop it if that stops being useful.
+- 44 `astro check` hints, all unused-parameter warnings in `tools/*.mjs`. Harmless.
+- `README.md` is still the Astro scaffold default. Task 17 replaces it.
