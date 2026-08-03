@@ -1,0 +1,284 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spartan — Direction A · Precision</title><link rel="stylesheet" href="assets/fonts.css">
+<style>
+:root{--red:#EB2927;--red-deep:#970000;--ink:#0E0E0F;--ink-2:#3A3A3D;--grey:#7F7F7F;--line:#E3E3E5;--paper:#fff;--paper-2:#F7F7F8;--max:1280px;--fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 32px}
+a{color:inherit;text-decoration:none}img{max-width:100%;display:block}
+.eyebrow{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--red);display:flex;align-items:center;gap:12px}
+.eyebrow::after{content:"";height:1px;background:var(--line);flex:1}
+h1,h2,h3{font-family:var(--fd);letter-spacing:-.02em;line-height:1.05;font-weight:700}
+.util{background:var(--ink);color:#B9B9BD;font-size:12px}
+.util .wrap{display:flex;justify-content:space-between;align-items:center;height:38px}
+.util strong{color:#fff;font-weight:600}
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:40px;height:78px}
+.logo{height:38px;width:auto}
+.nav ul{display:flex;gap:30px;list-style:none;margin-left:auto}
+.nav ul a{font-size:14px;font-weight:500;color:var(--ink-2);padding:6px 0;border-bottom:2px solid transparent}
+.nav ul a.on{color:var(--ink);border-color:var(--red)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:var(--fd);font-weight:600;font-size:14px;padding:12px 22px;border:1px solid var(--ink);background:none;cursor:pointer}
+.btn-solid{background:var(--red);border-color:var(--red);color:#fff}
+.hero{border-bottom:1px solid var(--line);padding:76px 0 0}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:end}
+.hero h1{font-size:clamp(44px,5.4vw,74px);font-weight:800}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero p{font-size:18px;color:var(--ink-2);max-width:46ch;margin:24px 0 32px}
+.hero-cta{display:flex;gap:12px;margin-bottom:56px}
+.hero-vis{position:relative;background:var(--paper-2);border:1px solid var(--line);border-bottom:none;aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden}
+.hero-vis::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:40px 40px;opacity:.5}
+.hero-vis img{width:76%;position:relative;filter:drop-shadow(0 24px 40px rgba(0,0,0,.16))}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.stat{padding:26px 0}
+.stat+.stat{border-left:1px solid var(--line);padding-left:24px}
+.stat b{display:block;font-family:var(--fd);font-size:34px;font-weight:800;letter-spacing:-.03em}
+.stat span{font-size:12.5px;color:var(--grey);letter-spacing:.04em}
+section{padding:88px 0}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:40px}
+.sec-head h2{font-size:clamp(28px,3.2vw,42px)}
+.sec-head p{color:var(--grey);max-width:52ch;font-size:15px}
+.div-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.division{border:1px solid var(--line);padding:36px;display:block}
+.division .num{font-family:var(--fd);font-size:12px;font-weight:700;color:var(--red);letter-spacing:.14em}
+.division h3{font-size:28px;margin:14px 0 12px}
+.division p{color:var(--ink-2);font-size:15px;max-width:44ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.chip{font-size:12.5px;border:1px solid var(--line);padding:6px 11px;color:var(--ink-2);background:var(--paper-2)}
+.go{margin-top:28px;font-family:var(--fd);font-weight:600;font-size:14px;color:var(--red);display:inline-block}
+.cats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.cat{background:#fff;padding:22px;display:flex;flex-direction:column;gap:14px;min-height:214px}
+.cat-img{height:86px;display:grid;place-items:center}
+.cat-img img{max-height:86px;width:auto;object-fit:contain}
+.cat-empty{height:86px;display:grid;place-items:center;color:var(--line);font-size:34px;font-family:var(--fd)}
+.cat h4{font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:-.01em}
+.cat small{color:var(--grey);font-size:12.5px;display:block;margin-top:4px;line-height:1.45}
+.cat .n{margin-top:auto;font-size:11px;font-family:var(--fd);font-weight:700;letter-spacing:.1em;color:var(--red)}
+.cat .n.soon{color:var(--grey)}
+.prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.card{border:1px solid var(--line);display:flex;flex-direction:column;background:#fff}
+.card-img{background:var(--paper-2);aspect-ratio:4/3;display:grid;place-items:center;padding:20px;border-bottom:1px solid var(--line)}
+.card-img img{max-height:100%;width:auto;object-fit:contain}
+.card-body{padding:18px}
+.card-body .k{font-size:11px;font-family:var(--fd);font-weight:700;letter-spacing:.12em;color:var(--red);text-transform:uppercase}
+.card-body h4{font-family:var(--fd);font-size:17px;font-weight:700;margin:8px 0 10px;letter-spacing:-.01em}
+.spec{display:flex;gap:8px;font-size:12.5px;color:var(--grey);padding:5px 0;border-top:1px dashed var(--line)}
+.spec b{color:var(--ink-2);font-weight:600;min-width:74px;flex-shrink:0}
+.card-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.card-foot span{font-size:12.5px;color:var(--grey)}
+.add{font-family:var(--fd);font-size:12.5px;font-weight:700;color:var(--red)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;border:1px solid var(--line);padding:44px}
+.spec-vis{background:var(--paper-2);aspect-ratio:1;display:grid;place-items:center;padding:40px;border:1px solid var(--line)}
+.spec-vis img{max-height:100%}
+table{width:100%;border-collapse:collapse;margin-top:22px;font-size:13.5px}
+th{background:var(--ink);color:#fff;font-family:var(--fd);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:11px 12px;text-align:left;font-weight:600}
+td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--ink-2)}
+td:first-child{font-weight:600;color:var(--ink);width:40%}
+.en388 td{text-align:center;font-family:var(--fd);font-weight:700;font-size:15px;color:var(--ink)}
+.en388 td:first-child{text-align:left;font-size:13px}
+.ind-band{background:var(--ink);color:#fff}
+.ind-band .eyebrow{color:#fff}.ind-band .eyebrow::after{background:#37373B}
+.ind-band h2{color:#fff}
+.ind{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#2A2A2E;border:1px solid #2A2A2E;margin-top:36px}
+.ind div{background:var(--ink);padding:26px 20px;font-family:var(--fd);font-weight:600;font-size:16px;display:flex;align-items:center;gap:12px}
+.ind i{color:var(--red);font-style:normal;font-size:12px;font-weight:700}
+.cta{border:1px solid var(--line);padding:56px;display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;background:var(--paper-2)}
+.cta h2{font-size:36px}
+.cta p{color:var(--ink-2);margin-top:14px;max-width:48ch}
+footer{border-top:1px solid var(--line);padding:56px 0 30px;font-size:13.5px;color:var(--grey)}
+.f-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;margin-bottom:44px}
+.f-grid h5{font-family:var(--fd);font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink);margin-bottom:16px}
+.f-grid a{display:block;padding:5px 0;color:var(--grey)}
+.f-bot{border-top:1px solid var(--line);padding-top:22px;display:flex;justify-content:space-between}
+.badge{position:fixed;left:20px;bottom:20px;background:var(--ink);color:#fff;padding:11px 17px;font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:.1em;z-index:99}
+@media(max-width:1100px){.cats{grid-template-columns:repeat(3,1fr)}.prod-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:820px){.hero-grid,.div-grid,.split,.cta{grid-template-columns:1fr}.cats,.ind{grid-template-columns:repeat(2,1fr)}.f-grid{grid-template-columns:1fr 1fr}.nav ul{display:none}.stats{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<div class="badge">DIRECTION A · PRECISION</div>
+<div class="util"><div class="wrap"><span>Established 2015 · Manufactured in India &amp; China</span><span><strong>Trade enquiries</strong> · sales@spartan.example</span></div></div>
+<header><div class="wrap nav"><img src="assets/brand/spartan-logo.svg" class="logo" alt="Spartan">
+<ul><li><a href="#" class="on">Home</a></li><li><a href="#">Electricals</a></li><li><a href="#">Safety</a></li><li><a href="#">Categories</a></li><li><a href="#">Industries</a></li><li><a href="#">Contact</a></li></ul>
+<a class="btn btn-solid" href="#">Request a quote</a></div></header>
+<div class="hero"><div class="wrap"><div class="hero-grid"><div>
+<div class="eyebrow" style="margin-bottom:26px">Home and Industrial Solutions</div>
+<h1>Built to <em>protect.</em><br>Engineered to <em>perform.</em></h1>
+<p>Two divisions, one standard. Spartan supplies lighting, ventilation and water management alongside certified personal protective equipment — to contractors, facilities and distributors.</p>
+<div class="hero-cta"><a class="btn btn-solid" href="#">Browse the catalogue</a><a class="btn" href="#">Download brochure</a></div>
+</div><div class="hero-vis"><img src="assets/products/p15-safety-helmets.png" alt="Spartan safety helmets"></div></div>
+<div class="stats"><div class="stat"><b>2015</b><span>ESTABLISHED</span></div><div class="stat"><b>74</b><span>PRODUCT LINES</span></div><div class="stat"><b>15</b><span>CATEGORIES</span></div><div class="stat"><b>2</b><span>DIVISIONS</span></div></div>
+</div></div>
+<section><div class="wrap"><div class="sec-head"><div><div class="eyebrow" style="margin-bottom:18px">Divisions</div><h2>One brand. Two specialisms.</h2></div><p>Every Spartan product is manufactured to consistent quality standards across our facilities in India and China.</p></div>
+<div class="div-grid">
+<a class="division" href="#"><div class="num">01 / ELECTRICALS</div><h3>Spartan Electricals</h3><p>Lighting, ventilation, water management and electrical controls for residential, commercial and industrial spaces.</p><div class="chips"><span class="chip">Lighting</span><span class="chip">Fans</span><span class="chip">Water Pumps</span><span class="chip">Cables</span><span class="chip">Insect Killers</span><span class="chip">Accessories</span></div><span class="go">Explore electricals →</span></a>
+<a class="division" href="#"><div class="num">02 / SAFETY</div><h3>Spartan Safety</h3><p>Certified personal protective equipment and workwear engineered for real working conditions on site.</p><div class="chips"><span class="chip">Helmets</span><span class="chip">Gloves</span><span class="chip">Footwear</span><span class="chip">Harnesses</span><span class="chip">Eye &amp; Hearing</span><span class="chip">Workwear</span></div><span class="go">Explore safety →</span></a>
+</div></div></section>
+<section style="padding-top:0"><div class="wrap"><div class="sec-head"><div><div class="eyebrow" style="margin-bottom:18px">Product categories</div><h2>The full range</h2></div><p>Fifteen categories spanning both divisions, drawn directly from the current Spartan brochure.</p></div>
+<div class="cats">
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p04-led-bulbs.png" alt="Lighting"></div>
+      <div><h4>Lighting</h4><small>Interior, industrial and outdoor LED</small></div>
+      <div class="n">11 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p10-ventilation-fans.png" alt="Fans &amp; Ventilation"></div>
+      <div><h4>Fans &amp; Ventilation</h4><small>100% copper motor, quiet operation</small></div>
+      <div class="n">4 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p11-pumps.png" alt="Water Pumps &amp; Controls"></div>
+      <div><h4>Water Pumps &amp; Controls</h4><small>Die-cast aluminium, TOP protected</small></div>
+      <div class="n">3 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p06-insect-killer.png" alt="Insect Killers"></div>
+      <div><h4>Insect Killers</h4><small>Chemical-free, 20–40W</small></div>
+      <div class="n">1 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p08-premium-network-cable.png" alt="Cables"></div>
+      <div><h4>Cables</h4><small>CAT.6 UTP network cable</small></div>
+      <div class="n">1 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p11-pc-10-automatic-pump-controller.png" alt="Electrical Accessories"></div>
+      <div><h4>Electrical Accessories</h4><small>Controllers and switchgear</small></div>
+      <div class="n">2 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p15-safety-helmets.png" alt="Head &amp; Face Protection"></div>
+      <div><h4>Head &amp; Face Protection</h4><small>Helmets, visors, welding masks</small></div>
+      <div class="n">7 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p13-safety-goggles.png" alt="Eye Protection"></div>
+      <div><h4>Eye Protection</h4><small>Goggles, glasses, over-glasses</small></div>
+      <div class="n">6 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p14-ear-muff.png" alt="Hearing Protection"></div>
+      <div><h4>Hearing Protection</h4><small>Up to SNR 37dB / NRR 32dB</small></div>
+      <div class="n">6 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p16-grip-guard-gp3.png" alt="Hand Protection"></div>
+      <div><h4>Hand Protection</h4><small>Cut, chemical and impact rated</small></div>
+      <div class="n">11 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p20-low-cut-safety-shoes-2.png" alt="Safety Footwear"></div>
+      <div><h4>Safety Footwear</h4><small>Steel and composite toe caps</small></div>
+      <div class="n">8 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p19-full-body-harness.png" alt="Harnesses &amp; Fall Arrest"></div>
+      <div><h4>Harnesses &amp; Fall Arrest</h4><small>Full body harness, web straps</small></div>
+      <div class="n">2 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p19-safety-vests.png" alt="Body Protection"></div>
+      <div><h4>Body Protection</h4><small>Hi-viz vests, coveralls, aprons</small></div>
+      <div class="n">6 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-img"><img src="assets/products/p23-winter-jacket.png" alt="Workwear"></div>
+      <div><h4>Workwear</h4><small>FR shirts, pants, jackets, suits</small></div>
+      <div class="n">9 PRODUCTS</div>
+    </a>
+    <a class="cat" href="#">
+      <div class="cat-empty">—</div>
+      <div><h4>Spill Control</h4><small>Range expanding — enquire for stock</small></div>
+      <div class="n soon">EXPANDING</div>
+    </a></div></div></section>
+<section style="padding-top:0"><div class="wrap"><div class="sec-head"><div><div class="eyebrow" style="margin-bottom:18px">Selected products</div><h2>Specification first</h2></div><p>Each product leads with materials, ratings and sizes — the details specifiers actually need.</p></div>
+<div class="prod-grid">
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p04-led-bulbs.png" alt="LED Bulbs"></div>
+      <div class="card-body">
+        <div class="k">Lighting</div>
+        <h4>LED Bulbs</h4>
+        <div class="spec"><b>Material</b><span>White PC diffuser + PBT coated aluminium</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p04-slim-led-panels.png" alt="Slim LED Panels"></div>
+      <div class="card-body">
+        <div class="k">Lighting</div>
+        <h4>Slim LED Panels</h4>
+        <div class="spec"><b>Material</b><span>White aluminium frame + glass LGB</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p05-all-weather-solar-flood-light.png" alt="All-Weather Solar Flood Light"></div>
+      <div class="card-body">
+        <div class="k">Lighting</div>
+        <h4>All-Weather Solar Flood Light</h4>
+        <div class="spec"><b>Material</b><span>Die-cast aluminium, IP66</span></div><div class="spec"><b>Power</b><span>50W · 100W · 150W · 200W · 300W</span></div><div class="spec"><b>Panel</b><span>6V 10W – 40W</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p05-industrial-canopy-pendant-lamps.png" alt="Industrial Canopy Pendant Lamps"></div>
+      <div class="card-body">
+        <div class="k">Lighting</div>
+        <h4>Industrial Canopy Pendant Lamps</h4>
+        <div class="spec"><b>Type</b><span>Highbay LED</span></div><div class="spec"><b>Power</b><span>100W · 150W · 200W · 300W</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p10-ventilation-fans.png" alt="Ventilation Fans"></div>
+      <div class="card-body">
+        <div class="k">Fans &amp; Ventilation</div>
+        <h4>Ventilation Fans</h4>
+        <div class="spec"><b>Motor</b><span>100% copper, quiet operation</span></div><div class="spec"><b>Size</b><span>6" · 8" · 10"</span></div><div class="spec"><b>Power</b><span>24W · 28W · 38W</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p11-pumps.png" alt="Pumps"></div>
+      <div class="card-body">
+        <div class="k">Water Pumps</div>
+        <h4>Pumps</h4>
+        <div class="spec"><b>Body</b><span>Aluminium die-cast, anti-rust</span></div><div class="spec"><b>Protection</b><span>Thermal Overload Protector</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p11-pc-10-automatic-pump-controller.png" alt="PC-10 Automatic Pump Controller"></div>
+      <div class="card-body">
+        <div class="k">Accessories</div>
+        <h4>PC-10 Automatic Pump Controller</h4>
+        <div class="spec"><b>Voltage</b><span>220–240 V</span></div><div class="spec"><b>Frequency</b><span>50/60 Hz</span></div><div class="spec"><b>Max intensity</b><span>10 A · 1.1 kW</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a>
+    <a class="card" href="#">
+      <div class="card-img"><img src="assets/products/p06-insect-killer.png" alt="Insect Killer"></div>
+      <div class="card-body">
+        <div class="k">Insect Control</div>
+        <h4>Insect Killer</h4>
+        <div class="spec"><b>Material</b><span>ABS fire retardant, chemical-free</span></div><div class="spec"><b>Power</b><span>20W · 30W · 40W</span></div><div class="spec"><b>Input</b><span>220–240 V · 50–60 Hz</span></div>
+      </div>
+      <div class="card-foot"><span>Spec sheet</span><span class="add">+ ENQUIRE</span></div>
+    </a></div></div></section>
+<section style="padding-top:0"><div class="wrap"><div class="split">
+<div class="spec-vis"><img src="assets/products/p16-grip-guard-gp5.png" alt="Grip Guard GP5"></div>
+<div><div class="eyebrow" style="margin-bottom:18px">Hand protection</div><h2 style="font-size:36px">Grip Guard GP5</h2>
+<p style="color:var(--ink-2);margin-top:14px">HPPE, steel, polyester and spandex liner with PU coating. Knit wrist cuff, sizes 7–12.</p>
+<table><tr><th colspan="2">Construction</th></tr><tr><td>Liner</td><td>HPPE, steel, polyester, spandex</td></tr><tr><td>Coating</td><td>Polyurethane</td></tr><tr><td>Colour</td><td>Grey / Grey</td></tr><tr><td>Cuff style</td><td>Knit wrist</td></tr></table>
+<table class="en388"><tr><th>Abrasion</th><th>Blade cut</th><th>Tear</th><th>Puncture</th><th>TDM cut</th></tr><tr><td>4</td><td>X</td><td>4</td><td>3</td><td>D</td></tr></table>
+<div style="display:flex;gap:12px;margin-top:26px"><a class="btn btn-solid" href="#">Add to enquiry</a><a class="btn" href="#">Full specification</a></div>
+</div></div></div></section>
+<section class="ind-band"><div class="wrap"><div class="eyebrow" style="margin-bottom:18px">Industries we serve</div><h2 style="font-size:clamp(28px,3.2vw,42px);max-width:20ch">Specified on sites where failure is not an option.</h2><div class="ind"><div><i>01</i>Construction</div><div><i>02</i>Oil &amp; Gas</div><div><i>03</i>Manufacturing</div><div><i>04</i>Warehousing &amp; Logistics</div><div><i>05</i>Facilities Management</div><div><i>06</i>Marine &amp; Ports</div><div><i>07</i>Utilities</div><div><i>08</i>Hospitality</div></div></div></section>
+<section><div class="wrap"><div class="cta"><div><div class="eyebrow" style="margin-bottom:18px">Trade enquiries</div><h2>Build your enquiry list, send it once.</h2><p>Add products as you browse and submit a single request. Our team responds with pricing, availability and lead times within one business day.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><a class="btn btn-solid" href="#">Request a quote</a><a class="btn" href="#">Download full brochure</a><a class="btn" style="border-color:var(--line)" href="#">Become a distributor</a></div></div></div></section>
+<footer><div class="wrap"><div class="f-grid">
+<div><img src="assets/brand/spartan-logo.svg" style="height:34px;margin-bottom:18px" alt="Spartan"><p style="max-width:34ch">Spartan Lighting &amp; Electrical Products. Brightening spaces and powering progress since 2015.</p></div>
+<div><h5>Electricals</h5><a href="#">Lighting</a><a href="#">Fans &amp; Ventilation</a><a href="#">Water Pumps</a><a href="#">Cables</a><a href="#">Insect Killers</a></div>
+<div><h5>Safety</h5><a href="#">Head &amp; Face</a><a href="#">Hand Protection</a><a href="#">Footwear</a><a href="#">Harnesses</a><a href="#">Workwear</a></div>
+<div><h5>Company</h5><a href="#">About Spartan</a><a href="#">Why Spartan</a><a href="#">Industries</a><a href="#">Contact</a></div>
+</div><div class="f-bot"><span>© 2026 Spartan. All rights reserved.</span><span>Manufactured in India &amp; China</span></div></div></footer>
+</body></html>

@@ -1,0 +1,445 @@
+// Direction B — "Forge": Spartan interpretation of the industrial/logistics reference.
+// Dark photographic hero, red/white split display type, chevron motifs, red trust band,
+// white icon cards, black footer. All content, colours, logo and imagery are Spartan's own.
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const DIR = path.dirname(fileURLToPath(import.meta.url));
+const P = "assets/products/";
+const e = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+/* --- red line icons, 28px, single consistent stroke family --- */
+const ICON = {
+  bulb: `<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/>`,
+  fan: `<circle cx="12" cy="12" r="2.2"/><path d="M12 9.8V4a4 4 0 0 1 3.2 6.4M14.2 12H20a4 4 0 0 1-6.4 3.2M12 14.2V20a4 4 0 0 1-3.2-6.4M9.8 12H4a4 4 0 0 1 6.4-3.2"/>`,
+  pump: `<path d="M4 20h16M6 20v-7h6v7M12 13V7h4l3 3v10M8.5 16.5h1"/><circle cx="15.5" cy="9.5" r="1"/>`,
+  helmet: `<path d="M3 17h18v2H3zM5 17a7 7 0 0 1 14 0M9.5 10.4V5.6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4.8"/>`,
+  glove: `<path d="M7 21V10a1.6 1.6 0 0 1 3.2 0V4.6a1.6 1.6 0 0 1 3.2 0V10m0-2.2a1.6 1.6 0 0 1 3.2 0V15a6 6 0 0 1-6 6H7Z"/>`,
+  boot: `<path d="M4 4h5v9l7 3.2a3 3 0 0 1 1.8 2.8V21H4Zm0 13h13"/>`,
+  cable: `<path d="M4 7h4a5 5 0 0 1 5 5 5 5 0 0 0 5 5h2M17 3v4M21 3v4M17 7h4"/>`,
+  shield: `<path d="M12 3 5 6v5.5c0 4.3 2.9 7.6 7 9.5 4.1-1.9 7-5.2 7-9.5V6Z"/><path d="m9.2 12 2 2 3.6-4"/>`,
+};
+const icon = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+
+const SERVICES = [
+  { i: "bulb", t: "Lighting", d: "Interior, industrial and outdoor LED — bulbs, panels, tubes, floodlights, highbays and solar." },
+  { i: "fan", t: "Fans & Ventilation", d: "100% copper motor ventilation fans from 4\" to 14\", built for quiet continuous duty." },
+  { i: "pump", t: "Water Pumps & Controls", d: "Die-cast aluminium pumps with thermal overload protection, controllers and float switches." },
+  { i: "helmet", t: "Head & Face Protection", d: "HDPE helmets with 6-point ratchet suspension, visors, brow guards and welding masks." },
+  { i: "glove", t: "Hand Protection", d: "Cut, chemical and impact rated gloves — PU, nitrile, latex and leather, sizes 7–12." },
+  { i: "boot", t: "Safety Footwear", d: "Steel and composite toe caps, EUR 36–48, from low-cut trainers to rigger and gum boots." },
+];
+
+const CATS = [
+  { n: "Lighting", c: 11, img: "p04-led-bulbs.png" },
+  { n: "Fans & Ventilation", c: 4, img: "p10-ventilation-fans.png" },
+  { n: "Water Pumps", c: 3, img: "p11-pumps.png" },
+  { n: "Insect Killers", c: 1, img: "p06-insect-killer.png" },
+  { n: "Cables", c: 1, img: "p08-premium-network-cable.png" },
+  { n: "Electrical Accessories", c: 2, img: "p11-pc-10-automatic-pump-controller.png" },
+  { n: "Head & Face", c: 7, img: "p15-safety-helmets.png" },
+  { n: "Eye Protection", c: 6, img: "p13-safety-goggles.png" },
+  { n: "Hearing Protection", c: 6, img: "p14-ear-muff.png" },
+  { n: "Hand Protection", c: 11, img: "p16-grip-guard-gp3.png" },
+  { n: "Safety Footwear", c: 8, img: "p20-low-cut-safety-shoes-2.png" },
+  { n: "Fall Arrest", c: 2, img: "p19-full-body-harness.png" },
+  { n: "Body Protection", c: 6, img: "p19-safety-vests.png" },
+  { n: "Workwear", c: 9, img: "p23-winter-jacket.png" },
+];
+
+const INDUSTRIES = ["Construction", "Oil & Gas", "Manufacturing", "Warehousing", "Facilities", "Marine & Ports", "Utilities", "Hospitality"];
+
+const FAQ = [
+  ["Do you supply to distributors and trade?", "Yes. Spartan works with distributors, contractors and facilities teams. Submit an enquiry and our team will respond with trade pricing and lead times within one business day."],
+  ["Where are Spartan products manufactured?", "Our range is manufactured across facilities in India and China, combining advanced production technology with strict, consistent quality standards."],
+  ["Can I order across both Electricals and Safety?", "Yes. Build a single enquiry list spanning both divisions and submit it once — it is consolidated into one quotation."],
+  ["Are your gloves and PPE certified?", "Cut, abrasion, tear and puncture performance is stated per product against EN 388 resistance levels. Full declarations are available on request."],
+  ["Do you supply spill control products?", "Our spill control range is expanding. Contact us for current availability and we will advise on stock and lead times."],
+];
+
+const NAV = ["Home", "About", "Electricals", "Safety", "Industries", "Contact"];
+
+const CHEV = `<svg class="chev" viewBox="0 0 200 240" aria-hidden="true"><path d="M0 0 100 120 0 240Z"/><path d="M70 0 170 120 70 240Z"/></svg>`;
+
+const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spartan — Direction B · Forge</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+:root{
+  --red:#EB2927;--red-dk:#B81C1B;--red-deep:#970000;
+  --black:#08080A;--panel:#0E0E11;--card:#151519;--line:#232329;
+  --paper:#F6F6F7;--white:#fff;--ink:#0E0E11;--grey:#8A8A92;--grey-lt:#B4B4BC;
+  --max:1240px;--fd:'Archivo',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);background:var(--black);color:var(--white);line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 32px}
+a{color:inherit;text-decoration:none}img{max-width:100%;display:block}
+h1,h2,h3,h4{font-family:var(--fd);line-height:1.06;letter-spacing:-.02em;font-weight:700}
+
+/* eyebrow: red, uppercase, dash prefix */
+.eb{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--red);display:inline-flex;align-items:center;gap:9px}
+.eb::before{content:"";width:16px;height:2px;background:var(--red)}
+.eb.center{justify-content:center}
+
+/* buttons */
+.pill{display:inline-flex;align-items:center;gap:9px;border:1px solid rgba(255,255,255,.32);border-radius:999px;padding:11px 20px;font-size:13px;font-weight:500;transition:.22s}
+.pill:hover{border-color:var(--red);background:rgba(235,41,39,.1)}
+.pill i{color:var(--red);font-style:normal;font-weight:700}
+.pill.dark{border-color:rgba(0,0,0,.18);color:var(--ink)}
+.pill.dark:hover{border-color:var(--red);background:rgba(235,41,39,.06)}
+.solid{display:inline-flex;align-items:center;gap:10px;background:var(--red);color:#fff;font-family:var(--fd);font-weight:700;font-size:13.5px;letter-spacing:.03em;padding:14px 26px;transition:.22s}
+.solid:hover{background:var(--red-dk)}
+
+/* chevron motif */
+.chev{position:absolute;fill:rgba(255,255,255,.028);pointer-events:none}
+
+/* ---------- top bars ---------- */
+.util{position:absolute;top:0;left:0;right:0;border-bottom:1px solid rgba(255,255,255,.09);font-size:12px;color:var(--grey-lt);z-index:25}
+.util .wrap{display:flex;justify-content:space-between;align-items:center;height:44px}
+.util-l{display:flex;align-items:center;gap:12px}
+.util .dot{width:26px;height:26px;border:1px solid rgba(255,255,255,.18);border-radius:50%;display:grid;place-items:center;font-size:9.5px;letter-spacing:0}
+header{position:absolute;top:44px;left:0;right:0;z-index:25}
+.nav{display:flex;align-items:center;height:84px;gap:40px}
+.nav .logo{height:38px;width:auto}
+.nav menu{display:flex;gap:28px;list-style:none;margin:0 auto;padding:0}
+.nav menu a{font-family:var(--fd);font-size:12.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:#D6D6DC;padding-bottom:3px;border-bottom:2px solid transparent;transition:.2s}
+.nav menu a.on,.nav menu a:hover{color:#fff;border-color:var(--red)}
+.nav .tel{font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:.04em}
+
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:880px;display:flex;align-items:flex-end;overflow:hidden;padding:196px 0 74px}
+.hero-bg{position:absolute;inset:0}
+.hero-bg img{width:100%;height:100%;object-fit:cover;object-position:58% 30%}
+.hero-bg::after{content:"";position:absolute;inset:0;background:
+  linear-gradient(100deg,var(--black) 4%,rgba(8,8,10,.94) 30%,rgba(8,8,10,.52) 62%,rgba(8,8,10,.8) 100%),
+  linear-gradient(0deg,var(--black) 1%,rgba(8,8,10,.25) 38%,transparent 62%),
+  linear-gradient(180deg,rgba(8,8,10,.85) 0%,transparent 22%)}
+.hero .chev{left:-40px;top:230px;width:420px;height:500px;fill:rgba(255,255,255,.04)}
+.hero .wrap{position:relative;z-index:5;width:100%}
+.hero-top{display:flex;justify-content:flex-end;margin-bottom:54px}
+.quote{max-width:34ch;font-size:13.5px;line-height:1.75;color:#C7C7CE;border-left:2px solid var(--red);padding-left:18px}
+.quote b{color:#fff;font-weight:600}
+h1.display{font-size:clamp(56px,9vw,124px);font-weight:800;letter-spacing:-.035em;text-transform:uppercase;line-height:.94;margin:26px 0 0}
+h1.display .r{color:var(--red);display:block}
+h1.display .w{color:#fff;display:block}
+.hero-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-top:38px}
+.hero-foot p{max-width:52ch;color:#BFBFC6;font-size:15.5px}
+.hero-actions{display:flex;gap:12px;margin-top:24px}
+
+/* ---------- about ---------- */
+.about{position:relative;background:var(--panel);overflow:hidden;padding:104px 0}
+.about .chev{right:-70px;bottom:-60px;width:460px;height:540px}
+.about .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.about h2{font-size:clamp(32px,4vw,50px);margin:20px 0 22px;letter-spacing:-.028em}
+.about p{color:var(--grey-lt);font-size:15px;margin-bottom:16px;max-width:52ch}
+.about-vis{position:relative;display:grid;place-items:center;min-height:400px}
+.about-vis img{width:92%;filter:drop-shadow(0 40px 60px rgba(0,0,0,.75))}
+.about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:34px}
+.about-stats div{background:var(--panel);padding:20px}
+.about-stats b{display:block;font-family:var(--fd);font-size:30px;font-weight:800;color:#fff;letter-spacing:-.03em}
+.about-stats span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey)}
+
+/* ---------- services (light) ---------- */
+.light{background:var(--paper);color:var(--ink);padding:104px 0}
+.sec-c{text-align:center;margin-bottom:52px}
+.sec-c h2{font-size:clamp(30px,4vw,46px);color:var(--ink);margin-top:16px;letter-spacing:-.028em}
+.sec-c p{color:#6A6A72;margin:16px auto 0;max-width:56ch;font-size:15px}
+.svc{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#E4E4E7;border:1px solid #E4E4E7}
+.svc article{background:#fff;padding:36px 32px;transition:.24s;position:relative}
+.svc article:hover{background:#fff;box-shadow:0 18px 40px rgba(0,0,0,.09);z-index:2}
+.svc svg{width:30px;height:30px;color:var(--red)}
+.svc h3{font-size:19px;color:var(--red);margin:20px 0 12px;letter-spacing:-.01em}
+.svc p{color:#6A6A72;font-size:14px;margin-bottom:22px;min-height:66px}
+
+/* ---------- red trust band ---------- */
+.band{background:var(--red);color:#fff;position:relative;overflow:hidden;padding:34px 0}
+.band .chev{left:-30px;top:-40px;width:300px;height:330px;fill:rgba(255,255,255,.09)}
+.band .chev.r{left:auto;right:-30px;top:auto;bottom:-40px;transform:scaleX(-1)}
+.band .wrap{position:relative;z-index:2;display:flex;align-items:center;gap:34px;flex-wrap:wrap;justify-content:center}
+.band .lead{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.9}
+.band ul{display:flex;flex-wrap:wrap;gap:10px;list-style:none}
+.band li{border:1px solid rgba(255,255,255,.42);padding:8px 15px;font-size:13px;font-weight:500}
+
+/* ---------- categories (dark) ---------- */
+.cats-sec{padding:104px 0;position:relative;overflow:hidden}
+.cats-sec .chev{right:-80px;top:60px;width:400px;height:470px}
+.cats-sec .wrap{position:relative;z-index:2}
+.sec-h{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:44px}
+.sec-h h2{font-size:clamp(30px,3.8vw,46px);margin-top:16px}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.cats a{background:var(--card);padding:24px;display:flex;flex-direction:column;gap:16px;min-height:212px;transition:.24s;position:relative}
+.cats a:hover{background:#1B1B21}
+.cats .ph{height:92px;display:grid;place-items:center}
+.cats .ph img{max-height:92px;width:auto;object-fit:contain}
+.cats h4{font-size:15.5px;color:#fff}
+.cats .cnt{margin-top:auto;font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.13em;color:var(--red)}
+.cats .cnt.soon{color:var(--grey)}
+.cats a.all{background:var(--red)}
+.cats a.all:hover{background:var(--red-dk)}
+.cats a.all .ph span{font-family:var(--fd);font-size:52px;font-weight:800;color:#fff;letter-spacing:-.04em;opacity:.92}
+.cats a.all .cnt{color:#fff}
+
+/* ---------- spotlight ---------- */
+.spot{background:var(--panel);padding:104px 0;position:relative;overflow:hidden}
+.spot .chev{left:-60px;bottom:-40px;width:380px;height:440px}
+.spot .wrap{position:relative;z-index:2;display:grid;grid-template-columns:.95fr 1.05fr;gap:64px;align-items:center}
+.spot-vis{background:radial-gradient(circle at 50% 45%,#22222A 0%,var(--panel) 68%);border:1px solid var(--line);aspect-ratio:1;display:grid;place-items:center;padding:52px}
+.spot-vis img{max-height:100%;filter:drop-shadow(0 30px 50px rgba(0,0,0,.7))}
+.spot h2{font-size:clamp(30px,3.6vw,44px);margin:18px 0 16px}
+.spot>.wrap>div>p{color:var(--grey-lt);font-size:15px;max-width:50ch}
+table{width:100%;border-collapse:collapse;margin-top:26px;font-size:13.5px}
+th{background:#000;color:#fff;font-family:var(--fd);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:12px;text-align:left;font-weight:700;border:1px solid var(--line)}
+td{padding:12px;border:1px solid var(--line);color:var(--grey-lt)}
+td:first-child{color:#fff;font-weight:500;width:38%}
+.en td{text-align:center;font-family:var(--fd);font-weight:800;font-size:16px;color:var(--red)}
+.en th{text-align:center}
+
+/* ---------- FAQ ---------- */
+.faq-sec{padding:104px 0;background:var(--paper);color:var(--ink)}
+.faq{max-width:880px;margin:0 auto;border-top:1px solid #E1E1E4}
+.faq details{border-bottom:1px solid #E1E1E4}
+.faq summary{cursor:pointer;list-style:none;padding:22px 46px 22px 0;font-family:var(--fd);font-weight:600;font-size:16.5px;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:8px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:1px solid #D2D2D6;border-radius:50%;display:grid;place-items:center;font-size:16px;font-family:var(--fb);color:var(--red);line-height:1}
+.faq details[open] summary::after{content:"–";border-color:var(--red);background:var(--red);color:#fff}
+.faq p{padding:0 46px 24px 0;color:#6A6A72;font-size:14.5px;max-width:74ch}
+
+/* ---------- CTA ---------- */
+.cta{position:relative;overflow:hidden;padding:96px 0;background:var(--black)}
+.cta .chev{right:-50px;top:-30px;width:400px;height:460px}
+.cta .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.15fr .85fr;gap:60px;align-items:center}
+.cta h2{font-size:clamp(30px,3.8vw,46px);margin:18px 0 16px}
+.cta p{color:var(--grey-lt);max-width:48ch}
+.cta-box{border:1px solid var(--line);background:var(--card);padding:32px}
+.cta-box label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey);margin-bottom:7px;font-family:var(--fd);font-weight:700}
+.cta-box input,.cta-box select{width:100%;background:#0B0B0E;border:1px solid var(--line);color:#fff;padding:13px 14px;font-family:var(--fb);font-size:14px;margin-bottom:16px}
+.cta-box input::placeholder{color:#5C5C64}
+
+/* ---------- footer ---------- */
+footer{background:#000;padding:0 0 0}
+.f-top{border-bottom:1px solid #1A1A1F;padding:34px 0}
+.f-top .wrap{display:flex;align-items:center;gap:48px;flex-wrap:wrap}
+.f-item{display:flex;align-items:center;gap:14px}
+.f-item .ic{width:40px;height:40px;border:1px solid #26262C;border-radius:50%;display:grid;place-items:center;color:var(--red);flex-shrink:0}
+.f-item .ic svg{width:17px;height:17px}
+.f-item small{display:block;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--grey)}
+.f-item span{font-size:14px;color:#fff}
+.f-form{margin-left:auto;display:flex;min-width:330px}
+.f-form input{flex:1;background:#131317;border:1px solid #26262C;border-right:none;color:#fff;padding:13px 15px;font-size:13.5px;font-family:var(--fb)}
+.f-form input::placeholder{color:#5C5C64}
+.f-form button{background:var(--red);color:#fff;border:none;padding:13px 22px;font-family:var(--fd);font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.f-main{padding:52px 0}
+.f-main .wrap{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr auto;gap:44px}
+.f-main p{color:var(--grey);font-size:13.5px;margin-top:18px;max-width:38ch}
+.f-main h5{font-family:var(--fd);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--red);margin-bottom:18px;font-weight:700}
+.f-main a{display:block;padding:6px 0;color:#C2C2C9;font-size:13.5px;transition:.2s}
+.f-main a:hover{color:var(--red)}
+.f-soc{display:flex;flex-direction:column;gap:11px}
+.f-soc a{width:38px;height:38px;border:1px solid #26262C;border-radius:50%;display:grid;place-items:center;color:#fff;padding:0}
+.f-soc a:hover{border-color:var(--red);background:var(--red)}
+.f-soc svg{width:15px;height:15px}
+.f-bot{border-top:1px solid #1A1A1F;padding:20px 0;text-align:center;color:#5E5E66;font-size:12.5px}
+.badge{position:fixed;left:20px;bottom:20px;background:var(--red);color:#fff;padding:11px 18px;font-family:var(--fd);font-size:11.5px;font-weight:800;letter-spacing:.14em;z-index:99}
+
+@media(max-width:1080px){
+  .svc{grid-template-columns:repeat(2,1fr)}
+  .cats{grid-template-columns:repeat(3,1fr)}
+  .f-main .wrap{grid-template-columns:1fr 1fr 1fr}
+  .nav menu{display:none}
+}
+@media(max-width:820px){
+  .about .wrap,.spot .wrap,.cta .wrap{grid-template-columns:1fr}
+  .cats{grid-template-columns:repeat(2,1fr)}
+  .svc{grid-template-columns:1fr}
+  .hero-top{flex-direction:column}
+  .quote{max-width:none}
+  .hero-foot{flex-direction:column;align-items:flex-start}
+  .f-main .wrap{grid-template-columns:1fr 1fr}
+  .f-form{min-width:100%;margin-left:0}
+  .util-l span{display:none}
+}
+</style></head>
+<body>
+<div class="badge">DIRECTION B · FORGE</div>
+
+<div class="hero">
+  <div class="hero-bg"><img src="assets/hero/safety.jpg" alt="Industrial workplace"></div>
+  ${CHEV}
+
+  <div class="util"><div class="wrap">
+    <div class="util-l"><span>Follow Spartan</span>
+      <span class="dot">in</span><span class="dot">f</span><span class="dot">ig</span></div>
+    <div>Established 2015 · Manufactured in India &amp; China</div>
+  </div></div>
+
+  <header><div class="wrap nav">
+    <img src="assets/brand/spartan-logo-light.svg" class="logo" alt="Spartan">
+    <menu>${NAV.map((n, i) => `<li><a href="#"${i === 0 ? ' class="on"' : ""}>${e(n)}</a></li>`).join("")}</menu>
+    <span class="tel">+971 00 000 0000</span>
+  </div></header>
+
+  <div class="wrap">
+    <div class="hero-top">
+      <div></div>
+      <div class="quote">Spartan Lighting &amp; Electrical Products is a growing and trusted brand established in 2015, committed to delivering reliable, high-quality solutions. <b>Durable, efficient and cost-effective products</b> for modern residential, commercial and industrial markets.</div>
+    </div>
+    <div class="eb">Home and Industrial Solutions</div>
+    <h1 class="display"><span class="r">Industrial</span><span class="w">Solutions.</span></h1>
+    <div class="hero-foot">
+      <div>
+        <p>Two divisions, one standard. Lighting, ventilation and water management alongside certified personal protective equipment — supplied to contractors, facilities teams and distributors.</p>
+        <div class="hero-actions">
+          <a class="solid" href="#">BROWSE CATALOGUE <i>›</i></a>
+          <a class="pill" href="#">Download brochure <i>›</i></a>
+        </div>
+      </div>
+      <a class="pill" href="#">SCROLL DOWN <i>↓</i></a>
+    </div>
+  </div>
+</div>
+
+<section class="about">
+  ${CHEV}
+  <div class="wrap">
+    <div>
+      <div class="eb">About Spartan</div>
+      <h2>A trusted name in electricals and safety.</h2>
+      <p>Since 2015 Spartan has focused on providing durable, efficient and cost-effective products that meet the needs of modern residential, commercial and industrial markets.</p>
+      <p>Our range is manufactured across facilities in India and China, combining advanced technology with strict quality standards — ensuring consistent performance, competitive pricing and breadth of choice.</p>
+      <div class="about-stats">
+        <div><b>2015</b><span>Established</span></div>
+        <div><b>74</b><span>Product lines</span></div>
+        <div><b>2</b><span>Divisions</span></div>
+      </div>
+      <div style="margin-top:30px"><a class="pill" href="#">Read more <i>›</i></a></div>
+    </div>
+    <div class="about-vis"><img src="${P}p15-safety-helmets.png" alt="Spartan safety helmets"></div>
+  </div>
+</section>
+
+<section class="light">
+  <div class="wrap">
+    <div class="sec-c">
+      <div class="eb center">What we supply</div>
+      <h2>Built for the sites<br>we supply.</h2>
+      <p>Fifteen categories across two divisions — every specification below is drawn directly from the current Spartan product brochure.</p>
+    </div>
+    <div class="svc">
+      ${SERVICES.map(s => `<article>${icon(s.i)}<h3>${e(s.t)}</h3><p>${e(s.d)}</p><a class="pill dark" href="#">Read More <i>›</i></a></article>`).join("")}
+    </div>
+  </div>
+</section>
+
+<div class="band">
+  ${CHEV}${CHEV.replace('class="chev"', 'class="chev r"')}
+  <div class="wrap">
+    <span class="lead">Trusted across industries</span>
+    <ul>${INDUSTRIES.map(i => `<li>${e(i)}</li>`).join("")}</ul>
+  </div>
+</div>
+
+<section class="cats-sec">
+  ${CHEV}
+  <div class="wrap">
+    <div class="sec-h">
+      <div><div class="eb">Product categories</div><h2>The full range.</h2></div>
+      <a class="pill" href="#">View all categories <i>›</i></a>
+    </div>
+    <div class="cats">
+      ${CATS.map(c => `<a href="#"><div class="ph"><img src="${P}${c.img}" alt="${e(c.n)}"></div><h4>${e(c.n)}</h4><div class="cnt">${c.c} PRODUCTS</div></a>`).join("")}
+      <a href="#"><div class="ph"></div><h4>Spill Control</h4><div class="cnt soon">RANGE EXPANDING</div></a>
+      <a href="#" class="all"><div class="ph"><span>74</span></div><h4>View every product</h4><div class="cnt">FULL CATALOGUE ›</div></a>
+    </div>
+  </div>
+</section>
+
+<section class="spot">
+  ${CHEV}
+  <div class="wrap">
+    <div class="spot-vis"><img src="${P}p16-grip-guard-gp5.png" alt="Grip Guard GP5"></div>
+    <div>
+      <div class="eb">Hand protection</div>
+      <h2>Grip Guard GP5</h2>
+      <p>HPPE, steel, polyester and spandex liner with a polyurethane coating. Knit wrist cuff for a secure fit, available in sizes 7 to 12.</p>
+      <table>
+        <tr><th colspan="2">Construction</th></tr>
+        <tr><td>Liner</td><td>HPPE, steel, polyester, spandex</td></tr>
+        <tr><td>Coating</td><td>Polyurethane</td></tr>
+        <tr><td>Colour</td><td>Grey / Grey</td></tr>
+        <tr><td>Cuff style</td><td>Knit wrist</td></tr>
+      </table>
+      <table class="en">
+        <tr><th>Abrasion</th><th>Blade cut</th><th>Tear</th><th>Puncture</th><th>TDM cut</th></tr>
+        <tr><td>4</td><td>X</td><td>4</td><td>3</td><td>D</td></tr>
+      </table>
+      <div style="display:flex;gap:12px;margin-top:28px">
+        <a class="solid" href="#">ADD TO ENQUIRY <i>›</i></a>
+        <a class="pill" href="#">Full specification <i>›</i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq-sec">
+  <div class="wrap">
+    <div class="sec-c">
+      <div class="eb center">Support</div>
+      <h2>Frequently asked questions</h2>
+    </div>
+    <div class="faq">
+      ${FAQ.map(([q, a], i) => `<details${i === 0 ? " open" : ""}><summary>${e(q)}</summary><p>${e(a)}</p></details>`).join("")}
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  ${CHEV}
+  <div class="wrap">
+    <div>
+      <div class="eb">Trade enquiries</div>
+      <h2>Build your enquiry list,<br>send it once.</h2>
+      <p>Add products as you browse the catalogue and submit a single request. Our team responds with pricing, availability and lead times within one business day.</p>
+      <div style="display:flex;gap:12px;margin-top:26px"><a class="solid" href="#">REQUEST A QUOTE <i>›</i></a><a class="pill" href="#">Become a distributor <i>›</i></a></div>
+    </div>
+    <div class="cta-box">
+      <label>Company</label><input placeholder="Your company name">
+      <label>Division of interest</label>
+      <select style="width:100%;background:#0B0B0E;border:1px solid var(--line);color:#fff;padding:13px 14px;font-family:var(--fb);font-size:14px;margin-bottom:16px">
+        <option>Spartan Electricals</option><option>Spartan Safety</option><option>Both divisions</option>
+      </select>
+      <label>Email</label><input placeholder="you@company.com">
+      <button class="solid" style="width:100%;justify-content:center;border:none;cursor:pointer;margin-top:6px">SEND ENQUIRY <i>›</i></button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-top"><div class="wrap">
+    <div class="f-item"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+      <div><small>Head office</small><span>Address line, City, Country</span></div></div>
+    <div class="f-item"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg></span>
+      <div><small>Trade enquiries</small><span>+971 00 000 0000</span></div></div>
+    <form class="f-form" onsubmit="return false"><input placeholder="Enter email address"><button>Submit <i style="font-style:normal">›</i></button></form>
+  </div></div>
+
+  <div class="f-main"><div class="wrap">
+    <div><img src="assets/brand/spartan-logo-light.svg" style="height:36px" alt="Spartan">
+      <p>Spartan Lighting &amp; Electrical Products. Brightening spaces and powering progress since 2015, across two divisions and fifteen product categories.</p></div>
+    <div><h5>Electricals</h5><a href="#">Lighting</a><a href="#">Fans &amp; Ventilation</a><a href="#">Water Pumps</a><a href="#">Cables</a><a href="#">Insect Killers</a></div>
+    <div><h5>Safety</h5><a href="#">Head &amp; Face</a><a href="#">Hand Protection</a><a href="#">Footwear</a><a href="#">Fall Arrest</a><a href="#">Workwear</a></div>
+    <div><h5>Company</h5><a href="#">About Spartan</a><a href="#">Why Spartan</a><a href="#">Industries</a><a href="#">Contact</a></div>
+    <div class="f-soc">
+      <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.2-1.5 1.5-1.5h1.7V4c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1V10H7.6v3h2.7v8h3.2Z"/></svg></a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2Zm0 7.6a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm5.8-7.8a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0ZM21 8.9c-.1-1.4-.4-2.7-1.4-3.7s-2.3-1.3-3.7-1.4C14.5 3.7 9.5 3.7 8.1 3.8c-1.4.1-2.7.4-3.7 1.4S3.1 7.5 3 8.9c-.1 1.4-.1 6.4 0 7.8.1 1.4.4 2.7 1.4 3.7s2.3 1.3 3.7 1.4c1.4.1 6.4.1 7.8 0 1.4-.1 2.7-.4 3.7-1.4s1.3-2.3 1.4-3.7c.1-1.4.1-6.4 0-7.8Zm-1.9 9.3a3 3 0 0 1-1.7 1.7c-1.2.5-4 .4-5.4.4s-4.2.1-5.4-.4a3 3 0 0 1-1.7-1.7c-.5-1.2-.4-4-.4-5.4s-.1-4.2.4-5.4a3 3 0 0 1 1.7-1.7c1.2-.5 4-.4 5.4-.4s4.2-.1 5.4.4a3 3 0 0 1 1.7 1.7c.5 1.2.4 4 .4 5.4s.1 4.2-.4 5.4Z"/></svg></a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.9 20.5V9.3H3.6v11.2h3.3ZM5.2 7.9a1.9 1.9 0 1 0 0-3.9 1.9 1.9 0 0 0 0 3.9Zm15.3 12.6h-3.3v-5.5c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.6H10V9.3h3.1v1.5h.1a3.5 3.5 0 0 1 3.1-1.7c3.3 0 3.9 2.2 3.9 5v6.4Z"/></svg></a>
+    </div>
+  </div></div>
+  <div class="f-bot">© 2026 Spartan. All rights reserved. · Manufactured in India &amp; China</div>
+</footer>
+</body></html>`;
+
+fs.writeFileSync(path.join(DIR, "direction-b-forge.html"), html);
+console.log("wrote direction-b-forge.html");
