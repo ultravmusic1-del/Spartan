@@ -84,6 +84,16 @@ describe('catalog repository', () => {
     expect(r.length).toBeGreaterThan(0);
   });
 
+  it('searches variant labels', async () => {
+    const r = await searchProducts('suede');
+    expect(r.some((p) => p.slug === 'low-cut-safety-shoes-suede-leather')).toBe(true);
+  });
+
+  it('finds ear muffs by their NRR rating', async () => {
+    const r = await searchProducts('NRR 25');
+    expect(r.some((p) => p.slug === 'ear-muff-nrr-25db')).toBe(true);
+  });
+
   it('returns nothing for an empty search', async () => {
     expect(await searchProducts('   ')).toEqual([]);
   });

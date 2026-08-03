@@ -6,6 +6,9 @@
  * Derived values (product counts, related products, filtering) are computed
  * here rather than in templates, and callers get plain typed data — never
  * Astro's `{ id, data, collection }` entry wrappers.
+ *
+ * Search covers a product's name, variantLabel and spec values, matched as a
+ * case-insensitive substring.
  */
 import { getCollection } from 'astro:content';
 // `astro:content` exports `z` as a const, not a namespace, so `import type { z }`
@@ -79,6 +82,15 @@ export async function getRelatedProducts(slug: string, limit = 4): Promise<Produ
   return siblings.filter((p) => p.slug !== slug).slice(0, limit);
 }
 
+/**
+ * Case-insensitive substring match over a product's name, variant label and
+ * spec values. Deliberately not fuzzy, tokenised or ranked.
+ *
+ * `variantLabel` is searched because it is the only field distinguishing
+ * otherwise near-identical variants: the two ear muffs differ solely by
+ * "NRR 25dB" vs "NRR 20dB", which appears nowhere in their name or specs, so
+ * without it those products are unreachable by the terms buyers actually use.
+ */
 export async function searchProducts(query: string): Promise<Product[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
@@ -86,6 +98,8 @@ export async function searchProducts(query: string): Promise<Product[]> {
   return products.filter(
     (p) =>
       p.name.toLowerCase().includes(q) ||
+      // variantLabel is null on 56 of 72 products.
+      (p.variantLabel?.toLowerCase().includes(q) ?? false) ||
       p.specs.some((s) => s.value.toLowerCase().includes(q)),
   );
 }
