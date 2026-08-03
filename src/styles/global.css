@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+@import './fonts.css';
+@import './tokens.css';
+
+@theme inline {
+  --color-brand: var(--color-red);
+  --color-brand-dark: var(--color-red-dark);
+  --color-brand-deep: var(--color-red-deep);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-black);
+  color: #fff;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+
+a { color: inherit; text-decoration: none; }
+img, svg { display: block; max-width: 100%; }
+
+:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: 3px;
+}
+
+.wrap {
+  max-width: var(--wrap-max);
+  margin-inline: auto;
+  padding-inline: var(--wrap-pad);
+}
+
+/* Small red text fails WCAG AA on light backgrounds (4.30:1).
+   Light sections must use the deep red (9.09:1). See spec section 2. */
+.on-light .text-brand { color: var(--color-red-deep); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

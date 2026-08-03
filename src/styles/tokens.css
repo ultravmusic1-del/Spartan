@@ -1,0 +1,31 @@
+:root {
+  --color-red: #eb2927;
+  --color-red-dark: #b81c1b;
+  --color-red-deep: #970000;
+
+  --color-black: #08080a;
+  --color-panel: #0e0e11;
+  --color-card: #151519;
+  --color-line: #232329;
+
+  --color-paper: #f6f6f7;
+  --color-paper-line: #e4e4e7;
+  --color-ink: #0e0e11;
+
+  --color-grey: #8a8a92;
+  --color-grey-lt: #b4b4bc;
+
+  --font-display: 'Archivo', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  --wrap-max: 1240px;
+  --wrap-pad: 32px;
+
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 640px) {
+  :root { --wrap-pad: 20px; }
+}
