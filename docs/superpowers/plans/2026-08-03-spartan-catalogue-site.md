@@ -1405,6 +1405,8 @@ Port each from the matching block of `design/direction-b-forge.html`, replacing 
 - **TrustBand** — industries from `src/data/site.json`. Spec §12.5 flags these as inferred; add an HTML comment saying so.
 - **CategoryGrid** — all 15 categories plus the red "View every product" tile, giving a clean 4×4.
 - **Spotlight** — Grip Guard GP5 via `getProduct('grip-guard-gp5')`, with `SpecTable` and `En388Table`.
+
+> **Pick featured products explicitly by slug.** `product.order` is per-category and its values repeat across categories, so unfiltered `getProducts({ limit: n })` returns a semi-arbitrary cross-category slice — fine for a filtered listing, wrong for a curated strip. Any "selected products" section must name its products.
 - **Faq** — native `<details>`/`<summary>`, no JS. Circular +/– affordance inverts to red when open.
 
 - [ ] **Step 2: Assemble index.astro**
@@ -1822,8 +1824,10 @@ Expected: FAIL — cannot resolve `./enquiry-schema`.
 
 - [ ] **Step 3: Implement src/lib/enquiry-schema.ts**
 
+> **Import `zod/v4`, not `zod`.** This project carries two zod instances: the top-level dependency is 3.25.76, while `astro/zod` — which backs the content schemas — is 4.4.3. zod 3.25 ships a `zod/v4` subpath, so importing from it keeps the enquiry schema on the same major as the rest of the project and avoids shipping two zod runtimes to the browser. Verify the subpath resolves before relying on it; fall back to bare `zod` and report if it does not.
+
 ```ts
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const enquiryItemSchema = z.object({
   slug: z.string().min(1).max(120),
