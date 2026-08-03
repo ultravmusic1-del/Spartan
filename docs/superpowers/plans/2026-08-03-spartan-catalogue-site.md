@@ -1065,6 +1065,8 @@ EOF
 
 The tone-on-tone motif. Decorative, so hidden from assistive tech.
 
+> **Trap, hit during Task 6 — applies to every consumer in Tasks 7–11.** Sizing `<Chevron>` with a class defined in the *consumer's* `<style>` block does nothing: Astro scopes that class to the consumer's own elements, so it never matches the SVG. The chevron then has no dimensions, fills its container, and renders as a large visible grey slab instead of a faint motif. It fails silently and only looks wrong. **Size and position it with global utility classes** (`w-[420px] h-[500px] left-[-40px] top-[230px]`), never with scoped ones.
+
 ```astro
 ---
 interface Props { class?: string; opacity?: number; flip?: boolean; }

@@ -44,14 +44,28 @@ All values below were **sampled from the brochure PDF**, not chosen.
 | `card` | `#151519` | Dark card / tile surface. |
 | `line` | `#232329` | Dark-mode borders and grid rules. |
 | `paper` | `#F6F6F7` | Light section background. |
-| `grey` | `#8A8A92` | Muted text on dark. |
+| `grey` | `#8A8A92` | Muted text on dark **only** — 3.17:1 on `paper`, fails AA there. |
 | `grey-lt` | `#B4B4BC` | Body text on dark. |
 | `ink` | `#0E0E11` | Body text on light. |
+| `ink-muted` | `#6A6A72` | Muted/secondary text on light (4.96:1). The light-background counterpart to `grey`. |
 
-**Accessibility rule (must be enforced):** `#EB2927` measures **4.67:1 on `#08080A`** (passes AA at any size) but only **4.30:1 on white** (fails AA for normal-size text). Therefore:
+**Accessibility rule (must be enforced).** Measured against the actual surfaces, not against pure white:
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| `red` on `black` | **4.65:1** | Passes AA at any size |
+| `red` on `paper` | **3.99:1** | Fails AA for normal text; passes the 3:1 large-text threshold |
+| `red-deep` on `paper` | **8.40:1** | Passes AAA |
+| `grey` on `paper` | **3.17:1** | Fails — never use `grey` on light |
+| `ink-muted` on `paper` | **4.96:1** | Passes AA |
+
+Therefore:
 
 - On dark backgrounds, `red` may be used for text at any size.
-- On light backgrounds, `red` is permitted **only** for text ≥ 24px, or ≥ 18.66px bold, or for non-text elements (icons, rules, fills). All smaller red text on light **must** use `red-deep` (`#970000`, 9.09:1).
+- On light backgrounds, `red` is permitted **only** for text ≥ 24px, or ≥ 18.66px bold, or for non-text elements (icons, rules, fills, decorative glyphs). All smaller red text on light **must** use `red-deep`.
+- Muted body copy on light uses `ink-muted`, never `grey`.
+
+An earlier draft of this spec quoted 4.67:1 and 4.30:1 for red. Those were computed against `#FFFFFF`; the real light surface is `paper` (`#F6F6F7`), which makes the light-background ratio *worse*, not better. The figures above are the measured ones.
 
 ### Typography
 
