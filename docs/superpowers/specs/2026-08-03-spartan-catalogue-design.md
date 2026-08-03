@@ -259,7 +259,7 @@ The extraction tooling is committed to `tools/` so assets can be regenerated whe
 |---|---|
 | `tools/extract-catalog.mjs` | `src/data/products.json` + 72 transparent product PNGs |
 | `tools/extract-logo.mjs` | Both vector logo lockups |
-| `tools/extract-heroes.mjs` | 5 section-divider photographs, text overlays removed |
+| `tools/extract-heroes.mjs` | 6 photographs — the 5 section dividers plus the cover — text overlays removed |
 
 Two hard-won details this tooling must preserve:
 
