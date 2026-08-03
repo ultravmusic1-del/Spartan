@@ -11,8 +11,9 @@
   --color-paper: #f6f6f7;
   --color-paper-line: #e4e4e7;
   --color-ink: #0e0e11;
+  --color-ink-muted: #6a6a72;   /* muted text on light surfaces — 4.96:1 on --color-paper */
 
-  --color-grey: #8a8a92;
+  --color-grey: #8a8a92;        /* dark surfaces only — 3.17:1 on --color-paper, fails AA */
   --color-grey-lt: #b4b4bc;
 
   --font-display: 'Archivo', system-ui, sans-serif;

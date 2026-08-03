@@ -6,11 +6,15 @@
  * IMPORTANT: this is `position: absolute`. Every consumer MUST be a positioned
  * ancestor (`position: relative`) with `overflow: hidden`, otherwise the motif
  * will anchor to the wrong element and spill past the section edge.
- * Size and offsets are supplied by the consumer through `class`
- * (e.g. `class="left-[-40px] top-[230px] w-[420px] h-[500px]"`). Use global
- * Tailwind utilities, not a class defined in the consumer's own `<style>`
- * block: Astro scopes those to the consumer's elements, so they never match
- * this SVG and the motif silently falls back to filling its container.
+ * Size and position it with GLOBAL utility classes, never with a class from the
+ * consumer's own scoped `<style>` block:
+ *
+ *   <Chevron class="left-[-40px] top-[230px] w-[420px] h-[500px]" />   correct
+ *   <Chevron class="my-chev" /> + `.my-chev { width: 420px }` in <style>  WRONG
+ *
+ * Astro scopes a consumer's `<style>` rules to that consumer's own elements, so
+ * such a class never matches this SVG. It does not error — the motif silently
+ * falls back to filling its container and reads as a large visible grey shape.
  *
  * Purely decorative, so it is hidden from assistive technology.
  */

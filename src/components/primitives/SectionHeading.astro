@@ -44,9 +44,10 @@ const { eyebrow, title, lede, center = false, onLight = false } = Astro.props;
 
   /* --color-grey-lt is tuned for near-black backgrounds and is far too pale on
      --color-paper (1.9:1). --color-grey is no better (3.17:1, still under the
-     4.5:1 AA floor for 15px text), so light sections use the ink token. */
+     4.5:1 AA floor for 15px text). --color-ink-muted is the light-surface
+     counterpart: 4.96:1, muted enough to keep the lede below the heading. */
   .sec--on-light p {
-    color: var(--color-ink);
+    color: var(--color-ink-muted);
   }
 
   .sec--center {

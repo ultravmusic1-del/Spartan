@@ -15,7 +15,7 @@ const { href, type = 'button', class: cls = '' } = Astro.props;
 const Tag = href ? 'a' : 'button';
 ---
 
-<Tag {href} type={href ? undefined : type} class={`solid ${cls}`}>
+<Tag {href} type={href ? undefined : type} class:list={['solid', cls]}>
   <slot /><span class="chev" aria-hidden="true">›</span>
 </Tag>
 
