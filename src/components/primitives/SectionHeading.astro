@@ -1,0 +1,59 @@
+---
+import Eyebrow from './Eyebrow.astro';
+
+/**
+ * SectionHeading — eyebrow + heading + optional lede, used at the top of most
+ * sections.
+ *
+ * `title` is rendered with `set:html` so headings can carry a `<br>`; the
+ * mockup has several deliberate two-line headings. This is safe because only
+ * trusted, authored strings reach it — section copy written in this repo or
+ * validated content-collection fields. Never pass user input, URL params or
+ * anything else untrusted to `title`, or this becomes an XSS hole.
+ */
+interface Props {
+  eyebrow: string;
+  title: string;
+  lede?: string;
+  center?: boolean;
+  onLight?: boolean;
+}
+
+const { eyebrow, title, lede, center = false, onLight = false } = Astro.props;
+---
+
+<div class:list={['sec', { 'sec--center': center, 'sec--on-light': onLight }]}>
+  <Eyebrow center={center} onLight={onLight}>{eyebrow}</Eyebrow>
+  <h2 set:html={title} />
+  {lede && <p>{lede}</p>}
+</div>
+
+<style>
+  .sec h2 {
+    font-size: clamp(30px, 4vw, 46px);
+    margin-top: 16px;
+    letter-spacing: -0.028em;
+  }
+
+  .sec p {
+    color: var(--color-grey-lt);
+    margin-top: 16px;
+    max-width: 56ch;
+    font-size: 15px;
+  }
+
+  /* --color-grey-lt is tuned for near-black backgrounds and is far too pale on
+     --color-paper (1.9:1). --color-grey is no better (3.17:1, still under the
+     4.5:1 AA floor for 15px text), so light sections use the ink token. */
+  .sec--on-light p {
+    color: var(--color-ink);
+  }
+
+  .sec--center {
+    text-align: center;
+  }
+
+  .sec--center p {
+    margin-inline: auto;
+  }
+</style>

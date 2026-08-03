@@ -1,0 +1,72 @@
+---
+/**
+ * PillButton — secondary action. Rounded outline, sentence case, red chevron.
+ *
+ * Renders an `<a>` when `href` is given, otherwise a `<button>`.
+ *
+ * `onLight` re-tunes the outline and text for `--color-paper` sections. The
+ * chevron stays brand red: it is a large decorative glyph, not small text, so
+ * the 4.30:1 white-background limit does not apply to it — but any *text*
+ * inside this button must not be red on a light section.
+ */
+interface Props {
+  href?: string;
+  type?: 'button' | 'submit';
+  class?: string;
+  onLight?: boolean;
+}
+
+const { href, type = 'button', class: cls = '', onLight = false } = Astro.props;
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag
+  {href}
+  type={href ? undefined : type}
+  class:list={['pill', { 'pill--on-light': onLight }, cls]}
+>
+  <slot /><span class="chev" aria-hidden="true">›</span>
+</Tag>
+
+<style>
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    background: transparent;
+    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 11px 20px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      background var(--dur-base) var(--ease-out);
+  }
+
+  .pill:hover {
+    border-color: var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 10%, transparent);
+  }
+
+  .pill .chev {
+    color: var(--color-red);
+    font-weight: 700;
+  }
+
+  .pill--on-light {
+    border-color: rgba(0, 0, 0, 0.18);
+    color: var(--color-ink);
+  }
+
+  .pill--on-light:hover {
+    border-color: var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 6%, transparent);
+  }
+</style>

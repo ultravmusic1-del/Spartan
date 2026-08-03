@@ -1,0 +1,36 @@
+---
+/**
+ * Chevron — the tone-on-tone angular motif that bleeds off the edge of most
+ * sections (see `design/direction-b-forge.html`, `.chev`).
+ *
+ * IMPORTANT: this is `position: absolute`. Every consumer MUST be a positioned
+ * ancestor (`position: relative`) with `overflow: hidden`, otherwise the motif
+ * will anchor to the wrong element and spill past the section edge.
+ * Size and offsets are supplied by the consumer through `class`
+ * (e.g. `class="left-[-40px] top-[230px] w-[420px] h-[500px]"`). Use global
+ * Tailwind utilities, not a class defined in the consumer's own `<style>`
+ * block: Astro scopes those to the consumer's elements, so they never match
+ * this SVG and the motif silently falls back to filling its container.
+ *
+ * Purely decorative, so it is hidden from assistive technology.
+ */
+interface Props {
+  class?: string;
+  /** Fill alpha. 0.028 is the section default; the red band uses ~0.09. */
+  opacity?: number;
+  /** Mirror horizontally, for the right-hand copy of a paired motif. */
+  flip?: boolean;
+}
+
+const { class: cls = '', opacity = 0.028, flip = false } = Astro.props;
+---
+
+<svg
+  class={`pointer-events-none absolute ${cls}`}
+  viewBox="0 0 200 240"
+  aria-hidden="true"
+  style={`fill: rgba(255,255,255,${opacity}); ${flip ? 'transform: scaleX(-1);' : ''}`}
+>
+  <path d="M0 0 100 120 0 240Z" />
+  <path d="M70 0 170 120 70 240Z" />
+</svg>

@@ -1,0 +1,49 @@
+---
+/**
+ * Eyebrow — the small red uppercase label with a leading dash that sits above
+ * almost every heading.
+ *
+ * `onLight` swaps the brand red for `--color-red-deep`. Brand red measures only
+ * 4.30:1 against white and fails WCAG AA at this size; the deep red is 9.09:1.
+ * Always set `onLight` inside a light (`--color-paper`) section.
+ */
+interface Props {
+  center?: boolean;
+  onLight?: boolean;
+}
+
+const { center = false, onLight = false } = Astro.props;
+---
+
+<div
+  class:list={['eyebrow', { 'eyebrow--center': center }]}
+  style={onLight ? 'color: var(--color-red-deep)' : undefined}
+>
+  <slot />
+</div>
+
+<style>
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-red);
+  }
+
+  /* `currentColor` so the dash follows the onLight switch automatically. */
+  .eyebrow::before {
+    content: '';
+    width: 16px;
+    height: 2px;
+    background: currentColor;
+  }
+
+  .eyebrow--center {
+    justify-content: center;
+  }
+</style>

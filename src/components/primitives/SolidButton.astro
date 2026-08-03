@@ -1,0 +1,50 @@
+---
+/**
+ * SolidButton — primary CTA. Solid red, sharp corners, uppercase display type,
+ * trailing chevron.
+ *
+ * Renders an `<a>` when `href` is given, otherwise a `<button>`.
+ */
+interface Props {
+  href?: string;
+  type?: 'button' | 'submit';
+  class?: string;
+}
+
+const { href, type = 'button', class: cls = '' } = Astro.props;
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag {href} type={href ? undefined : type} class={`solid ${cls}`}>
+  <slot /><span class="chev" aria-hidden="true">›</span>
+</Tag>
+
+<style>
+  .solid {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--color-red);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 14px 26px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    transition: background var(--dur-base) var(--ease-out);
+  }
+
+  .solid:hover {
+    background: var(--color-red-dark);
+  }
+
+  .chev {
+    font-weight: 700;
+  }
+</style>
