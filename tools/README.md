@@ -15,6 +15,17 @@ brochure is revised — output is committed, so a normal build never runs these.
    yields products inside black boxes — which looks fine on white pages and
    catastrophic on the dark layout.
 
-2. **Same-column image assignment.** Products are matched to the nearest image
-   within their own page column. Nearest-overall assignment swaps images
-   between the left and right columns of two-column pages.
+2. **Same-column assignment.** Products are matched to the images *and* spec
+   lines within their own page column (`sameColumnFilter` in `lib/pdf.mjs`).
+   Nearest-overall assignment swaps images between the left and right columns
+   of two-column pages, and a spec filter without the column test hands every
+   product its neighbour's specs on top of its own.
+
+## Spec parsing
+
+`extract-catalog` emits `specs: [{ label, value }]` per product, splitting each
+line on its first colon. Lines with no `Label:` are feature bullets and get
+`label: null` — no label is invented for them. Values the brochure wrapped over
+several lines are rejoined, which is a heuristic: the PDF marks a wrap no
+differently from a new bullet. The unparsed lines are kept as `specsRaw` so
+consumers can fall back on them.

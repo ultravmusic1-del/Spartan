@@ -82,24 +82,40 @@ export function renderImagesOnly(page, box, scale, keepImages) {
 }
 
 /**
- * Assign each in-page image to the nearest product name *in the same column*.
- * Cross-column assignment mixes products up on two-column pages — e.g. the
- * orange vests migrate to the green-vest entry on page 19.
+ * Build the same-column test for one page's products.
+ *
+ * A page is two-column when product names appear on both sides of the page
+ * centre. On such pages anything belonging to a product — its images and its
+ * spec lines alike — must come from that product's own column: the columns sit
+ * close enough that nearest-overall matching reaches across the gutter.
+ *
+ * Returns `(bbox, product) => boolean`, always true on single-column pages.
  */
-export function assignImagesToProducts(images, products) {
+export function sameColumnFilter(products) {
   const MID = PAGE_W / 2;
   const col = (x) => (x < MID ? 0 : 1);
   const twoCol =
     products.some((p) => centre(p.nameBox)[0] >= MID) &&
     products.some((p) => centre(p.nameBox)[0] < MID);
 
+  return (bbox, product) => !twoCol || col(centre(bbox)[0]) === col(centre(product.nameBox)[0]);
+}
+
+/**
+ * Assign each in-page image to the nearest product name *in the same column*.
+ * Cross-column assignment mixes products up on two-column pages — e.g. the
+ * orange vests migrate to the green-vest entry on page 19.
+ */
+export function assignImagesToProducts(images, products) {
+  const sameColumn = sameColumnFilter(products);
+
   for (const im of images) {
     const ic = centre(im.bbox);
     let best = null;
     let bestD = Infinity;
     for (const p of products) {
+      if (!sameColumn(im.bbox, p)) continue;
       const c = centre(p.nameBox);
-      if (twoCol && col(ic[0]) !== col(c[0])) continue;
       const d = Math.hypot(ic[0] - c[0], ic[1] - c[1]);
       if (d < bestD) { bestD = d; best = p; }
     }

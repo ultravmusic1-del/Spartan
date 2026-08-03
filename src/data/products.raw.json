@@ -34,10 +34,14 @@
    {
     "name": "Slim LED Panels",
     "specs": [
+     {
+      "label": "Material",
+      "value": "white Aluminium frame iron back cover + glass LGB"
+     }
+    ],
+    "specsRaw": [
      "Material: white Aluminium frame iron",
-     "Material: white With PC Diffuser +",
-     "back cover + glass LGB",
-     "PBT coated Aluminium housing"
+     "back cover + glass LGB"
     ],
     "image": "p04-slim-led-panels.png",
     "imageSize": "623x304",
@@ -47,9 +51,13 @@
    {
     "name": "LED Bulbs",
     "specs": [
-     "Material: white Aluminium frame iron",
+     {
+      "label": "Material",
+      "value": "white With PC Diffuser + PBT coated Aluminium housing"
+     }
+    ],
+    "specsRaw": [
      "Material: white With PC Diffuser +",
-     "back cover + glass LGB",
      "PBT coated Aluminium housing"
     ],
     "image": "p04-led-bulbs.png",
@@ -60,8 +68,13 @@
    {
     "name": "T8 LED Tube Lights",
     "specs": [
-     "Material: glass tube + PC cover",
-     "Material: Aluminium ring + iron back"
+     {
+      "label": "Material",
+      "value": "glass tube + PC cover"
+     }
+    ],
+    "specsRaw": [
+     "Material: glass tube + PC cover"
     ],
     "image": "p04-t8-led-tube-lights.png",
     "imageSize": "614x273",
@@ -71,7 +84,12 @@
    {
     "name": "LED Backlit Panels",
     "specs": [
-     "Material: glass tube + PC cover",
+     {
+      "label": "Material",
+      "value": "Aluminium ring + iron back cover + P S Diffuser"
+     }
+    ],
+    "specsRaw": [
      "Material: Aluminium ring + iron back",
      "cover + P S Diffuser"
     ],
@@ -83,6 +101,12 @@
    {
     "name": "LED Amoeba Lighting Fixtures",
     "specs": [
+     {
+      "label": "Material",
+      "value": "Fe + PP IP20"
+     }
+    ],
+    "specsRaw": [
      "Material: Fe + PP IP20"
     ],
     "image": "p04-led-amoeba-lighting-fixtures.png",
@@ -93,7 +117,12 @@
    {
     "name": "LED Wall Lamps (ARC)",
     "specs": [
-     "Material: Fe + PP IP20",
+     {
+      "label": "Material",
+      "value": "Fe + PP IP20"
+     }
+    ],
+    "specsRaw": [
      "Material: Fe + PP IP20"
     ],
     "image": "p04-led-wall-lamps-arc.png",
@@ -104,6 +133,12 @@
    {
     "name": "Waterproof Fittings",
     "specs": [
+     {
+      "label": "Material",
+      "value": "ABS + PS"
+     }
+    ],
+    "specsRaw": [
      "Material: ABS + PS"
     ],
     "image": "p04-waterproof-fittings.png",
@@ -122,12 +157,18 @@
    {
     "name": "Industrial Canopy Pendant Lamps",
     "specs": [
+     {
+      "label": null,
+      "value": "Highbay lighting LED lights"
+     },
+     {
+      "label": "Power",
+      "value": "100W | 150W | 200W | 300W"
+     }
+    ],
+    "specsRaw": [
      "Highbay lighting LED lights",
-     "Aluminium tempered glass cover",
-     "Power: 100W | 150W | 200W | 300W",
-     "Material: Die-cast Aluminium + IP66 Rated",
-     "Power: 50W | 100W | 150W | 200W | 300W",
-     "Panel: 6V 10W | 20W | 25W | 30W | 40W"
+     "Power: 100W | 150W | 200W | 300W"
     ],
     "image": "p05-industrial-canopy-pendant-lamps.png",
     "imageSize": "599x313",
@@ -137,9 +178,17 @@
    {
     "name": "LED Floodlights",
     "specs": [
-     "Highbay lighting LED lights",
+     {
+      "label": null,
+      "value": "Aluminium tempered glass cover"
+     },
+     {
+      "label": null,
+      "value": "Good heat dissipation"
+     }
+    ],
+    "specsRaw": [
      "Aluminium tempered glass cover",
-     "Power: 100W | 150W | 200W | 300W",
      "Good heat dissipation"
     ],
     "image": "p05-led-floodlights.png",
@@ -150,6 +199,20 @@
    {
     "name": "All-Weather Solar Flood Light",
     "specs": [
+     {
+      "label": "Material",
+      "value": "Die-cast Aluminium + IP66 Rated"
+     },
+     {
+      "label": "Power",
+      "value": "50W | 100W | 150W | 200W | 300W"
+     },
+     {
+      "label": "Panel",
+      "value": "6V 10W | 20W | 25W | 30W | 40W"
+     }
+    ],
+    "specsRaw": [
      "Material: Die-cast Aluminium + IP66 Rated",
      "Power: 50W | 100W | 150W | 200W | 300W",
      "Panel: 6V 10W | 20W | 25W | 30W | 40W"
@@ -170,6 +233,20 @@
    {
     "name": "Insect Killer",
     "specs": [
+     {
+      "label": null,
+      "value": "ABS fire retardant + Free of chemicals"
+     },
+     {
+      "label": "Power",
+      "value": "20W | 30W | 40W"
+     },
+     {
+      "label": "Input Voltage",
+      "value": "220-240 V  | 50-60 Hz"
+     }
+    ],
+    "specsRaw": [
      "ABS fire retardant + Free of chemicals",
      "Power: 20W | 30W | 40W",
      "Input Voltage: 220-240 V  | 50-60 Hz"
@@ -202,6 +279,16 @@
    {
     "name": "Premium Network Cable",
     "specs": [
+     {
+      "label": null,
+      "value": "CAT.6 UTP"
+     },
+     {
+      "label": null,
+      "value": "Network cable indoor PVC"
+     }
+    ],
+    "specsRaw": [
      "CAT.6 UTP",
      "Network cable indoor PVC"
     ],
@@ -233,12 +320,23 @@
    {
     "name": "Ventilation Fans",
     "specs": [
+     {
+      "label": null,
+      "value": "100% Copper motor, Quiet operation"
+     },
+     {
+      "label": "Size",
+      "value": "6 inch | 8 inch | 10 inch"
+     },
+     {
+      "label": "Power",
+      "value": "24W | 28W | 38W"
+     }
+    ],
+    "specsRaw": [
      "100% Copper motor, Quiet operation",
-     "100% Copper motor, Quiet operation",
-     "Size: 6 inch | 8 inch",
      "Size: 6 inch | 8 inch | 10 inch",
-     "Power: 24W | 28W | 38W",
-     "Power: 20W | 28W"
+     "Power: 24W | 28W | 38W"
     ],
     "image": "p10-ventilation-fans.png",
     "imageSize": "467x331",
@@ -248,7 +346,20 @@
    {
     "name": "Ventilation Fans",
     "specs": [
-     "100% Copper motor, Quiet operation",
+     {
+      "label": null,
+      "value": "100% Copper motor, Quiet operation"
+     },
+     {
+      "label": "Size",
+      "value": "6 inch | 8 inch"
+     },
+     {
+      "label": "Power",
+      "value": "20W | 28W"
+     }
+    ],
+    "specsRaw": [
      "100% Copper motor, Quiet operation",
      "Size: 6 inch | 8 inch",
      "Power: 20W | 28W"
@@ -261,12 +372,23 @@
    {
     "name": "Ventilation Fans",
     "specs": [
-     "100% Copper motor, Quiet operation",
+     {
+      "label": null,
+      "value": "100% Copper motor, Quiet operation"
+     },
+     {
+      "label": "Size",
+      "value": "14 inch"
+     },
+     {
+      "label": "Power",
+      "value": "58W"
+     }
+    ],
+    "specsRaw": [
      "100% Copper motor, Quiet operation",
      "Size: 14 inch",
-     "Size: 4 inch | 6 inch | 8 inch",
-     "Power: 58W",
-     "Power: 12W | 20W | 20W"
+     "Power: 58W"
     ],
     "image": "p10-ventilation-fans-3.png",
     "imageSize": "509x261",
@@ -276,7 +398,20 @@
    {
     "name": "Ventilation Fans",
     "specs": [
-     "100% Copper motor, Quiet operation",
+     {
+      "label": null,
+      "value": "100% Copper motor, Quiet operation"
+     },
+     {
+      "label": "Size",
+      "value": "4 inch | 6 inch | 8 inch"
+     },
+     {
+      "label": "Power",
+      "value": "12W | 20W | 20W"
+     }
+    ],
+    "specsRaw": [
      "100% Copper motor, Quiet operation",
      "Size: 4 inch | 6 inch | 8 inch",
      "Power: 12W | 20W | 20W"
@@ -297,12 +432,15 @@
    {
     "name": "Pumps",
     "specs": [
+     {
+      "label": null,
+      "value": "Aluminium die-cast, anti-rust treated, lubricant-oil rinsed, with Thermal Overload Protector (TOP)"
+     }
+    ],
+    "specsRaw": [
      "Aluminium die-cast, anti-rust treated,",
-     "Rated Voltage: 220-240 V",
-     "Rated Current: 10(4) A",
      "lubricant-oil rinsed, with Thermal",
-     "Overload Protector (TOP)",
-     "Frequency: 50/60 Hz"
+     "Overload Protector (TOP)"
     ],
     "image": "p11-pumps.png",
     "imageSize": "505x329",
@@ -312,12 +450,23 @@
    {
     "name": "FS-15 Float Switch",
     "specs": [
-     "Aluminium die-cast, anti-rust treated,",
+     {
+      "label": "Rated Voltage",
+      "value": "220-240 V"
+     },
+     {
+      "label": "Rated Current",
+      "value": "10(4) A"
+     },
+     {
+      "label": "Frequency",
+      "value": "50/60 Hz"
+     }
+    ],
+    "specsRaw": [
      "Rated Voltage: 220-240 V",
      "Rated Current: 10(4) A",
-     "lubricant-oil rinsed, with Thermal",
-     "Frequency: 50/60 Hz",
-     "Maximum Intensity: 10 A-1.1 kW"
+     "Frequency: 50/60 Hz"
     ],
     "image": "p11-fs-15-float-switch.png",
     "imageSize": "419x185",
@@ -327,6 +476,20 @@
    {
     "name": "PC-10 Automatic Pump Controller",
     "specs": [
+     {
+      "label": "Rated Voltage",
+      "value": "220-240 V"
+     },
+     {
+      "label": "Frequency",
+      "value": "50/60 Hz"
+     },
+     {
+      "label": "Maximum Intensity",
+      "value": "10 A-1.1 kW"
+     }
+    ],
+    "specsRaw": [
      "Rated Voltage: 220-240 V",
      "Frequency: 50/60 Hz",
      "Maximum Intensity: 10 A-1.1 kW"
@@ -359,7 +522,16 @@
    {
     "name": "Safety Glasses",
     "specs": [
-     "Clear & dark polycarbonate lens",
+     {
+      "label": null,
+      "value": "Clear & dark polycarbonate lens"
+     },
+     {
+      "label": null,
+      "value": "Lightweight design"
+     }
+    ],
+    "specsRaw": [
      "Clear & dark polycarbonate lens",
      "+ Lightweight design"
     ],
@@ -371,10 +543,18 @@
    {
     "name": "Safety Glasses",
     "specs": [
+     {
+      "label": null,
+      "value": "Clear & dark polycarbonate lens"
+     },
+     {
+      "label": null,
+      "value": "Adjustable temple"
+     }
+    ],
+    "specsRaw": [
      "Clear & dark polycarbonate lens",
-     "Clear & dark polycarbonate lens",
-     "+ Adjustable temple",
-     "+ Lightweight design"
+     "+ Adjustable temple"
     ],
     "image": "p13-safety-glasses-2.png",
     "imageSize": "797x209",
@@ -384,9 +564,21 @@
    {
     "name": "Safety Goggles",
     "specs": [
+     {
+      "label": null,
+      "value": "Transparent polycarbonate lens"
+     },
+     {
+      "label": null,
+      "value": "Stable + flexible PVC frame"
+     },
+     {
+      "label": null,
+      "value": "Indirect ventilating design"
+     }
+    ],
+    "specsRaw": [
      "Transparent polycarbonate lens",
-     "Clear & dark polycarbonate lens + temple",
-     "+ One-piece design - perfect view",
      "+ Stable + flexible PVC frame",
      "+ Indirect ventilating design"
     ],
@@ -398,11 +590,18 @@
    {
     "name": "Over Glasses",
     "specs": [
-     "Transparent polycarbonate lens",
+     {
+      "label": null,
+      "value": "Clear & dark polycarbonate lens + temple"
+     },
+     {
+      "label": null,
+      "value": "One-piece design - perfect view"
+     }
+    ],
+    "specsRaw": [
      "Clear & dark polycarbonate lens + temple",
-     "+ One-piece design - perfect view",
-     "+ Stable + flexible PVC frame",
-     "+ Indirect ventilating design"
+     "+ One-piece design - perfect view"
     ],
     "image": "p13-over-glasses.png",
     "imageSize": "798x207",
@@ -412,8 +611,21 @@
    {
     "name": "Welding Goggles",
     "specs": [
+     {
+      "label": null,
+      "value": "Supple PVC frame + PVC Lens"
+     },
+     {
+      "label": null,
+      "value": "Flip-up front design for convenience"
+     },
+     {
+      "label": null,
+      "value": "Indirect ventilating design"
+     }
+    ],
+    "specsRaw": [
      "Supple PVC frame + PVC Lens",
-     "Transparent polycarbonate lens",
      "+ Flip-up front design for convenience",
      "+ Indirect ventilating design"
     ],
@@ -425,11 +637,22 @@
    {
     "name": "Safety Goggles",
     "specs": [
-     "Supple PVC frame + PVC Lens",
+     {
+      "label": null,
+      "value": "Transparent polycarbonate lens"
+     },
+     {
+      "label": null,
+      "value": "Stable + flexible PVC frame"
+     },
+     {
+      "label": null,
+      "value": "Direct ventilating design"
+     }
+    ],
+    "specsRaw": [
      "Transparent polycarbonate lens",
      "+ Stable + flexible PVC frame",
-     "+ Flip-up front design for convenience",
-     "+ Indirect ventilating design",
      "+ Direct ventilating design"
     ],
     "image": "p13-safety-goggles-2.png",
@@ -448,10 +671,22 @@
    {
     "name": "Ear Muff",
     "specs": [
-     "Material: ABS shell, POM headband",
+     {
+      "label": "Material",
+      "value": "ABS shell, POM headband"
+     },
+     {
+      "label": "NRR",
+      "value": "25dB + Easy slide cup adjustment"
+     },
+     {
+      "label": null,
+      "value": "Foldable Soft head cushion"
+     }
+    ],
+    "specsRaw": [
      "Material: ABS shell, POM headband",
      "NRR: 25dB + Easy slide cup adjustment",
-     "NRR: 20dB + Easy slide cup adjustment",
      "+ Foldable Soft head cushion"
     ],
     "image": "p14-ear-muff.png",
@@ -462,11 +697,18 @@
    {
     "name": "Ear Muff",
     "specs": [
+     {
+      "label": "Material",
+      "value": "ABS shell, POM headband"
+     },
+     {
+      "label": "NRR",
+      "value": "20dB + Easy slide cup adjustment"
+     }
+    ],
+    "specsRaw": [
      "Material: ABS shell, POM headband",
-     "Material: ABS shell, POM headband",
-     "NRR: 25dB + Easy slide cup adjustment",
-     "NRR: 20dB + Easy slide cup adjustment",
-     "+ Foldable Soft head cushion"
+     "NRR: 20dB + Easy slide cup adjustment"
     ],
     "image": "p14-ear-muff-2.png",
     "imageSize": "638x320",
@@ -476,6 +718,16 @@
    {
     "name": "Corded Disposable Ear Plugs",
     "specs": [
+     {
+      "label": "SNR",
+      "value": "37dB"
+     },
+     {
+      "label": "NRR",
+      "value": "32dB"
+     }
+    ],
+    "specsRaw": [
      "SNR: 37dB",
      "NRR: 32dB"
     ],
@@ -487,9 +739,17 @@
    {
     "name": "Corded Reusable Ear Plugs",
     "specs": [
-     "SNR: 37dB",
+     {
+      "label": "SNR",
+      "value": "31dB"
+     },
+     {
+      "label": "NRR",
+      "value": "25dB"
+     }
+    ],
+    "specsRaw": [
      "SNR: 31dB",
-     "NRR: 32dB",
      "NRR: 25dB"
     ],
     "image": "p14-corded-reusable-ear-plugs.png",
@@ -500,10 +760,18 @@
    {
     "name": "Ear Plugs dispsenser",
     "specs": [
+     {
+      "label": null,
+      "value": "Dispenses one pair at a time"
+     },
+     {
+      "label": null,
+      "value": "Holds 500 pairs of disposable earplugs"
+     }
+    ],
+    "specsRaw": [
      "Dispenses one pair at a time",
-     "SNR: 37dB",
-     "Holds 500 pairs of disposable earplugs",
-     "NRR: 32dB"
+     "Holds 500 pairs of disposable earplugs"
     ],
     "image": "p14-ear-plugs-dispsenser.png",
     "imageSize": "289x574",
@@ -513,8 +781,17 @@
    {
     "name": "Uncorded Disposable Ear Plugs",
     "specs": [
+     {
+      "label": "SNR",
+      "value": "37dB"
+     },
+     {
+      "label": "NRR",
+      "value": "32dB"
+     }
+    ],
+    "specsRaw": [
      "SNR: 37dB",
-     "Holds 500 pairs of disposable earplugs",
      "NRR: 32dB"
     ],
     "image": "p14-uncorded-disposable-ear-plugs.png",
@@ -533,9 +810,17 @@
    {
     "name": "Welding Mask",
     "specs": [
+     {
+      "label": "Material",
+      "value": "PP + 108x50mm Glass"
+     },
+     {
+      "label": null,
+      "value": "With ratchet adjustment knob"
+     }
+    ],
+    "specsRaw": [
      "Material: PP + 108x50mm Glass",
-     "Material: PP + 110x50mm Glass",
-     "With hand holder",
      "With ratchet adjustment knob"
     ],
     "image": "p15-welding-mask.png",
@@ -546,10 +831,18 @@
    {
     "name": "Hand-Held Welding Mask",
     "specs": [
-     "Material: PP + 108x50mm Glass",
+     {
+      "label": "Material",
+      "value": "PP + 110x50mm Glass"
+     },
+     {
+      "label": null,
+      "value": "With hand holder"
+     }
+    ],
+    "specsRaw": [
      "Material: PP + 110x50mm Glass",
-     "With hand holder",
-     "With ratchet adjustment knob"
+     "With hand holder"
     ],
     "image": "p15-hand-held-welding-mask.png",
     "imageSize": "395x295",
@@ -559,9 +852,13 @@
    {
     "name": "Bracket",
     "specs": [
-     "Material: ABS",
-     "Material: PVC + Aluminum edge",
-     "Thickness: White 0.8/1 mm | Black 1 mm"
+     {
+      "label": "Material",
+      "value": "ABS"
+     }
+    ],
+    "specsRaw": [
+     "Material: ABS"
     ],
     "image": "p15-bracket.png",
     "imageSize": "395x288",
@@ -571,7 +868,20 @@
    {
     "name": "Visors",
     "specs": [
-     "Material: ABS",
+     {
+      "label": "Material",
+      "value": "PVC + Aluminum edge"
+     },
+     {
+      "label": "Size",
+      "value": "20x39.56 cm"
+     },
+     {
+      "label": "Thickness",
+      "value": "White 0.8/1 mm | Black 1 mm"
+     }
+    ],
+    "specsRaw": [
      "Material: PVC + Aluminum edge",
      "Size: 20x39.56 cm",
      "Thickness: White 0.8/1 mm | Black 1 mm"
@@ -584,15 +894,28 @@
    {
     "name": "Safety Helmets",
     "specs": [
+     {
+      "label": null,
+      "value": "HDPE compound shell + Nylon rachet"
+     },
+     {
+      "label": "Colors",
+      "value": "Red | White | Blue | Orange | Yellow | Green"
+     },
+     {
+      "label": null,
+      "value": "6-Point adjustment - perfect load distribution"
+     },
+     {
+      "label": null,
+      "value": "High level impact resistance + Light weight"
+     }
+    ],
+    "specsRaw": [
      "HDPE compound shell + Nylon rachet",
-     "High Level Impact Resistance",
      "Colors: Red | White | Blue | Orange | Yellow | Green",
-     "Ratchet adjustment suspension",
      "6-Point adjustment - perfect load distribution",
-     "+ Sweatband for improved comfort",
-     "High level impact resistance + Light weight",
-     "Cup shaped adjustable chin strap",
-     "Compatible with Spartan & other helmets"
+     "High level impact resistance + Light weight"
     ],
     "image": "p15-safety-helmets.png",
     "imageSize": "589x330",
@@ -602,13 +925,23 @@
    {
     "name": "Brow Guard",
     "specs": [
-     "HDPE compound shell + Nylon rachet",
+     {
+      "label": null,
+      "value": "High Level Impact Resistance"
+     },
+     {
+      "label": null,
+      "value": "Ratchet adjustment suspension"
+     },
+     {
+      "label": null,
+      "value": "Sweatband for improved comfort"
+     }
+    ],
+    "specsRaw": [
      "High Level Impact Resistance",
-     "Colors: Red | White | Blue | Orange | Yellow | Green",
      "Ratchet adjustment suspension",
-     "6-Point adjustment - perfect load distribution",
-     "+ Sweatband for improved comfort",
-     "High level impact resistance + Light weight"
+     "+ Sweatband for improved comfort"
     ],
     "image": "p15-brow-guard.png",
     "imageSize": "449x294",
@@ -618,6 +951,16 @@
    {
     "name": "Chin Straps",
     "specs": [
+     {
+      "label": null,
+      "value": "Cup shaped adjustable chin strap"
+     },
+     {
+      "label": null,
+      "value": "Compatible with Spartan & other helmets"
+     }
+    ],
+    "specsRaw": [
      "Cup shaped adjustable chin strap",
      "Compatible with Spartan & other helmets"
     ],
@@ -637,6 +980,24 @@
    {
     "name": "Grip Guard GP1",
     "specs": [
+     {
+      "label": "Liner",
+      "value": "100% Nylon"
+     },
+     {
+      "label": "Coating",
+      "value": "PU coating"
+     },
+     {
+      "label": "Color",
+      "value": "Black + Sizes: 7-12"
+     },
+     {
+      "label": "Cuff Style",
+      "value": "Knit wrist"
+     }
+    ],
+    "specsRaw": [
      "Liner: 100% Nylon",
      "Coating: PU coating",
      "Color: Black + Sizes: 7-12",
@@ -650,6 +1011,24 @@
    {
     "name": "Grip Guard GP3",
     "specs": [
+     {
+      "label": "Liner",
+      "value": "HPPE, Steel, Polyester, Spandex"
+     },
+     {
+      "label": "Coating",
+      "value": "PU coating"
+     },
+     {
+      "label": "Color",
+      "value": "Blue | Black + Sizes: 7-12"
+     },
+     {
+      "label": "Cuff Style",
+      "value": "Knit wrist"
+     }
+    ],
+    "specsRaw": [
      "Liner: HPPE, Steel, Polyester, Spandex",
      "Coating: PU coating",
      "Color: Blue | Black + Sizes: 7-12",
@@ -663,6 +1042,24 @@
    {
     "name": "Grip Guard GP5",
     "specs": [
+     {
+      "label": "Liner",
+      "value": "HPPE, Steel, Polyester, Spandex"
+     },
+     {
+      "label": "Coating",
+      "value": "PU coating"
+     },
+     {
+      "label": "Color",
+      "value": "Grey | Grey + Sizes: 7-12"
+     },
+     {
+      "label": "Cuff Style",
+      "value": "Knit wrist"
+     }
+    ],
+    "specsRaw": [
      "Liner: HPPE, Steel, Polyester, Spandex",
      "Coating: PU coating",
      "Color: Grey | Grey + Sizes: 7-12",
@@ -676,6 +1073,24 @@
    {
     "name": "Flex-Fit",
     "specs": [
+     {
+      "label": "Liner",
+      "value": "15 gauge nylon, R-PET, spandex"
+     },
+     {
+      "label": "Coating",
+      "value": "Nitrile Microfoam"
+     },
+     {
+      "label": "Color",
+      "value": "Grey | Black + Sizes: 7-12"
+     },
+     {
+      "label": "Cuff Style",
+      "value": "Knit wrist"
+     }
+    ],
+    "specsRaw": [
      "Liner: 15 gauge nylon, R-PET, spandex",
      "Coating: Nitrile Microfoam",
      "Color: Grey | Black + Sizes: 7-12",
@@ -697,6 +1112,28 @@
    {
     "name": "Chem Guard",
     "specs": [
+     {
+      "label": "Material",
+      "value": "Nitrile Rubber + Lining: Flockline"
+     },
+     {
+      "label": "Color",
+      "value": "Green G8 + Sizes: 11-11"
+     },
+     {
+      "label": "Cuff Style",
+      "value": "Straight + Free of latex protein"
+     },
+     {
+      "label": null,
+      "value": "Free of zinc mercaptobenzothiazole"
+     },
+     {
+      "label": null,
+      "value": "High chemical resistance"
+     }
+    ],
+    "specsRaw": [
      "Material: Nitrile Rubber + Lining: Flockline",
      "Color: Green G8 + Sizes: 11-11",
      "Cuff Style: Straight + Free of latex protein",
@@ -711,6 +1148,24 @@
    {
     "name": "Cut Flex",
     "specs": [
+     {
+      "label": "Liner",
+      "value": "Para Aramid"
+     },
+     {
+      "label": "Color",
+      "value": "Yellow + Size/Length: 18ˮ"
+     },
+     {
+      "label": null,
+      "value": "Thumb hole prevents slip + wrist exposure"
+     },
+     {
+      "label": null,
+      "value": "Circular Machine knitted 2 ply sleeve"
+     }
+    ],
+    "specsRaw": [
      "Liner: Para Aramid",
      "Color: Yellow + Size/Length: 18ˮ",
      "Thumb hole prevents slip + wrist exposure",
@@ -724,15 +1179,37 @@
    {
     "name": "Impact Ultra D",
     "specs": [
+     {
+      "label": "Liner",
+      "value": "Polyester"
+     },
+     {
+      "label": "Coating",
+      "value": "Sandy Nitrile coating"
+     },
+     {
+      "label": "Sizes",
+      "value": "7-11 + TPR impact protection"
+     },
+     {
+      "label": null,
+      "value": "Flexible + Durable + No hand fatigue"
+     },
+     {
+      "label": null,
+      "value": "Abrasion + Slip-resistant + Knitted wrist"
+     },
+     {
+      "label": null,
+      "value": "Excellent Breathability+ Wet & dry dual grip"
+     }
+    ],
+    "specsRaw": [
      "Liner: Polyester",
      "Coating: Sandy Nitrile coating",
-     "Coating: Crinkled latex + Color: Grey | Blue",
      "Sizes: 7-11 + TPR impact protection",
-     "Flexible + Comfortable + Lightweight",
      "Flexible + Durable + No hand fatigue",
      "Abrasion + Slip-resistant + Knitted wrist",
-     "Abrasion + Slip-resistant + Knitted wrist",
-     "Excellent breathability & good grip",
      "Excellent Breathability+ Wet & dry dual grip"
     ],
     "image": "p17-impact-ultra-d.png",
@@ -743,17 +1220,33 @@
    {
     "name": "Latex Coated Gloves",
     "specs": [
+     {
+      "label": "Liner",
+      "value": "Polyester"
+     },
+     {
+      "label": "Coating",
+      "value": "Crinkled latex + Color: Grey | Blue"
+     },
+     {
+      "label": null,
+      "value": "Flexible + Comfortable + Lightweight"
+     },
+     {
+      "label": null,
+      "value": "Abrasion + Slip-resistant + Knitted wrist"
+     },
+     {
+      "label": null,
+      "value": "Excellent breathability & good grip"
+     }
+    ],
+    "specsRaw": [
      "Liner: Polyester",
-     "Liner: Polyester",
-     "Coating: Sandy Nitrile coating",
      "Coating: Crinkled latex + Color: Grey | Blue",
-     "Sizes: 7-11 + TPR impact protection",
      "Flexible + Comfortable + Lightweight",
-     "Flexible + Durable + No hand fatigue",
      "Abrasion + Slip-resistant + Knitted wrist",
-     "Abrasion + Slip-resistant + Knitted wrist",
-     "Excellent breathability & good grip",
-     "Excellent Breathability+ Wet & dry dual grip"
+     "Excellent breathability & good grip"
     ],
     "image": "p17-latex-coated-gloves.png",
     "imageSize": "325x324",
@@ -771,16 +1264,28 @@
    {
     "name": "Leather Welding Gloves",
     "specs": [
+     {
+      "label": "Material",
+      "value": "Cow split leather"
+     },
+     {
+      "label": null,
+      "value": "Cotton lined palm + Welted seams"
+     },
+     {
+      "label": null,
+      "value": "Canvas lining inside on cuff + Wing thumb"
+     },
+     {
+      "label": "Color",
+      "value": "Red + Size: 16ˮ"
+     }
+    ],
+    "specsRaw": [
      "Material: Cow split leather",
-     "Material: Cow split leather + Single palm",
      "Cotton lined palm + Welted seams",
-     "Cotton lined palm + Rubberized cuff",
      "Canvas lining inside on cuff + Wing thumb",
-     "Color: Green stripes + Size: 10.5",
-     "Color: Red + Size: 16ˮ",
-     "Material: Split leather + Size: 22ˮ",
-     "Comfortable + Durable + Abrasion resistant",
-     "Protects against sparks and splatter"
+     "Color: Red + Size: 16ˮ"
     ],
     "image": "p18-leather-welding-gloves.png",
     "imageSize": "325x323",
@@ -790,13 +1295,23 @@
    {
     "name": "Leather Rigger Gloves",
     "specs": [
-     "Material: Cow split leather",
+     {
+      "label": "Material",
+      "value": "Cow split leather + Single palm"
+     },
+     {
+      "label": null,
+      "value": "Cotton lined palm + Rubberized cuff"
+     },
+     {
+      "label": "Color",
+      "value": "Green stripes + Size: 10.5"
+     }
+    ],
+    "specsRaw": [
      "Material: Cow split leather + Single palm",
-     "Cotton lined palm + Welted seams",
      "Cotton lined palm + Rubberized cuff",
-     "Canvas lining inside on cuff + Wing thumb",
-     "Color: Green stripes + Size: 10.5",
-     "Color: Red + Size: 16ˮ"
+     "Color: Green stripes + Size: 10.5"
     ],
     "image": "p18-leather-rigger-gloves.png",
     "imageSize": "274x323",
@@ -806,6 +1321,24 @@
    {
     "name": "Leather Welding Sleeves",
     "specs": [
+     {
+      "label": "Material",
+      "value": "Split leather + Size: 22ˮ"
+     },
+     {
+      "label": null,
+      "value": "Heavy duty sewing with piping"
+     },
+     {
+      "label": null,
+      "value": "Comfortable + Durable + Abrasion resistant"
+     },
+     {
+      "label": null,
+      "value": "Protects against sparks and splatter"
+     }
+    ],
+    "specsRaw": [
      "Material: Split leather + Size: 22ˮ",
      "Heavy duty sewing with piping",
      "Comfortable + Durable + Abrasion resistant",
@@ -827,14 +1360,28 @@
    {
     "name": "Safety Vests",
     "specs": [
-     "Material: 100% Polyester + 120 GSM",
+     {
+      "label": "Material",
+      "value": "100% Polyester + 120 GSM"
+     },
+     {
+      "label": "Colors",
+      "value": "Hi-Viz Green | Hi-Viz Orange"
+     },
+     {
+      "label": null,
+      "value": "2ˮ reflective strips for high visibility"
+     },
+     {
+      "label": null,
+      "value": "Velcro closure vests + Lightweight"
+     }
+    ],
+    "specsRaw": [
      "Material: 100% Polyester + 120 GSM",
      "Colors: Hi-Viz Green | Hi-Viz Orange",
-     "Colors: Hi-Viz Green | Hi-Viz Orange",
      "2ˮ reflective strips for high visibility",
-     "2ˮ reflective strips for high visibility",
-     "Velcro closure vests + Lightweight",
-     "Zipper closure vests + Lightweight"
+     "Velcro closure vests + Lightweight"
     ],
     "image": "p19-safety-vests.png",
     "imageSize": "733x322",
@@ -844,13 +1391,27 @@
    {
     "name": "Safety Vests",
     "specs": [
-     "Material: 100% Polyester + 120 GSM",
+     {
+      "label": "Material",
+      "value": "100% Polyester + 120 GSM"
+     },
+     {
+      "label": "Colors",
+      "value": "Hi-Viz Green | Hi-Viz Orange"
+     },
+     {
+      "label": null,
+      "value": "2ˮ reflective strips for high visibility"
+     },
+     {
+      "label": null,
+      "value": "Zipper closure vests + Lightweight"
+     }
+    ],
+    "specsRaw": [
      "Material: 100% Polyester + 120 GSM",
      "Colors: Hi-Viz Green | Hi-Viz Orange",
-     "Colors: Hi-Viz Green | Hi-Viz Orange",
      "2ˮ reflective strips for high visibility",
-     "2ˮ reflective strips for high visibility",
-     "Velcro closure vests + Lightweight",
      "Zipper closure vests + Lightweight"
     ],
     "image": "p19-safety-vests-2.png",
@@ -861,11 +1422,27 @@
    {
     "name": "Leather Welding Apron",
     "specs": [
+     {
+      "label": "Material",
+      "value": "Single Piece Split leather"
+     },
+     {
+      "label": "Length",
+      "value": "36ˮ + Width: 24ˮ + Piping"
+     },
+     {
+      "label": null,
+      "value": "Comfortable + Durable + Abrasion resistant"
+     },
+     {
+      "label": null,
+      "value": "Protects against sparks and splatter"
+     }
+    ],
+    "specsRaw": [
      "Material: Single Piece Split leather",
-     "Material: Spunbound + 30 GSM",
      "Length: 36ˮ + Width: 24ˮ + Piping",
      "Comfortable + Durable + Abrasion resistant",
-     "Hood + Full sleeves + Elastic cuffs",
      "Protects against sparks and splatter"
     ],
     "image": "p19-leather-welding-apron.png",
@@ -876,13 +1453,23 @@
    {
     "name": "Nonwoven Disposable Coverall",
     "specs": [
-     "Material: Single Piece Split leather",
+     {
+      "label": "Material",
+      "value": "Spunbound + 30 GSM"
+     },
+     {
+      "label": "Color",
+      "value": "White + Sizes: XL-XXXL"
+     },
+     {
+      "label": null,
+      "value": "Hood + Full sleeves + Elastic cuffs"
+     }
+    ],
+    "specsRaw": [
      "Material: Spunbound + 30 GSM",
-     "Length: 36ˮ + Width: 24ˮ + Piping",
      "Color: White + Sizes: XL-XXXL",
-     "Comfortable + Durable + Abrasion resistant",
-     "Hood + Full sleeves + Elastic cuffs",
-     "Protects against sparks and splatter"
+     "Hood + Full sleeves + Elastic cuffs"
     ],
     "image": "p19-nonwoven-disposable-coverall.png",
     "imageSize": "485x383",
@@ -892,12 +1479,27 @@
    {
     "name": "Lightweight Web Straps",
     "specs": [
+     {
+      "label": null,
+      "value": "Designed to reduce suspension trauma"
+     },
+     {
+      "label": null,
+      "value": "Compact + Versatile + Easy installation"
+     },
+     {
+      "label": null,
+      "value": "Multiple attachment point options"
+     },
+     {
+      "label": "Length",
+      "value": "1.2 meters"
+     }
+    ],
+    "specsRaw": [
      "Designed to reduce suspension trauma",
-     "Material: Fray-proof dope-dyed Polyester",
      "Compact + Versatile + Easy installation",
-     "+ High strength alloy steel buckles",
      "Multiple attachment point options",
-     "+ 100% twin webbing with shock absorber",
      "Length: 1.2 meters"
     ],
     "image": "p19-lightweight-web-straps.png",
@@ -908,13 +1510,27 @@
    {
     "name": "Full Body Harness",
     "specs": [
-     "Designed to reduce suspension trauma",
+     {
+      "label": "Material",
+      "value": "Fray-proof dope-dyed Polyester"
+     },
+     {
+      "label": null,
+      "value": "High strength alloy steel buckles"
+     },
+     {
+      "label": null,
+      "value": "100% twin webbing with shock absorber"
+     },
+     {
+      "label": "Lanyard length",
+      "value": "2 meters"
+     }
+    ],
+    "specsRaw": [
      "Material: Fray-proof dope-dyed Polyester",
-     "Compact + Versatile + Easy installation",
      "+ High strength alloy steel buckles",
-     "Multiple attachment point options",
      "+ 100% twin webbing with shock absorber",
-     "Length: 1.2 meters",
      "Lanyard length: 2 meters"
     ],
     "image": "p19-full-body-harness.png",
@@ -933,12 +1549,28 @@
    {
     "name": "Construction Gum Boots",
     "specs": [
+     {
+      "label": "Material",
+      "value": "PVC + Without steel toe"
+     },
+     {
+      "label": "Sizes",
+      "value": "EUR 39 - 46 + Height: 368 - 380 MM"
+     },
+     {
+      "label": "Weight",
+      "value": "1.89 - 2.34 KG"
+     },
+     {
+      "label": null,
+      "value": "Water | Oil | Acid | Alkali resistant + Anti-slip"
+     }
+    ],
+    "specsRaw": [
      "Material: PVC + Without steel toe",
      "Sizes: EUR 39 - 46 + Height: 368 - 380 MM",
-     "Sizes: EUR 39 - 46 + Height: 368 - 380 MM",
      "Weight: 1.89 - 2.34 KG",
-     "Water | Oil | Acid | Alkali resistant + Anti-slip",
-     "Water | Oil | Acid | Alkali resistant"
+     "Water | Oil | Acid | Alkali resistant + Anti-slip"
     ],
     "image": "p20-construction-gum-boots.png",
     "imageSize": "317x358",
@@ -948,13 +1580,31 @@
    {
     "name": "Construction Gum Boots",
     "specs": [
-     "Material: PVC + Without steel toe",
+     {
+      "label": "Material",
+      "value": "PVC + With steel toe"
+     },
+     {
+      "label": "Sizes",
+      "value": "EUR 39 - 46 + Height: 368 - 380 MM"
+     },
+     {
+      "label": "Weight",
+      "value": "1.89 - 2.34 KG"
+     },
+     {
+      "label": null,
+      "value": "Water | Oil | Acid | Alkali resistant"
+     },
+     {
+      "label": null,
+      "value": "Anti-slip + Anti-impact"
+     }
+    ],
+    "specsRaw": [
      "Material: PVC + With steel toe",
      "Sizes: EUR 39 - 46 + Height: 368 - 380 MM",
-     "Sizes: EUR 39 - 46 + Height: 368 - 380 MM",
      "Weight: 1.89 - 2.34 KG",
-     "Weight: 1.89 - 2.34 KG",
-     "Water | Oil | Acid | Alkali resistant + Anti-slip",
      "Water | Oil | Acid | Alkali resistant",
      "Anti-slip + Anti-impact"
     ],
@@ -966,13 +1616,32 @@
    {
     "name": "Low Cut Safety Shoes",
     "specs": [
+     {
+      "label": "Upper",
+      "value": "KPU (Knitted Polyurethane)"
+     },
+     {
+      "label": null,
+      "value": "Quarter | Tongue lining: Black mesh"
+     },
+     {
+      "label": "Insole",
+      "value": "Non-woven + Sole: rubber"
+     },
+     {
+      "label": null,
+      "value": "Composite toe cap + 6 Pairs eyelets fastening"
+     },
+     {
+      "label": "Sizes",
+      "value": "EUR 36-47"
+     }
+    ],
+    "specsRaw": [
      "Upper: KPU (Knitted Polyurethane)",
      "Quarter | Tongue lining: Black mesh",
-     "Quarter | Tongue lining: Black mesh",
      "Insole: Non-woven + Sole: rubber",
-     "Insole: Non-woven + Sole: EVA | Rubber",
      "Composite toe cap + 6 Pairs eyelets fastening",
-     "Steel toe cap + 6 Pairs buckles fastening",
      "Sizes: EUR 36-47"
     ],
     "image": "p20-low-cut-safety-shoes.png",
@@ -983,15 +1652,32 @@
    {
     "name": "Low Cut Safety Shoes",
     "specs": [
-     "Upper: KPU (Knitted Polyurethane)",
+     {
+      "label": "Upper",
+      "value": "Brown suede leather"
+     },
+     {
+      "label": null,
+      "value": "Quarter | Tongue lining: Black mesh"
+     },
+     {
+      "label": "Insole",
+      "value": "Non-woven + Sole: EVA | Rubber"
+     },
+     {
+      "label": null,
+      "value": "Steel toe cap + 6 Pairs buckles fastening"
+     },
+     {
+      "label": "Sizes",
+      "value": "EUR 36-47"
+     }
+    ],
+    "specsRaw": [
      "Upper: Brown suede leather",
      "Quarter | Tongue lining: Black mesh",
-     "Quarter | Tongue lining: Black mesh",
-     "Insole: Non-woven + Sole: rubber",
      "Insole: Non-woven + Sole: EVA | Rubber",
-     "Composite toe cap + 6 Pairs eyelets fastening",
      "Steel toe cap + 6 Pairs buckles fastening",
-     "Sizes: EUR 36-47",
      "Sizes: EUR 36-47"
     ],
     "image": "p20-low-cut-safety-shoes-2.png",
@@ -1002,11 +1688,30 @@
    {
     "name": "Rigger Boots",
     "specs": [
+     {
+      "label": "Upper",
+      "value": "Embossed leather"
+     },
+     {
+      "label": "Quarter Lining",
+      "value": "black mesh + Collar: Oxford"
+     },
+     {
+      "label": "Insole",
+      "value": "Non-woven + Sole: PU/PU"
+     },
+     {
+      "label": null,
+      "value": "Steel toe cap"
+     },
+     {
+      "label": "Sizes",
+      "value": "EUR 36-48"
+     }
+    ],
+    "specsRaw": [
      "Upper: Embossed leather",
-     "Upper: Black embossed leather",
      "Quarter Lining: black mesh + Collar: Oxford",
-     "Quarter | Tongue lining: Grey mesh",
-     "Insole: Non-woven + Sole: PU/PU",
      "Insole: Non-woven + Sole: PU/PU",
      "Steel toe cap",
      "Sizes: EUR 36-48"
@@ -1019,15 +1724,36 @@
    {
     "name": "High Cut Safety Shoes",
     "specs": [
-     "Upper: Embossed leather",
+     {
+      "label": "Upper",
+      "value": "Black embossed leather"
+     },
+     {
+      "label": null,
+      "value": "Quarter | Tongue lining: Grey mesh"
+     },
+     {
+      "label": "Insole",
+      "value": "Non-woven + Sole: PU/PU"
+     },
+     {
+      "label": null,
+      "value": "Steel toe cap"
+     },
+     {
+      "label": null,
+      "value": "4 Pairs metal D-ring fastening"
+     },
+     {
+      "label": "Sizes",
+      "value": "EUR 36-48"
+     }
+    ],
+    "specsRaw": [
      "Upper: Black embossed leather",
-     "Quarter Lining: black mesh + Collar: Oxford",
      "Quarter | Tongue lining: Grey mesh",
      "Insole: Non-woven + Sole: PU/PU",
-     "Insole: Non-woven + Sole: PU/PU",
      "Steel toe cap",
-     "Steel toe cap",
-     "Sizes: EUR 36-48",
      "4 Pairs metal D-ring fastening",
      "Sizes: EUR 36-48"
     ],
@@ -1047,13 +1773,28 @@
    {
     "name": "Disposable Shoe Cover",
     "specs": [
+     {
+      "label": "Material",
+      "value": "PP Non-woven + 30 GSM"
+     },
+     {
+      "label": "Size",
+      "value": "15x40 cm + Color: Blue"
+     },
+     {
+      "label": null,
+      "value": "Elasticated + Extra thick + Water resistant"
+     },
+     {
+      "label": null,
+      "value": "Enhanced traction + Prevents scuffs on floor"
+     }
+    ],
+    "specsRaw": [
      "Material: PP Non-woven + 30 GSM",
-     "Material: Split leather + Leg: 15ˮ + Foot: 8ˮ",
      "Size: 15x40 cm + Color: Blue",
      "Elasticated + Extra thick + Water resistant",
-     "Comfortable + Durable + Abrasion resistant",
-     "Enhanced traction + Prevents scuffs on floor",
-     "Protects against sparks and splatter"
+     "Enhanced traction + Prevents scuffs on floor"
     ],
     "image": "p21-disposable-shoe-cover.png",
     "imageSize": "443x237",
@@ -1063,13 +1804,27 @@
    {
     "name": "Leather Welding Leg Guard",
     "specs": [
-     "Material: PP Non-woven + 30 GSM",
+     {
+      "label": "Material",
+      "value": "Split leather + Leg: 15ˮ + Foot: 8ˮ"
+     },
+     {
+      "label": null,
+      "value": "Heavy duty sewing with piping"
+     },
+     {
+      "label": null,
+      "value": "Comfortable + Durable + Abrasion resistant"
+     },
+     {
+      "label": null,
+      "value": "Protects against sparks and splatter"
+     }
+    ],
+    "specsRaw": [
      "Material: Split leather + Leg: 15ˮ + Foot: 8ˮ",
-     "Size: 15x40 cm + Color: Blue",
      "Heavy duty sewing with piping",
-     "Elasticated + Extra thick + Water resistant",
      "Comfortable + Durable + Abrasion resistant",
-     "Enhanced traction + Prevents scuffs on floor",
      "Protects against sparks and splatter"
     ],
     "image": "p21-leather-welding-leg-guard.png",
@@ -1100,12 +1855,27 @@
    {
     "name": "Fire Retardant Pants",
     "specs": [
-     "Fabric: 100% Cotton mercerized pre shrunk",
+     {
+      "label": "Fabric",
+      "value": "100% Cotton mercerized pre shrunk"
+     },
+     {
+      "label": null,
+      "value": "240 GSM + Beathable + Soft finished"
+     },
+     {
+      "label": "Color",
+      "value": "Navy blue + Sizes: 30-48"
+     },
+     {
+      "label": "Shrinkage",
+      "value": "Below 2%"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 100% Cotton mercerized pre shrunk",
      "240 GSM + Beathable + Soft finished",
-     "235 GSM + Breathable + Soft finished",
      "Color: Navy blue + Sizes: 30-48",
-     "Colors: Khaki | Light blue + Sizes: S-4XL",
      "Shrinkage: Below 2%"
     ],
     "image": "p23-fire-retardant-pants.png",
@@ -1116,13 +1886,27 @@
    {
     "name": "Fire Retardant Shirts",
     "specs": [
+     {
+      "label": "Fabric",
+      "value": "100% Cotton mercerized pre shrunk"
+     },
+     {
+      "label": null,
+      "value": "235 GSM + Breathable + Soft finished"
+     },
+     {
+      "label": "Colors",
+      "value": "Khaki | Light blue + Sizes: S-4XL"
+     },
+     {
+      "label": "Shrinkage",
+      "value": "Below 2%"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 100% Cotton mercerized pre shrunk",
-     "Fabric: 100% Cotton mercerized pre shrunk",
-     "240 GSM + Beathable + Soft finished",
      "235 GSM + Breathable + Soft finished",
-     "Color: Navy blue + Sizes: 30-48",
      "Colors: Khaki | Light blue + Sizes: S-4XL",
-     "Shrinkage: Below 2%",
      "Shrinkage: Below 2%"
     ],
     "image": "p23-fire-retardant-shirts.png",
@@ -1133,13 +1917,28 @@
    {
     "name": "Fire Retardant Winter Jacket",
     "specs": [
+     {
+      "label": "Fabric",
+      "value": "100% Cotton + 270 GSM + 3/1 S Twill"
+     },
+     {
+      "label": null,
+      "value": "50MM Reflective tape at arm | shoulder"
+     },
+     {
+      "label": "Colors",
+      "value": "Navy blue | Grey + Sizes: S-6XL"
+     },
+     {
+      "label": "Shrinkage",
+      "value": "3%"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 100% Cotton + 270 GSM + 3/1 S Twill",
      "50MM Reflective tape at arm | shoulder",
-     "50MM Reflective tape at arm | shoulder | knee",
      "Colors: Navy blue | Grey + Sizes: S-6XL",
-     "Colors: Navy blue + Sizes: S-4XL",
-     "Shrinkage: 3%",
-     "Buttoned front open jacket + Elastic waist pants"
+     "Shrinkage: 3%"
     ],
     "image": "p23-fire-retardant-winter-jacket.png",
     "imageSize": "347x434",
@@ -1149,13 +1948,27 @@
    {
     "name": "Fire Retardant Workshop Suit",
     "specs": [
-     "Fabric: 100% Cotton + 270 GSM + 3/1 S Twill",
+     {
+      "label": "Fabric",
+      "value": "100% Cotton"
+     },
+     {
+      "label": null,
+      "value": "50MM Reflective tape at arm | shoulder | knee"
+     },
+     {
+      "label": "Colors",
+      "value": "Navy blue + Sizes: S-4XL"
+     },
+     {
+      "label": null,
+      "value": "Buttoned front open jacket + Elastic waist pants"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 100% Cotton",
-     "50MM Reflective tape at arm | shoulder",
      "50MM Reflective tape at arm | shoulder | knee",
-     "Colors: Navy blue | Grey + Sizes: S-6XL",
      "Colors: Navy blue + Sizes: S-4XL",
-     "Shrinkage: 3%",
      "Buttoned front open jacket + Elastic waist pants"
     ],
     "image": "p23-fire-retardant-workshop-suit.png",
@@ -1166,12 +1979,31 @@
    {
     "name": "Leather Welding Jacket",
     "specs": [
+     {
+      "label": "Material",
+      "value": "Grey side-split leather front"
+     },
+     {
+      "label": null,
+      "value": "Fire Retardant cotton back for breathability"
+     },
+     {
+      "label": "Color",
+      "value": "Pearl grey + Sizes: M-3XL"
+     },
+     {
+      "label": null,
+      "value": "Riveted stress points + reinforced snaps"
+     },
+     {
+      "label": null,
+      "value": "Fully adjustable waist, cuffs and collar"
+     }
+    ],
+    "specsRaw": [
      "Material: Grey side-split leather front",
-     "Fabric: 100% Polyester + PU coated",
      "+ Fire Retardant cotton back for breathability",
-     "Triple layered + Detatchable hood",
      "Color: Pearl grey + Sizes: M-3XL",
-     "Color: Navy blue + 50MM Reflective tape",
      "Riveted stress points + reinforced snaps",
      "Fully adjustable waist, cuffs and collar"
     ],
@@ -1183,15 +2015,28 @@
    {
     "name": "Winter Jacket",
     "specs": [
-     "Material: Grey side-split leather front",
+     {
+      "label": "Fabric",
+      "value": "100% Polyester + PU coated"
+     },
+     {
+      "label": null,
+      "value": "Triple layered + Detatchable hood"
+     },
+     {
+      "label": "Color",
+      "value": "Navy blue + 50MM Reflective tape"
+     },
+     {
+      "label": null,
+      "value": "Wind protection + Water proof"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 100% Polyester + PU coated",
-     "+ Fire Retardant cotton back for breathability",
      "Triple layered + Detatchable hood",
-     "Color: Pearl grey + Sizes: M-3XL",
      "Color: Navy blue + 50MM Reflective tape",
-     "Riveted stress points + reinforced snaps",
-     "Wind protection + Water proof",
-     "Fully adjustable waist, cuffs and collar"
+     "Wind protection + Water proof"
     ],
     "image": "p23-winter-jacket.png",
     "imageSize": "680x416",
@@ -1209,13 +2054,23 @@
    {
     "name": "Cotton Pants & Shirts",
     "specs": [
+     {
+      "label": "Fabric",
+      "value": "100% Cotton + 220 GSM"
+     },
+     {
+      "label": "Colors",
+      "value": "Grey | Blue | Navy Blue | Khaki"
+     },
+     {
+      "label": "Sizes",
+      "value": "S-4XL"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 100% Cotton + 220 GSM",
      "Colors: Grey | Blue | Navy Blue | Khaki",
-     "Colors: Orange | Red | Blue | Navy Blue | Khaki",
-     "Sizes: S-4XL",
-     "Fabric: 0.18MM  170T 100% Polyester/PVC",
-     "Detachable hood + Concealed zippered collar",
-     "Elastic waist pants + Adjustable snaps"
+     "Sizes: S-4XL"
     ],
     "image": "p24-cotton-pants-shirts.png",
     "imageSize": "520x434",
@@ -1225,11 +2080,18 @@
    {
     "name": "Fire Retardant Cotton Coveralls",
     "specs": [
+     {
+      "label": "Fabric",
+      "value": "100% Cotton + 220 GSM"
+     },
+     {
+      "label": "Colors",
+      "value": "Orange | Red | Blue | Navy Blue | Khaki"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 100% Cotton + 220 GSM",
-     "Fabric: 100% Cotton + 220 GSM",
-     "Colors: Grey | Blue | Navy Blue | Khaki",
-     "Colors: Orange | Red | Blue | Navy Blue | Khaki",
-     "Sizes: S-4XL"
+     "Colors: Orange | Red | Blue | Navy Blue | Khaki"
     ],
     "image": "p24-fire-retardant-cotton-coveralls.png",
     "imageSize": "505x417",
@@ -1239,6 +2101,24 @@
    {
     "name": "Rain Suit",
     "specs": [
+     {
+      "label": "Fabric",
+      "value": "0.18MM  170T 100% Polyester/PVC"
+     },
+     {
+      "label": null,
+      "value": "Detachable hood + Concealed zippered collar"
+     },
+     {
+      "label": null,
+      "value": "Elastic waist pants + Adjustable snaps"
+     },
+     {
+      "label": "Color",
+      "value": "Yellow"
+     }
+    ],
+    "specsRaw": [
      "Fabric: 0.18MM  170T 100% Polyester/PVC",
      "Detachable hood + Concealed zippered collar",
      "Elastic waist pants + Adjustable snaps",

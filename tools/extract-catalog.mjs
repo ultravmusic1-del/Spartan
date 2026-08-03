@@ -20,7 +20,58 @@ import {
   slugify,
   renderImagesOnly,
   assignImagesToProducts,
+  sameColumnFilter,
 } from './lib/pdf.mjs';
+
+// --- spec line parsing -----------------------------------------------------
+// `Label: value` opens a new spec. Labels are short and never contain a `+`,
+// so the first colon always separates label from value.
+const LABEL_RE = /^([A-Za-z][A-Za-z0-9 .\/&-]{0,29}):\s*(.*)$/;
+// The brochure marks additional feature bullets with a leading `+ `.
+const BULLET_RE = /^\+\s+/;
+// A line left hanging on a connector is continued by the line beneath it.
+const DANGLING_RE = /[+,&|\/-]$/;
+// So is one broken mid-noun-phrase after a preposition or article ("with
+// Thermal" / "Overload Protector (TOP)" on page 11). Narrow on purpose: this
+// pattern matches exactly one mid-entry line in the whole brochure.
+const DANGLING_PHRASE_RE = /\b(?:with|and|or|of|for|in|on|to|from|at|by|the|a|an)\s+[A-Z][A-Za-z-]*$/;
+
+/**
+ * Turn a product's raw spec lines into `{ label, value }` pairs.
+ *
+ * The brochure wraps long values across several lines, so a line is treated as
+ * a continuation of the one above when it starts lower-case or when the line
+ * above ends on a dangling connector or preposition. Anything else starts a new
+ * entry: a `Label:` line, a `+ ` bullet, or a self-contained feature phrase.
+ * Feature phrases carry no label and none is invented for them.
+ *
+ * Continuation is a heuristic — the brochure gives no structural marker for it,
+ * and a wrap between two capitalised words with no dangling connector would
+ * read as two entries. The unparsed lines are kept alongside as `specsRaw` so
+ * that consumers can fall back on them.
+ */
+function parseSpecs(rawLines) {
+  const specs = [];
+  let prev = null;
+  for (const raw of rawLines) {
+    const text = raw.trim();
+    if (!text) continue;
+    const labelled = LABEL_RE.exec(text);
+    if (labelled) {
+      specs.push({ label: labelled[1].trim(), value: labelled[2].trim() });
+    } else if (BULLET_RE.test(text)) {
+      specs.push({ label: null, value: text.replace(BULLET_RE, '').trim() });
+    } else if (specs.length && (/^[a-z]/.test(text) ||
+      (prev && (DANGLING_RE.test(prev) || DANGLING_PHRASE_RE.test(prev))))) {
+      const last = specs[specs.length - 1];
+      last.value = `${last.value} ${text}`.trim();
+    } else {
+      specs.push({ label: null, value: text });
+    }
+    prev = text;
+  }
+  return specs;
+}
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 const PDF = process.argv[2] ?? './brochure.pdf';
@@ -83,13 +134,21 @@ for (let pno = 1; pno <= total; pno++) {
   const section = lines.find(l => l.role === 'section')?.text ?? null;
   const pageLabel = lines.find(l => l.role === 'pagelabel')?.text ?? null;
 
-  const products = prodLines.map(p => {
+  const products = prodLines.map(p => ({ name: p.text, nameBox: p.bbox, specs: [], specsRaw: [], images: [] }));
+
+  // Spec lines belong to the nearest product name *above* them in their own
+  // column. The horizontal window alone is wide enough to reach into the
+  // neighbouring column, which hands every product its neighbour's specs too.
+  const sameColumn = sameColumnFilter(products);
+  prodLines.forEach((p, i) => {
+    const prod = products[i];
     const nextY = prodLines.filter(q => q !== p && q.bbox[1] > p.bbox[3] && Math.abs(q.bbox[0] - p.bbox[0]) < 120)
       .reduce((m, q) => Math.min(m, q.bbox[1]), Infinity);
-    const specs = lines.filter(l => l.role === 'spec' && l.bbox[1] >= p.bbox[3] - 2 && l.bbox[1] < nextY &&
-      rectOverlap([l.bbox[0], 0, l.bbox[2], 1], [p.bbox[0] - 90, 0, p.bbox[2] + 220, 1]) > 0)
+    prod.specsRaw = lines.filter(l => l.role === 'spec' && l.bbox[1] >= p.bbox[3] - 2 && l.bbox[1] < nextY &&
+      rectOverlap([l.bbox[0], 0, l.bbox[2], 1], [p.bbox[0] - 90, 0, p.bbox[2] + 220, 1]) > 0 &&
+      sameColumn(l.bbox, prod))
       .sort((a, b) => a.bbox[1] - b.bbox[1]).map(s => s.text);
-    return { name: p.text, nameBox: p.bbox, specs, images: [] };
+    prod.specs = parseSpecs(prod.specsRaw);
   });
 
   // assign EVERY in-page image to its nearest product within the SAME column
@@ -140,5 +199,15 @@ for (const p of out) n += p.products.length;
 console.log(`products with composited images: ${n}`);
 for (const p of out) {
   if (p.heroes.length) console.log(`p${String(p.page).padStart(2, '0')} HERO ${p.heroes[0].render} (src ${p.heroes[0].largestSource})`);
-  for (const pr of p.products) console.log(`p${String(p.page).padStart(2, '0')} ${pr.name.padEnd(32)} parts=${String(pr.parts).padStart(2)} out=${pr.imageSize.padEnd(10)} native=${pr.nativeMax}`);
+  for (const pr of p.products) {
+    const labelled = pr.specs.filter(s => s.label).length;
+    console.log(`p${String(p.page).padStart(2, '0')} ${pr.name.padEnd(32)} parts=${String(pr.parts).padStart(2)} out=${pr.imageSize.padEnd(10)} native=${pr.nativeMax.padEnd(9)} specs=${String(pr.specs.length).padStart(2)} (${labelled} labelled, ${pr.specs.length - labelled} unlabelled, from ${String(pr.specsRaw.length).padStart(2)} lines)`);
+  }
 }
+
+const all = out.flatMap(p => p.products);
+const dist = new Map();
+for (const pr of all) dist.set(pr.specs.length, (dist.get(pr.specs.length) ?? 0) + 1);
+console.log('\nspec-count distribution (specs per product):');
+for (const k of [...dist.keys()].sort((a, b) => a - b)) console.log(`  ${k} spec(s): ${dist.get(k)} product(s)`);
+console.log(`  max ${Math.max(...all.map(p => p.specs.length))}, total ${all.reduce((s, p) => s + p.specs.length, 0)} specs over ${all.length} products`);
