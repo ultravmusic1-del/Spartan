@@ -9,7 +9,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "extract:catalog": "node tools/extract-catalog.mjs",
+    "extract:logo": "node tools/extract-logo.mjs",
+    "extract:heroes": "node tools/extract-heroes.mjs"
   },
   "dependencies": {
     "@astrojs/preact": "^6.0.2",
@@ -27,8 +30,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "mupdf": "^1.26",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
+    "sharp": "^0.35.3",
     "vitest": "^4.1.10"
   }
 }

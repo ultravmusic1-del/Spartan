@@ -1988,6 +1988,8 @@ Expected: FAIL. Implement `productJsonLd`, `breadcrumbJsonLd`, `organizationJson
 
 Renders title, description, canonical, Open Graph, Twitter card and an optional `jsonLd` prop as `<script type="application/ld+json">`. Add `organizationJsonLd` site-wide, `productJsonLd` + breadcrumbs on product pages, `itemListJsonLd` + breadcrumbs on category pages.
 
+Also add the favicon links here. Task 2 built `BaseLayout.astro` to the spec's markup, which omitted them, leaving the scaffold's `public/favicon.svg` and `public/favicon.ico` unreferenced. Replace the placeholder Astro favicon with a Spartan mark derived from the existing `spartan-logo.svg` helmet — crop the helmet path only, never redraw it.
+
 - [ ] **Step 4: Verify**
 
 ```bash
