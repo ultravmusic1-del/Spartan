@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a static, catalogue-style marketing site for Spartan presenting 74 products across 15 categories in two divisions, with a multi-product enquiry basket, architected so a database-backed admin can replace the JSON data source by changing one module.
+**Goal:** Build a static, catalogue-style marketing site for Spartan presenting 72 products across 15 categories in two divisions, with a multi-product enquiry basket, architected so a database-backed admin can replace the JSON data source by changing one module.
 
 **Architecture:** Astro 5 static output. Product data lives in JSON, is validated by Zod through Astro's Content Layer, and is read **exclusively** through a repository module (`src/lib/catalog.ts`) — that indirection is the seam a future admin plugs into. Interactive pieces (mobile nav, enquiry basket, catalogue filters) are Preact islands; everything else ships zero JS. The enquiry endpoint is the only server-rendered route.
 
@@ -36,7 +36,7 @@ src/
   data/
     divisions.json              2 records
     categories.json             15 records
-    products.json               74 records
+    products.json               72 records
   content.config.ts             Content Layer collections + Zod schemas
   lib/
     catalog.ts                  THE SEAM — every content read goes through here
@@ -607,6 +607,28 @@ EOF
 **Files:**
 - Create: `src/content.config.ts`, `src/data/divisions.json`, `src/data/categories.json`, `src/data/products.json`
 
+**True product distribution, counted from the extracted data (72 total).** Use these; earlier drafts of this plan said 74, which double-counted two "RESISTANCE SPECIFICATIONS" table headings as products.
+
+| Category | Count | Brochure source |
+|---|---|---|
+| Lighting | 10 | p4 (7) + p5 (3) |
+| Fans & Ventilation | 4 | p10 |
+| Water Pumps & Controls | 3 | p11 — Pumps, FS-15 Float Switch, PC-10 Controller |
+| Insect Killers | 1 | p6 |
+| Cables | 1 | p8 |
+| Electrical Accessories | 0 | — expanding |
+| Head & Face Protection | 7 | p15 |
+| Eye Protection | 6 | p13 |
+| Hearing Protection | 6 | p14 |
+| Hand Protection | 11 | p16 (4) + p17 (4) + p18 (3) |
+| Safety Footwear | 8 | p20 (6) + p21 (2) |
+| Harnesses & Fall Arrest | 2 | p19 — Full Body Harness, Lightweight Web Straps |
+| Body Protection | 4 | p19 — Safety Vests ×2, Welding Apron, Disposable Coverall |
+| Workwear | 9 | p23 (6) + p24 (3) |
+| Spill Control | 0 | — expanding |
+
+Electricals division total: **19**. Safety division total: **53**.
+
 - [ ] **Step 1: Author divisions.json**
 
 ```json
@@ -641,7 +663,7 @@ EOF
   { "id": "pumps", "slug": "water-pumps", "name": "Water Pumps & Controls", "divisionId": "electricals", "description": "Die-cast aluminium pumps with thermal overload protection, controllers and float switches.", "heroProductSlug": "pumps", "status": "active", "order": 3 },
   { "id": "insect", "slug": "insect-killers", "name": "Insect Killers", "divisionId": "electricals", "description": "Chemical-free ABS fire-retardant insect control, 20–40W.", "heroProductSlug": "insect-killer", "status": "active", "order": 4 },
   { "id": "cables", "slug": "cables", "name": "Cables", "divisionId": "electricals", "description": "Network and installation cable.", "heroProductSlug": "premium-network-cable", "status": "active", "order": 5 },
-  { "id": "accessories", "slug": "electrical-accessories", "name": "Electrical Accessories", "divisionId": "electricals", "description": "Pump controllers, float switches and installation essentials.", "heroProductSlug": "pc-10-automatic-pump-controller", "status": "active", "order": 6 },
+  { "id": "accessories", "slug": "electrical-accessories", "name": "Electrical Accessories", "divisionId": "electricals", "description": "Our electrical accessories range is expanding. Contact us for current availability and lead times.", "heroProductSlug": null, "status": "expanding", "order": 6 },
   { "id": "head", "slug": "head-face-protection", "name": "Head & Face Protection", "divisionId": "safety", "description": "HDPE helmets with 6-point ratchet suspension, visors, brow guards and welding masks.", "heroProductSlug": "safety-helmets", "status": "active", "order": 7 },
   { "id": "eye", "slug": "eye-protection", "name": "Eye Protection", "divisionId": "safety", "description": "Polycarbonate goggles, glasses, over-glasses and welding goggles.", "heroProductSlug": "safety-goggles-indirect-vent", "status": "active", "order": 8 },
   { "id": "hearing", "slug": "hearing-protection", "name": "Hearing Protection", "divisionId": "safety", "description": "Ear plugs and muffs up to SNR 37dB / NRR 32dB.", "heroProductSlug": "ear-muff-nrr-25db", "status": "active", "order": 9 },
@@ -672,7 +694,7 @@ Run it, then verify:
 node -e "const p=require('./src/data/products.json');console.log(p.length, new Set(p.map(x=>x.slug)).size)"
 ```
 
-Expected: `74 74`.
+Expected: `72 72`.
 
 - [ ] **Step 4: Write the failing schema test**
 
@@ -849,8 +871,8 @@ describe('catalog repository', () => {
     expect(c.every((x) => x.divisionId === 'electricals')).toBe(true);
   });
 
-  it('returns all 74 products', async () => {
-    expect(await getProducts()).toHaveLength(74);
+  it('returns all 72 products', async () => {
+    expect(await getProducts()).toHaveLength(72);
   });
 
   it('filters products by category', async () => {
@@ -860,7 +882,7 @@ describe('catalog repository', () => {
 
   it('filters products by division across its categories', async () => {
     const p = await getProducts({ divisionId: 'electricals' });
-    expect(p.length).toBe(22);
+    expect(p.length).toBe(19);
   });
 
   it('computes productCount on categories', async () => {
@@ -1401,7 +1423,7 @@ import EnquiryCta from '../components/sections/EnquiryCta.astro';
 ---
 <BaseLayout
   title="Spartan — Industrial Electrical & Safety Solutions"
-  description="Lighting, ventilation and water management alongside certified personal protective equipment. 74 products across two divisions, supplied to contractors, facilities teams and distributors."
+  description="Lighting, ventilation and water management alongside certified personal protective equipment. 72 products across two divisions, supplied to contractors, facilities teams and distributors."
 >
   <main id="main">
     <Hero />
@@ -1487,7 +1509,7 @@ Two-column layout mirroring the Spotlight section: image left on a radial-lit pa
 
 - [ ] **Step 3: Build catalogue/index.astro with filters**
 
-Server-renders all 74 products and all 15 categories. `CatalogueFilters.tsx` is a `client:idle` island that filters the already-rendered DOM by division and category via `data-` attributes — so the page is complete and indexable without JS, and filtering costs no round trip.
+Server-renders all 72 products and all 15 categories. `CatalogueFilters.tsx` is a `client:idle` island that filters the already-rendered DOM by division and category via `data-` attributes — so the page is complete and indexable without JS, and filtering costs no round trip.
 
 - [ ] **Step 4: Verify every route builds**
 
@@ -1495,13 +1517,13 @@ Server-renders all 74 products and all 15 categories. `CatalogueFilters.tsx` is 
 npm run build
 ```
 
-Expected: 15 category pages and 74 product pages emitted. Confirm:
+Expected: 15 category pages and 72 product pages emitted. Confirm:
 
 ```bash
 ls dist/products | wc -l
 ```
 
-Expected: `74`.
+Expected: `72`.
 
 - [ ] **Step 5: Commit**
 
@@ -2165,7 +2187,7 @@ EOF
 Run before declaring the build complete. Every line needs observed output, not assumption.
 
 - [ ] `npm run test` — all Vitest suites pass
-- [ ] `npm run build` — clean build; 74 product pages and 15 category pages emitted
+- [ ] `npm run build` — clean build; 72 product pages and 15 category pages emitted
 - [ ] `npx astro check` — no type errors
 - [ ] `npx playwright test` — all e2e and axe specs pass
 - [ ] Lighthouse ≥ 95 on Performance, Accessibility, Best Practices, SEO for three sampled pages

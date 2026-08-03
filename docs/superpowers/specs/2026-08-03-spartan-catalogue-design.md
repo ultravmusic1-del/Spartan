@@ -8,13 +8,13 @@
 
 ## 1. Goal
 
-A catalogue-style marketing website for **Spartan**, a brand with two divisions — Spartan Electricals and Spartan Safety. The site presents ~74 products across 15 categories, lets trade buyers assemble a multi-product enquiry and submit it as a single RFQ, and is architected so a **CMS-backed admin dashboard can be added later without rewriting page code**.
+A catalogue-style marketing website for **Spartan**, a brand with two divisions — Spartan Electricals and Spartan Safety. The site presents 72 products across 15 categories, lets trade buyers assemble a multi-product enquiry and submit it as a single RFQ, and is architected so a **CMS-backed admin dashboard can be added later without rewriting page code**.
 
 This is a catalogue and lead-generation site. It is **not** an e-commerce store: no prices, no cart, no checkout, no user accounts.
 
 ### Success criteria
 
-1. All 74 brochure products are browsable, filterable and individually addressable by URL.
+1. All 72 brochure products are browsable, filterable and individually addressable by URL.
 2. A visitor can add products from anywhere in the catalogue to an enquiry list and submit it in one action.
 3. Lighthouse ≥ 95 for Performance, Accessibility, Best Practices and SEO on Home, a category page and a product page.
 4. Swapping the product data source from local JSON to a database requires changing **one module** (`src/lib/catalog.ts`) and no page or component files.
@@ -86,7 +86,7 @@ Two official lockups exist, both extracted as **vector** from the brochure. Neit
 /safety                 Division landing — Spartan Safety
 /catalogue              All products, filterable
 /catalogue/[category]   Category listing        (15 pages)
-/products/[slug]        Product detail          (74 pages)
+/products/[slug]        Product detail          (72 pages)
 /why-spartan            Why Spartan
 /industries             Industries We Serve
 /contact                Contact Us
@@ -156,7 +156,7 @@ Per the approved decision, gap categories are built but honestly labelled. **No 
 |---|---|---|
 | **Spill Control** | Zero brochure content | Category page exists with `status: 'expanding'`, an explanatory empty state ("Our spill control range is expanding — contact us for current availability") and a direct enquiry CTA. Appears in nav and grids with an "Range expanding" badge instead of a product count. |
 | **Cables** | 1 product (CAT.6 UTP) | Normal category page; genuinely one product. |
-| **Electrical Accessories** | 2 products | Normal category page. |
+| **Electrical Accessories** | Zero. The brochure's only controls (PC-10 controller, FS-15 float switch) belong to the "Water Pumping & Flow Control" section and stay there — splitting a brochure section across two site categories would invent structure. | Same treatment as Spill Control: `status: 'expanding'`, explanatory empty state, enquiry CTA. |
 
 Brochure page 23 carries an internal note that shirt specs are pending. The two affected products (Fire Retardant Shirts, Cotton Pants & Shirts) publish with the specs that **are** stated; no fabricated fields.
 
@@ -212,7 +212,7 @@ The page alternates dark and light to create pace:
 2. **About** — `panel`. Two columns: copy + stat strip left, product cutout right. Chevron bleeding off the right edge.
 3. **What we supply** — light. Centred eyebrow + heading, then a 3×2 grid of white cards: red line icon, red heading, grey body, outlined pill "Read More ›". Hairline `#E4E4E7` grid, no gaps.
 4. **Trust band** — full-bleed red. Uppercase lead + outlined industry chips. Chevrons at both ends at 9% white.
-5. **Categories** — dark. 4×4 grid: 15 category tiles + a solid-red "74 / View every product" tile.
+5. **Categories** — dark. 4×4 grid: 15 category tiles + a solid-red "72 / View every product" tile.
 6. **Product spotlight** — `panel`. Radial-lit product cutout left, spec table + EN 388 table right.
 7. **FAQ** — light. `<details>` accordion, circular +/– affordance that inverts to red when open.
 8. **Enquiry CTA** — dark. Copy left, compact form card right.
