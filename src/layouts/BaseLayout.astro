@@ -27,6 +27,35 @@ const { title, description, darkHeader = true } = Astro.props;
     <link rel="preload" href="/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/inter-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    {/*
+      Two flags, both needed before the first paint.
+
+      `data-js` marks the document as scripted. Everything that cannot work
+      without script — the enquiry buttons, the catalogue filter bar — stays
+      collapsed until it is set, so a visitor without JavaScript is never shown
+      a control that does nothing. Setting it here rather than per page means it
+      is true from the first byte of <body> onwards.
+
+      `data-enquiry` says a returning buyer already has a basket. The header's
+      count badge is an island: at `client:idle` it appears well after paint,
+      and the header would visibly jump. Reading the key here reserves its 44px
+      square before anything is drawn instead. The key is duplicated from
+      src/stores/enquiry.ts on purpose — importing the store here would ship it
+      twice and defeat the point — so a version bump there must be echoed here.
+    */}
+    <script is:inline>
+      (function () {
+        var d = document.documentElement;
+        d.dataset.js = '1';
+        try {
+          var raw = localStorage.getItem('spartan.enquiry.v1');
+          if (raw && JSON.parse(raw).length) d.dataset.enquiry = '1';
+        } catch (e) {
+          /* Private mode, a full quota or a corrupt basket: no reservation,
+             which costs a small shift and nothing else. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <a href="#main" class="skip-link sr-only focus:not-sr-only">Skip to content</a>

@@ -1,0 +1,517 @@
+/* Enquiry islands — EnquiryButton, EnquiryBadge, EnquiryDrawer.
+ *
+ * Astro's scoped styles never reach the DOM a framework component renders, so
+ * island CSS has to be global and namespaced. Elsewhere on this site that block
+ * lives in the .astro file that renders the island (Header.astro for the mobile
+ * nav, catalogue/index.astro for the filter bar). The enquiry button breaks that
+ * arrangement: it is rendered by ProductCard *and* by the product detail page,
+ * and a category with a single product renders no ProductCard at all — so
+ * hanging its styles off either one leaves a page where the button is unstyled.
+ * A stylesheet imported by global.css is the only place that is true everywhere.
+ *
+ * Every surface here is dark, so --color-red is correct for text, icons and
+ * borders. The two red *surfaces* carrying white text — the count pip and the
+ * solid add button — use --color-red-fill (4.91:1) and --color-red-dark on
+ * hover (6.52:1). Brand red behind white would measure 4.30:1 and fail AA.
+ *
+ * These rules are unlayered, so they beat Tailwind's @layer utilities. Nothing
+ * here should ever be fought with a utility class.
+ */
+
+/* Visually hidden, still announced. Local rather than Tailwind's `sr-only`
+   because a utility would sit in @layer utilities and lose to any unlayered
+   rule that happened to set position or size on the same element. */
+.eq-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- button --- */
+
+.eq-add-wrap {
+  display: flex;
+}
+
+/* Not the `hidden` attribute: Tailwind 4's preflight ships
+   `[hidden]:where(:not([hidden=until-found])){display:none!important}`, which no
+   ordinary author rule outranks, so `hidden` can be switched off but never made
+   to hold its space (handoff.md section 7).
+
+   Two states, and they are different on purpose. Without JavaScript `data-js` is
+   never set and the button collapses entirely — the basket genuinely needs
+   script, and a dead "+ Enquire" would be a promise the page cannot keep. With
+   JavaScript it keeps the exact box it will occupy and only waits to become
+   operable, so revealing it shifts nothing. */
+.eq-add-wrap--pending {
+  display: none;
+}
+
+html[data-js] .eq-add-wrap--pending {
+  display: flex;
+  visibility: hidden;
+}
+
+.eq-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* WCAG 2.5.5 minimum touch target — do not reduce. */
+  min-height: 44px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.eq-add__icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* In a ProductCard: full width of the card, outline, sitting under the specs. */
+.eq-add--card {
+  width: 100%;
+  padding: 11px 16px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #fff;
+  font-size: 11.5px;
+}
+
+.eq-add--card:hover {
+  border-color: var(--color-red);
+  background: color-mix(in srgb, var(--color-red) 12%, transparent);
+}
+
+.eq-add--card.eq-add--done {
+  border-color: var(--color-red);
+  background: color-mix(in srgb, var(--color-red) 16%, transparent);
+}
+
+/* On a product detail page: the mockup's solid "ADD TO ENQUIRY", matching
+   SolidButton's metrics so the row of actions reads as one set.
+   The min-width absorbs the label change so the buttons beside it do not
+   shuffle when the confirmation appears. */
+.eq-add--solid {
+  min-width: 218px;
+  padding: 14px 26px;
+  background: var(--color-red-fill);
+  border: none;
+  color: #fff;
+  font-size: 13.5px;
+  letter-spacing: 0.03em;
+}
+
+.eq-add--solid:hover {
+  background: var(--color-red-dark);
+}
+
+.eq-add--solid.eq-add--done {
+  background: var(--color-red-dark);
+}
+
+/* ----------------------------------------------------------------- badge --- */
+
+/* The header slot. It is always in the markup, because the badge island's live
+   region has to have a home at every count including zero — but an empty basket
+   must not leave a hole in the nav.
+
+   `display: contents` is what makes that work. The nav is a flex row with a
+   40px gap: a zero-width wrapper would still be a flex item and would still
+   spend one of those gaps, pushing the phone number 40px off the right edge on
+   every page with an empty basket. With the wrapper and the island marker both
+   out of the box tree, the only descendant left at zero is the live region,
+   which is absolutely positioned and therefore not a flex item at all. At a
+   count above zero the badge button becomes the flex item directly.
+
+   `data-enquiry` is set before first paint by the inline script in BaseLayout —
+   the only way to know a returning buyer has a basket without waiting for the
+   island to hydrate. It restores a real box and reserves the 44px square, so
+   the badge appears into space that already exists instead of jerking the
+   header sideways at idle. The badge is a fixed 44x44 whatever the count (the
+   pip is out of flow), so the reservation is exact.
+
+   Do not copy `display: contents` onto a `client:visible` island's marker
+   without checking: an element with no box has nothing for an IntersectionObserver
+   to observe. Astro works around it by observing the marker's children, but
+   that is a detail of Astro's directive, not a general guarantee. */
+.eq-slot,
+.eq-slot > astro-island {
+  display: contents;
+}
+
+html[data-enquiry] .eq-slot > astro-island {
+  display: flex;
+  align-items: center;
+  min-width: 44px;
+}
+
+.eq-badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* WCAG 2.5.5 minimum touch target — do not reduce. */
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out);
+}
+
+.eq-badge:hover {
+  border-color: var(--color-red);
+  background: color-mix(in srgb, var(--color-red) 12%, transparent);
+}
+
+.eq-badge__icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Out of flow so three digits cannot change the button's box. */
+.eq-badge__pip {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  /* A red surface carrying white text, so the fill token, not brand red. */
+  background: var(--color-red-fill);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------------- drawer --- */
+
+.eq-drawer {
+  position: fixed;
+  inset: 0;
+  /* Above the mobile nav panel (60) and the header (25). */
+  z-index: 70;
+}
+
+.eq-drawer__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.66);
+  animation: eq-fade var(--dur-base) var(--ease-out);
+}
+
+.eq-drawer__panel {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: flex;
+  flex-direction: column;
+  /* Never wider than the viewport: at 375px this is exactly 375px and the page
+     behind it gains no horizontal scroll. */
+  width: min(420px, 100%);
+  background: var(--color-panel);
+  border-left: 1px solid var(--color-line);
+  animation: eq-slide var(--dur-base) var(--ease-out);
+}
+
+@keyframes eq-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes eq-slide {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.eq-drawer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 16px 16px 16px 24px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.eq-drawer__title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.eq-drawer__close {
+  display: grid;
+  place-items: center;
+  /* WCAG 2.5.5 minimum touch target — do not reduce. */
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out);
+}
+
+.eq-drawer__close:hover {
+  border-color: var(--color-red);
+  background: color-mix(in srgb, var(--color-red) 12%, transparent);
+}
+
+.eq-drawer__close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.eq-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.eq-list {
+  list-style: none;
+}
+
+.eq-item {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.eq-item__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eq-item__name {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fff;
+}
+
+.eq-item__remove {
+  display: grid;
+  place-items: center;
+  /* WCAG 2.5.5 minimum touch target — do not reduce. The negative margin pulls
+     the visual weight back without shrinking the hit area. */
+  width: 44px;
+  height: 44px;
+  margin: -11px -10px 0 0;
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  color: var(--color-grey);
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.eq-item__remove:hover {
+  color: var(--color-red);
+}
+
+.eq-item__remove svg {
+  width: 16px;
+  height: 16px;
+}
+
+.eq-qty {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  width: fit-content;
+  border: 1px solid var(--color-line);
+}
+
+.eq-qty__step {
+  display: grid;
+  place-items: center;
+  /* WCAG 2.5.5 minimum touch target — do not reduce. */
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.eq-qty__step:hover {
+  background: color-mix(in srgb, var(--color-red) 14%, transparent);
+  color: var(--color-red);
+}
+
+.eq-qty__step svg {
+  width: 16px;
+  height: 16px;
+}
+
+.eq-qty__field {
+  width: 58px;
+  height: 44px;
+  padding: 0 4px;
+  background: #0b0b0e;
+  border: 0;
+  border-inline: 1px solid var(--color-line);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+  /* The native spinners are a 12px target sitting beside two 44px ones. The
+     explicit steppers replace them; min/max and the numeric keypad stay. */
+  appearance: textfield;
+}
+
+.eq-qty__field::-webkit-outer-spin-button,
+.eq-qty__field::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.eq-item__note {
+  display: block;
+  margin-top: 12px;
+}
+
+.eq-item__field {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: #0b0b0e;
+  border: 1px solid var(--color-line);
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #fff;
+  resize: vertical;
+}
+
+.eq-item__field::placeholder {
+  color: var(--color-grey);
+}
+
+.eq-item__field:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.eq-empty {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.eq-empty__title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.eq-empty__note {
+  max-width: 34ch;
+  margin: 10px auto 0;
+  font-size: 13.5px;
+  color: var(--color-grey-lt);
+}
+
+.eq-empty__link {
+  display: inline-flex;
+  align-items: center;
+  /* WCAG 2.5.5 minimum touch target — do not reduce. */
+  min-height: 44px;
+  margin-top: 18px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--color-red);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.eq-empty__link:hover {
+  color: var(--color-red);
+}
+
+.eq-drawer__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-black);
+}
+
+.eq-drawer__count {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-grey-lt);
+}
+
+.eq-drawer__review {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* WCAG 2.5.5 minimum touch target — do not reduce. */
+  min-height: 44px;
+  padding: 12px 22px;
+  /* A red surface carrying white text, so the fill token, not brand red. */
+  background: var(--color-red-fill);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+.eq-drawer__review:hover {
+  background: var(--color-red-dark);
+}

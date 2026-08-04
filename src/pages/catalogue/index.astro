@@ -80,12 +80,10 @@ const rows = products.map((product) => {
   darkHeader={false}
 >
   <main id="main">
-    {/* Marks the document as scripted before the filter bar is painted, so the
-        bar can hold its space while it waits to hydrate without leaving a blank
-        gap for anyone browsing without JavaScript. See the global styles at the
-        foot of this file. */}
-    <script is:inline>document.documentElement.dataset.js = '1';</script>
-
+    {/* `data-js` — which the filter bar's pending state below depends on — is
+        set by BaseLayout's inline script, in <head> and so before this page is
+        parsed at all. It used to be set here; it is needed on every page now
+        that the enquiry islands exist. */}
     <section class="cat">
       <div class="wrap">
         <SectionHeading

@@ -5,8 +5,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/catalog/Breadcrumbs.astro';
 import Chevron from '../../components/primitives/Chevron.astro';
 import Eyebrow from '../../components/primitives/Eyebrow.astro';
-import SolidButton from '../../components/primitives/SolidButton.astro';
 import PillButton from '../../components/primitives/PillButton.astro';
+import EnquiryButton from '../../components/enquiry/EnquiryButton.tsx';
 import SpecTable from '../../components/catalog/SpecTable.astro';
 import En388Table from '../../components/catalog/En388Table.astro';
 import ProductGrid from '../../components/catalog/ProductGrid.astro';
@@ -22,8 +22,8 @@ import { getCategories, getProducts, getRelatedProducts } from '../../lib/catalo
  * sentence, no adjective and no inferred benefit, because every one of those
  * would be a claim about safety equipment that the brochure does not make.
  *
- * "Add to enquiry" is deliberately absent: that island is Task 13's. Both
- * actions here go to real destinations rather than sit dead.
+ * "Add to enquiry" is the enquiry island; the two links beside it are real
+ * destinations, so the page still has somewhere to go without JavaScript.
  */
 export async function getStaticPaths() {
   const products = await getProducts();
@@ -130,9 +130,13 @@ const hasUntested = product.en388
             }
 
             <div class="pd__actions">
-              {/* Task 13 owns "Add to enquiry". Until it exists both actions go
-                  somewhere real rather than sit dead. */}
-              <SolidButton href="/enquiry">Request a quote</SolidButton>
+              {/* The mockup's spotlight CTA. It is the primary action here, so
+                  "Request a quote" steps down to an outline: two solid red
+                  buttons side by side would read as one control split in half.
+                  That link stays because it works without JavaScript, which the
+                  island cannot. */}
+              <EnquiryButton client:visible slug={product.slug} name={fullName} variant="solid" />
+              <PillButton href="/enquiry">Request a quote</PillButton>
               <PillButton href="/contact">Ask about this product</PillButton>
             </div>
           </div>

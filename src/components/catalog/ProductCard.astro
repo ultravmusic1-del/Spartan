@@ -3,6 +3,7 @@ import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import type { Product } from '../../lib/catalog';
 import { getCategories } from '../../lib/catalog';
+import EnquiryButton from '../enquiry/EnquiryButton.tsx';
 
 /**
  * ProductCard — one product in a grid. Derived from the mockup's `.cats a`
@@ -10,9 +11,14 @@ import { getCategories } from '../../lib/catalog';
  * product card of its own.
  *
  * The whole card is one link so the hit area is the card and the focus ring
- * outlines it. The "Add to enquiry" button (Task 13) must NOT be nested inside
- * that link, so it goes in the `action` slot below it — rendered only when a
- * caller fills it, so the card never shows a reserved empty strip.
+ * outlines it. The enquiry button must NOT be nested inside that link — a
+ * button inside an anchor is invalid, and every click on it would also follow
+ * the link — so it goes in the `action` slot below it.
+ *
+ * That slot now defaults to the enquiry island rather than being empty: adding
+ * from the grid is the whole point of the grid, and leaving it to each caller
+ * would mean one forgotten page where products cannot be added at all. A caller
+ * that wants something else still overrides the slot.
  *
  * Category name is read through `catalog.ts` — the content seam — rather than
  * taken as a prop, so the card's API stays `product` + `class` and callers
@@ -59,7 +65,9 @@ const cardSpecs = [
   ...product.specs.filter((s) => s.label === null),
 ].slice(0, 3);
 
-const hasAction = Astro.slots.has('action');
+// 16 products share a name with a sibling, so the basket line and the button's
+// accessible name both need the variant label or two entries read as identical.
+const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}` : product.name;
 ---
 
 <article class:list={['card', cls]}>
@@ -104,14 +112,13 @@ const hasAction = Astro.slots.has('action');
     }
   </a>
 
-  {/* Task 13 fills this with the enquiry island. */}
-  {
-    hasAction && (
-      <div class="card__actions">
-        <slot name="action" />
-      </div>
-    )
-  }
+  <div class="card__actions">
+    <slot name="action">
+      {/* `client:visible`, so a 72-card catalogue page does not hydrate 72
+          islands before any of them is scrolled to. */}
+      <EnquiryButton client:visible slug={product.slug} name={fullName} />
+    </slot>
+  </div>
 </article>
 
 <style>

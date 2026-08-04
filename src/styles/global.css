@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 @import './fonts.css';
 @import './tokens.css';
+/* The enquiry islands render outside every Astro scope and appear on pages that
+   share no single component, so their CSS cannot hang off one .astro file. */
+@import './enquiry.css';
 
 @theme inline {
   --color-brand: var(--color-red);

@@ -27,6 +27,8 @@ import site from '../../data/site.json';
 import logoLight from '../../assets/brand/spartan-logo-light.svg';
 import UtilityBar from './UtilityBar.astro';
 import MobileNav, { type NavItem } from './MobileNav.tsx';
+import EnquiryBadge from '../enquiry/EnquiryBadge.tsx';
+import EnquiryDrawer from '../enquiry/EnquiryDrawer.tsx';
 
 interface Props {
   mode?: 'transparent' | 'solid';
@@ -77,11 +79,23 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
     <a class="nav__tel" href={telHref}>{site.phone}</a>
 
+    {/* The basket count. `.eq-slot` is styled by src/styles/enquiry.css, not
+        here: it holds a Preact island, and the rules that reserve its width key
+        off an attribute on <html> that no scoped selector can reach. */}
+    <div class="eq-slot">
+      <EnquiryBadge client:idle />
+    </div>
+
     <div class="nav__mobile">
       <MobileNav client:media="(max-width: 1080px)" items={items} current={current} />
     </div>
   </div>
 </header>
+
+{/* The drawer the badge opens. It sits here rather than in BaseLayout so the
+    trigger and the panel it controls stay in one component, and it renders
+    nothing at all until it is opened. */}
+<EnquiryDrawer client:idle />
 
 <style>
   .site-header {
@@ -207,8 +221,13 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
       display: none;
     }
 
-    .nav__mobile {
-      margin-left: auto;
+    /* With the phone number gone there can be one trailing item or two,
+       depending on whether the enquiry badge has anything to show. Pushing from
+       the logo clusters whatever is there against the right edge; a
+       `margin-left: auto` on the trigger only worked while it was the only one,
+       and would have split the free space once the badge appeared beside it. */
+    .nav__logo {
+      margin-right: auto;
     }
   }
 </style>
