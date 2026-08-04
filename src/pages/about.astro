@@ -1,0 +1,420 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/primitives/SectionHeading.astro';
+import Chevron from '../components/primitives/Chevron.astro';
+import Eyebrow from '../components/primitives/Eyebrow.astro';
+import SolidButton from '../components/primitives/SolidButton.astro';
+import PillButton from '../components/primitives/PillButton.astro';
+/**
+ * Three of the six brochure photographs. `cover.jpg` is deliberately NOT one of
+ * them: the cover was a text overlay on a plain field, so with the text removed
+ * it is a completely blank white image (mean RGB 255,255,255) and rendered as
+ * an empty box. `lighting.jpg` is also skipped here — the lower half of that
+ * plate is the brochure's own white-and-red divider graphic, which shows as a
+ * white band under any landscape crop.
+ *
+ * The two division cards use the same photograph as each division's own landing
+ * hero, so the pages read as the same place.
+ */
+import storyImage from '../assets/hero/workwear.jpg';
+import electricalImage from '../assets/hero/electrical.jpg';
+import safetyImage from '../assets/hero/safety.jpg';
+import site from '../data/site.json';
+import { getCategories, getDivisions, getProducts } from '../lib/catalog';
+
+/**
+ * About — the brochure's own story and nothing else.
+ *
+ * EVERY FACTUAL STATEMENT ON THIS PAGE IS SOURCED. The three story paragraphs
+ * are the client's own About text from the brochure, lightly re-punctuated and
+ * not added to. The founding year comes from site.json. The manufacturing base
+ * is the brochure's "India and China". Every count — products, categories,
+ * divisions, per-division totals — is derived from catalog.ts at build time.
+ *
+ * Deliberately absent, because none of it is documented anywhere: staff
+ * numbers, factory sizes, export volumes, client names, certifications, years
+ * of experience beyond the founding year, awards and memberships. If this page
+ * feels short, that is the honest length.
+ *
+ * No hero photograph behind the header, so `darkHeader={false}` gives the solid
+ * sticky header instead of the transparent overlay.
+ */
+const [divisions, categories, products] = await Promise.all([
+  getDivisions(),
+  getCategories(),
+  getProducts(),
+]);
+
+const divisionPhotos: Record<string, ImageMetadata> = {
+  electricals: electricalImage,
+  safety: safetyImage,
+};
+
+const divisionRows = await Promise.all(
+  divisions.map(async (division) => ({
+    division,
+    photo: divisionPhotos[division.slug],
+    categories: (await getCategories({ divisionId: division.id })).length,
+    products: (await getProducts({ divisionId: division.id })).length,
+  })),
+);
+
+const stats = [
+  { value: String(site.established), label: 'Established' },
+  { value: String(divisions.length), label: 'Divisions' },
+  { value: String(categories.length), label: 'Categories' },
+  { value: String(products.length), label: 'Products' },
+];
+
+const expanding = categories.filter((c) => c.status === 'expanding').length;
+---
+
+<BaseLayout
+  title="About Spartan — established 2015"
+  description={`Spartan is a growing and trusted brand established in ${site.established}, supplying ${products.length} products across ${categories.length} categories in two divisions, manufactured across facilities in India and China.`}
+  darkHeader={false}
+>
+  <main id="main">
+    <section class="ab">
+      <div class="wrap">
+        <SectionHeading
+          level="h1"
+          eyebrow="About Spartan"
+          title="A growing and trusted brand."
+          lede={`Established in ${site.established}, supplying ${products.length} products across ${categories.length} categories in two divisions.`}
+        />
+      </div>
+    </section>
+
+    <section class="st">
+      <Chevron class="right-[-70px] bottom-[-60px] w-[420px] h-[500px]" />
+
+      <div class="wrap st__inner">
+        <div>
+          <h2 class="st__title">Our story</h2>
+
+          {/* `{' '}` is load-bearing: Astro strips the whitespace between a
+              newline and an expression, so "established in\n{site.established}"
+              renders as "in2015". */}
+          <p class="st__body">
+            Spartan Lighting &amp; Electrical Products is a growing and trusted brand established in{
+              ' '
+            }{site.established}, committed to delivering reliable, high-quality solutions for the
+            electrical and lighting industry.
+          </p>
+          <p class="st__body">
+            The company focuses on providing durable, efficient and cost-effective products that
+            meet the needs of modern residential, commercial and industrial markets.
+          </p>
+          <p class="st__body">
+            Our range is manufactured across facilities in India and China, combining advanced
+            technology with strict quality standards — ensuring consistent performance, competitive
+            pricing and a wide variety of products.
+          </p>
+
+          <dl class="st__stats">
+            {
+              stats.map((stat) => (
+                <div class="st__stat">
+                  <dt>{stat.label}</dt>
+                  <dd>{stat.value}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </div>
+
+        <div class="st__vis">
+          <Image
+            src={storyImage}
+            alt=""
+            widths={[420, 840, 1225]}
+            sizes="(min-width: 821px) 44vw, 92vw"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="dv on-light">
+      <div class="wrap">
+        <SectionHeading
+          onLight
+          eyebrow="Structure"
+          title="Two divisions, one catalogue."
+          lede={`The range is organised into two divisions covering ${categories.length} categories in all. ${
+            expanding === 1
+              ? 'One of those categories is a range still expanding, with no products listed yet.'
+              : `${expanding} of those categories are ranges still expanding, with no products listed yet.`
+          }`}
+        />
+
+        <div class="dv__grid">
+          {
+            divisionRows.map(({ division, photo, categories: catCount, products: prodCount }) => (
+              <article class="dv__card">
+                <div class="dv__media">
+                  {photo && (
+                    <Image
+                      src={photo}
+                      alt=""
+                      widths={[420, 840]}
+                      sizes="(min-width: 821px) 46vw, 92vw"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                </div>
+                <div class="dv__body">
+                  <h3 class="dv__name">{division.name}</h3>
+                  <p class="dv__blurb">{division.blurb}</p>
+                  <p class="dv__count">
+                    {prodCount} products · {catCount} categories
+                  </p>
+                  <PillButton href={`/${division.slug}`} onLight>
+                    Explore {division.name}
+                  </PillButton>
+                </div>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="ac">
+      <Chevron class="left-[-60px] top-[-40px] w-[380px] h-[440px]" />
+
+      <div class="wrap ac__inner">
+        <Eyebrow>Next</Eyebrow>
+        <h2 class="ac__title">See the range for yourself.</h2>
+        <p class="ac__body">
+          Every product page carries the specifications exactly as they are printed in the Spartan
+          brochure — materials, sizes and ratings, and nothing that is not stated there.
+        </p>
+        <div class="ac__actions">
+          <SolidButton href="/catalogue">Browse the catalogue</SolidButton>
+          <PillButton href="/why-spartan">Why Spartan</PillButton>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .ab {
+    padding: 56px 0 0;
+  }
+
+  .st {
+    position: relative;
+    padding: 72px 0 104px;
+    overflow: hidden;
+  }
+
+  .st__inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .st__title {
+    margin-bottom: 22px;
+    font-size: clamp(26px, 3.2vw, 38px);
+    letter-spacing: -0.026em;
+  }
+
+  .st__body {
+    max-width: 52ch;
+    margin-bottom: 16px;
+    font-size: 15px;
+    color: var(--color-grey-lt);
+  }
+
+  /* Hairline strip: 1px gaps over --color-line, so the rules between cells are
+     the container showing through rather than doubled borders. */
+  .st__stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    margin-top: 34px;
+    background: var(--color-line);
+    border: 1px solid var(--color-line);
+  }
+
+  .st__stat {
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    background: var(--color-black);
+  }
+
+  /* The number reads first but describes the label, so the label is the <dt>
+     and is ordered visually below it. */
+  .st__stat dd {
+    order: -1;
+    font-family: var(--font-display);
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: #fff;
+  }
+
+  .st__stat dt {
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    /* Dark surface only. */
+    color: var(--color-grey);
+  }
+
+  .st__vis {
+    border: 1px solid var(--color-line);
+  }
+
+  .st__vis :global(img) {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: 50% 32%;
+  }
+
+  .dv {
+    padding: 104px 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  .dv__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    margin-top: 52px;
+    background: var(--color-paper-line);
+    border: 1px solid var(--color-paper-line);
+  }
+
+  .dv__card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .dv__media :global(img) {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: 50% 38%;
+  }
+
+  .dv__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 32px;
+  }
+
+  /* 21px at weight 700 is 15.75pt bold, clear of WCAG's 14pt-bold large-text
+     threshold, so the 3:1 bar applies and brand red on white measures 4.30:1.
+     Anything smaller in red on this surface uses --color-red-deep. */
+  .dv__name {
+    font-size: 21px;
+    color: var(--color-red);
+  }
+
+  /* --color-grey is 3.17:1 on light and must never be used here. */
+  .dv__blurb {
+    max-width: 44ch;
+    margin: 12px 0 16px;
+    font-size: 14.5px;
+    color: var(--color-ink-muted);
+  }
+
+  .dv__count {
+    margin-bottom: 20px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    /* 13px-equivalent red on a light surface, so the deep red: 8.40:1. */
+    color: var(--color-red-deep);
+  }
+
+  .ac {
+    position: relative;
+    padding: 96px 0;
+    background: var(--color-panel);
+    overflow: hidden;
+  }
+
+  .ac__inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  .ac__title {
+    margin: 18px 0 14px;
+    font-size: clamp(28px, 3.6vw, 42px);
+    letter-spacing: -0.028em;
+  }
+
+  .ac__body {
+    max-width: 56ch;
+    font-size: 15px;
+    color: var(--color-grey-lt);
+  }
+
+  .ac__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+  }
+
+  @media (max-width: 820px) {
+    .st {
+      padding: 56px 0 80px;
+    }
+
+    .st__inner {
+      grid-template-columns: 1fr;
+      gap: 44px;
+    }
+
+    .st__vis {
+      order: -1;
+    }
+
+    .dv {
+      padding: 80px 0;
+    }
+
+    .dv__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ac {
+      padding: 80px 0;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .st__stats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .dv__body {
+      padding: 26px 22px;
+    }
+  }
+</style>

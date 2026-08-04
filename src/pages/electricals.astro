@@ -1,0 +1,11 @@
+---
+import DivisionPage from '../components/sections/DivisionPage.astro';
+
+/**
+ * `/electricals`. Both division landings are the same page with a different
+ * slug, so the whole thing — document shell included — lives in DivisionPage
+ * and these two files stay thin enough that they cannot drift apart.
+ */
+---
+
+<DivisionPage divisionSlug="electricals" />

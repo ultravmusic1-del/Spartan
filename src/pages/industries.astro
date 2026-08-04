@@ -1,0 +1,303 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/primitives/SectionHeading.astro';
+import Chevron from '../components/primitives/Chevron.astro';
+import Eyebrow from '../components/primitives/Eyebrow.astro';
+import SolidButton from '../components/primitives/SolidButton.astro';
+import PillButton from '../components/primitives/PillButton.astro';
+import site from '../data/site.json';
+import { getCategories } from '../lib/catalog';
+
+/**
+ * Industries — the eight sectors in site.json, each mapped to the Spartan
+ * categories that are genuinely relevant to it.
+ *
+ * TWO DIFFERENT LEVELS OF CONFIDENCE ARE IN PLAY HERE, and the page is written
+ * so they do not get confused with one another:
+ *
+ *   1. The eight industry names are INFERRED FROM THE PRODUCT MIX. The brochure
+ *      states no industries-served list. They are pending client confirmation —
+ *      see the comment rendered into the markup below, handoff.md section 8
+ *      item 5, and the same comment in TrustBand.astro.
+ *   2. The category mapping under each industry IS defensible on its own,
+ *      because it is read off the products: construction needs helmets,
+ *      footwear and fall arrest, and Spartan has helmets, footwear and fall
+ *      arrest.
+ *
+ * So the copy describes which ranges suit which work. It does NOT say Spartan
+ * supplies any of these sectors, name a project or a client, or imply a track
+ * record — none of that is documented.
+ *
+ * Category names, slugs and counts all come through catalog.ts; an id that
+ * stops resolving throws at build time rather than silently dropping a chip.
+ *
+ * No hero photograph, so `darkHeader={false}` gives the solid sticky header.
+ */
+
+/**
+ * Industry -> category ids, in the order they should read. Each line is
+ * justified by products that exist in that category, noted alongside.
+ */
+const MAP: Record<string, { note: string; categoryIds: string[] }> = {
+  Construction: {
+    note: 'Helmets, brow guards and visors overhead; safety shoes and rigger boots underfoot; a full body harness and web straps for work at height, plus gloves and hi-viz vests.',
+    categoryIds: ['head', 'foot', 'harness', 'hand', 'body'],
+  },
+  'Oil & Gas': {
+    note: 'Fire retardant shirts, pants, coveralls and workshop suits, worn with head, eye, hand and foot protection.',
+    categoryIds: ['workwear', 'head', 'eye', 'hand', 'foot'],
+  },
+  Manufacturing: {
+    note: 'Ear muffs and plugs against plant noise, safety glasses and goggles, cut and chemical resistant gloves, and industrial canopy, highbay and floodlighting overhead.',
+    categoryIds: ['hearing', 'eye', 'hand', 'foot', 'lighting'],
+  },
+  Warehousing: {
+    note: 'Industrial lighting through the racking, hi-viz vests around moving plant, safety footwear and general handling gloves.',
+    categoryIds: ['lighting', 'body', 'foot', 'hand'],
+  },
+  Facilities: {
+    note: 'The Electricals division end to end — LED panels, bulbs, tubes and wall lamps, ventilation fans, water pumps with float switch and automatic controller, insect killers and network cable.',
+    categoryIds: ['lighting', 'fans', 'pumps', 'insect', 'cables'],
+  },
+  'Marine & Ports': {
+    note: 'Gum boots and rigger boots for wet decks, rain suits, hi-viz vests, leather rigger gloves and fall arrest for work at height.',
+    categoryIds: ['foot', 'workwear', 'body', 'hand', 'harness'],
+  },
+  Utilities: {
+    note: 'Helmets and visors, a full body harness for pole and tower work, gloves, eye protection and portable floodlighting.',
+    categoryIds: ['head', 'harness', 'hand', 'eye', 'lighting'],
+  },
+  Hospitality: {
+    note: 'Interior and outdoor LED lighting, quiet ventilation fans, chemical-free insect killers and water pumps with automatic control.',
+    categoryIds: ['lighting', 'fans', 'insect', 'pumps'],
+  },
+};
+
+const categories = await getCategories();
+const byId = new Map(categories.map((c) => [c.id, c]));
+
+const industries = (site.industries as string[]).map((name) => {
+  const entry = MAP[name];
+  if (!entry) throw new Error(`[industries] no category mapping for "${name}"`);
+  return {
+    name,
+    note: entry.note,
+    categories: entry.categoryIds.map((id) => {
+      const category = byId.get(id);
+      if (!category) throw new Error(`[industries] "${name}" maps to unknown category "${id}"`);
+      return category;
+    }),
+  };
+});
+---
+
+<BaseLayout
+  title="Industries — which Spartan ranges suit which work"
+  description={`Eight sectors and the Spartan categories relevant to each, from head and fall protection on site to lighting, ventilation and water management in buildings.`}
+  darkHeader={false}
+>
+  <main id="main">
+    <section class="ih">
+      <div class="wrap">
+        <SectionHeading
+          level="h1"
+          eyebrow="Industries"
+          title="Which ranges suit which work."
+          lede="Eight sectors, and the Spartan categories that fit them. Every category listed here is one you can open and read in full — the mapping describes the products, not a claim about past projects."
+        />
+      </div>
+    </section>
+
+    <!--
+      PENDING CLIENT CONFIRMATION: these eight industries are inferred from the
+      product mix (site.json -> industries). The Spartan brochure does not state
+      an industries-served list. Confirm or replace before launch. The category
+      mapping beneath each one is read off the catalogue and stands on its own.
+      See also TrustBand.astro, which carries the same note.
+    -->
+    <section class="ig">
+      <Chevron class="right-[-70px] top-[80px] w-[380px] h-[440px]" />
+
+      <div class="wrap ig__inner">
+        <h2 class="ig__title">Eight sectors, mapped to the catalogue.</h2>
+
+        <ul class="ig__grid">
+          {
+            industries.map((industry) => (
+              <li class="ind">
+                <h3 class="ind__name">{industry.name}</h3>
+                <p class="ind__note">{industry.note}</p>
+                <ul class="ind__cats">
+                  {industry.categories.map((category) => (
+                    <li>
+                      <a href={`/catalogue/${category.slug}`}>
+                        {category.name}
+                        <span class="ind__count">{category.productCount}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="ic">
+      <div class="wrap ic__inner">
+        <Eyebrow>Not listed?</Eyebrow>
+        <h2 class="ic__title">Tell us what the job needs.</h2>
+        <p class="ic__body">
+          The list above is a starting point, not a boundary. Send us the specification you are
+          working to and we will tell you what in the catalogue matches it.
+        </p>
+        <div class="ic__actions">
+          <SolidButton href="/contact">Send an enquiry</SolidButton>
+          <PillButton href="/catalogue">Browse the catalogue</PillButton>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .ih {
+    padding: 56px 0 0;
+  }
+
+  .ig {
+    position: relative;
+    padding: 64px 0 104px;
+    overflow: hidden;
+  }
+
+  .ig__inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  .ig__title {
+    margin-bottom: 32px;
+    font-size: clamp(24px, 3vw, 34px);
+    letter-spacing: -0.024em;
+  }
+
+  /* Hairline grid: the 1px gaps are --color-line showing through, so the rules
+     between cells never double up. */
+  .ig__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    list-style: none;
+    background: var(--color-line);
+    border: 1px solid var(--color-line);
+  }
+
+  .ind {
+    display: flex;
+    flex-direction: column;
+    padding: 32px;
+    background: var(--color-card);
+  }
+
+  .ind__name {
+    font-size: 20px;
+    color: #fff;
+  }
+
+  .ind__note {
+    max-width: 52ch;
+    margin: 12px 0 20px;
+    font-size: 14.5px;
+    color: var(--color-grey-lt);
+  }
+
+  .ind__cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+    list-style: none;
+  }
+
+  .ind__cats a {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    padding: 10px 15px;
+    border: 1px solid var(--color-line);
+    font-size: 13px;
+    color: var(--color-grey-lt);
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out);
+  }
+
+  .ind__cats a:hover {
+    border-color: var(--color-red);
+    color: #fff;
+  }
+
+  /* Red on --color-card measures 4.65:1 and passes AA at any size. */
+  .ind__count {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--color-red);
+  }
+
+  .ic {
+    padding: 0 0 104px;
+  }
+
+  .ic__inner {
+    padding: 48px 40px;
+    border: 1px solid var(--color-line);
+    background: var(--color-panel);
+  }
+
+  .ic__title {
+    margin: 16px 0 12px;
+    font-size: clamp(24px, 3vw, 34px);
+    letter-spacing: -0.026em;
+  }
+
+  .ic__body {
+    max-width: 56ch;
+    font-size: 15px;
+    color: var(--color-grey-lt);
+  }
+
+  .ic__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  @media (max-width: 820px) {
+    .ig {
+      padding: 48px 0 80px;
+    }
+
+    .ig__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ind {
+      padding: 26px 22px;
+    }
+
+    .ic {
+      padding-bottom: 80px;
+    }
+
+    .ic__inner {
+      padding: 32px 24px;
+    }
+  }
+</style>

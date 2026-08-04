@@ -1,0 +1,464 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Chevron from '../primitives/Chevron.astro';
+import Eyebrow from '../primitives/Eyebrow.astro';
+import SolidButton from '../primitives/SolidButton.astro';
+import PillButton from '../primitives/PillButton.astro';
+import CategoryTile from '../catalog/CategoryTile.astro';
+import ProductGrid from '../catalog/ProductGrid.astro';
+import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+
+/**
+ * DivisionPage — the whole of `/electricals` and `/safety`, including the
+ * document shell. The two landings are structurally identical, so they are one
+ * component taking a slug rather than two near-copies that would drift apart:
+ * `src/pages/electricals.astro` and `src/pages/safety.astro` are each three
+ * lines long.
+ *
+ * Every number on the page is counted from the catalogue — product totals,
+ * category totals, per-category counts inside the tiles. Nothing is typed in,
+ * so nothing can go stale. The prose is the division's own `blurb` plus those
+ * counts; there is no claim here about clients, lead times, certifications or
+ * volumes, because none is documented.
+ *
+ * THE SELECTED PRODUCTS ARE NAMED BY SLUG. `product.order` is per-category and
+ * its values repeat across categories (handoff.md section 5), so
+ * `getProducts({ divisionId, limit: n })` returns a semi-arbitrary slice that
+ * would silently over-represent whichever category happens to sort first. The
+ * lists below deliberately span every category in the division that currently
+ * holds products, and an unresolvable slug throws at build time rather than
+ * quietly shortening the grid.
+ */
+interface Props {
+  divisionSlug: string;
+}
+
+const { divisionSlug } = Astro.props;
+
+/**
+ * A representative spread, not a ranking: one or more products from each
+ * category in the division that has any, chosen so the grid shows the range of
+ * the division rather than the depth of its largest category. Both lists are a
+ * multiple of four so the grid fills its rows at every breakpoint.
+ */
+const SELECTED: Record<string, string[]> = {
+  electricals: [
+    'slim-led-panels', // Lighting — interior
+    'led-floodlights', // Lighting — industrial
+    'all-weather-solar-flood-light', // Lighting — outdoor/solar
+    'ventilation-fans-6-8-10-inch', // Fans & Ventilation
+    'pumps', // Water Pumps & Controls — the pump
+    'pc-10-automatic-pump-controller', // Water Pumps & Controls — the control
+    'insect-killer', // Insect Killers
+    'premium-network-cable', // Cables
+  ],
+  safety: [
+    'safety-helmets', // Head & Face Protection
+    'welding-mask', // Head & Face Protection — welding
+    'safety-glasses-lightweight', // Eye Protection
+    'safety-goggles-indirect-vent', // Eye Protection — goggles
+    'ear-muff-nrr-25db', // Hearing Protection
+    'grip-guard-gp5', // Hand Protection — EN 388 rated
+    'chem-guard', // Hand Protection — chemical
+    'low-cut-safety-shoes-kpu', // Safety Footwear
+    'rigger-boots', // Safety Footwear — boots
+    'full-body-harness', // Harnesses & Fall Arrest
+    'nonwoven-disposable-coverall', // Body Protection
+    'fire-retardant-workshop-suit', // Workwear
+  ],
+};
+
+const [divisions, categories, products] = await Promise.all([
+  getDivisions(),
+  getCategories({ divisionId: divisionSlug }),
+  getProducts({ divisionId: divisionSlug }),
+]);
+
+const division = divisions.find((d) => d.slug === divisionSlug);
+if (!division) throw new Error(`No division for slug "${divisionSlug}"`);
+
+const other = divisions.find((d) => d.slug !== divisionSlug);
+
+const bySlug = new Map(products.map((p) => [p.slug, p]));
+const selected = (SELECTED[divisionSlug] ?? []).map((slug) => {
+  const product = bySlug.get(slug);
+  // A typo in the list above would otherwise just drop a card from the grid.
+  if (!product) throw new Error(`[DivisionPage] "${slug}" is not a published ${divisionSlug} product`);
+  return product;
+});
+
+// astro:assets cannot resolve a runtime string path, so both the division
+// photograph and the tiles' hero products go through static glob maps keyed by
+// filename (handoff.md section 7). Lazy, so only rendered images are emitted.
+const heroImages = import.meta.glob<{ default: ImageMetadata }>('/src/assets/hero/*.jpg');
+const heroLoader = heroImages[`/src/assets/hero/${division.heroImage}`];
+if (!heroLoader) console.warn(`[DivisionPage] no hero module for "${division.heroImage}"`);
+const heroImage = heroLoader ? (await heroLoader()).default : undefined;
+
+const productImages = import.meta.glob<{ default: ImageMetadata }>('/src/assets/products/*.png');
+const allProducts = await getProducts();
+const productBySlug = new Map(allProducts.map((p) => [p.slug, p]));
+
+const tiles = await Promise.all(
+  categories.map(async (category) => {
+    const file = category.heroProductSlug
+      ? productBySlug.get(category.heroProductSlug)?.images[0]
+      : undefined;
+    const loader = file ? productImages[`/src/assets/products/${file}`] : undefined;
+    if (file && !loader) console.warn(`[DivisionPage] no image module for "${file}"`);
+    return { category, image: loader ? (await loader()).default : null };
+  }),
+);
+
+const productCount = products.length;
+const categoryCount = categories.length;
+const expanding = categories.filter((c) => c.status === 'expanding').length;
+---
+
+<BaseLayout
+  title={`${division.name} — ${productCount} products across ${categoryCount} categories`}
+  description={`${division.blurb} ${productCount} products across ${categoryCount} categories.`}
+>
+  <main id="main">
+    <section class="dh">
+      <div class="dh__bg">
+        {
+          heroImage && (
+            <Image
+              src={heroImage}
+              alt=""
+              widths={[640, 960, 1225]}
+              sizes="100vw"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          )
+        }
+      </div>
+
+      {/* Sized with global utilities — a class from this file's scoped <style>
+          would never match the SVG. See Chevron.astro. */}
+      <Chevron class="left-[-40px] top-[180px] w-[360px] h-[430px]" opacity={0.04} />
+
+      <div class="wrap dh__inner">
+        <Eyebrow>Division</Eyebrow>
+        <h1 class="dh__title">{division.name}</h1>
+        <p class="dh__blurb">{division.blurb}</p>
+
+        <dl class="dh__stats">
+          <div class="dh__stat">
+            <dt>Products</dt>
+            <dd>{productCount}</dd>
+          </div>
+          <div class="dh__stat">
+            <dt>Categories</dt>
+            <dd>{categoryCount}</dd>
+          </div>
+        </dl>
+
+        <div class="dh__actions">
+          <SolidButton href="/catalogue">Browse the catalogue</SolidButton>
+          <PillButton href="/contact">Talk to us</PillButton>
+        </div>
+      </div>
+    </section>
+
+    <section class="dc">
+      <div class="wrap">
+        <h2 class="dc__title">Categories in this division</h2>
+        <p class="dc__lede">
+          {categoryCount} categories, {productCount} products.
+          {
+            /* Both expanding ranges are listed rather than hidden, and the tile
+               says "Range expanding" instead of a count. Saying so here as well
+               keeps the difference between the two totals honest. */
+            expanding > 0 && (
+              <>
+                {' '}
+                {expanding === 1 ? 'One range is' : `${expanding} ranges are`} still expanding and
+                has no products listed yet.
+              </>
+            )
+          }
+        </p>
+
+        <ul class="dc__grid">
+          {
+            tiles.map(({ category, image }) => (
+              <li>
+                <CategoryTile category={category} image={image} />
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="ds">
+      <Chevron class="right-[-70px] top-[40px] w-[400px] h-[470px]" />
+
+      <div class="wrap ds__inner">
+        <div class="ds__head">
+          <div>
+            <Eyebrow>Selected products</Eyebrow>
+            <h2 class="ds__title">A cross-section of the range.</h2>
+            <p class="ds__lede">
+              {selected.length} of the {productCount}
+              {' '}products in {division.name}, with at least one from every category in the
+              division that currently has products. Every specification shown on a product page is
+              taken from the Spartan brochure.
+            </p>
+          </div>
+          <PillButton href="/catalogue">See all {productCount} products</PillButton>
+        </div>
+
+        <ProductGrid products={selected} />
+
+        <div class="ds__foot">
+          <SolidButton href="/catalogue">Browse the full catalogue</SolidButton>
+          {other && <PillButton href={`/${other.slug}`}>Explore {other.name}</PillButton>}
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  /* Shorter than the home page hero — this one opens a landing rather than the
+     site — but the same construction: 44px utility bar + 84px nav are both out
+     of flow above it, so the padding-top has to clear them. */
+  .dh {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 620px;
+    padding: 196px 0 72px;
+    overflow: hidden;
+  }
+
+  .dh__bg {
+    position: absolute;
+    inset: 0;
+  }
+
+  .dh__bg :global(img) {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 55% 32%;
+  }
+
+  /* Left-to-right scrim for the copy, a bottom fade into the page, and a top
+     fade behind the nav — the home hero's three layers at the same weights. */
+  .dh__bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        100deg,
+        var(--color-black) 4%,
+        rgba(8, 8, 10, 0.94) 32%,
+        rgba(8, 8, 10, 0.58) 66%,
+        rgba(8, 8, 10, 0.8) 100%
+      ),
+      linear-gradient(0deg, var(--color-black) 1%, rgba(8, 8, 10, 0.25) 38%, transparent 62%),
+      linear-gradient(180deg, rgba(8, 8, 10, 0.85) 0%, transparent 22%);
+  }
+
+  .dh__inner {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+  }
+
+  .dh__title {
+    margin-top: 20px;
+    font-size: clamp(40px, 6.6vw, 84px);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 0.96;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .dh__blurb {
+    max-width: 52ch;
+    margin-top: 20px;
+    font-size: 15.5px;
+    /* 8.2:1 over the scrimmed photograph at its lightest point. */
+    color: #bfbfc6;
+  }
+
+  /* Hairline strip: the 1px gaps are --color-line showing through, so the rule
+     between the cells is never doubled. */
+  .dh__stats {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 30px;
+    background: var(--color-line);
+    border: 1px solid var(--color-line);
+  }
+
+  .dh__stat {
+    display: flex;
+    flex-direction: column;
+    min-width: 132px;
+    padding: 16px 22px;
+    background: rgba(8, 8, 10, 0.78);
+  }
+
+  /* The number reads first but describes the label, so the label is the <dt>
+     and is ordered visually below it. */
+  .dh__stat dd {
+    order: -1;
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: #fff;
+  }
+
+  .dh__stat dt {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    /* Dark surface only. */
+    color: var(--color-grey);
+  }
+
+  .dh__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .dc {
+    padding: 96px 0 0;
+  }
+
+  .dc__title {
+    font-size: clamp(26px, 3.2vw, 38px);
+    letter-spacing: -0.026em;
+  }
+
+  .dc__lede {
+    max-width: 60ch;
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--color-grey-lt);
+  }
+
+  /* Hairline grid, same construction as the home page's category grid. */
+  .dc__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-top: 32px;
+    list-style: none;
+    background: var(--color-line);
+    border: 1px solid var(--color-line);
+  }
+
+  .dc__grid > li {
+    display: flex;
+    background: var(--color-card);
+  }
+
+  /* CategoryTile renders its own <a>; stretching it keeps every cell full
+     height so the gaps stay hairlines instead of opening under a short tile. */
+  .dc__grid > li > :global(a) {
+    flex: 1;
+  }
+
+  .ds {
+    position: relative;
+    padding: 96px 0 104px;
+    overflow: hidden;
+  }
+
+  .ds__inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  .ds__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 40px;
+    margin-bottom: 36px;
+  }
+
+  .ds__title {
+    margin-top: 16px;
+    font-size: clamp(26px, 3.2vw, 38px);
+    letter-spacing: -0.026em;
+  }
+
+  .ds__lede {
+    max-width: 58ch;
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--color-grey-lt);
+  }
+
+  .ds__foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 1080px) {
+    .dc__grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 820px) {
+    .dh {
+      min-height: 540px;
+      padding: 176px 0 60px;
+    }
+
+    .dc {
+      padding-top: 72px;
+    }
+
+    .dc__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ds {
+      padding: 72px 0 80px;
+    }
+
+    .ds__head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    /* Two 132px cells plus padding overflow a 375px viewport once the wrap's
+       20px gutters are taken off. */
+    .dh__stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .dh__stat {
+      min-width: 0;
+      padding: 14px 16px;
+    }
+  }
+</style>

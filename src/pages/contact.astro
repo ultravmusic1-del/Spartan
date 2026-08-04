@@ -1,0 +1,336 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/primitives/SectionHeading.astro';
+import Chevron from '../components/primitives/Chevron.astro';
+import SolidButton from '../components/primitives/SolidButton.astro';
+import PillButton from '../components/primitives/PillButton.astro';
+import site from '../data/site.json';
+import { getDivisions } from '../lib/catalog';
+
+/**
+ * Contact.
+ *
+ * THE FORM IS PRESENTATIONAL. `/api/enquiry` does not exist until Task 14, so
+ * there is no action and no method; the submit is `type="button"` inside a form
+ * whose `onsubmit` returns false, which means Enter in a field cannot navigate
+ * either. It must never show a success message — telling someone their enquiry
+ * was sent when nothing was sent is worse than an inert control. Same
+ * arrangement as EnquiryCta and the footer newsletter field.
+ *
+ * Every field has a real, visible <label> tied to it by id, and the division
+ * options come from the catalogue rather than being typed in twice.
+ *
+ * CONTACT DETAILS ARE PLACEHOLDERS. `+971 00 000 0000`,
+ * `sales@spartan.example` and `Address line, City, Country` are what is in
+ * site.json until the client supplies the real values (handoff.md section 8,
+ * item 1). They are rendered from site.json rather than typed here, so one edit
+ * to that file updates this page, the header and the footer together. Nothing
+ * else is stated: no opening hours, no response time, no WhatsApp number, no
+ * named contact, because none of those is known.
+ *
+ * No hero photograph, so `darkHeader={false}` gives the solid sticky header.
+ */
+const divisions = await getDivisions();
+
+const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
+const mailHref = `mailto:${site.email}`;
+
+const details = [
+  { label: 'Head office', value: site.address, href: undefined },
+  { label: 'Trade enquiries', value: site.phone, href: telHref },
+  { label: 'Email', value: site.email, href: mailHref },
+];
+---
+
+<BaseLayout
+  title="Contact Spartan"
+  description="Get in touch with Spartan about the Electricals or Safety range. Send a general enquiry, or raise a product-specific request straight from the catalogue."
+  darkHeader={false}
+>
+  <main id="main">
+    <section class="ch">
+      <div class="wrap">
+        <SectionHeading
+          level="h1"
+          eyebrow="Contact"
+          title="Talk to us."
+          lede="Tell us what you are working on and we will point you at the right part of the range."
+        />
+      </div>
+    </section>
+
+    <section class="cb">
+      <Chevron class="left-[-70px] bottom-[-60px] w-[380px] h-[440px]" />
+
+      <div class="wrap cb__inner">
+        <div class="cb__side">
+          <h2 class="cb__h2">Contact details</h2>
+
+          <dl class="det">
+            {
+              details.map((item) => (
+                <div class="det__row">
+                  <dt>{item.label}</dt>
+                  <dd>
+                    {item.href ? <a href={item.href}>{item.value}</a> : <span>{item.value}</span>}
+                  </dd>
+                </div>
+              ))
+            }
+          </dl>
+
+          <div class="note">
+            <h3 class="note__title">Enquiring about a specific product?</h3>
+            <p class="note__body">
+              Open the product in the catalogue and raise the request from there — it carries the
+              product with it, so nobody has to work out which of four ventilation fan sizes you
+              meant. Use the form here for everything else.
+            </p>
+            <div class="note__action">
+              <PillButton href="/catalogue">Browse the catalogue</PillButton>
+            </div>
+          </div>
+        </div>
+
+        <!-- No endpoint until Task 14. This form must not navigate and must not
+             claim to have sent anything. -->
+        <form class="cf2" onsubmit="return false" aria-labelledby="cf2-title">
+          <h2 class="cb__h2" id="cf2-title">General enquiry</h2>
+
+          <div class="cf2__row">
+            <div class="cf2__field">
+              <label for="c-name">Name</label>
+              <input id="c-name" name="name" type="text" autocomplete="name" placeholder="Your name" />
+            </div>
+
+            <div class="cf2__field">
+              <label for="c-company">Company</label>
+              <input
+                id="c-company"
+                name="company"
+                type="text"
+                autocomplete="organization"
+                placeholder="Your company name"
+              />
+            </div>
+          </div>
+
+          <div class="cf2__row">
+            <div class="cf2__field">
+              <label for="c-email">Email</label>
+              <input
+                id="c-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@company.com"
+              />
+            </div>
+
+            <div class="cf2__field">
+              <label for="c-phone">Phone</label>
+              <input id="c-phone" name="phone" type="tel" autocomplete="tel" placeholder="Optional" />
+            </div>
+          </div>
+
+          <div class="cf2__field">
+            <label for="c-division">Division of interest</label>
+            <select id="c-division" name="division">
+              {divisions.map((division) => <option value={division.slug}>{division.name}</option>)}
+              <option value="both">Both divisions</option>
+            </select>
+          </div>
+
+          <div class="cf2__field">
+            <label for="c-message">Message</label>
+            <textarea
+              id="c-message"
+              name="message"
+              rows="6"
+              placeholder="What are you looking for?"></textarea>
+          </div>
+
+          {/* Sized through a wrapper this file owns. A Tailwind class handed to
+              SolidButton would sit in `@layer utilities` and lose to its own
+              unlayered scoped styles — and `mt-*` would additionally lose to
+              global.css's unlayered `* { margin: 0 }`. */}
+          <div class="cf2__submit">
+            <SolidButton type="button">Send enquiry</SolidButton>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .ch {
+    padding: 56px 0 0;
+  }
+
+  .cb {
+    position: relative;
+    padding: 56px 0 104px;
+    overflow: hidden;
+  }
+
+  .cb__inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 56px;
+    align-items: start;
+  }
+
+  .cb__h2 {
+    margin-bottom: 20px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    /* Dark surface only — 6.1:1 on --color-black. */
+    color: var(--color-grey);
+  }
+
+  .det {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .det__row {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .det__row dt {
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  .det__row dd {
+    margin-top: 6px;
+    font-size: 15.5px;
+    color: #fff;
+  }
+
+  /* 44px target for a single line of text. */
+  .det__row dd a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .det__row dd a:hover {
+    color: var(--color-red);
+  }
+
+  .note {
+    margin-top: 32px;
+    padding: 26px 24px;
+    border: 1px solid var(--color-line);
+    background: var(--color-card);
+  }
+
+  .note__title {
+    font-size: 16px;
+    color: #fff;
+  }
+
+  .note__body {
+    margin: 10px 0 18px;
+    font-size: 14px;
+    color: var(--color-grey-lt);
+  }
+
+  .cf2 {
+    padding: 32px;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+  }
+
+  .cf2__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .cf2__field {
+    margin-bottom: 16px;
+  }
+
+  .cf2__field label {
+    display: block;
+    margin-bottom: 7px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    /* 5.6:1 on the card surface. */
+    color: var(--color-grey);
+  }
+
+  .cf2__field input,
+  .cf2__field select,
+  .cf2__field textarea {
+    width: 100%;
+    padding: 13px 14px;
+    background: #0b0b0e;
+    border: 1px solid var(--color-line);
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    color: #fff;
+  }
+
+  .cf2__field textarea {
+    resize: vertical;
+  }
+
+  /* The mockup's #5C5C64 placeholder is 3.2:1 on this field background, below
+     AA. --color-grey is 5.2:1 and keeps the same recessive role — the same
+     substitution the footer and EnquiryCta make. */
+  .cf2__field input::placeholder,
+  .cf2__field textarea::placeholder {
+    color: var(--color-grey);
+  }
+
+  .cf2__submit {
+    margin-top: 6px;
+  }
+
+  /* The button belongs to SolidButton, so this has to be :global — and it wins
+     because both rules are unlayered and this one is more specific. */
+  .cf2__submit :global(.solid) {
+    width: 100%;
+  }
+
+  @media (max-width: 980px) {
+    .cb__inner {
+      grid-template-columns: 1fr;
+      gap: 44px;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .cb {
+      padding: 40px 0 80px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .cf2 {
+      padding: 24px 20px;
+    }
+
+    .cf2__row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+</style>
