@@ -1,0 +1,684 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionHeading from '../components/primitives/SectionHeading.astro';
+import Chevron from '../components/primitives/Chevron.astro';
+import EnquiryForm from '../components/enquiry/EnquiryForm.tsx';
+import site from '../data/site.json';
+
+/**
+ * /enquiry — the end of the site's only conversion path.
+ *
+ * Everything else on the site exists to get a trade buyer here: they collect
+ * products while browsing, the drawer's "Review enquiry" brings them to this
+ * page, and this page turns the list into one RFQ. There are no prices and no
+ * checkout; the next step is a quotation, not a transaction.
+ *
+ * `client:load`, not `client:idle`. On every other page the enquiry islands are
+ * secondary to the content and can wait; here the island *is* the page, and
+ * deferring it would leave the one screen that matters inert.
+ *
+ * No hero photograph, so `darkHeader={false}` gives the solid sticky header.
+ *
+ * CONTACT DETAILS ARE PLACEHOLDERS — `sales@spartan.example` is what sits in
+ * site.json until the client supplies the real address (handoff.md section 8,
+ * item 1). It is passed down from here rather than typed into the island, so
+ * one edit to that file updates this page, the header, the footer and contact.
+ */
+---
+
+<BaseLayout
+  title="Send your enquiry | Spartan"
+  description="Review the products on your list, add quantities and notes, and send one enquiry across both Spartan divisions. Our team responds with availability and pricing."
+  darkHeader={false}
+>
+  <main id="main">
+    <section class="eh">
+      <div class="wrap">
+        <SectionHeading
+          level="h1"
+          eyebrow="Enquiry"
+          title="Send your enquiry."
+          lede="Check the list, adjust quantities, and add anything we should know. One request covers both divisions."
+        />
+      </div>
+    </section>
+
+    <section class="eb">
+      <Chevron class="right-[-70px] top-[-40px] w-[380px] h-[440px]" />
+
+      <div class="wrap eb__inner">
+        <div class="eb__app">
+          <EnquiryForm client:load email={site.email} />
+        </div>
+
+        {/*
+          The no-JavaScript path.
+
+          The basket genuinely cannot work without script — it lives in
+          localStorage and is read and written by an island — so there is no
+          honest way to render a buyer's list here without it. The choice was
+          between a plain-POST fallback and an honest pointer, and the pointer
+          won: a plain POST could only ever submit a *general* enquiry, because
+          the list it would need is unreadable without the script that is
+          missing, so it would quietly send something different from what the
+          page appears to be about. Worse, /api/enquiry answers in JSON, so the
+          no-script buyer would land on a page of raw JSON, and a styled reply
+          would mean a second static confirmation route and a server-rendered
+          re-render of the form for the 400 case.
+
+          So instead: with script the island is shown and this panel is not;
+          without it this panel is shown and the island is not. Nothing is ever
+          visible and dead. This is the same `data-js` gate EnquiryButton and
+          the catalogue filter bar already use, and the address below is a real,
+          working mailto — not a consolation.
+        */}
+        <div class="eb__nojs">
+          <h2 class="eb__nojs-title">This page needs JavaScript.</h2>
+          <p class="eb__nojs-body">
+            Your enquiry list is held in your browser, so it cannot be shown or sent with JavaScript
+            switched off. Email us instead and we will pick it up from there — tell us the products
+            you are interested in and the quantities you need.
+          </p>
+          <dl class="eb__nojs-detail">
+            <div>
+              <dt>Email</dt>
+              <dd><a href={`mailto:${site.email}`}>{site.email}</a></dd>
+            </div>
+            <div>
+              <dt>Phone</dt>
+              <dd><a href={`tel:${site.phone.replace(/[^+\d]/g, '')}`}>{site.phone}</a></dd>
+            </div>
+          </dl>
+          <a class="eb__nojs-link" href="/catalogue">Browse the catalogue</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .eh {
+    padding: 56px 0 0;
+  }
+
+  .eb {
+    position: relative;
+    padding: 48px 0 104px;
+    overflow: hidden;
+  }
+
+  .eb__inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  @media (max-width: 820px) {
+    .eb {
+      padding: 36px 0 80px;
+    }
+  }
+</style>
+
+<!-- The form is a Preact island: Astro's scoped styles never reach the DOM a
+     framework component renders, so its CSS is global and namespaced, the same
+     arrangement Header.astro uses for the mobile nav and catalogue/index.astro
+     for the filter bar. It is declared on this page rather than in
+     src/styles/enquiry.css because /enquiry is the only route that renders it,
+     and every other page would otherwise carry the bytes.
+
+     Every surface here is dark. --color-red is therefore correct for icons,
+     rules and borders; the one red *surface* carrying white text is the submit
+     button, which uses --color-red-fill (4.91:1) and --color-red-dark on hover
+     (6.52:1). Muted copy is --color-grey / --color-grey-lt, both of which are
+     dark-surface-only tokens. -->
+<style is:global>
+  /* Two gates, one flag. `data-js` is set on <html> by BaseLayout's inline
+     script before the first paint, so neither of these ever flashes the wrong
+     way round. A class, not the `hidden` attribute: Tailwind 4's preflight
+     ships `[hidden]:where(:not([hidden=until-found])){display:none!important}`,
+     which no ordinary author rule outranks. */
+  .eb__app {
+    display: none;
+  }
+
+  html[data-js] .eb__app {
+    display: block;
+  }
+
+  html[data-js] .eb__nojs {
+    display: none;
+  }
+
+  .eb__nojs {
+    max-width: 62ch;
+    padding: 32px;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-left: 3px solid var(--color-red);
+  }
+
+  .eb__nojs-title {
+    font-size: 22px;
+    color: #fff;
+  }
+
+  .eb__nojs-body {
+    margin-top: 12px;
+    color: var(--color-grey-lt);
+  }
+
+  .eb__nojs-detail {
+    margin-top: 22px;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .eb__nojs-detail > div {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .eb__nojs-detail dt {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  .eb__nojs-detail dd a {
+    display: inline-flex;
+    align-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    font-size: 15.5px;
+    color: #fff;
+  }
+
+  .eb__nojs-link {
+    display: inline-flex;
+    align-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    margin-top: 12px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--color-red);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  /* ------------------------------------------------------------- layout --- */
+
+  .ef {
+    display: grid;
+    grid-template-columns: 1.02fr 0.98fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .ef-list,
+  .ef-form {
+    padding: 28px;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+  }
+
+  .ef-panel__title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    /* 5.6:1 on --color-card. */
+    color: var(--color-grey);
+  }
+
+  /* --------------------------------------------------------------- list --- */
+
+  .ef-list__bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .ef-list__count {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-grey-lt);
+  }
+
+  .ef-list__empty {
+    padding: 28px 0 4px;
+  }
+
+  .ef-list__empty-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .ef-list__empty-note {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--color-grey-lt);
+  }
+
+  .ef-list__empty-link {
+    display: inline-flex;
+    align-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    margin-top: 10px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--color-red);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .ef-list__empty-link:hover {
+    color: var(--color-red);
+  }
+
+  .ef-items {
+    list-style: none;
+  }
+
+  .ef-item {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .ef-item:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .ef-item__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .ef-item__name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+  }
+
+  .ef-item__remove {
+    display: grid;
+    place-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. The negative margin
+       pulls the visual weight back without shrinking the hit area. */
+    width: 44px;
+    height: 44px;
+    margin: -11px -10px 0 0;
+    flex-shrink: 0;
+    background: transparent;
+    border: 0;
+    color: var(--color-grey);
+    cursor: pointer;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .ef-item__remove:hover {
+    color: var(--color-red);
+  }
+
+  .ef-item__remove svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ef-item__controls {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .ef-qty {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--color-line);
+  }
+
+  .ef-qty__step {
+    display: grid;
+    place-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    transition:
+      background var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out);
+  }
+
+  .ef-qty__step:hover {
+    background: color-mix(in srgb, var(--color-red) 14%, transparent);
+    color: var(--color-red);
+  }
+
+  .ef-qty__step svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ef-qty__field {
+    width: 54px;
+    height: 44px;
+    padding: 0 4px;
+    background: #0b0b0e;
+    border: 0;
+    border-inline: 1px solid var(--color-line);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+    /* The native spinners are a 12px target sitting beside two 44px ones. The
+       explicit steppers replace them; min/max and the numeric keypad stay. */
+    appearance: textfield;
+  }
+
+  .ef-qty__field::-webkit-outer-spin-button,
+  .ef-qty__field::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  .ef-item__note {
+    display: block;
+    flex: 1;
+    /* A flex item defaults to `min-width: auto`, which refuses to shrink below
+       the textarea's default 20-column intrinsic width and pushes the row past
+       a 375px viewport. */
+    min-width: 0;
+  }
+
+  .ef-item__field {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    background: #0b0b0e;
+    border: 1px solid var(--color-line);
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #fff;
+    resize: vertical;
+  }
+
+  .ef-item__field::placeholder {
+    /* The mockup's #5C5C64 is 3.2:1 on this field background, below AA.
+       --color-grey is 5.2:1 and keeps the same recessive role. */
+    color: var(--color-grey);
+  }
+
+  /* --------------------------------------------------------------- form --- */
+
+  .ef-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .ef-field {
+    margin-top: 16px;
+  }
+
+  .ef-field label {
+    display: block;
+    margin-bottom: 7px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    /* 5.6:1 on --color-card. */
+    color: var(--color-grey);
+  }
+
+  .ef-field__req {
+    color: var(--color-red);
+    letter-spacing: 0.1em;
+  }
+
+  .ef-field input,
+  .ef-field textarea {
+    width: 100%;
+    padding: 13px 14px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    background: #0b0b0e;
+    border: 1px solid var(--color-line);
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    color: #fff;
+  }
+
+  .ef-field textarea {
+    resize: vertical;
+  }
+
+  .ef-field input:hover,
+  .ef-field textarea:hover {
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+
+  .ef-field [aria-invalid='true'] {
+    border-color: var(--color-red);
+  }
+
+  /* Brand red is 4.22:1 against --color-card, under the AA floor for text this
+     size, so the message itself is white and the red does the marking: a rule
+     down the edge and a tinted ground. Colour is not the only channel either —
+     the field is `aria-invalid`, the message is a `role="alert"`, and the words
+     say what is wrong. */
+  .ef-field__error,
+  .ef-alert {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 14%, transparent);
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #fff;
+  }
+
+  .ef-alert {
+    margin-top: 20px;
+  }
+
+  .ef-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 22px;
+    padding: 14px 26px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    /* A red surface carrying white text, so the fill token, not brand red. */
+    background: var(--color-red-fill);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    transition: background var(--dur-base) var(--ease-out);
+  }
+
+  .ef-submit:hover:not(:disabled) {
+    background: var(--color-red-dark);
+  }
+
+  /* In flight. Still red, still legible (white on --color-red-dark is 6.52:1),
+     but plainly not pressable again. */
+  .ef-submit--sending {
+    background: var(--color-red-dark);
+    cursor: progress;
+  }
+
+  /* Before hydration only, and only for the moment `client:load` takes. An
+     inactive control is exempt from the contrast minimum, and looking inactive
+     is the entire point — the handler does not exist yet. */
+  .ef-submit--pending {
+    background: var(--color-line);
+    color: var(--color-grey);
+    cursor: default;
+  }
+
+  .ef-note {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--color-grey);
+  }
+
+  /* Honeypot. Off-screen rather than `display: none`, which the cruder bots
+     know to skip, and out of the tab order and the accessibility tree via
+     `tabindex="-1"` and `aria-hidden` in the markup. */
+  .ef-hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* ---------------------------------------------------- confirmation --- */
+
+  .ef-done {
+    max-width: 62ch;
+    padding: 40px 32px;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-left: 3px solid var(--color-red);
+  }
+
+  .ef-done__mark {
+    width: 34px;
+    height: 34px;
+    color: var(--color-red);
+  }
+
+  .ef-done__title {
+    margin-top: 18px;
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3.4vw, 34px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+
+  .ef-done__body {
+    margin-top: 14px;
+    color: var(--color-grey-lt);
+  }
+
+  .ef-done__pending {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 14%, transparent);
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .ef-done__pending a {
+    text-decoration: underline;
+  }
+
+  .ef-done__link {
+    display: inline-flex;
+    align-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    margin-top: 20px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--color-red);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .ef-done__link:hover {
+    color: var(--color-red);
+  }
+
+  @media (max-width: 980px) {
+    .ef {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .ef-list,
+    .ef-form {
+      padding: 22px 18px;
+    }
+
+    .eb__nojs {
+      padding: 24px 20px;
+    }
+
+    .ef-done {
+      padding: 32px 20px;
+    }
+
+    /* Below this the stepper and the note field cannot share a row without the
+       note collapsing to a couple of words wide. */
+    .ef-item__controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .ef-qty {
+      width: fit-content;
+    }
+
+    .ef-row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+</style>
