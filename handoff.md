@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-08-03
 **Branch:** `feat/catalogue-site` (all work lives here; `main` tracks it)
-**State:** 6 of 17 planned tasks complete, 1 partially complete and unverified.
+**State:** 9 of 17 tasks complete and verified. The home page renders end to end from real catalogue data.
 
 ---
 

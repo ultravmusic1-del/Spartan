@@ -42,8 +42,10 @@ img, svg { display: block; max-width: 100%; }
   padding-inline: var(--wrap-pad);
 }
 
-/* Small red text fails WCAG AA on light backgrounds (4.30:1).
-   Light sections must use the deep red (9.09:1). See spec section 2. */
+/* Small red text fails WCAG AA against --color-paper (3.99:1).
+   Light sections must use the deep red (8.40:1). See spec section 2.
+   The 4.30:1 / 9.09:1 figures quoted here previously were measured
+   against pure white, not the paper surface actually used. */
 .on-light .text-brand { color: var(--color-red-deep); }
 
 @media (prefers-reduced-motion: reduce) {
