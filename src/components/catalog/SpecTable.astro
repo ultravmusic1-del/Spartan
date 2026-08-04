@@ -1,0 +1,107 @@
+---
+import type { Product } from '../../lib/catalog';
+
+/**
+ * SpecTable — a product's specifications as a real data table.
+ *
+ * Two row shapes, because the brochure prints two kinds of line and both are
+ * real data:
+ *
+ *   { label: 'Power', value: '20W | 30W | 40W' }   labelled -> th + td
+ *   { label: null,    value: '100% Copper motor' } feature  -> full-width td
+ *
+ * Roughly a third of all spec rows are unlabelled. They are rendered as a cell
+ * spanning both columns rather than given an invented label or dropped — the
+ * first would fabricate data, the second would lose it.
+ *
+ * Labels are `<th scope="row">` so assistive technology pairs each value with
+ * its label, and they carry the mockup's `th` treatment (black, Archivo,
+ * 10.5px, uppercase, wide tracking — see `design/direction-b-forge.html`).
+ *
+ * `caption` is a real `<caption>`, visually hidden: it names the table for
+ * screen readers without duplicating the heading that always sits above it.
+ */
+interface Props {
+  specs: Product['specs'];
+  /** Names the table for assistive technology, e.g. "Slim LED Panels specifications". */
+  caption: string;
+  class?: string;
+}
+
+const { specs, caption, class: cls = '' } = Astro.props;
+---
+
+{
+  specs.length > 0 && (
+    <table class:list={['spec', cls]}>
+      <caption class="vh">{caption}</caption>
+      <tbody>
+        {specs.map((spec) =>
+          spec.label === null ? (
+            <tr>
+              <td class="spec__feature" colspan="2">
+                {spec.value}
+              </td>
+            </tr>
+          ) : (
+            <tr>
+              <th scope="row">{spec.label}</th>
+              <td>{spec.value}</td>
+            </tr>
+          ),
+        )}
+      </tbody>
+    </table>
+  )
+}
+
+<style>
+  .spec {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  /* Row headers, not a header row: the brochure labels each line individually.
+     Values match the mockup's `th`. */
+  .spec th {
+    width: 38%;
+    background: #000;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px;
+    border: 1px solid var(--color-line);
+    vertical-align: top;
+  }
+
+  .spec td {
+    padding: 12px;
+    border: 1px solid var(--color-line);
+    color: var(--color-grey-lt);
+  }
+
+  /* Unlabelled feature lines span both columns. Slightly brighter than a value
+     cell because they read as statements rather than as the right half of a
+     pair. */
+  .spec__feature {
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .vh {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

@@ -1,0 +1,120 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import type { Category } from '../../lib/catalog';
+
+/**
+ * CategoryTile — one cell of the category grid. Port of the mockup's `.cats a`
+ * (see `design/direction-b-forge.html`): 212px minimum, 24px padding, a 92px
+ * image well, the name, and a count pinned to the bottom.
+ *
+ * Two categories — Electrical Accessories and Spill Control — genuinely have no
+ * products and no hero image. They are `status: 'expanding'`, get "RANGE
+ * EXPANDING" instead of a count, and render with an empty image well rather
+ * than a placeholder or a borrowed photo. That is the honest state, not a bug.
+ *
+ * The image is decorative: the category name sits right beside it inside the
+ * same link, so `alt=""` keeps the link's accessible name from being read
+ * twice. The caller resolves the hero product's image and passes it in.
+ */
+interface Props {
+  category: Category;
+  /** The hero product's image. Null for the two expanding categories. */
+  image?: ImageMetadata | null;
+  class?: string;
+}
+
+const { category, image = null, class: cls = '' } = Astro.props;
+
+const expanding = category.status === 'expanding';
+const count = category.productCount;
+// The mockup prints "1 PRODUCTS"; Cables really does hold exactly one.
+const countLabel = `${count} ${count === 1 ? 'Product' : 'Products'}`;
+---
+
+<a class:list={['tile', cls]} href={`/catalogue/${category.slug}`}>
+  <div class="tile__media">
+    {
+      image && (
+        <Image
+          src={image}
+          alt=""
+          widths={[180, 360]}
+          sizes="(min-width: 1081px) 250px, (min-width: 821px) 300px, (min-width: 641px) 270px, 45vw"
+          width={Math.round(image.width * Math.min(1, 360 / image.width))}
+          height={Math.round(image.height * Math.min(1, 360 / image.width))}
+          loading="lazy"
+          decoding="async"
+        />
+      )
+    }
+  </div>
+  <h3 class="tile__name">{category.name}</h3>
+  <p class:list={['tile__count', { 'tile__count--soon': expanding }]}>
+    {expanding ? 'Range expanding' : countLabel}
+  </p>
+</a>
+
+<style>
+  .tile {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 212px;
+    padding: 24px;
+    background: var(--color-card);
+    transition: background var(--dur-base) var(--ease-out);
+  }
+
+  .tile:hover {
+    background: #1b1b21;
+  }
+
+  .tile:focus-visible {
+    outline: 2px solid var(--color-red);
+    outline-offset: -3px;
+  }
+
+  /* Keeps its height when empty so the two expanding tiles line up with the
+     rest of the row instead of collapsing. */
+  .tile__media {
+    height: 92px;
+    display: grid;
+    place-items: center;
+  }
+
+  .tile__media :global(img) {
+    max-height: 92px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .tile__name {
+    font-size: 15.5px;
+    color: #fff;
+  }
+
+  /* Red on --color-card measures 4.65:1 and passes AA at any size; --color-grey
+     is legible on dark surfaces only, which is the only place this tile lives. */
+  .tile__count {
+    margin-top: auto;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--color-red);
+  }
+
+  .tile__count--soon {
+    color: var(--color-grey);
+  }
+
+  @media (max-width: 640px) {
+    .tile {
+      padding: 20px;
+      min-height: 184px;
+    }
+  }
+</style>

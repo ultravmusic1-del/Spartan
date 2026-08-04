@@ -1,0 +1,93 @@
+---
+import type { Product } from '../../lib/catalog';
+import ProductCard from './ProductCard.astro';
+
+/**
+ * ProductGrid — the hairline grid from the mockup's `.cats`: 1px gaps over a
+ * `--color-line` background, so the rules between cards are the container
+ * showing through rather than borders that would double up.
+ *
+ * Columns follow the mockup's breakpoints exactly: 4, then 3 below 1080px,
+ * then 2 below 820px.
+ *
+ * An empty array renders an empty state, not an empty grid. `/catalogue/
+ * spill-control` and `/catalogue/electrical-accessories` reach this: both
+ * ranges are real and both have no products yet. Callers can replace the
+ * wording through the `empty` slot.
+ */
+interface Props {
+  products: Product[];
+  class?: string;
+}
+
+const { products, class: cls = '' } = Astro.props;
+---
+
+{
+  products.length > 0 ? (
+    <ul class:list={['grid', cls]}>
+      {products.map((product) => (
+        <li>
+          <ProductCard product={product} />
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <div class:list={['empty', cls]}>
+      <slot name="empty">
+        <p class="empty__title">No products in this range yet.</p>
+        <p class="empty__note">Contact us for current availability and lead times.</p>
+      </slot>
+    </div>
+  )
+}
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    list-style: none;
+    background: var(--color-line);
+    border: 1px solid var(--color-line);
+  }
+
+  /* The card fills its cell so the 1px gap stays a hairline rule rather than
+     opening into a gap wherever a card is shorter than its row. */
+  .grid > li {
+    display: flex;
+    background: var(--color-card);
+  }
+
+  .empty {
+    border: 1px solid var(--color-line);
+    background: var(--color-card);
+    padding: 48px 32px;
+    text-align: center;
+  }
+
+  .empty__title {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .empty__note {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--color-grey-lt);
+  }
+
+  @media (max-width: 1080px) {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 820px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

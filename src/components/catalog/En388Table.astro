@@ -1,0 +1,129 @@
+---
+import type { Product } from '../../lib/catalog';
+import { en388Columns } from './en388';
+
+/**
+ * En388Table — the five EN 388 mechanical resistance levels for a glove.
+ *
+ * Renders nothing at all when the product has no rating. Only 6 of the 72
+ * products carry one; the rest were never tested, and an empty table or a row
+ * of dashes would imply otherwise. Absent must read as absent.
+ *
+ * `X` (not submitted for the test) and a digit (tested, that level — including
+ * `0`) are different claims about a piece of safety equipment. The distinction
+ * is carried three ways: the printed character itself, a `title` for hover, and
+ * visually-hidden text in each cell. The hidden text matters — a `title`
+ * attribute is not reliably announced by screen readers and is unreachable by
+ * keyboard and touch, so on its own it would leave the difference invisible to
+ * exactly the users least able to guess it.
+ */
+interface Props {
+  en388: Product['en388'];
+  class?: string;
+}
+
+const { en388, class: cls = '' } = Astro.props;
+const columns = en388 ? en388Columns(en388) : [];
+---
+
+{
+  columns.length > 0 && (
+    /* Five columns of wide-tracked uppercase will not fit a 320px phone even
+       at the reduced type below, so the table gets a scroll container that is
+       keyboard-reachable (WCAG 2.1.1). It only scrolls where it has to. */
+    <div
+      class:list={['en-scroll', cls]}
+      tabindex="0"
+      role="group"
+      aria-label="EN 388 mechanical resistance levels"
+    >
+      <table class="en">
+        <caption class="vh">EN 388 mechanical resistance levels</caption>
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th scope="col">{col.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {columns.map((col) => (
+              <td title={col.title}>
+                <span aria-hidden="true">{col.value}</span>
+                <span class="vh">{col.title}</span>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+<style>
+  .en-scroll {
+    overflow-x: auto;
+  }
+
+  .en {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  .en th {
+    background: #000;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 12px;
+    border: 1px solid var(--color-line);
+  }
+
+  /* Brand red on --color-card / --color-panel measures 4.65:1 and passes AA at
+     any size. These levels never appear on a light surface. */
+  .en td {
+    padding: 12px;
+    border: 1px solid var(--color-line);
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--color-red);
+  }
+
+  /* "Abrasion" and "Puncture" are single words that cannot wrap, so at 10.5px
+     with 0.14em tracking the five columns need ~373px — more than a 375px
+     phone has after page padding. Scaling the header type down is preferable
+     to hiding columns behind a scroll: all five levels stay comparable at a
+     glance, which is the whole point of the pictogram. */
+  @media (max-width: 640px) {
+    .en th {
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      padding: 10px 4px;
+    }
+
+    .en td {
+      font-size: 14px;
+      padding: 10px 4px;
+    }
+  }
+
+  .vh {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
