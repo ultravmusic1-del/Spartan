@@ -1,11 +1,27 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/sections/Hero.astro';
+import About from '../components/sections/About.astro';
+import ServiceCards from '../components/sections/ServiceCards.astro';
+import TrustBand from '../components/sections/TrustBand.astro';
+import CategoryGrid from '../components/sections/CategoryGrid.astro';
+import Spotlight from '../components/sections/Spotlight.astro';
+import Faq from '../components/sections/Faq.astro';
+import EnquiryCta from '../components/sections/EnquiryCta.astro';
 ---
-<BaseLayout title="Spartan" description="Home and industrial solutions">
-  <main id="main" class="wrap" style="padding-block:80px">
-    <h1 style="font-size:64px;text-transform:uppercase">
-      <span style="color:var(--color-red);display:block">Industrial</span>
-      <span style="display:block">Solutions.</span>
-    </h1>
+
+<BaseLayout
+  title="Spartan — Industrial Electrical & Safety Solutions"
+  description="Lighting, ventilation and water management alongside certified personal protective equipment. 72 products across two divisions, supplied to contractors, facilities teams and distributors."
+>
+  <main id="main">
+    <Hero />
+    <About />
+    <ServiceCards />
+    <TrustBand />
+    <CategoryGrid />
+    <Spotlight />
+    <Faq />
+    <EnquiryCta />
   </main>
 </BaseLayout>

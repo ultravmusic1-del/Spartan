@@ -1,0 +1,159 @@
+---
+import SectionHeading from '../primitives/SectionHeading.astro';
+import PillButton from '../primitives/PillButton.astro';
+import { getCategories, getDivisions } from '../../lib/catalog';
+
+/**
+ * ServiceCards — "What we supply". Port of the mockup's `.light` + `.svc`
+ * block: centred heading, then a 3x2 hairline grid of white cards.
+ *
+ * This is a LIGHT section, so it carries `on-light` and every primitive inside
+ * it takes `onLight`. Brand red measures 3.99:1 on --color-paper and fails AA
+ * for normal-size text; the eyebrow, lede and pill switch to the deep red and
+ * ink-muted automatically once told they are on light.
+ *
+ * The six cards are real categories, named by id — heading, body copy and link
+ * all come from the catalogue, so nothing here can describe a range the data
+ * does not have. Icons are a single family of 24x24 line SVGs at
+ * stroke-width 1.6 with round caps and joins, per spec section 6. No emoji.
+ */
+const FEATURED = ['lighting', 'fans', 'pumps', 'head', 'hand', 'foot'] as const;
+
+/** Inner markup for each 24x24 icon. Authored here, so `set:html` is safe. */
+const ICONS: Record<string, string> = {
+  lighting: '<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/>',
+  fans:
+    '<circle cx="12" cy="12" r="2.2"/>' +
+    '<path d="M12 9.8V4a4 4 0 0 1 3.2 6.4M14.2 12H20a4 4 0 0 1-6.4 3.2M12 14.2V20a4 4 0 0 1-3.2-6.4M9.8 12H4a4 4 0 0 1 6.4-3.2"/>',
+  pumps:
+    '<path d="M4 20h16M6 20v-7h6v7M12 13V7h4l3 3v10M8.5 16.5h1"/>' +
+    '<circle cx="15.5" cy="9.5" r="1"/>',
+  head: '<path d="M3 17h18v2H3zM5 17a7 7 0 0 1 14 0M9.5 10.4V5.6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4.8"/>',
+  hand: '<path d="M7 21V10a1.6 1.6 0 0 1 3.2 0V4.6a1.6 1.6 0 0 1 3.2 0V10m0-2.2a1.6 1.6 0 0 1 3.2 0V15a6 6 0 0 1-6 6H7Z"/>',
+  foot: '<path d="M4 4h5v9l7 3.2a3 3 0 0 1 1.8 2.8V21H4Zm0 13h13"/>',
+};
+
+const [categories, divisions] = await Promise.all([getCategories(), getDivisions()]);
+const byId = new Map(categories.map((c) => [c.id, c]));
+const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
+---
+
+<section class="services on-light">
+  <div class="wrap">
+    <SectionHeading
+      center
+      onLight
+      eyebrow="What we supply"
+      title="Built for the sites<br>we supply."
+      lede={`${categories.length} categories across ${divisions.length} divisions — every specification is taken directly from the current Spartan product brochure.`}
+    />
+
+    <div class="services__grid">
+      {
+        cards.map((category) => (
+          <article class="card">
+            <svg
+              class="card__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              set:html={ICONS[category.id] ?? ''}
+            />
+            <h3 class="card__title">{category.name}</h3>
+            <p class="card__body">{category.description}</p>
+            <PillButton href={`/catalogue/${category.slug}`} onLight>
+              Read More
+            </PillButton>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .services {
+    padding: 104px 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  /* SectionHeading owns its own spacing above; this is the mockup's 52px gap
+     between the heading block and the card grid. */
+  .services__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-top: 52px;
+    background: var(--color-paper-line);
+    border: 1px solid var(--color-paper-line);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 36px 32px;
+    background: #fff;
+    transition: box-shadow var(--dur-base) var(--ease-out);
+  }
+
+  .card:hover {
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.09);
+  }
+
+  .card__icon {
+    width: 30px;
+    height: 30px;
+    color: var(--color-red);
+  }
+
+  /* 19px at weight 700 is 14.25pt bold, which clears WCAG's 14pt-bold
+     large-text threshold, so the 3:1 bar applies and brand red on white
+     measures 4.30:1. Small red text on a light surface (the eyebrow, the pill
+     label) uses --color-red-deep instead — that is what `onLight` does. */
+  .card__title {
+    margin: 20px 0 12px;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-red);
+  }
+
+  /* --color-grey is 3.17:1 on light and must never be used here; ink-muted is
+     4.96:1 and passes AA. */
+  .card__body {
+    margin-bottom: 22px;
+    /* Keeps the pills on a row aligned when the copy runs to different lengths,
+       without clipping the longest description. */
+    min-height: 66px;
+    font-size: 14px;
+    color: var(--color-ink-muted);
+  }
+
+  @media (max-width: 1080px) {
+    .services__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 820px) {
+    .services {
+      padding: 80px 0;
+    }
+
+    .services__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .card__body {
+      min-height: 0;
+    }
+  }
+</style>
