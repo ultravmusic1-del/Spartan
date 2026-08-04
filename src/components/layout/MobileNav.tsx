@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 
 export interface NavItem {
   href: string;
@@ -32,25 +32,44 @@ export default function MobileNav({ items, current }: Props) {
     triggerRef.current?.focus();
   };
 
-  useEffect(() => {
+  // A layout effect, not a passive one: the listener has to be installed in the
+  // same frame the panel mounts. With useEffect there is a window between paint
+  // and the effect in which Tab is unhandled, and a fast key repeat walks focus
+  // straight out of the panel.
+  useLayoutEffect(() => {
     if (!open) return;
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setOpen(false);
-        triggerRef.current?.focus();
+        close();
+        return;
       }
       if (e.key !== 'Tab') return;
+      const panel = panelRef.current;
+      if (!panel) return;
       // Every focusable element in the panel is an anchor or a button, so this
       // selector is exhaustive; nothing else in here can take focus.
-      const f = panelRef.current?.querySelectorAll<HTMLElement>('a,button');
-      if (!f?.length) return;
+      const f = panel.querySelectorAll<HTMLElement>('a,button');
+      if (!f.length) return;
       const first = f[0]!;
       const last = f[f.length - 1]!;
-      if (e.shiftKey && document.activeElement === first) {
+      const active = document.activeElement;
+
+      // Clicking any non-focusable part of the panel — its background, the bar
+      // beside the close button — drops focus onto <body>. From there native
+      // Tab order resumes at the top of the document and walks out to the
+      // header behind the panel, which `aria-modal` promises cannot happen.
+      // Anything outside the panel is pulled back to the near edge.
+      if (!(active instanceof Node) || !panel.contains(active)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
+
+      if (e.shiftKey && active === first) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!e.shiftKey && active === last) {
         e.preventDefault();
         first.focus();
       }

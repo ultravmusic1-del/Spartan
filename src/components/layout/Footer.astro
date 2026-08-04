@@ -88,7 +88,23 @@ const year = new Date().getFullYear();
           autocomplete="email"
           placeholder="Enter email address"
         />
-        <button type="button">Submit <span aria-hidden="true">›</span></button>
+        <!-- The mockup sets this chevron as a › character. Text glyphs render
+             inconsistently across platforms, so it is an inline SVG here. -->
+        <button type="button">
+          Submit
+          <svg
+            class="f-form__chev"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m9 5 7 7-7 7"></path>
+          </svg>
+        </button>
       </form>
     </div>
   </div>
@@ -263,6 +279,12 @@ const year = new Date().getFullYear();
     background: var(--color-red-dark);
   }
 
+  /* Optically matches the › the mockup sets at this font size. */
+  .f-form__chev {
+    width: 11px;
+    height: 11px;
+  }
+
   /* ---------- main ---------- */
   .f-main {
     padding: 52px 0;
@@ -319,37 +341,47 @@ const year = new Date().getFullYear();
   .f-soc {
     display: flex;
     flex-direction: column;
-    gap: 11px;
+    /* 5px between the 44px boxes leaves the design's 11px between the rings. */
+    gap: 5px;
   }
 
-  .f-soc a {
+  /* The design draws a 38px circle; WCAG 2.5.5 wants a 44px target. An overlay
+     pseudo-element enlarges the hit area but not the box getBoundingClientRect
+     reports, so the box itself is 44px and the ring is drawn 3px inside it.
+     `:hover` is listed too because `.f-main a:hover` above is more specific
+     than `.f-soc a`: without it the icon turns red on the red hover fill and
+     the control disappears. The mockup has the same collision. */
+  .f-soc a,
+  .f-soc a:hover {
     position: relative;
     display: grid;
     place-items: center;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     padding: 0;
-    border: 1px solid var(--f-circle);
     border-radius: 50%;
     color: #fff;
+  }
+
+  .f-soc a::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid var(--f-circle);
+    border-radius: 50%;
     transition:
       background var(--dur-base) var(--ease-out),
       border-color var(--dur-base) var(--ease-out);
   }
 
-  /* Keeps the 38px circle the design asks for while giving it a 44px target. */
-  .f-soc a::after {
-    content: '';
-    position: absolute;
-    inset: -3px;
-  }
-
-  .f-soc a:hover {
+  .f-soc a:hover::before {
     border-color: var(--color-red);
     background: var(--color-red);
   }
 
   .f-soc svg {
+    /* Positioned so it paints above the ::before ring's hover fill. */
+    position: relative;
     width: 15px;
     height: 15px;
   }
