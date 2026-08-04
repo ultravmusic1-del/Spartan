@@ -238,6 +238,10 @@ Documented in `tools/README.md`. If you regenerate assets, do not "simplify" eit
 
 **Product image resolution is a real constraint.** Native sizes are 100–440px wide. Sharp at the sizes the design uses (~180px tiles, ~400px spotlight) but must never be upscaled beyond ~2×. Components should take `srcset` so higher-resolution supplier photography drops in later without markup changes.
 
+**Do not "fix" the black panel in the two Safety Vests images.** `p19-safety-vests.png` and `p19-safety-vests-2.png` each contain a third element on an opaque black background. This looks exactly like the clip-forwarding failure above and has already been flagged once as a suspected regression. It is not. Brochure page 19 shows it as a deliberate **DAY | NIGHT reflectivity comparison panel** — the same vest in daylight beside the same vest under night-time flash, demonstrating the reflective strips. The extraction is correct; only the overlaid "DAY"/"NIGHT" text was dropped, along with every other text overlay.
+
+Verified: all 72 assets were scanned for opaque black plates and only these two flagged, both legitimate. If a product page ever needs it, the right treatment is a caption explaining the panel — not editing the image.
+
 ---
 
 ## 7. Progress
@@ -252,27 +256,26 @@ Documented in `tools/README.md`. If you regenerate assets, do not "simplify" eit
 | 4 | Content schemas and data | 7 tests; EN 388 independently verified |
 | 5 | Catalog repository | 20 tests; the admin seam |
 | 6 | Design system primitives | `ink-muted` token added; contrast switch confirmed |
+| 7 | Header, footer, mobile nav | Verified against 11 criteria with Playwright; 4 defects fixed |
+| 8 | Catalogue components | ProductCard, CategoryTile, ProductGrid, SpecTable, En388Table |
 
-**29 unit tests passing. `astro check` 0 errors. `astro build` clean.**
+**32 unit tests passing. `astro check` 0 errors. `astro build` clean.**
 
-### ⚠ Task 7 — partially complete and UNVERIFIED
+Task 7's defects, for the record: focus escaped the modal panel when a click landed on a non-focusable part of it; footer socials measured 38×38 not 44×44 (an `::after` overlay enlarged the hit area but not the reported box); a text-glyph chevron survived; and a hover-specificity collision turned social icons red on a red fill, making them vanish.
 
-Committed as `2272361` with an explicit WIP marker. **Do not treat it as done.**
+### Reusable pattern — dynamic product images
 
-Exists and compiles: `src/components/layout/{UtilityBar,Header,Footer}.astro`, `MobileNav.tsx`, `src/data/site.json`, `BaseLayout` wiring, `tsconfig.json` Preact JSX config.
+`astro:assets` cannot take a runtime string path. Established in Task 8 and reused by Tasks 9–11:
 
-**Never checked:**
-- No screenshots at 1440px or 375px
-- `MobileNav` focus trap never exercised — Tab cycling, Shift+Tab wrap, Escape-restores-focus
-- 1080/1081px desktop/mobile boundary unverified (exactly one of hamburger/desktop-menu must show either side)
-- Light lockup legibility on dark not visually confirmed
-- `aria-current="page"`, 44px touch targets, SVG-vs-text-glyph icons unaudited
-- Footer category links: confirm they come from `getCategories()`, not hard-coded
-- Solid (non-hero) header mode unverified
+```ts
+const productImages = import.meta.glob<{ default: ImageMetadata }>('/src/assets/products/*.png');
+const loader = productImages[`/src/assets/products/${product.images[0]}`];
+const image = loader ? (await loader()).default : undefined;
+```
 
-**Resume by running Task 7's Step 6 verification in the plan before building anything on top.**
+Root-absolute pattern gives root-absolute keys, so it works unchanged from any directory. Lazy (no `eager`) so only rendered images are emitted — verified: 26 referenced images produced 52 variants, not all 72. Astro clamps `widths` down to the source's native size, so upscaling cannot happen by accident; `widths` requires `sizes`.
 
-### Remaining — Tasks 8–17
+### Remaining — Tasks 9–17
 
 Full code and tests are in the plan. Summary:
 
