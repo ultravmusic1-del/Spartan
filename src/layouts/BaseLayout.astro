@@ -28,6 +28,16 @@ const { title, description, darkHeader = true } = Astro.props;
     <link rel="preload" href="/fonts/inter-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
     {/*
+      The Spartan helmet, cropped from the existing spartan-logo.svg vector to
+      the helmet path's own bounding box. Not redrawn — the logo is extracted
+      brochure artwork and is never recreated. The scaffold's favicon.ico was
+      removed, so these links are load-bearing: without them browsers fall back
+      to requesting /favicon.ico and get a 404.
+    */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="180x180" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    {/*
       Two flags, both needed before the first paint.
 
       `data-js` marks the document as scripted. Everything that cannot work
