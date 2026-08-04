@@ -21,6 +21,21 @@ brochure is revised — output is committed, so a normal build never runs these.
    of two-column pages, and a spec filter without the column test hands every
    product its neighbour's specs on top of its own.
 
+## Hero photographs — two are not usable as-is
+
+`extract-heroes` emits six plates. After a re-run, expect to delete or avoid two:
+
+- **`cover.jpg` is blank white** (mean RGB 255,255,255). The brochure cover was
+  a text overlay on a plain field, so once the overlay is correctly stripped
+  there is no photograph left. It is deleted from `src/assets/hero/` — do not
+  re-add it, it renders as an empty box.
+- **`lighting.jpg` and `ventilation-water.jpg`** carry the brochure's own
+  white-and-red divider graphic across the lower half of the plate, which shows
+  as a band under any landscape crop. Usable only with a tight top crop.
+
+`electrical.jpg`, `safety.jpg` and `workwear.jpg` are clean full-bleed
+photographs and are the three the site uses.
+
 ## Spec parsing
 
 `extract-catalog` emits `specs: [{ label, value }]` per product, splitting each

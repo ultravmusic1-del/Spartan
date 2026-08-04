@@ -26,7 +26,11 @@ const industries: string[] = site.industries;
   <Chevron class="right-[-30px] bottom-[-40px] w-[300px] h-[330px]" opacity={0.09} flip />
 
   <div class="wrap band__inner">
-    <h2 class="band__lead" id="band-lead">Trusted across industries</h2>
+    <!-- "Industries we serve" is the client's own framing from their brief.
+         Avoid "Trusted across industries" or similar: that asserts a track
+         record we have no source for, and it would sit directly above a
+         sector list that is itself still pending client confirmation. -->
+    <h2 class="band__lead" id="band-lead">Industries we serve</h2>
     <ul class="band__list">
       {industries.map((industry) => <li>{industry}</li>)}
     </ul>
