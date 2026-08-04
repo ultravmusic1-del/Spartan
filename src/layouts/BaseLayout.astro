@@ -45,7 +45,8 @@ const { title, description, darkHeader = true } = Astro.props;
     left: 8px;
     z-index: 100;
     padding: 12px 18px;
-    background: var(--color-red);
+    /* Red surface behind white text, so the fill token, not brand red. */
+    background: var(--color-red-fill);
     color: #fff;
     font-family: var(--font-display);
     font-size: 13px;

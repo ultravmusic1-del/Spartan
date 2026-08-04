@@ -37,7 +37,8 @@ const industries: string[] = site.industries;
   .band {
     position: relative;
     padding: 34px 0;
-    background: var(--color-red);
+    /* Red surface behind white text, so the fill token, not brand red. */
+    background: var(--color-red-fill);
     color: #fff;
     overflow: hidden;
   }

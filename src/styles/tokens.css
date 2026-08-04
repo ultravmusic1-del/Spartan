@@ -1,5 +1,10 @@
 :root {
   --color-red: #eb2927;
+  /* Surfaces that carry white text. Brand red is 4.30:1 against white —
+     just under the AA 4.5:1 floor for normal-size text — so red *fills*
+     behind white copy use this (4.91:1) while --color-red stays the brand
+     colour for text, icons, rules and large display type. */
+  --color-red-fill: #dd1e1c;
   --color-red-dark: #b81c1b;
   --color-red-deep: #970000;
 

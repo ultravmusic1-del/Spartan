@@ -36,7 +36,8 @@ All values below were **sampled from the brochure PDF**, not chosen.
 
 | Token | Hex | Use |
 |---|---|---|
-| `red` | `#EB2927` | Primary brand red. Large/bold text, fills, rules, icons. |
+| `red` | `#EB2927` | Primary brand red. Text, icons, rules, borders, decorative fills. |
+| `red-fill` | `#DD1E1C` | **Red surfaces that carry white text** (see accessibility rule below). |
 | `red-dark` | `#B81C1B` | Hover state for red fills. |
 | `red-deep` | `#970000` | **Small text on light backgrounds** (see accessibility rule below). |
 | `black` | `#08080A` | Page background (dark sections). |
@@ -58,12 +59,16 @@ All values below were **sampled from the brochure PDF**, not chosen.
 | `red-deep` on `paper` | **8.40:1** | Passes AAA |
 | `grey` on `paper` | **3.17:1** | Fails — never use `grey` on light |
 | `ink-muted` on `paper` | **4.96:1** | Passes AA |
+| white on `red` | **4.30:1** | Fails AA for normal text; passes the 3:1 large-text threshold |
+| white on `red-fill` | **4.91:1** | Passes AA at any size |
+| white on `red-dark` | **6.52:1** | Passes AA at any size — the hover step |
 
 Therefore:
 
 - On dark backgrounds, `red` may be used for text at any size.
 - On light backgrounds, `red` is permitted **only** for text ≥ 24px, or ≥ 18.66px bold, or for non-text elements (icons, rules, fills, decorative glyphs). All smaller red text on light **must** use `red-deep`.
 - Muted body copy on light uses `ink-muted`, never `grey`.
+- **Any red *surface* carrying white text uses `red-fill`. Brand `red` is for text, icons, rules, borders and decorative fills.** That one sentence decides every case — including surfaces whose white text is large enough that `red` would technically pass, because a button label and a tile heading rendered in two different reds reads as a bug.
 
 An earlier draft of this spec quoted 4.67:1 and 4.30:1 for red. Those were computed against `#FFFFFF`; the real light surface is `paper` (`#F6F6F7`), which makes the light-background ratio *worse*, not better. The figures above are the measured ones.
 

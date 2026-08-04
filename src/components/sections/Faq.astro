@@ -111,10 +111,14 @@ const faqs = [
     color: var(--color-red-deep);
   }
 
+  /* Open: the disc inverts to a red surface behind a white glyph, so the fill
+     token. The border is the rim of this same disc rather than a rule in its
+     own right, so it moves with the fill — a brand-red hairline around a
+     --color-red-fill disc would read as an artefact. */
   .faq__item[open] .faq__q::after {
     content: '–';
-    border-color: var(--color-red);
-    background: var(--color-red);
+    border-color: var(--color-red-fill);
+    background: var(--color-red-fill);
     color: #fff;
   }
 

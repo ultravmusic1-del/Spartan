@@ -125,7 +125,11 @@ const tiles = await Promise.all(
     gap: 16px;
     min-height: 212px;
     padding: 24px;
-    background: var(--color-red);
+    /* Red surface behind white text, so the fill token, not brand red. The
+       52px numeral clears the AA large-text bar on brand red on its own, but
+       the 15.5px heading below it does not — one fill keeps the tile a single
+       colour instead of two reds a few percent apart. */
+    background: var(--color-red-fill);
     transition: background var(--dur-base) var(--ease-out);
   }
 

@@ -67,7 +67,8 @@ The brochure cover also carries an Arabic wordmark (**سبارتان**). Not use
 All values sampled from the brochure PDF. Tokens live in `src/styles/tokens.css`.
 
 ```
---color-red        #eb2927   brand red
+--color-red        #eb2927   brand red — text, icons, rules, borders, decorative fills
+--color-red-fill   #dd1e1c   red SURFACES that carry white text
 --color-red-dark   #b81c1b   hover on red fills
 --color-red-deep   #970000   small red text on light surfaces
 --color-black      #08080a   page background
@@ -90,8 +91,13 @@ All values sampled from the brochure PDF. Tokens live in `src/styles/tokens.css`
 | red-deep on paper | 8.40:1 | passes AAA |
 | grey on paper | **3.17:1** | **never use grey on light** |
 | ink-muted on paper | 4.96:1 | passes AA |
+| white on red | **4.30:1** | **fails AA for normal text**; passes the 3:1 large-text bar |
+| white on red-fill | 4.91:1 | passes AA at any size |
+| white on red-dark | 6.52:1 | passes AA at any size — the hover step |
 
 So: on dark, red is fine at any size. On light, red is permitted **only** for text ≥24px, or ≥18.66px bold, or non-text elements. Smaller red text on light must use `red-deep`. Muted body copy on light uses `ink-muted`.
+
+And in the other direction: **any red *surface* carrying white text uses `red-fill`; brand red stays the colour for text, icons, rules, borders and decorative fills.** That covers the solid CTA, the trust band, the red catalogue tile, the footer Submit button and social hover disc, the open FAQ toggle and the skip link. It applies even where the white text is large enough for brand red to pass on its own — two reds a few percent apart inside one component reads as a defect.
 
 `Eyebrow`, `PillButton` and `SectionHeading` take an `onLight` prop that switches these automatically — that is how the rule is enforced in code rather than remembered.
 
@@ -241,6 +247,8 @@ Documented in `tools/README.md`. If you regenerate assets, do not "simplify" eit
 **Do not "fix" the black panel in the two Safety Vests images.** `p19-safety-vests.png` and `p19-safety-vests-2.png` each contain a third element on an opaque black background. This looks exactly like the clip-forwarding failure above and has already been flagged once as a suspected regression. It is not. Brochure page 19 shows it as a deliberate **DAY | NIGHT reflectivity comparison panel** — the same vest in daylight beside the same vest under night-time flash, demonstrating the reflective strips. The extraction is correct; only the overlaid "DAY"/"NIGHT" text was dropped, along with every other text overlay.
 
 Verified: all 72 assets were scanned for opaque black plates and only these two flagged, both legitimate. If a product page ever needs it, the right treatment is a caption explaining the panel — not editing the image.
+
+Because of that panel, Body Protection's `heroProductSlug` is **`nonwoven-disposable-coverall`**, not a vest: at 92px in the category grid the DAY/NIGHT plate reads as a black rectangle on the dark tile. The images stay as they are; only the tile's choice of hero changed.
 
 ---
 
