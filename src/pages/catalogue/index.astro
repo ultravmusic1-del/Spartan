@@ -1,0 +1,421 @@
+---
+import type { ImageMetadata } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHeading from '../../components/primitives/SectionHeading.astro';
+import SolidButton from '../../components/primitives/SolidButton.astro';
+import CategoryTile from '../../components/catalog/CategoryTile.astro';
+import ProductCard from '../../components/catalog/ProductCard.astro';
+import CatalogueFilters, {
+  type FilterCategory,
+  type FilterDivision,
+} from '../../components/catalog/CatalogueFilters.tsx';
+import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+
+/**
+ * The whole catalogue on one page: all 15 categories and all 72 products are
+ * server-rendered, so the page is complete for a crawler and complete with
+ * JavaScript switched off. `CatalogueFilters` narrows what is *visible* by
+ * toggling `hidden` on the list items below — it never fetches, and it never
+ * re-renders the list.
+ *
+ * Which is why this page owns the two `<ul>`s rather than handing them to
+ * ProductGrid: the `data-` attributes the island reads have to live on the
+ * items, and the rules that make `hidden` win over `display: grid` have to be
+ * owned by whoever owns the element (an attribute selector on a class the page
+ * owns beats the plain class rule; a Tailwind utility would sit in
+ * `@layer utilities` and lose to unlayered component CSS outright).
+ *
+ * No hero, so `darkHeader={false}` gives the solid sticky header.
+ */
+const [categories, divisions, products] = await Promise.all([
+  getCategories(),
+  getDivisions(),
+  getProducts(),
+]);
+
+const divisionSlug = new Map(divisions.map((d) => [d.id, d.slug]));
+const categoryById = new Map(categories.map((c) => [c.id, c]));
+
+// astro:assets cannot take a runtime path (handoff.md section 7). Lazy, so only
+// the images actually rendered are emitted.
+const productImages = import.meta.glob<{ default: ImageMetadata }>('/src/assets/products/*.png');
+const bySlug = new Map(products.map((p) => [p.slug, p]));
+
+const tiles = await Promise.all(
+  categories.map(async (category) => {
+    const file = category.heroProductSlug
+      ? bySlug.get(category.heroProductSlug)?.images[0]
+      : undefined;
+    const loader = file ? productImages[`/src/assets/products/${file}`] : undefined;
+    if (file && !loader) console.warn(`[catalogue] no image module for "${file}"`);
+    return {
+      category,
+      image: loader ? (await loader()).default : null,
+      division: divisionSlug.get(category.divisionId) ?? '',
+    };
+  }),
+);
+
+const filterDivisions: FilterDivision[] = divisions.map((d) => ({ slug: d.slug, name: d.name }));
+const filterCategories: FilterCategory[] = categories.map((c) => ({
+  slug: c.slug,
+  name: c.name,
+  divisionSlug: divisionSlug.get(c.divisionId) ?? '',
+  count: c.productCount,
+}));
+
+const rows = products.map((product) => {
+  const category = categoryById.get(product.categoryId);
+  return {
+    product,
+    categorySlug: category?.slug ?? '',
+    division: category ? (divisionSlug.get(category.divisionId) ?? '') : '',
+  };
+});
+---
+
+<BaseLayout
+  title="Catalogue — Spartan Electricals & Spartan Safety"
+  description={`Every Spartan product in one place: ${products.length} products across ${categories.length} categories in two divisions. Filter by division or category, or open a category for its full range.`}
+  darkHeader={false}
+>
+  <main id="main">
+    {/* Marks the document as scripted before the filter bar is painted, so the
+        bar can hold its space while it waits to hydrate without leaving a blank
+        gap for anyone browsing without JavaScript. See the global styles at the
+        foot of this file. */}
+    <script is:inline>document.documentElement.dataset.js = '1';</script>
+
+    <section class="cat">
+      <div class="wrap">
+        <SectionHeading
+          level="h1"
+          eyebrow="Full catalogue"
+          title="Every product, in one place."
+          lede={`${products.length} products across ${categories.length} categories in two divisions. Filter the list below, or open a category for its own page.`}
+        />
+
+        <div class="cat__filters">
+          <CatalogueFilters
+            client:idle
+            divisions={filterDivisions}
+            categories={filterCategories}
+            total={products.length}
+          />
+        </div>
+
+        <h2 class="cat__h2">Browse by category</h2>
+        <ul class="cat__tiles">
+          {
+            tiles.map(({ category, image, division }) => (
+              <li data-category-tile data-division={division}>
+                <CategoryTile category={category} image={image} />
+              </li>
+            ))
+          }
+        </ul>
+
+        <h2 class="cat__h2">All products</h2>
+        <ul class="cat__grid" data-product-grid>
+          {
+            rows.map(({ product, categorySlug, division }) => (
+              <li data-product data-division={division} data-category={categorySlug}>
+                <ProductCard product={product} />
+              </li>
+            ))
+          }
+        </ul>
+
+        {/* Only reachable by filtering to one of the two expanding ranges. */}
+        <div class="cat__none" data-product-none hidden>
+          <p class="cat__none-title">No products in this range yet.</p>
+          <p class="cat__none-note">
+            Contact us for current availability and lead times — we can quote against your
+            specification while the published range catches up.
+          </p>
+          <div class="cat__none-action">
+            <SolidButton href="/enquiry">Send an enquiry</SolidButton>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .cat {
+    padding: 56px 0 104px;
+  }
+
+  .cat__filters {
+    margin-top: 40px;
+  }
+
+  .cat__h2 {
+    margin: 48px 0 18px;
+    font-size: clamp(20px, 2.2vw, 26px);
+    letter-spacing: -0.022em;
+  }
+
+  /* The hairline grid from the mockup, with the same two adjustments
+     ProductGrid makes: the 1px rules are each cell's own box-shadow rather than
+     a --color-line container showing through the gaps (a short last row would
+     otherwise leave lighter grey blocks), and the column count and container
+     width are clamped to how many cells there actually are. Filtering can leave
+     a single product, so the island rewrites --cols on the product grid. */
+  .cat__tiles,
+  .cat__grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 4), 1fr);
+    max-width: calc(var(--cols, 4) / 4 * 100%);
+    gap: 1px;
+    list-style: none;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+  }
+
+  .cat__tiles > li,
+  .cat__grid > li {
+    display: flex;
+    background: var(--color-card);
+    box-shadow: 0 0 0 1px var(--color-line);
+  }
+
+  /* CategoryTile and ProductCard render their own root, which has to fill the
+     cell or the rules open into gaps under a short tile. */
+  .cat__tiles > li > :global(a),
+  .cat__grid > li > :global(article) {
+    flex: 1;
+  }
+
+  /* `hidden` is what the island sets on the items it filters out. Tailwind's
+     preflight already forces `display: none !important` on any `[hidden]`
+     element, but these page-owned rules make that independent of it: without
+     something at this specificity the `display` values above would win, since
+     the plain UA `[hidden]` rule does not carry `!important`. */
+  .cat__tiles > li[hidden],
+  .cat__grid > li[hidden],
+  .cat__grid[hidden],
+  .cat__none[hidden] {
+    display: none;
+  }
+
+  .cat__none {
+    margin-top: 0;
+    padding: 48px 32px;
+    border: 1px solid var(--color-line);
+    background: var(--color-card);
+    text-align: center;
+  }
+
+  .cat__none-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .cat__none-note {
+    max-width: 52ch;
+    margin: 10px auto 0;
+    font-size: 14px;
+    color: var(--color-grey-lt);
+  }
+
+  .cat__none-action {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  @media (max-width: 1080px) {
+    .cat__tiles,
+    .cat__grid {
+      grid-template-columns: repeat(var(--cols-md, 3), 1fr);
+      max-width: calc(var(--cols-md, 3) / 3 * 100%);
+    }
+  }
+
+  @media (max-width: 820px) {
+    .cat {
+      padding: 40px 0 80px;
+    }
+
+    .cat__tiles,
+    .cat__grid {
+      grid-template-columns: repeat(var(--cols-sm, 2), 1fr);
+      max-width: calc(var(--cols-sm, 2) / 2 * 100%);
+    }
+  }
+</style>
+
+<!-- The filter bar is a Preact island: Astro's scoped styles never reach the DOM
+     a framework component renders, so its CSS is global and namespaced, the same
+     arrangement Header.astro uses for the mobile nav. -->
+<style is:global>
+  .cf {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 20px 28px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  /* Until it hydrates the bar must not be operable — a control that looks live
+     and does nothing is worse than no control, and `client:idle` leaves a real
+     window. `visibility: hidden` takes it out of the tab order and the
+     accessibility tree while it keeps the exact box it will occupy, so
+     revealing it shifts nothing (measured: 0px, CLS 0.000). Without JavaScript
+     `data-js` is never set, the bar collapses to nothing instead of leaving a
+     gap, and all 72 products are listed below regardless.
+
+     This is a class rather than the `hidden` attribute on purpose: Tailwind 4's
+     preflight ships `[hidden]:where(...){display:none!important}`, which no
+     ordinary author rule can outrank, so `hidden` can be switched off but never
+     made to hold its space. */
+  .cf--pending {
+    display: none;
+  }
+
+  html[data-js] .cf--pending {
+    display: flex;
+    visibility: hidden;
+  }
+
+  /* A fieldset defaults to `min-inline-size: min-content`, which refuses to
+     shrink below its widest pill and pushes the bar past a 375px viewport. */
+  .cf__group {
+    border: 0;
+    min-inline-size: 0;
+  }
+
+  .cf__legend {
+    display: block;
+    margin-bottom: 9px;
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    /* 5.9:1 on --color-black. */
+    color: var(--color-grey);
+  }
+
+  .cf__radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cf__radio {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-grey-lt);
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      background var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out);
+  }
+
+  .cf__radio:hover {
+    border-color: var(--color-red);
+    color: #fff;
+  }
+
+  /* The native control stays in the accessibility tree and keeps its arrow-key
+     roving; only its paint is replaced by the pill. It is stretched over the
+     whole pill rather than shrunk to a 1px corner so that focus lands on a box
+     the same shape as the thing you can see: the global :focus-visible ring
+     then draws around the pill on its own, with no :has() and no
+     `outline: none` on a focusable control. */
+  .cf__radio input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 999px;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .cf__radio--on {
+    /* A red surface carrying white text, so the fill token, not brand red. */
+    background: var(--color-red-fill);
+    border-color: var(--color-red-fill);
+    color: #fff;
+  }
+
+  .cf__radio--on:hover {
+    background: var(--color-red-dark);
+    border-color: var(--color-red-dark);
+    color: #fff;
+  }
+
+  .cf__select {
+    min-width: 250px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    padding: 11px 14px;
+    background: #0b0b0e;
+    border: 1px solid var(--color-line);
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .cf__status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+    min-height: 44px;
+  }
+
+  .cf__count {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-grey-lt);
+  }
+
+  .cf__reset {
+    min-height: 44px;
+    padding: 10px 4px;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--color-red);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .cf__reset:hover {
+    color: var(--color-red);
+  }
+
+  @media (max-width: 820px) {
+    .cf__status {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+</style>

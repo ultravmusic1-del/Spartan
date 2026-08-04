@@ -21,11 +21,23 @@ interface Props {
 }
 
 const { products, class: cls = '' } = Astro.props;
+
+// A grid holding fewer products than it has columns must not stretch its rules
+// across the empty ones: Cables and Insect Killers hold a single product each,
+// and a related-products strip in a two-product category shows one card. The
+// column count and the container's width are both clamped to what is actually
+// there. `repeat()` takes an integer rather than a `min()` expression, so the
+// three breakpoint values are worked out here instead of in CSS.
+const n = products.length;
+const cols = { lg: Math.min(n, 4), md: Math.min(n, 3), sm: Math.min(n, 2) };
 ---
 
 {
   products.length > 0 ? (
-    <ul class:list={['grid', cls]}>
+    <ul
+      class:list={['grid', cls]}
+      style={`--pg-cols:${cols.lg};--pg-cols-md:${cols.md};--pg-cols-sm:${cols.sm}`}
+    >
       {products.map((product) => (
         <li>
           <ProductCard product={product} />
@@ -45,18 +57,24 @@ const { products, class: cls = '' } = Astro.props;
 <style>
   .grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(var(--pg-cols), 1fr);
+    /* Four columns wide at most, and never wider than the products in it. */
+    max-width: calc(var(--pg-cols) / 4 * 100%);
     gap: 1px;
     list-style: none;
-    background: var(--color-line);
+    background: var(--color-card);
     border: 1px solid var(--color-line);
   }
 
   /* The card fills its cell so the 1px gap stays a hairline rule rather than
-     opening into a gap wherever a card is shorter than its row. */
+     opening into a gap wherever a card is shorter than its row.
+     The 1px rules are each cell's own box-shadow rather than a --color-line
+     container showing through the gaps: a last row that does not fill its
+     columns would otherwise leave the unused cells as lighter grey blocks. */
   .grid > li {
     display: flex;
     background: var(--color-card);
+    box-shadow: 0 0 0 1px var(--color-line);
   }
 
   .empty {
@@ -81,13 +99,15 @@ const { products, class: cls = '' } = Astro.props;
 
   @media (max-width: 1080px) {
     .grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(var(--pg-cols-md), 1fr);
+      max-width: calc(var(--pg-cols-md) / 3 * 100%);
     }
   }
 
   @media (max-width: 820px) {
     .grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(var(--pg-cols-sm), 1fr);
+      max-width: calc(var(--pg-cols-sm) / 2 * 100%);
     }
   }
 </style>

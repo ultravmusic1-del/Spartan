@@ -1,0 +1,91 @@
+---
+/**
+ * Breadcrumbs — the trail above a category or product heading.
+ *
+ * Shared by `/catalogue/[category]` and `/products/[slug]` so the two pages
+ * cannot drift apart on markup or contrast; it holds no catalogue knowledge of
+ * its own and takes the trail already resolved through `catalog.ts`.
+ *
+ * The last crumb is the current page: it is plain text carrying
+ * `aria-current="page"`, never a link to where the user already is. Separators
+ * are real elements marked `aria-hidden` rather than CSS `content`, because
+ * generated content is exposed to some screen readers and a trail read as
+ * "Catalogue slash Lighting" is noise.
+ *
+ * No JSON-LD here — structured data is Task 15's.
+ */
+export interface Crumb {
+  label: string;
+  /** Omitted on the last crumb, which is the current page. */
+  href?: string;
+}
+
+interface Props {
+  trail: Crumb[];
+  class?: string;
+}
+
+const { trail, class: cls = '' } = Astro.props;
+---
+
+<nav class:list={['crumbs', cls]} aria-label="Breadcrumb">
+  <ol>
+    {
+      trail.map((crumb, i) => (
+        <li>
+          {i > 0 && (
+            <span class="crumbs__sep" aria-hidden="true">
+              /
+            </span>
+          )}
+          {crumb.href ? (
+            <a href={crumb.href}>{crumb.label}</a>
+          ) : (
+            <span class="crumbs__current" aria-current="page">
+              {crumb.label}
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<style>
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    list-style: none;
+    font-family: var(--font-display);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .crumbs li {
+    display: flex;
+    align-items: center;
+  }
+
+  /* 6.9:1 on --color-black; these pages are dark throughout. */
+  .crumbs a {
+    color: var(--color-grey);
+    padding-block: 4px;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .crumbs a:hover {
+    color: #fff;
+  }
+
+  .crumbs__sep {
+    margin-inline: 10px;
+    color: var(--color-line);
+  }
+
+  .crumbs__current {
+    color: var(--color-grey-lt);
+  }
+</style>

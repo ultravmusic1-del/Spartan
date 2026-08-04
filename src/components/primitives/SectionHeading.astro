@@ -17,18 +17,37 @@ interface Props {
   lede?: string;
   center?: boolean;
   onLight?: boolean;
+  /**
+   * Heading level. Sections default to `h2`. A listing or detail page whose
+   * subject IS this heading passes `h1`, so the document keeps exactly one and
+   * skips no level on the way down to the `h3`s inside the cards below.
+   *
+   * Named `level` rather than the more idiomatic `as`: a property literally
+   * called `as` on this interface makes `astro check` lose track of `Props`
+   * and report it unused (ts6196). Measured — the hint appears and disappears
+   * with the rename alone.
+   */
+  level?: 'h1' | 'h2';
 }
 
-const { eyebrow, title, lede, center = false, onLight = false } = Astro.props;
+const {
+  eyebrow,
+  title,
+  lede,
+  center = false,
+  onLight = false,
+  level: Heading = 'h2',
+} = Astro.props;
 ---
 
 <div class:list={['sec', { 'sec--center': center, 'sec--on-light': onLight }]}>
   <Eyebrow center={center} onLight={onLight}>{eyebrow}</Eyebrow>
-  <h2 set:html={title} />
+  <Heading set:html={title} />
   {lede && <p>{lede}</p>}
 </div>
 
 <style>
+  .sec h1,
   .sec h2 {
     font-size: clamp(30px, 4vw, 46px);
     margin-top: 16px;

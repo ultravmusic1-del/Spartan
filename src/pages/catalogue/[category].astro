@@ -1,0 +1,159 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/catalog/Breadcrumbs.astro';
+import SectionHeading from '../../components/primitives/SectionHeading.astro';
+import SolidButton from '../../components/primitives/SolidButton.astro';
+import PillButton from '../../components/primitives/PillButton.astro';
+import ProductGrid from '../../components/catalog/ProductGrid.astro';
+import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+
+/**
+ * One page per category, fifteen in all. Two of them — Electrical Accessories
+ * and Spill Control — have no products at all. They are not stubs and they do
+ * not get a borrowed photograph or an invented placeholder product: the range
+ * is real, the client's brief lists it, and the brochure has nothing in it yet.
+ * Those pages say so and offer a way to ask, which is the honest state.
+ *
+ * No hero, so `darkHeader={false}` gives the solid sticky header.
+ */
+export async function getStaticPaths() {
+  const categories = await getCategories();
+  return categories.map((c) => ({ params: { category: c.slug } }));
+}
+
+const { category: slug } = Astro.params;
+
+const [categories, divisions] = await Promise.all([getCategories(), getDivisions()]);
+const category = categories.find((c) => c.slug === slug);
+if (!category) throw new Error(`No category for slug "${slug}"`);
+
+const division = divisions.find((d) => d.id === category.divisionId);
+const products = await getProducts({ categoryId: category.id });
+
+const count = products.length;
+const countLabel = `${count} ${count === 1 ? 'product' : 'products'}`;
+
+// An expanding category's description IS the "range expanding" message, and the
+// empty panel below states it with the actions attached. Running it as a lede as
+// well says the same thing twice on a page that has little else on it, so the
+// panel keeps it and the lede stands down. The description still carries the
+// page's meta description.
+const lede = category.status === 'expanding' ? undefined : category.description;
+---
+
+<BaseLayout
+  title={`${category.name} — ${division?.name ?? 'Spartan'}`}
+  description={category.description}
+  darkHeader={false}
+>
+  <main id="main">
+    <section class="cp">
+      <div class="wrap">
+        <Breadcrumbs
+          trail={[
+            { label: 'Catalogue', href: '/catalogue' },
+            { label: category.name },
+          ]}
+        />
+
+        <SectionHeading
+          level="h1"
+          eyebrow={division?.name ?? 'Catalogue'}
+          title={category.name}
+          lede={lede}
+        />
+
+        <div class="cp__body">
+          {count > 0 && <h2 class="cp__count">{countLabel}</h2>}
+
+          {/* The slot only renders on the two categories that have nothing in
+              them; everywhere else ProductGrid ignores it. */}
+          <ProductGrid products={products}>
+            <Fragment slot="empty">
+              {/* The only heading in this branch, so the outline still runs
+                  h1 -> h2 with nothing skipped. */}
+              <h2 class="cp__empty-title">This range is expanding.</h2>
+              <p class="cp__empty-note">
+                Contact us for current availability and lead times — we can quote against your
+                specification while the published range catches up.
+              </p>
+              <div class="cp__empty-actions">
+                <SolidButton href="/enquiry">Send an enquiry</SolidButton>
+                <PillButton href="/contact">Talk to us</PillButton>
+              </div>
+            </Fragment>
+          </ProductGrid>
+
+          {
+            count > 0 && (
+              <div class="cp__foot">
+                <SolidButton href="/enquiry">Request a quote</SolidButton>
+                <PillButton href="/catalogue">Browse the full catalogue</PillButton>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .cp {
+    padding: 56px 0 104px;
+  }
+
+  .cp__body {
+    margin-top: 44px;
+  }
+
+  /* A real section heading for the grid below it, carrying the mockup's small
+     table-header treatment rather than display size — it labels a list, it does
+     not open a section. */
+  .cp__count {
+    margin-bottom: 14px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  .cp__empty-title {
+    font-size: 20px;
+    color: #fff;
+  }
+
+  .cp__empty-note {
+    max-width: 52ch;
+    margin: 12px auto 0;
+    font-size: 14.5px;
+    color: var(--color-grey-lt);
+  }
+
+  .cp__empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 26px;
+  }
+
+  .cp__foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 820px) {
+    .cp {
+      padding: 40px 0 80px;
+    }
+
+    .cp__body {
+      margin-top: 36px;
+    }
+  }
+</style>
