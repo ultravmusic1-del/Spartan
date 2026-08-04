@@ -283,6 +283,10 @@ const image = loader ? (await loader()).default : undefined;
 
 Root-absolute pattern gives root-absolute keys, so it works unchanged from any directory. Lazy (no `eager`) so only rendered images are emitted — verified: 26 referenced images produced 52 variants, not all 72. Astro clamps `widths` down to the source's native size, so upscaling cannot happen by accident; `widths` requires `sizes`.
 
+### Build output moved to `dist/client/`
+
+Adding the first server-rendered route (`/api/enquiry`, the only one) switched the Vercel adapter into hybrid mode. Static pages now emit to **`dist/client/`**, not `dist/`, with the SSR bundle in `dist/server/`. Any script or check that globs `dist/products` or `dist/catalogue` needs the `client/` segment. Current output: 96 `index.html` + `404.html` — 72 product pages, 15 category pages, the catalogue index, and 8 top-level pages.
+
 ### Two CSS traps that fail silently
 
 **Tailwind utilities lose to Astro scoped styles.** Utilities compile into `@layer utilities`; Astro's scoped component styles are unlayered, and **unlayered CSS beats every layer regardless of specificity**. Passing `max-sm:hidden` to a component whose own scoped rule sets `display` does nothing at all. Wrap the component in an element the page owns instead. `Chevron` sizing works through utilities *only* because `Chevron` declares no width of its own.
