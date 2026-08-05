@@ -83,8 +83,10 @@ const [divisions, categories, products] = await Promise.all([
     font-weight: 800;
     letter-spacing: -0.05em;
     line-height: 0.86;
-    /* Decorative display numeral, not a heading; brand red on --color-black
-       measures 4.65:1 and passes AA at any size. */
+    /* Decorative display numeral, not a heading, and far past WCAG's 24px
+       large-text threshold, so the 3:1 bar applies and brand red on
+       --color-black (4.65:1) clears it comfortably. "Red is fine on dark at
+       any size" is NOT true — see tokens.css — but at 190px it is. */
     color: var(--color-red);
   }
 
@@ -133,7 +135,7 @@ const [divisions, categories, products] = await Promise.all([
   }
 
   .nf__more a:hover {
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   @media (max-width: 820px) {

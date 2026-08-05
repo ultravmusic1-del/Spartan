@@ -15,42 +15,33 @@ import { expect, test } from '@playwright/test';
  * IF A COLOUR-CONTRAST VIOLATION APPEARS HERE, DO NOT RELAX THIS TEST.
  *
  * ---------------------------------------------------------------------------
- * KNOWN OPEN DEFECT — these tests fail on `/`, `/catalogue`, `/enquiry`,
- * `/electricals`, `/safety`, `/why-spartan` and `/industries`, and they are
- * right to.
+ * RESOLVED — this block previously documented a colour-contrast defect that
+ * failed these tests on `/`, `/catalogue`, `/enquiry`, `/electricals`,
+ * `/safety`, `/why-spartan` and `/industries`. Kept because the mistake behind
+ * it is easy to make again.
  *
- * handoff.md §3 records "red on black 4.65:1 — passes AA at any size" and
- * generalises it to "on dark, red is fine at any size". That measurement was
+ * handoff.md §3 recorded "red on black 4.65:1 — passes AA at any size" and
+ * generalised it to "on dark, red is fine at any size". That measurement was
  * taken against `--color-black` (#08080a) only. The site has three dark
  * surfaces, and brand red does not clear AA on the other two:
  *
  *   #eb2927 on #08080a (--color-black)  4.65:1  passes
- *   #eb2927 on #0e0e11 (--color-panel)  4.47:1  FAILS  (AA needs 4.5:1)
+ *   #eb2927 on #0e0e11 (--color-panel)  4.48:1  FAILS  (AA needs 4.5:1)
  *   #eb2927 on #151519 (--color-card)   4.23:1  FAILS
  *
- * Five components put small bold red text on those two surfaces:
+ * Fixed by adding `--color-red-light: #ef3a38` (5.08 / 4.89 / 4.62:1 on the
+ * three surfaces) and using it for small red TEXT on dark. `--color-red` is
+ * unchanged and remains the colour for large text, icons, rules, borders and
+ * decorative fills. `design/direction-b-forge.html` still has the original
+ * failure — it came in with the approved design — so that file is not a
+ * reference for this particular pairing.
  *
- *   .eyebrow        Eyebrow.astro           11px/700 on --color-panel   4.47:1
- *   .tile__count    CategoryTile.astro      11px/700 on --color-card    4.23:1
- *   .card__variant  ProductCard.astro     11.5px/700 on --color-card    4.23:1
- *   .ind__count     industries.astro        11px/700 on --color-card    4.23:1
- *   .ef-field__req  enquiry.astro           11px/700 on --color-card    4.23:1
- *
- * CategoryTile.astro even carries the wrong figure in a comment ("Red on
- * --color-card measures 4.65:1"); that is the black number.
- *
- * It is not fixed here because every fix is a brand decision and none of them
- * is local: (a) a lighter red — there is no such token, all four reds are at or
- * below brand red, so it means adding one; (b) dropping red for these labels in
- * favour of --color-grey-lt, which changes the approved comp's accent system;
- * (c) moving these components onto --color-black, which changes the surface
- * system. `design/direction-b-forge.html` has the same failure, so it came in
- * with the approved design rather than with the implementation.
- *
- * Task 16's brief is explicit that a violation needing a design decision is
- * escalated rather than papered over, and its scope bars edits to
- * `src/styles/tokens.css`. So the test stays strict and the defect stays
- * visible. It is a launch blocker for Task 17.
+ * AXE HAS A BLIND SPOT HERE. It reported the 11px and 11.5px labels but never
+ * flagged `.en td` in En388Table.astro — 16px/800, which is 12pt bold and so
+ * still normal-size text by WCAG — at 4.48:1 on `--color-panel` inside the
+ * home Spotlight. That one was found by measuring the rendered colour against
+ * the resolved background in the browser. A clean run here is a floor, not a
+ * certificate; re-measure rather than trusting the scan.
  * ---------------------------------------------------------------------------
  */
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21aa'];

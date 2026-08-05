@@ -85,8 +85,15 @@ const columns = en388 ? en388Columns(en388) : [];
     border: 1px solid var(--color-line);
   }
 
-  /* Brand red on --color-card / --color-panel measures 4.65:1 and passes AA at
-     any size. These levels never appear on a light surface. */
+  /* 16px is 12pt, and WCAG's large-text bar for bold type is 14pt (18.66px),
+     so these levels are normal-size text and need 4.5:1 however heavy they
+     look. The table renders on --color-panel inside the home Spotlight and on
+     --color-black on a product page; brand red is 4.48:1 on the first and
+     fails. --color-red-light is 4.89:1 and 5.08:1 respectively.
+
+     axe did not report this one — only the 11px labels — so it was found by
+     measuring the rendered colour against the resolved background rather than
+     by reading the scan. These levels never appear on a light surface. */
   .en td {
     padding: 12px;
     border: 1px solid var(--color-line);
@@ -94,7 +101,7 @@ const columns = en388 ? en388Columns(en388) : [];
     font-family: var(--font-display);
     font-weight: 800;
     font-size: 16px;
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   /* "Abrasion" and "Puncture" are single words that cannot wrap, so at 10.5px

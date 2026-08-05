@@ -73,6 +73,7 @@ All values sampled from the brochure PDF. Tokens live in `src/styles/tokens.css`
 --color-red-fill   #dd1e1c   red SURFACES that carry white text
 --color-red-dark   #b81c1b   hover on red fills
 --color-red-deep   #970000   small red text on light surfaces
+--color-red-light  #ef3a38   small red text on dark surfaces
 --color-black      #08080a   page background
 --color-panel      #0e0e11   alternating dark section
 --color-card       #151519   dark card surface
@@ -89,8 +90,11 @@ All values sampled from the brochure PDF. Tokens live in `src/styles/tokens.css`
 | Pair | Ratio | Verdict |
 |---|---|---|
 | red on black | 4.65:1 | passes AA at any size |
-| **red on panel** | **4.47:1** | **fails AA for normal text** — see the correction below |
-| **red on card** | **4.23:1** | **fails AA for normal text** — see the correction below |
+| **red on panel** | **4.48:1** | **fails AA for normal text**; passes the 3:1 large-text bar |
+| **red on card** | **4.23:1** | **fails AA for normal text**; passes the 3:1 large-text bar |
+| red-light on black | 5.08:1 | passes AA at any size |
+| red-light on panel | 4.89:1 | passes AA at any size |
+| red-light on card | 4.62:1 | passes AA at any size |
 | red on paper | **3.99:1** | **fails AA for normal text**; passes the 3:1 large-text bar |
 | red-deep on paper | 8.40:1 | passes AAA |
 | grey on paper | **3.17:1** | **never use grey on light** |
@@ -99,27 +103,17 @@ All values sampled from the brochure PDF. Tokens live in `src/styles/tokens.css`
 | white on red-fill | 4.91:1 | passes AA at any size |
 | white on red-dark | 6.52:1 | passes AA at any size — the hover step |
 
-On light, red is permitted **only** for text ≥24px, or ≥18.66px bold, or non-text elements. Smaller red text on light must use `red-deep`. Muted body copy on light uses `ink-muted`.
+**"On dark, red is fine at any size" is not true, and an earlier version of this document said it was.** That claim was measured against `--color-black` alone. There are three dark surfaces and brand red clears AA on only one. Hence the rule:
 
-> **Correction, Task 16 — "on dark, red is fine at any size" is not true.**
-> That generalisation was measured against `--color-black` alone. The site has
-> three dark surfaces and brand red clears AA on only one of them: 4.65:1 on
-> `--color-black`, but **4.47:1 on `--color-panel`** and **4.23:1 on
-> `--color-card`**, both under the 4.5:1 floor for normal-size text. Five
-> components put small bold red text on those two surfaces and fail WCAG AA:
-> `.eyebrow` (Eyebrow.astro), `.tile__count` (CategoryTile.astro),
-> `.card__variant` (ProductCard.astro), `.ind__count` (industries.astro) and
-> `.ef-field__req` (enquiry.astro). It affects `/`, `/catalogue`, `/enquiry`,
-> `/electricals`, `/safety`, `/why-spartan` and `/industries`, and
-> `design/direction-b-forge.html` has the same failure, so it arrived with the
-> approved design rather than with the implementation.
->
-> **Unfixed, deliberately, and the tests fail on it.** No token solves it — all
-> four reds are at or below brand red — so the options are a new lighter red, or
-> dropping red for these labels, or moving the components onto `--color-black`.
-> All three are brand decisions. **This is a launch blocker for Task 17 and needs
-> the client or the designer.** The measured numbers and the three options are in
-> the header of `tests/e2e/a11y.spec.ts`.
+> **Small red text on a dark surface uses `--color-red-light`. Brand `--color-red` stays the colour for large text, icons, rules, borders and decorative fills.**
+
+Large means ≥24px, or ≥18.66px (14pt) bold — **bold alone does not make text large**. The EN 388 levels at 16px/800 are 12pt bold, so they are normal-size text and needed the fix too; axe never flagged them, and they were caught only by measuring the rendered colour against the resolved background.
+
+As with `red-fill`, the rule applies even on `--color-black` where brand red would pass: `.eyebrow` alone appears on all three dark surfaces, and two reds a few percent apart reads as a defect. Applied to `.eyebrow`, `.tile__count`, `.card__variant`, `.ind__count`, `.ef-field__req`, `.en td`, `.pd__variant`, `.f-head` and the hover states that turn small text red.
+
+**`design/direction-b-forge.html` has the same failure**, so it arrived with the approved design rather than the implementation — it stays the source of truth for spacing, size and layout, but **not** for this colour pairing.
+
+On light, red is permitted **only** for text ≥24px, or ≥18.66px bold, or non-text elements. Smaller red text on light must use `red-deep`. Muted body copy on light uses `ink-muted`.
 
 And in the other direction: **any red *surface* carrying white text uses `red-fill`; brand red stays the colour for text, icons, rules, borders and decorative fills.** That covers the solid CTA, the trust band, the red catalogue tile, the footer Submit button and social hover disc, the open FAQ toggle and the skip link. It applies even where the white text is large enough for brand red to pass on its own — two reds a few percent apart inside one component reads as a defect.
 

@@ -274,7 +274,11 @@ const pageTitle = category
     letter-spacing: -0.028em;
   }
 
-  /* Red on --color-black measures 4.65:1 and passes AA at any size. */
+  /* This is the same variant label as .card__variant, which sits on
+     --color-card and has to use --color-red-light to reach 4.5:1. Brand red
+     would pass here on --color-black (4.65:1), but the label the user clicked
+     and the label they land on would then be two different reds; it uses the
+     dark-surface text red for the same reason .eyebrow does. 5.08:1. */
   .pd__variant {
     margin-top: 10px;
     font-family: var(--font-display);
@@ -282,7 +286,7 @@ const pageTitle = category
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   .pd__label {

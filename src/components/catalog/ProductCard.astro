@@ -180,7 +180,9 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
     color: #fff;
   }
 
-  /* Red on --color-card measures 4.65:1 and passes AA at any size. */
+  /* 11.5px/700 is normal-size text by WCAG and needs 4.5:1. Brand red on
+     --color-card is 4.23:1 and fails — 4.65:1 is the --color-black figure and
+     was never the surface this card uses. --color-red-light is 4.62:1. */
   .card__variant {
     display: block;
     margin-top: 5px;
@@ -188,7 +190,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   .card__specs {

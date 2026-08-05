@@ -39,7 +39,8 @@ All values below were **sampled from the brochure PDF**, not chosen.
 | `red` | `#EB2927` | Primary brand red. Text, icons, rules, borders, decorative fills. |
 | `red-fill` | `#DD1E1C` | **Red surfaces that carry white text** (see accessibility rule below). |
 | `red-dark` | `#B81C1B` | Hover state for red fills. |
-| `red-deep` | `#970000` | **Small text on light backgrounds** (see accessibility rule below). |
+| `red-deep` | `#970000` | **Small red text on light backgrounds** (see accessibility rule below). |
+| `red-light` | `#EF3A38` | **Small red text on dark backgrounds** (see accessibility rule below). |
 | `black` | `#08080A` | Page background (dark sections). |
 | `panel` | `#0E0E11` | Alternating dark section background. |
 | `card` | `#151519` | Dark card / tile surface. |
@@ -52,9 +53,16 @@ All values below were **sampled from the brochure PDF**, not chosen.
 
 **Accessibility rule (must be enforced).** Measured against the actual surfaces, not against pure white:
 
+There are **three** dark surfaces, and brand `red` clears AA on only one of them. Measuring against `black` alone and generalising to "on dark, red is fine at any size" is how this was got wrong once already:
+
 | Pair | Ratio | Verdict |
 |---|---|---|
 | `red` on `black` | **4.65:1** | Passes AA at any size |
+| `red` on `panel` | **4.48:1** | **Fails AA for normal text**; passes the 3:1 large-text threshold |
+| `red` on `card` | **4.23:1** | **Fails AA for normal text**; passes the 3:1 large-text threshold |
+| `red-light` on `black` | **5.08:1** | Passes AA at any size |
+| `red-light` on `panel` | **4.89:1** | Passes AA at any size |
+| `red-light` on `card` | **4.62:1** | Passes AA at any size |
 | `red` on `paper` | **3.99:1** | Fails AA for normal text; passes the 3:1 large-text threshold |
 | `red-deep` on `paper` | **8.40:1** | Passes AAA |
 | `grey` on `paper` | **3.17:1** | Fails — never use `grey` on light |
@@ -65,12 +73,16 @@ All values below were **sampled from the brochure PDF**, not chosen.
 
 Therefore:
 
-- On dark backgrounds, `red` may be used for text at any size.
+- **Small red text on a dark surface uses `red-light`.** Brand `red` stays the colour for large text, icons, rules, borders and decorative fills. As with `red-fill`, this applies even on `black` where `red` would pass on its own: `.eyebrow` alone appears on all three dark surfaces, and two reds a few percent apart across them reads as a bug rather than a system.
 - On light backgrounds, `red` is permitted **only** for text ≥ 24px, or ≥ 18.66px bold, or for non-text elements (icons, rules, fills, decorative glyphs). All smaller red text on light **must** use `red-deep`.
 - Muted body copy on light uses `ink-muted`, never `grey`.
 - **Any red *surface* carrying white text uses `red-fill`. Brand `red` is for text, icons, rules, borders and decorative fills.** That one sentence decides every case — including surfaces whose white text is large enough that `red` would technically pass, because a button label and a tile heading rendered in two different reds reads as a bug.
 
+"Large" means ≥ 24px, or ≥ 18.66px (14pt) bold. **Bold does not by itself make text large** — the EN 388 levels at 16px/800 are 12pt bold and therefore normal-size text, needing the full 4.5:1.
+
 An earlier draft of this spec quoted 4.67:1 and 4.30:1 for red. Those were computed against `#FFFFFF`; the real light surface is `paper` (`#F6F6F7`), which makes the light-background ratio *worse*, not better. The figures above are the measured ones.
+
+**`design/direction-b-forge.html` puts small red text on `panel` and `card` and so carries this failure itself.** It remains the source of truth for spacing, size and layout, but it is *not* a reference for this colour pairing — the defect arrived with the approved design, not with the implementation.
 
 ### Typography
 

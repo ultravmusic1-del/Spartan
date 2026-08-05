@@ -230,8 +230,10 @@ const year = new Date().getFullYear();
     min-height: 44px;
   }
 
+  /* Hover turns 14px body text red, which is small text and carries the same
+     4.5:1 obligation as the resting state. */
   .f-item__tel:hover {
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   .f-form {
@@ -322,8 +324,12 @@ const year = new Date().getFullYear();
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    /* 4.65:1 on black — passes AA. */
-    color: var(--color-red);
+    /* Small red text on a dark surface, so --color-red-light: 5.33:1 here.
+       Brand red would also pass on this near-black footer (4.88:1), but this
+       is the same species of small uppercase display label as .eyebrow and
+       .tile__count, which cannot use brand red, and one page carrying both
+       reds a few percent apart reads as a defect rather than a system. */
+    color: var(--color-red-light);
   }
 
   .f-main a {
@@ -335,7 +341,7 @@ const year = new Date().getFullYear();
   }
 
   .f-main a:hover {
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   /* ---------- socials ---------- */

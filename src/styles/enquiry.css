@@ -9,10 +9,14 @@
  * hanging its styles off either one leaves a page where the button is unstyled.
  * A stylesheet imported by global.css is the only place that is true everywhere.
  *
- * Every surface here is dark, so --color-red is correct for text, icons and
- * borders. The two red *surfaces* carrying white text — the count pip and the
- * solid add button — use --color-red-fill (4.91:1) and --color-red-dark on
- * hover (6.52:1). Brand red behind white would measure 4.30:1 and fail AA.
+ * Every surface here is dark, which does NOT mean brand red is safe at any
+ * size: it is 4.65:1 on --color-black but only 4.48:1 on --color-panel and
+ * 4.23:1 on --color-card, so it fails AA for normal-size text on the drawer
+ * and its cards. --color-red is correct here for icons, rules and borders;
+ * small red *text* uses --color-red-light (4.62:1 at worst). The two red
+ * *surfaces* carrying white text — the count pip and the solid add button —
+ * use --color-red-fill (4.91:1) and --color-red-dark on hover (6.52:1). Brand
+ * red behind white would measure 4.30:1 and fail AA.
  *
  * These rules are unlayered, so they beat Tailwind's @layer utilities. Nothing
  * here should ever be fought with a utility class.
@@ -471,7 +475,7 @@ html[data-enquiry] .eq-slot > astro-island {
 }
 
 .eq-empty__link:hover {
-  color: var(--color-red);
+  color: var(--color-red-light);
 }
 
 .eq-drawer__foot {

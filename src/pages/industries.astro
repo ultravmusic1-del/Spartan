@@ -241,13 +241,15 @@ const industries = (site.industries as string[]).map((name) => {
     color: #fff;
   }
 
-  /* Red on --color-card measures 4.65:1 and passes AA at any size. */
+  /* 11px/700 is normal-size text and needs 4.5:1. Brand red on --color-card is
+     4.23:1 and fails; 4.65:1 was the --color-black figure, copied to the wrong
+     surface. --color-red-light is 4.62:1. */
   .ind__count {
     font-family: var(--font-display);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.06em;
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   .ic {

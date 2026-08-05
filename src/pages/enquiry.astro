@@ -126,10 +126,13 @@ import site from '../data/site.json';
      src/styles/enquiry.css because /enquiry is the only route that renders it,
      and every other page would otherwise carry the bytes.
 
-     Every surface here is dark. --color-red is therefore correct for icons,
-     rules and borders; the one red *surface* carrying white text is the submit
-     button, which uses --color-red-fill (4.91:1) and --color-red-dark on hover
-     (6.52:1). Muted copy is --color-grey / --color-grey-lt, both of which are
+     Every surface here is dark, but that does not make brand red safe at any
+     size — it is 4.23:1 on --color-card, under the 4.5:1 floor for normal-size
+     text. --color-red is correct for icons, rules and borders; small red
+     *text* uses --color-red-light (4.62:1 on --color-card). The one red
+     *surface* carrying white text is the submit button, which uses
+     --color-red-fill (4.91:1) and --color-red-dark on hover (6.52:1). Muted
+     copy is --color-grey / --color-grey-lt, both of which are
      dark-surface-only tokens. -->
 <style is:global>
   /* Two gates, one flag. `data-js` is set on <html> by BaseLayout's inline
@@ -292,7 +295,7 @@ import site from '../data/site.json';
   }
 
   .ef-list__empty-link:hover {
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   .ef-items {
@@ -466,8 +469,10 @@ import site from '../data/site.json';
     color: var(--color-grey);
   }
 
+  /* 11px/700 on --color-card: brand red is 4.23:1 and fails the 4.5:1 floor
+     for normal-size text. --color-red-light is 4.62:1. */
   .ef-field__req {
-    color: var(--color-red);
+    color: var(--color-red-light);
     letter-spacing: 0.1em;
   }
 
@@ -640,7 +645,7 @@ import site from '../data/site.json';
   }
 
   .ef-done__link:hover {
-    color: var(--color-red);
+    color: var(--color-red-light);
   }
 
   @media (max-width: 980px) {
