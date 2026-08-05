@@ -336,6 +336,26 @@ The SSR bundle is **not** left in `dist/server/` — the adapter moves it to `.v
 
 Current output: 96 `index.html` + `404.html` — 72 product pages, 15 category pages, the catalogue index, and 8 top-level pages, plus `sitemap-index.xml`.
 
+### The hero is a scroll-scrubbed film
+
+`src/components/sections/Hero.astro`. The section is a tall scroll track (240svh desktop, 220svh mobile) with a sticky one-viewport stage; scroll progress drives `video.currentTime`. Assets are in `public/video/` — H.264 only, **4-frame GOP**, ~1.46 MB each, one downloaded per device via `<source media>`.
+
+Things that will look like bugs but are deliberate:
+
+- **The dense keyframes are the point.** Scrubbing seeks constantly and every seek to a non-keyframe makes the decoder walk back. Re-encoding with a normal long GOP will halve the file and make the scroll judder. Measured: GOP 1 = 2965 KB, GOP 4 = 1459 KB, GOP 8 = 1002 KB.
+- **No WebM, on purpose.** VP9 at a 4-frame GOP is *larger* than H.264 (1691 vs 1459 KB) — dense keyframes remove the long-GOP prediction VP9 wins on.
+- **The copy is anchored from the top, not centred.** Sampling the left half of every frame for pixels above 190 luma, the bright mass never rises above y=43%. Centred, the accent line sat inside it at 1.56:1. Do not re-centre it.
+- **The poster is a `<picture>`, not the `poster` attribute** — that attribute takes one URL and the two clips need different stills.
+- **No pause control.** The motion is entirely scroll-driven, so there is no auto-playing content and WCAG 2.2.2 does not apply. Reintroducing autoplay would require one.
+
+Worst-case contrast, brightest pixel under each element sampled every 0.5s: desktop white 17.4 / red 3.20 / eyebrow 5.05 / pill 11.8; mobile 15.6 / 3.28 / 5.02 / 18.3. Re-measure if the copy moves — the margins on the red line are thin by design, because it sits as low as it can while staying clear of the light.
+
+### Two test/tooling traps
+
+**Playwright silently tests the dev server if one is running.** `playwright.config.ts` sets `reuseExistingServer: true` and `webServer.command` builds first — but if anything is already listening on 4321, Playwright attaches to *that* and never builds. With `astro dev` running this produced 15 confident failures that vanished the moment the dev server was stopped. **Stop the dev server before `npx playwright test`.**
+
+**Astro's dev server can serve stale scoped CSS after a component is rewritten wholesale.** Twice during the hero work the new markup shipped with the previous stylesheet — `min-height` and `display` reading their old values while the DOM was clearly new. `astro check` passes, so nothing warns you. Restart the dev server (and clear `node_modules/.vite`) if computed styles disagree with the file you just wrote.
+
 ### Two CSS traps that fail silently
 
 **Tailwind utilities lose to Astro scoped styles.** Utilities compile into `@layer utilities`; Astro's scoped component styles are unlayered, and **unlayered CSS beats every layer regardless of specificity**. Passing `max-sm:hidden` to a component whose own scoped rule sets `display` does nothing at all. Wrap the component in an element the page owns instead. `Chevron` sizing works through utilities *only* because `Chevron` declares no width of its own.
