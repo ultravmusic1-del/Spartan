@@ -2,9 +2,9 @@
 
 **Last updated:** 2026-08-04
 **Branch:** `feat/catalogue-site` (all work lives here; `main` tracks it)
-**State:** 14 of 17 tasks complete and verified; Task 15 partially done. The site builds end to end — 96 pages plus a 404 and one server-rendered endpoint — and the full enquiry path works from product card to submitted RFQ.
+**State:** 15 of 17 tasks complete and verified. The site builds end to end — 96 pages plus a 404 and one server-rendered endpoint — and the full enquiry path works from product card to submitted RFQ.
 
-**Next session starts at §7, "Task 15 — PARTIAL".**
+**Next session starts at Task 16 — end-to-end tests.**
 
 ---
 
@@ -32,13 +32,13 @@ This is safety equipment. A fabricated protection rating is a genuine hazard, no
 | Path | What it is |
 |---|---|
 | `docs/superpowers/specs/2026-08-03-spartan-catalogue-design.md` | **The spec.** Brand rules, content model, IA, accessibility contract. Read first. |
-| `docs/superpowers/plans/2026-08-03-spartan-catalogue-site.md` | **The implementation plan.** 17 tasks with full code, tests and commands. Task 15 is partly done; 16–17 remain. Its Task 4 category data and Task 17 `dist/` globs are superseded by this document. |
+| `docs/superpowers/plans/2026-08-03-spartan-catalogue-site.md` | **The implementation plan.** 17 tasks with full code, tests and commands. Tasks 16–17 remain. Its Task 4 category data and Task 17 `dist/` globs are superseded by this document. |
 | `design/direction-b-forge.html` | **The approved visual design**, fully rendered. Source of truth for every spacing, size and colour value. Open it in a browser. |
 | `design/direction-a-precision.html` | Rejected alternative. Kept for reference only. |
 | `design/previews/*.png` | Full-page renders of both directions. |
 | `design/assets/` | Reference copies of all extracted assets. Used for byte-comparison verification — **do not edit**. |
 | `src/assets/products/` | 72 transparent product PNGs (the live set). |
-| `src/assets/hero/` | 6 photographs — 5 section dividers + cover, text overlays removed. |
+| `src/assets/hero/` | 5 photographs, text overlays removed. `cover.jpg` was deleted — blank white once the overlay was stripped. |
 | `src/assets/brand/` | Both logo lockups, SVG + PNG. |
 | `src/data/` | `divisions.json` (2), `categories.json` (15), `products.json` (72), `site.json`, `products.raw.json` (extractor output). |
 | `tools/` | PDF extraction scripts. Run only when the brochure is revised. |
@@ -132,8 +132,8 @@ Both self-hosted variable fonts at `public/fonts/`. **`@font-face` must declare 
 npm install
 npm run dev            # astro dev  (Astro 7: --background / astro dev stop)
 npm run build
-npm run test           # vitest run — 57 tests currently passing
-npx astro check        # 0 errors expected; 44 hints are pre-existing in tools/*.mjs
+npm run test           # vitest run — 63 tests currently passing
+npx astro check        # 0 errors, 0 warnings, 7 hints (unused params in tools/*.mjs)
 
 npm run extract:catalog -- "path/to/brochure.pdf"   # regenerate products + PNGs
 npm run extract:logo    -- "path/to/brochure.pdf"
@@ -275,7 +275,7 @@ Because of that panel, Body Protection's `heroProductSlug` is **`nonwoven-dispos
 | 13 | Enquiry UI islands | Button, badge, drawer with focus trap |
 | 14 | Enquiry submission | Schema, `/enquiry` page, `/api/enquiry` endpoint |
 
-**57 unit tests passing. `astro check` 0 errors. `astro build` clean — 96 pages + 404 + one SSR endpoint.**
+**63 unit tests passing. `astro check` 0 errors. `astro build` clean — 96 pages + 404 + one SSR endpoint.**
 
 Task 7's defects, for the record: focus escaped the modal panel when a click landed on a non-focusable part of it; footer socials measured 38×38 not 44×44 (an `::after` overlay enlarged the hit area but not the reported box); a text-glyph chevron survived; and a hover-specificity collision turned social icons red on a red fill, making them vanish.
 
@@ -307,23 +307,19 @@ Current output: 96 `index.html` + `404.html` — 72 product pages, 15 category p
 
 **The `hidden` attribute can never hold its space.** Tailwind 4's preflight ships `[hidden]:where(:not([hidden=until-found])){display:none!important}`, and no ordinary author rule outranks `!important`. Using `hidden` for a "not yet hydrated" placeholder cost 134px of layout shift and CLS 0.042; a plain class gave 0px and CLS 0.000. `hidden` is still correct where `display: none` is genuinely the intent.
 
-### ⚠ Task 15 — PARTIAL. Start here.
+### SEO — the rule that must stay true
 
-Committed as `a685b4f`, labelled partial in its commit message. A session limit cut it off mid-task. **What landed is complete and verified; what is missing is listed below.**
+**The site has no prices and no reviews.** Product structured data never emits `offers`, `price`, `priceCurrency`, `availability`, `aggregateRating` or `review`. Google accepts them and then displays a price that does not exist — the structured-data equivalent of inventing a specification. `seo.ts` enforces it and a test asserts it; the built output is swept for all six strings and returns zero.
 
-**Done:**
-- `src/lib/seo.ts` + `seo.test.ts` — 9 tests, TDD. Exports `productJsonLd`, `breadcrumbJsonLd`, `itemListJsonLd`, `organizationJsonLd`, plus `absoluteUrl` / `productFullName` / `productDescription`.
-- The favicon — the Spartan helmet, cropped from `spartan-logo.svg` to the helmet path's own bounding box. Geometry unchanged; the logo is never redrawn. `favicon.ico` was removed, so the `<link>` tags now in `BaseLayout` are load-bearing.
+`Seo.astro` is the **sole** emitter of `<title>`, meta description and canonical — `BaseLayout` forwards to it and emits none itself. Emitting from both would duplicate all three on every page. Verified: 97/97 pages have exactly one of each, all titles and descriptions distinct.
 
-**Still to do:**
-1. `src/components/Seo.astro` — Open Graph, Twitter card, and an optional `jsonLd` prop rendered as `<script type="application/ld+json">`.
-2. **Move `<title>`, meta description and canonical out of `BaseLayout` into it.** They are emitted there today; emitting from both would duplicate them, which is a real SEO defect. Verify the built HTML has exactly one of each across all 97 pages.
-3. Wire the JSON-LD: `organizationJsonLd` site-wide, `productJsonLd` + `breadcrumbJsonLd` on the 72 product pages, `itemListJsonLd` + `breadcrumbJsonLd` on the 15 category pages.
-4. `public/robots.txt` pointing at the sitemap. Note the sitemap URL will be wrong until the domain is confirmed — make that obvious to whoever sets it.
-5. `src/pages/index.astro` hard-codes "72 products" in its meta description. Derive it from `catalog.ts` — it is the one number on the site that can go stale.
-6. Pick an `og:image`. There is no dedicated social image; the hero photographs and the logo exist. Note that `electrical.jpg`, `safety.jpg` and `workwear.jpg` are the three clean plates (see `tools/README.md`).
+`organizationJsonLd` is on the **home page only**. It describes the company, not the document; 97 copies would be 97 competing declarations of one entity.
 
-**The rule that governs this task: the site has no prices and no reviews.** Product structured data must never emit `offers`, `price`, `priceCurrency`, `availability`, `aggregateRating` or `review`. Google will accept them and then display a price that does not exist. `seo.ts` already enforces this and has a test asserting it — keep that true.
+JSON-LD goes through `set:html` (a plain expression HTML-escapes the quotes and breaks the JSON), so `serialiseJsonLd()` rewrites every `<` as `<`. `JSON.parse` returns an identical string, but a `</script>` can never reach the HTML parser intact. No catalogue value contains `<` today — this matters when the admin dashboard lets arbitrary text in.
+
+`og:image` is a build-time 1200×630 JPEG crop of the division hero, `position: bottom` (a centre crop of `safety.jpg` decapitates the workers). `safety.jpg` site-wide, `electrical.jpg` on Electricals pages. Forced to JPEG because several link-preview scrapers still will not render WebP.
+
+**`public/robots.txt` hard-codes the sitemap URL** and `site` is still a placeholder, so it will be wrong until the domain is set. A `src/pages/robots.txt.ts` static endpoint would emit the real value at build time and make that failure impossible — worth doing when the domain lands.
 
 ### Remaining — Tasks 16–17
 
