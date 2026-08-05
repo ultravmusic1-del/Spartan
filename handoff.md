@@ -391,7 +391,9 @@ The build is done. Three things follow it, in rough order:
 
 3. **Arabic localisation, deferred.** The brochure cover carries an Arabic wordmark (سبارتان) that is unused in this build. A second locale means RTL, a translated content model, and `hreflang` — it is a project, not a task.
 
-Two harness facts that will otherwise waste an hour. `client:visible` islands do not hydrate in a background Chrome tab — the rendering pipeline is frozen, IntersectionObserver never fires, and every enquiry button stays pending; force a paint or keep the tab foregrounded. And neither browser harness used here synthesises a `click` from synthetic Enter/Space on a `<button>`, so keyboard *activation* of buttons was never observed working under automation, though the focus trap, tab order and Escape handling all were.
+One harness fact that will otherwise waste an hour: **`client:visible` islands do not hydrate in a background Chrome tab.** The rendering pipeline is frozen, IntersectionObserver never fires, and every enquiry button stays in its pending state. Force a paint or keep the tab foregrounded.
+
+Keyboard *activation* was an open question through Tasks 13–14, because the browser-automation harnesses used then did not synthesise a `click` from synthetic Enter/Space on a `<button>`. **Playwright does**, and it is now covered — `tests/e2e/enquiry.spec.ts:158`, "a keyboard Enter on the enquiry button adds the product", passing on both projects. Focus trap, tab order and Escape were always verified.
 
 ---
 
