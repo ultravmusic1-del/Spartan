@@ -1,10 +1,20 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-08-05
 **Branch:** `feat/catalogue-site` (all work lives here; `main` tracks it)
-**State:** 15 of 17 tasks complete and verified. The site builds end to end — 96 pages plus a 404 and one server-rendered endpoint — and the full enquiry path works from product card to submitted RFQ.
+**State:** **All 17 tasks complete and verified. The build is finished.** The site builds end to end — 96 pages plus a 404 and one server-rendered endpoint — and the full enquiry path works from product card to submitted RFQ.
 
-**Next session starts at Task 16 — end-to-end tests.**
+```
+vitest        63 passed
+playwright    83 passed, 1 skipped  (desktop + mobile projects)
+astro check   0 errors, 0 warnings, 7 hints
+astro build   clean — 96 pages + 404 + 1 SSR endpoint
+lighthouse    >= 95 on all four categories, all three page types
+```
+
+**Nothing in the build is outstanding. What remains is deployment and the client-supplied items in §8** — see §7 "What a next session picks up".
+
+**Start here, in this order:** `README.md` (setup, scripts, architecture, launch checklist) → this document (the history and the traps) → `docs/CONTENT-EDITING.md` if you are touching catalogue data.
 
 ---
 
@@ -31,8 +41,10 @@ This is safety equipment. A fabricated protection rating is a genuine hazard, no
 
 | Path | What it is |
 |---|---|
-| `docs/superpowers/specs/2026-08-03-spartan-catalogue-design.md` | **The spec.** Brand rules, content model, IA, accessibility contract. Read first. |
-| `docs/superpowers/plans/2026-08-03-spartan-catalogue-site.md` | **The implementation plan.** 17 tasks with full code, tests and commands. Tasks 16–17 remain. Its Task 4 category data and Task 17 `dist/` globs are superseded by this document. |
+| `README.md` | **Start here.** Setup, every script, environment variables, the admin seam, brand rules, Lighthouse results and the six-item launch checklist. |
+| `docs/CONTENT-EDITING.md` | How to maintain the catalogue **without being a developer** — adding products and categories, expanding status, replacing photography, and the five rules that bite (slug permanence, `heroProductSlug`, upscaling, invented data, EN 388 `X` vs `0`). |
+| `docs/superpowers/specs/2026-08-03-spartan-catalogue-design.md` | **The spec.** Brand rules, content model, IA, accessibility contract. |
+| `docs/superpowers/plans/2026-08-03-spartan-catalogue-site.md` | **The implementation plan.** All 17 tasks with full code, tests and commands — now history. Its Task 4 category data and Task 17 `dist/` globs are superseded by this document. |
 | `design/direction-b-forge.html` | **The approved visual design**, fully rendered. Source of truth for every spacing, size and colour value. Open it in a browser. |
 | `design/direction-a-precision.html` | Rejected alternative. Kept for reference only. |
 | `design/previews/*.png` | Full-page renders of both directions. |
@@ -140,15 +152,19 @@ Both self-hosted variable fonts at `public/fonts/`. **`@font-face` must declare 
 | Email | Resend (Task 14) |
 | Rendering | `output: 'static'`; only `/api/enquiry` will set `prerender = false` |
 | Hosting | Vercel adapter |
-| Tests | Vitest (unit), Playwright + axe (Task 16) |
+| Tests | Vitest (unit), Playwright + axe (e2e) |
 
 ### Commands
+
+Full table in `README.md`. The short version:
 
 ```bash
 npm install
 npm run dev            # astro dev  (Astro 7: --background / astro dev stop)
-npm run build
-npm run test           # vitest run — 63 tests currently passing
+npm run build          # -> dist/client/ + .vercel/output/
+npm run preview        # tests/preview-server.mjs, NOT astro preview — see README
+npm run test           # vitest run — 63 passing
+npm run test:e2e       # playwright — 83 passing, 1 skipped
 npx astro check        # 0 errors, 0 warnings, 7 hints (unused params in tools/*.mjs)
 
 npm run extract:catalog -- "path/to/brochure.pdf"   # regenerate products + PNGs
@@ -290,8 +306,11 @@ Because of that panel, Body Protection's `heroProductSlug` is **`nonwoven-dispos
 | 12 | Enquiry basket store | Persistent, quantity-clamped, corrupt-storage resilient |
 | 13 | Enquiry UI islands | Button, badge, drawer with focus trap |
 | 14 | Enquiry submission | Schema, `/enquiry` page, `/api/enquiry` endpoint |
+| 15 | SEO and structured data | `Seo.astro` sole emitter; no `offers`/`price`/`rating` ever; og:image; favicon |
+| 16 | End-to-end tests | Playwright + axe, desktop and mobile — 83 passing, 1 skipped |
+| 17 | Launch readiness | Lighthouse, seam verification, README, content-editing guide, launch checklist |
 
-**63 unit tests passing. `astro check` 0 errors. `astro build` clean — 96 pages + 404 + one SSR endpoint.**
+**63 unit tests and 83 e2e tests passing (1 skipped). `astro check` 0 errors, 0 warnings, 7 hints. `astro build` clean — 96 pages + 404 + one SSR endpoint.**
 
 Task 7's defects, for the record: focus escaped the modal panel when a click landed on a non-focusable part of it; footer socials measured 38×38 not 44×44 (an `::after` overlay enlarged the hit area but not the reported box); a text-glyph chevron survived; and a hover-specificity collision turned social icons red on a red fill, making them vanish.
 
@@ -337,18 +356,42 @@ JSON-LD goes through `set:html` (a plain expression HTML-escapes the quotes and 
 
 **`public/robots.txt` hard-codes the sitemap URL** and `site` is still a placeholder, so it will be wrong until the domain is set. A `src/pages/robots.txt.ts` static endpoint would emit the real value at build time and make that failure impossible — worth doing when the domain lands.
 
-### Remaining — Tasks 16–17
+### Lighthouse — measured, Task 17
 
-Full code and tests are in the plan.
+Lighthouse 12.8.2 against `npm run preview`, headless Chrome, Lighthouse's own mobile and desktop presets. Target was ≥95 on all four categories.
 
-| # | Task | Delivers |
-|---|---|---|
-| 16 | End-to-end tests | Playwright + axe across 6 routes; catalogue, enquiry flow, accessibility |
-| 17 | Launch readiness | Lighthouse ≥95, seam verification, README, content-editing guide |
+| Page | Preset | Perf | A11y | BP | SEO |
+|---|---|---|---|---|---|
+| `/` | mobile | 95–97 | 100 | 100 | 100 |
+| `/catalogue/hand-protection` | mobile | 99 | 100 | 100 | 100 |
+| `/products/grip-guard-gp5` | mobile | 98 | 100 | **96** | 100 |
+| all three | desktop | 100 | 100 | 100 | 100 |
 
-**Two things Task 16 will need to know.** `client:visible` islands do not hydrate in a background Chrome tab — the rendering pipeline is frozen, so IntersectionObserver never fires and every enquiry button stays in its pending state. Force a paint (a screenshot works) or keep the tab foregrounded. And neither browser harness used here synthesises a `click` from synthetic Enter/Space on a `<button>`; Enter on an `<a>` navigates fine. Keyboard *activation* of buttons therefore was never observed working — the focus trap, tab order and Escape handling all were.
+CLS 0.000 and TBT 0 ms everywhere. Two numbers are worth understanding:
 
-**Task 17's seam-verification greps need updating** for the `dist/client/` path change above, and its Lighthouse step should sample a page of each type: home, a category, a product.
+**Best Practices 96 on the product page is `image-size-responsive`, and it is not fixable here.** The spotlight image is displayed at 257×308 and its source is natively 257×308; Lighthouse wants 386×462 for a DPR-2 screen. This is exactly the resolution constraint in §6 — the brochure-extracted photography is 100–440px and must never be upscaled. Desktop scores 100 because DPR is 1. It resolves when the client supplies real photography, with no markup change (`srcset` is already in place). **Do not "fix" this by adding `widths` that upscale.**
+
+**Home mobile Performance is 95–97 across five runs**, the lowest headroom on the site. LCP is a *text* element (`.hero__lede`), ~83% render delay under the 4× CPU throttle, behind 41 KB of render-blocking CSS. Two production factors are absent from the measurement: the preview server sends no `Content-Encoding` and no `Cache-Control`, so `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) both vanish on Vercel. The remaining lever is `build.inlineStylesheets: 'always'`, which was **not** taken — it inlines ~41 KB into all 96 pages and loses cross-page CSS caching, which is a worse trade at a score that already clears the bar.
+
+### One defect Lighthouse found that axe did not
+
+`label-content-name-mismatch` — WCAG 2.5.3 Label in Name, serious impact — on every `EnquiryButton`. The button reads **ENQUIRE** and its accessible name was `Add <product> to enquiry list`, which does not contain "Enquire". A voice-control user saying "click Enquire" could not activate the one control that builds an enquiry. The static name also went stale the moment the label changed to "Added".
+
+Fixed by deriving the name from the visible label: `` `${visible}: ${name}` ``.
+
+**Two harnesses missed it.** axe's rule for this is experimental and off by default, so the e2e axe pass never ran it; Lighthouse weights it 0, so it never showed up in the accessibility score either — the category read 100 with a serious WCAG A failure present on 72 product cards. **A green axe run is not a claim that a page passes WCAG.**
+
+### What a next session picks up
+
+The build is done. Three things follow it, in rough order:
+
+1. **Deployment.** Vercel is assumed and configured but never confirmed with the client (§8 item 3), and nothing has been deployed. The domain has to land first — it changes `astro.config.mjs` *and* `public/robots.txt`, and both must match (§7 SEO). Doing it properly means replacing `public/robots.txt` with a `src/pages/robots.txt.ts` endpoint so the two can never diverge again. `.env` needs the Resend credentials in Vercel's project settings, not just locally.
+
+2. **The admin dashboard.** This is what §5 exists for. Replace `file()` in `content.config.ts` with a database loader; `catalog.ts` and all 96 pages are untouched. The Zod schemas become the write-validation contract. Two things to carry across: `serialiseJsonLd()` escaping matters the moment arbitrary text can enter the catalogue (§7), and the "never invent product data" rule needs to survive contact with a UI that has empty fields inviting to be filled — `docs/CONTENT-EDITING.md` is the statement of that rule for whoever maintains data in the meantime.
+
+3. **Arabic localisation, deferred.** The brochure cover carries an Arabic wordmark (سبارتان) that is unused in this build. A second locale means RTL, a translated content model, and `hreflang` — it is a project, not a task.
+
+Two harness facts that will otherwise waste an hour. `client:visible` islands do not hydrate in a background Chrome tab — the rendering pipeline is frozen, IntersectionObserver never fires, and every enquiry button stays pending; force a paint or keep the tab foregrounded. And neither browser harness used here synthesises a `click` from synthetic Enter/Space on a `<button>`, so keyboard *activation* of buttons was never observed working under automation, though the focus trap, tab order and Escape handling all were.
 
 ---
 
@@ -381,5 +424,6 @@ Worth keeping if you continue with agents:
 ## 10. Known cleanup
 
 - `design/assets/products/` duplicates `src/assets/products/` (~10MB). Deliberate — the reference set enables byte-comparison verification after a re-extraction. Drop it if that stops being useful.
-- 44 `astro check` hints, all unused-parameter warnings in `tools/*.mjs`. Harmless.
-- `README.md` is still the Astro scaffold default. Task 17 replaces it.
+- 7 `astro check` hints, all unused-parameter warnings in `tools/*.mjs`. Harmless.
+- **The footer's social icons have no destinations.** They render and hover but link nowhere, and `sameAs` is correspondingly absent from `organizationJsonLd`. Either the client supplies the URLs or the icons come out — a link that goes nowhere is worse than no icon. Not in §8 because it is a build decision as much as a client one.
+- `playwright-report/` and `test-results/` are local run artefacts.

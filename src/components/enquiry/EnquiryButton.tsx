@@ -58,17 +58,33 @@ export default function EnquiryButton({ slug, name, variant = 'card' }: Props) {
 
   const label = variant === 'solid' ? 'Add to enquiry' : 'Enquire';
   const doneLabel = variant === 'solid' ? 'Added to enquiry' : 'Added';
+  const visible = added ? doneLabel : label;
+
+  /**
+   * WCAG 2.5.3 Label in Name: the accessible name must CONTAIN the visible text
+   * verbatim. A static `Add ${name} to enquiry list` does not contain "Enquire",
+   * so a voice-control user saying "click Enquire" could not activate the button
+   * that plainly reads ENQUIRE — and the name went stale the moment the label
+   * changed to "Added". Deriving it from `visible` keeps both true in both
+   * states. The full sentence is not lost: the live region below still announces
+   * "<name> added to your enquiry list. Quantity N."
+   *
+   * axe's rule for this is experimental and off by default, so the e2e axe pass
+   * never saw it; Lighthouse's a11y category weights it 0. It was a real defect
+   * in both places regardless.
+   */
+  const ariaLabel = `${visible}: ${name}`;
 
   return (
     <div class={`eq-add-wrap${ready ? '' : ' eq-add-wrap--pending'}`}>
       <button
         type="button"
         class={`eq-add eq-add--${variant}${added ? ' eq-add--done' : ''}`}
-        aria-label={`Add ${name} to enquiry list`}
+        aria-label={ariaLabel}
         onClick={onClick}
       >
         {added ? <TickIcon /> : <PlusIcon />}
-        <span>{added ? doneLabel : label}</span>
+        <span>{visible}</span>
       </button>
 
       {/* Present from hydration, so the first message lands in a region the
