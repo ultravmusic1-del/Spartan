@@ -1,5 +1,10 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
 import { file } from 'astro/loaders';
+// `z` from 'astro:content' is deprecated in Astro 7 and slated for removal.
+// 'astro/zod' is the same zod instance Astro validates with (v4), so the
+// schemas below stay byte-compatible with the Content Layer. src/lib/catalog.ts
+// already imports its types from here for the same reason.
+import { z } from 'astro/zod';
 
 export const divisionSchema = z.object({
   id: z.string(),
