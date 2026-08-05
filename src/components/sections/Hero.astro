@@ -1,228 +1,374 @@
 ---
-import { Image } from 'astro:assets';
-import heroImage from '../../assets/hero/safety.jpg';
-import Chevron from '../primitives/Chevron.astro';
+import { getImage } from 'astro:assets';
+import desktopPoster from '../../assets/hero/hero-desktop-poster.jpg';
+import mobilePoster from '../../assets/hero/hero-mobile-poster.jpg';
 import Eyebrow from '../primitives/Eyebrow.astro';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
-import site from '../../data/site.json';
 
 /**
- * Hero — port of the mockup's `.hero` block (`design/direction-b-forge.html`).
+ * Hero — a scroll-scrubbed film of the Spartan product range.
  *
- * 880px minimum, content anchored to the bottom, 196px of top padding so the
- * absolutely-positioned utility bar (44px) and nav (84px) that BaseLayout
- * renders above it never collide with the pull-quote.
+ * HOW IT WORKS. The <section> is a tall scroll track; the stage inside it is
+ * `position: sticky` and one viewport high. Scroll progress through the track
+ * maps to `video.currentTime`, so the clip advances only as fast as the visitor
+ * scrolls and stops when they stop.
  *
- * The photograph is the LCP element on the home page, so it is `eager` +
- * `fetchpriority="high"` and must never be made lazy. It is decorative — the
- * headline carries the meaning — so `alt` is empty.
+ * ENCODED FOR SEEKING, NOT PLAYBACK. A normal web encode puts a keyframe every
+ * couple of seconds because playback only moves forward. Scrubbing seeks
+ * constantly, and every seek to a non-keyframe makes the decoder walk back to
+ * the previous one — that is what makes cheap scroll-video judder. These are
+ * H.264 with a 4-frame GOP: 37 keyframes across 145 frames, so no seek decodes
+ * more than three frames. Measured cost of the GOP choice, desktop clip:
+ * GOP 1 (all keyframes) 2965 KB · GOP 4 1459 KB · GOP 8 1002 KB.
  *
- * `safety.jpg` is 1225x1418 native. Above ~1225px viewport width it is scaled
- * up by `object-fit: cover`; that is a source constraint, not something to fix
- * with a larger `widths` entry (Astro clamps to the source anyway). Higher
- * resolution photography drops straight in here.
+ * NO WEBM. VP9 at a 4-frame GOP came out *larger* than H.264 (1691 vs 1459 KB)
+ * — its advantage is long-GOP inter-prediction, which dense keyframes remove.
+ * One universal format is smaller and simpler here.
  *
- * The three stacked gradients are the mockup's `.hero-bg::after`, in order: a
- * left-to-right scrim that keeps the headline legible over the busiest part of
- * the photograph, a bottom fade into the page, and a top fade behind the nav.
+ * TWO CLIPS, ONE DOWNLOAD. Landscape (1168x784) and portrait (784x1168) are
+ * different compositions, not crops. `<source media>` fetches exactly one —
+ * verified in Chrome: at 390px `currentSrc` is hero-mobile.mp4 at 784x1168, at
+ * 1440px hero-desktop.mp4 at 1168x784.
+ *
+ * WHERE THE COPY SITS was measured. Every frame of both clips was reduced to a
+ * per-pixel MAXIMUM luminance across the whole 6.04s, because text must survive
+ * the worst frame, not the average one. 95th-percentile worst-case luma, 0-255:
+ *
+ *   Desktop, left third   : 11 / 49 / 52 / 46 / 34 / 20  (top row to bottom)
+ *   Desktop, centre third : the products, 155-244 — unusable
+ *   Mobile,  top third    : 20-27 across the full width — exceptionally clean
+ *   Mobile,  middle       : the products, 149-241 — unusable
+ *
+ * So desktop copy sits high and hard left, clear of the cluster; mobile splits,
+ * with the headline in the clean top band and the buttons pushed to the foot of
+ * the frame, below the products rather than across them.
+ *
+ * REDUCED MOTION AND NO JAVASCRIPT both collapse the track to a single
+ * viewport and keep the poster — no scrubbing, nothing that moves on its own.
+ * Because the motion is entirely scroll-driven there is no auto-playing content
+ * here, so WCAG 2.2.2 does not apply and no pause control is needed.
  */
-const productCountLabel = '72 products';
+
+const posterDesktop = await getImage({
+  src: desktopPoster,
+  widths: [960, 1168],
+  format: 'avif',
+});
+const posterMobile = await getImage({
+  src: mobilePoster,
+  widths: [640, 784],
+  format: 'avif',
+});
 ---
 
-<section class="hero">
-  <div class="hero__bg">
-    <Image
-      src={heroImage}
-      alt=""
-      widths={[640, 960, 1225]}
-      sizes="100vw"
-      loading="eager"
-      fetchpriority="high"
-      decoding="async"
-    />
-  </div>
+<section class="hero" data-hero>
+  <div class="hero__stage">
+    <div class="hero__media">
+      <picture class="hero__poster">
+        <source
+          media="(max-width: 767px)"
+          srcset={posterMobile.srcSet.attribute}
+          sizes="100vw"
+          type="image/avif"
+        />
+        <img
+          src={posterDesktop.src}
+          srcset={posterDesktop.srcSet.attribute}
+          sizes="100vw"
+          alt=""
+          width={desktopPoster.width}
+          height={desktopPoster.height}
+          fetchpriority="high"
+          decoding="async"
+        />
+      </picture>
 
-  {/* Sized with global utilities — a class from this file's scoped <style>
-      would never match the SVG. See Chevron.astro. */}
-  <Chevron class="left-[-40px] top-[230px] w-[420px] h-[500px]" opacity={0.04} />
+      <video
+        class="hero__video"
+        muted
+        playsinline
+        preload="auto"
+        aria-hidden="true"
+        tabindex="-1"
+        data-hero-video
+      >
+        <source src="/video/hero-mobile.mp4" type="video/mp4" media="(max-width: 767px)" />
+        <source src="/video/hero-desktop.mp4" type="video/mp4" />
+      </video>
 
-  <div class="wrap hero__inner">
-    <div class="hero__top">
-      <p class="hero__quote">
-        Spartan Lighting &amp; Electrical Products is a growing and trusted brand established in {
-          site.established
-        }, committed to delivering reliable, high-quality solutions.
-        <b>Durable, efficient and cost-effective products</b> for modern residential, commercial and
-        industrial markets.
-      </p>
+      <div class="hero__scrim"></div>
     </div>
 
-    <Eyebrow>Home and Industrial Solutions</Eyebrow>
-
-    <h1 class="hero__title">
-      <span class="hero__title-red">Industrial</span>
-      <span class="hero__title-white">Solutions.</span>
-    </h1>
-
-    <div class="hero__foot">
-      <div>
-        <p class="hero__lede">
-          Two divisions, one standard. Lighting, ventilation and water management alongside
-          personal protective equipment and workwear — {productCountLabel} supplied to contractors,
-          facilities teams and distributors.
-        </p>
-        <div class="hero__actions">
-          <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-          {/* The mockup's second action is "Download brochure". The source PDF
-              is ~163MB and is not committed, so linking it would ship a broken
-              download — see handoff.md section 8. */}
-          <PillButton href="/enquiry">Request a quote</PillButton>
-        </div>
+    <div class="hero__inner">
+      <div class="hero__copy">
+        <Eyebrow>Spartan</Eyebrow>
+        <h1 class="hero__title">
+          <span class="hero__title-line">Home and Industrial</span>
+          <span class="hero__title-line hero__title-line--accent">Solutions.</span>
+        </h1>
       </div>
 
-      {/* Hidden through a wrapper this component owns, not a class handed to
-          PillButton. Tailwind's utilities live in `@layer utilities`, and
-          unlayered CSS — which is what Astro's scoped component styles are —
-          beats every layer regardless of specificity, so `max-sm:hidden` on a
-          PillButton loses to its own `.pill { display: inline-flex }` and
-          silently does nothing. Verified: the pill stayed visible at 375px. */}
-      <div class="hero__scroll">
-        <PillButton href="#about">Scroll down</PillButton>
+      <div class="hero__actions">
+        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+        <PillButton href="/enquiry">Request a quote</PillButton>
       </div>
     </div>
   </div>
 </section>
 
+<script is:inline>
+  (() => {
+    const track = document.querySelector('[data-hero]');
+    const video = document.querySelector('[data-hero-video]');
+    if (!track || !video) return;
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduce.matches) return; // track stays one viewport tall; poster only
+
+    let duration = 0;
+    let wanted = 0;
+    let frame = 0;
+
+    // iOS will not seek a video that has never been handed to the decoder, so
+    // prime it with a play/pause the visitor never sees. Muted + playsinline is
+    // what makes that allowed without a gesture.
+    const prime = () => {
+      const p = video.play();
+      if (p && typeof p.then === 'function') p.then(() => video.pause()).catch(() => {});
+      else video.pause();
+    };
+
+    const ready = () => {
+      duration = video.duration || 0;
+      if (!duration) return;
+      video.classList.add('is-ready');
+      prime();
+      onScroll();
+    };
+
+    const apply = () => {
+      frame = 0;
+      // Sub-frame seeks are wasted work; 24fps means anything under ~0.04s is
+      // the same picture.
+      if (Math.abs(video.currentTime - wanted) > 0.02) video.currentTime = wanted;
+    };
+
+    const onScroll = () => {
+      if (!duration) return;
+      const r = track.getBoundingClientRect();
+      const scrollable = r.height - window.innerHeight;
+      if (scrollable <= 0) return;
+      const progress = Math.min(1, Math.max(0, -r.top / scrollable));
+      wanted = progress * duration;
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+
+    if (video.readyState >= 1) ready();
+    else video.addEventListener('loadedmetadata', ready, { once: true });
+
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+  })();
+</script>
+
 <style>
+  /* Without scripting the track is a plain one-viewport hero, so nothing
+     depends on a scrub that cannot happen. The tall track is opted into only
+     once `data-js` confirms the scroll handler can drive it. */
   .hero {
     position: relative;
-    display: flex;
-    align-items: flex-end;
-    min-height: 880px;
-    padding: 196px 0 74px;
+    height: 100svh;
+    background: var(--color-black);
+  }
+
+  :global(html[data-js]) .hero {
+    height: 240svh;
+  }
+
+  .hero__stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
     overflow: hidden;
   }
 
-  .hero__bg {
+  .hero__media {
     position: absolute;
     inset: 0;
   }
 
-  .hero__bg :global(img) {
+  .hero__poster,
+  .hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Biased left so a tall, narrow window crops the right edge rather than
+       eating into the measured text-safe zone. */
+    object-position: 42% 50%;
+  }
+
+  .hero__poster :global(img) {
     width: 100%;
     height: 100%;
     max-width: none;
     object-fit: cover;
-    object-position: 58% 30%;
+    object-position: inherit;
   }
 
-  .hero__bg::after {
-    content: '';
+  .hero__video {
+    opacity: 0;
+    transition: opacity 500ms var(--ease-out);
+  }
+
+  .hero__video.is-ready {
+    opacity: 1;
+  }
+
+  /* Directional scrim. Held near-opaque down the left so the copy always clears
+     AA, releasing by ~68% so the product cluster stays the subject. */
+  .hero__scrim {
     position: absolute;
     inset: 0;
     background:
       linear-gradient(
-        100deg,
-        var(--color-black) 4%,
-        rgba(8, 8, 10, 0.94) 30%,
-        rgba(8, 8, 10, 0.52) 62%,
-        rgba(8, 8, 10, 0.8) 100%
+        95deg,
+        rgba(8, 8, 10, 0.95) 0%,
+        rgba(8, 8, 10, 0.88) 26%,
+        rgba(8, 8, 10, 0.55) 48%,
+        rgba(8, 8, 10, 0.12) 68%,
+        rgba(8, 8, 10, 0.3) 100%
       ),
-      linear-gradient(0deg, var(--color-black) 1%, rgba(8, 8, 10, 0.25) 38%, transparent 62%),
-      linear-gradient(180deg, rgba(8, 8, 10, 0.85) 0%, transparent 22%);
+      linear-gradient(180deg, rgba(8, 8, 10, 0.8) 0%, transparent 22%),
+      linear-gradient(0deg, var(--color-black) 0%, transparent 26%);
   }
 
+  /* Deliberately NOT the centred `.wrap`: the copy is pulled toward the left
+     edge, away from the product cluster, rather than sitting on the page grid. */
   .hero__inner {
     position: relative;
     z-index: 5;
-    width: 100%;
-  }
-
-  .hero__top {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 54px;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
+    padding-inline: clamp(20px, 4vw, 72px);
+    /* Anchored from the top rather than centred, because the constraint is a
+       hard edge rather than a proportion. Sampling the left half of every frame
+       for pixels above 190 luma, the bright mass never rises above y=43% — it
+       climbs from 50% at t=0 to 43% at t=6 as the cluster grows. Centred, the
+       accent line landed at y 45-52%, right inside that band, and measured
+       1.56:1. Lifting the block so the accent line finishes at that edge takes
+       it to 3.20:1, over the 3:1 bar for large text. Note the measurement is
+       deliberately pessimistic — it takes the single brightest pixel anywhere in
+       the element's box, including the gaps between letters, so the perceived
+       contrast is better than the number. Must clear the 128px header, hence
+       the floor. */
+    padding-top: clamp(150px, 15vh, 190px);
   }
 
-  .hero__quote {
-    max-width: 34ch;
-    padding-left: 18px;
-    border-left: 2px solid var(--color-red);
-    font-size: 13.5px;
-    line-height: 1.75;
-    /* 9.4:1 over the scrimmed photograph at its lightest point. */
-    color: #c7c7ce;
-  }
-
-  .hero__quote b {
-    color: #fff;
-    font-weight: 600;
+  .hero__copy {
+    max-width: 34rem;
   }
 
   .hero__title {
-    margin-top: 26px;
-    font-size: clamp(56px, 9vw, 124px);
+    margin-top: 22px;
+    font-size: clamp(40px, 4.6vw, 68px);
     font-weight: 800;
     letter-spacing: -0.035em;
-    line-height: 0.94;
+    line-height: 0.96;
     text-transform: uppercase;
   }
 
-  .hero__title-red {
-    display: block;
-    color: var(--color-red);
-  }
-
-  .hero__title-white {
+  .hero__title-line {
     display: block;
     color: #fff;
   }
 
-  .hero__foot {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 40px;
-    margin-top: 38px;
-  }
-
-  .hero__lede {
-    max-width: 52ch;
-    font-size: 15.5px;
-    color: #bfbfc6;
+  .hero__title-line--accent {
+    color: var(--color-red);
   }
 
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 34px;
   }
 
-  @media (max-width: 820px) {
-    .hero {
-      min-height: 720px;
-      padding: 176px 0 64px;
+  /* ---------- mobile ---------- */
+  @media (max-width: 767px) {
+    :global(html[data-js]) .hero {
+      height: 220svh;
     }
 
-    .hero__top {
-      justify-content: flex-start;
+    .hero__poster,
+    .hero__video {
+      object-position: 50% 50%;
     }
 
-    .hero__quote {
+    /* Heavier at both ends than desktop: the headline sits in the clean top
+       band and the buttons at the foot, with the products between them. */
+    .hero__scrim {
+      background:
+        linear-gradient(
+          180deg,
+          rgba(8, 8, 10, 0.95) 0%,
+          rgba(8, 8, 10, 0.91) 30%,
+          rgba(8, 8, 10, 0.62) 42%,
+          rgba(8, 8, 10, 0.1) 58%,
+          rgba(8, 8, 10, 0.42) 78%,
+          rgba(8, 8, 10, 0.86) 100%
+        ),
+        linear-gradient(0deg, var(--color-black) 0%, transparent 14%);
+    }
+
+    /* Headline top, buttons bottom — the products own the middle. */
+    .hero__inner {
+      justify-content: space-between;
+      padding-top: 136px;
+      padding-bottom: 48px;
+    }
+
+    .hero__copy {
       max-width: none;
     }
 
-    .hero__foot {
-      flex-direction: column;
-      align-items: flex-start;
+    /* Stacked and full-bleed. Side by side they total ~387px against 350px of
+       available width, and a wrapped row leaves a ragged half-width pill. */
+    .hero__actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 0;
+    }
+
+    .hero__actions :global(.solid),
+    .hero__actions :global(.pill) {
+      width: 100%;
+    }
+
+    /* The outlined pill carries no fill of its own, and the foot of the frame
+       still catches light off the floor. A backdrop is the honest fix — dimming
+       the scrim far enough to rescue a transparent control would bury the
+       product shot the film exists to show. */
+    .hero__actions :global(.pill) {
+      background: rgba(8, 8, 10, 0.72);
+      border-color: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(8px);
     }
   }
 
-  /* Redundant on a phone: the next section is already in view. */
-  @media (max-width: 640px) {
-    .hero__scroll {
+  /* Scroll-linked motion is the visitor's own doing, but scrubbing still means
+     a moving picture. Collapse to a single still viewport. */
+  @media (prefers-reduced-motion: reduce) {
+    :global(html[data-js]) .hero,
+    .hero {
+      height: 100svh;
+    }
+
+    .hero__video {
       display: none;
     }
   }
