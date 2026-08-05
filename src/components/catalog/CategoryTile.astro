@@ -95,8 +95,17 @@ const countLabel = `${count} ${count === 1 ? 'Product' : 'Products'}`;
     color: #fff;
   }
 
-  /* Red on --color-card measures 4.65:1 and passes AA at any size; --color-grey
-     is legible on dark surfaces only, which is the only place this tile lives. */
+  /* KNOWN AA FAILURE — brand red on --color-card measures 4.23:1, under the
+     4.5:1 floor for text at 11px/700. This comment previously read "4.65:1",
+     which is the figure for red on --color-black; the tile's surface is
+     --color-card and was never re-measured. Task 16's axe run caught it, along
+     with the same mistake in .eyebrow, .card__variant, .ind__count and
+     .ef-field__req. No token fixes it — every red in tokens.css is at or below
+     brand red — so the fix is a brand decision and is open. See the header of
+     tests/e2e/a11y.spec.ts.
+
+     --color-grey on --color-card (below) is legible and is a dark-surface-only
+     token, which is the only place this tile lives. */
   .tile__count {
     margin-top: auto;
     font-family: var(--font-display);

@@ -8,13 +8,14 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "node tests/preview-server.mjs",
     "astro": "astro",
     "test": "vitest run",
     "normalise": "node tools/normalise-products.mjs",
     "extract:catalog": "node tools/extract-catalog.mjs",
     "extract:logo": "node tools/extract-logo.mjs",
-    "extract:heroes": "node tools/extract-heroes.mjs"
+    "extract:heroes": "node tools/extract-heroes.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@astrojs/preact": "^6.0.2",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.62.1",
     "mupdf": "^1.26",
     "prettier": "^3.9.6",

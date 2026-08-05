@@ -29,4 +29,15 @@ if (existsSync(prodStore)) {
 
 // `getViteConfig` boots the Astro integration pipeline so virtual modules such
 // as `astro:content` resolve inside tests.
-export default getViteConfig({ test: { globals: true, environment: 'node' } });
+export default getViteConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    // Unit tests live beside the code they cover, always under `src/`. Pinning
+    // the pattern keeps Vitest away from `tests/e2e/`, which is Playwright's:
+    // those files call `test.describe`, which Vitest resolves to its own `test`
+    // and then fails to collect. Vitest's default `include` swept them up as
+    // soon as Task 16 added them.
+    include: ['src/**/*.test.ts'],
+  },
+});
