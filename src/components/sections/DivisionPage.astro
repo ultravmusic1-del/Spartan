@@ -120,6 +120,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
 <BaseLayout
   title={`${division.name} — ${productCount} products across ${categoryCount} categories`}
   description={`${division.blurb} ${productCount} products across ${categoryCount} categories.`}
+  division={division.id}
 >
   <main id="main">
     <section class="dh">

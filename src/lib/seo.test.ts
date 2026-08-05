@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { productJsonLd, breadcrumbJsonLd, organizationJsonLd, itemListJsonLd } from './seo';
+import {
+  productJsonLd,
+  breadcrumbJsonLd,
+  organizationJsonLd,
+  itemListJsonLd,
+  productDescription,
+  requireSite,
+  serialiseJsonLd,
+} from './seo';
 
 const product = {
   slug: 'safety-helmets',
@@ -118,6 +126,78 @@ describe('breadcrumbJsonLd — the current page', () => {
     expect(ld.itemListElement[1]).not.toHaveProperty('item');
     expect(ld.itemListElement[1]!.name).toBe('Safety Helmets');
     expect(ld.itemListElement[1]!.position).toBe(2);
+  });
+});
+
+/*
+ * Two additions made while wiring the builders into pages (Task 15): a second
+ * length budget for the same description text, and one place that turns
+ * `Astro.site` into the string the builders take.
+ */
+
+describe('productDescription — the meta-description budget', () => {
+  const wordy = {
+    ...product,
+    specs: [
+      { label: 'Shell', value: 'HDPE compound + nylon ratchet' },
+      { label: 'Colours', value: 'Red, White, Blue, Orange, Yellow, Green' },
+      { label: 'Adjustment', value: '6-point, for even load distribution across the crown' },
+    ],
+  };
+
+  it('cuts at a whole spec row under the budget it is given', () => {
+    // The JSON-LD ceiling fits all three rows.
+    expect(productDescription(wordy).length).toBeLessThanOrEqual(300);
+    expect(productDescription(wordy)).toContain('6-point');
+
+    // A meta description is truncated by search engines around 155-160, so the
+    // same text is cut again at 160 — and cut between rows, never mid-value.
+    const meta = productDescription(wordy, 160);
+    expect(meta.length).toBeLessThanOrEqual(160);
+    expect(meta).toBe('Safety Helmets. Shell: HDPE compound + nylon ratchet. Colours: Red, White, Blue, Orange, Yellow, Green.');
+    expect(meta.endsWith('Green.')).toBe(true);
+  });
+
+  it('still returns the product name when no spec row fits', () => {
+    // Never an empty string and never a truncated fragment: the name alone is
+    // the honest floor.
+    expect(productDescription(wordy, 20)).toBe('Safety Helmets.');
+  });
+});
+
+describe('serialiseJsonLd', () => {
+  // The catalogue holds no "<" today, so nothing in the built output exercises
+  // this. It is here for the admin dashboard, where product text stops being
+  // brochure-derived — which is exactly the point at which nobody will be
+  // reading Seo.astro.
+  const CLOSER = '</' + 'script><img src=x onerror=alert(1)>';
+
+  it('escapes < so a closing script tag cannot end the block early', () => {
+    const out = serialiseJsonLd(productJsonLd({ ...product, name: `Guard ${CLOSER}` }, SITE));
+    expect(out).not.toContain('<');
+    expect(out).toContain('\\u003c');
+    // Escaped, not deleted: the value survives a round trip byte for byte.
+    expect(JSON.parse(out).name).toBe(`Guard ${CLOSER}`);
+  });
+
+  it('neutralises an HTML comment opener too', () => {
+    const out = serialiseJsonLd({ name: 'Guard <!-- hidden -->' });
+    expect(out).not.toContain('<!--');
+    expect(JSON.parse(out).name).toBe('Guard <!-- hidden -->');
+  });
+
+  it('leaves ordinary nodes byte-identical to JSON.stringify', () => {
+    const node = productJsonLd(product, SITE);
+    expect(serialiseJsonLd(node)).toBe(JSON.stringify(node));
+  });
+});
+
+describe('requireSite', () => {
+  it('returns the configured origin and refuses to guess one', () => {
+    expect(requireSite(new URL('https://spartan.example'))).toBe('https://spartan.example/');
+    // `Astro.site` is undefined whenever astro.config.mjs omits `site`. There is
+    // no relative form of a canonical or an og:url, so this fails the build.
+    expect(() => requireSite(undefined)).toThrow(/must set `site`/);
   });
 });
 

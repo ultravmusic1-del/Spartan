@@ -30,6 +30,11 @@ export const BRAND_NAME = 'Spartan';
  * characters, but a structured-data description is also read by assistants and
  * previews, so it is allowed to run longer. 300 is the ceiling; the builder
  * cuts at a whole spec row below it rather than mid-value.
+ *
+ * `productDescription` takes the ceiling as an argument so the same text can be
+ * cut twice from the same source: 300 for the JSON-LD node, ~160 for the page's
+ * meta description. Two builders would drift; one builder with two budgets
+ * cannot.
  */
 const MAX_DESCRIPTION = 300;
 
@@ -115,6 +120,7 @@ export function productFullName(product: Pick<Product, 'name' | 'variantLabel'>)
  */
 export function productDescription(
   product: Pick<Product, 'name' | 'variantLabel' | 'specs'>,
+  max: number = MAX_DESCRIPTION,
 ): string {
   let text = productFullName(product);
 
@@ -124,11 +130,58 @@ export function productDescription(
     const row = spec.label ? `${spec.label.trim()}: ${value}` : value;
     const next = `${text}. ${row}`;
     // +1 for the full stop the finished string ends on.
-    if (next.length + 1 > MAX_DESCRIPTION) break;
+    if (next.length + 1 > max) break;
     text = next;
   }
 
   return `${text}.`;
+}
+
+/**
+ * The configured site origin, in the form the builders above expect.
+ *
+ * `Astro.site` is `URL | undefined` — undefined the moment `site` is missing
+ * from astro.config.mjs — and every URL emitted from this module is absolute by
+ * definition, so there is no sensible fallback: a relative canonical or a
+ * literal "undefined/products/x" in an Open Graph tag is worse than no page at
+ * all. Failing the build with a named cause is the honest outcome, and putting
+ * it here means the one message is shared by Seo.astro and by every page that
+ * builds a JSON-LD node.
+ */
+/**
+ * A structured-data node as the text that goes inside a
+ * `<script type="application/ld+json">` block.
+ *
+ * JSON-LD has to be written with Astro's `set:html`, because a plain `{expr}`
+ * is HTML-escaped and `&quot;` in place of `"` is not JSON any more. `set:html`
+ * escapes nothing at all, and that moves one hazard onto us: an HTML parser
+ * ends a script block at the first closing script tag it meets, wherever that
+ * sits — inside a JSON string included. A product name carrying one would close
+ * the block early, and every byte after it would be parsed as markup instead of
+ * as data. Injected markup follows for free.
+ *
+ * Rewriting every "<" as its < escape closes that off. It is an ordinary
+ * JSON string escape, so `JSON.parse` returns the identical string and
+ * validators see no difference; the dangerous sequence simply never reaches the
+ * HTML parser intact. The same substitution neutralises "<!--", which would
+ * otherwise open a comment inside the block.
+ *
+ * No catalogue value contains "<" today — every one traces to the client's
+ * brochure, and the built output confirms it. This exists for the CMS-backed
+ * admin dashboard (handoff.md section 5), where the text becomes arbitrary and
+ * this decision will not be revisited.
+ */
+export function serialiseJsonLd(node: object): string {
+  return JSON.stringify(node).replace(/</g, '\\u003c');
+}
+
+export function requireSite(site: URL | undefined): string {
+  if (!site) {
+    throw new Error(
+      'astro.config.mjs must set `site`: canonical, Open Graph and JSON-LD URLs are absolute by definition.',
+    );
+  }
+  return site.href;
 }
 
 export interface ProductJsonLdOptions {

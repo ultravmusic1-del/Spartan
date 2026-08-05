@@ -6,6 +6,7 @@ import SolidButton from '../../components/primitives/SolidButton.astro';
 import PillButton from '../../components/primitives/PillButton.astro';
 import ProductGrid from '../../components/catalog/ProductGrid.astro';
 import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+import { breadcrumbJsonLd, itemListJsonLd, requireSite, type Crumb } from '../../lib/seo';
 
 /**
  * One page per category, fifteen in all. Two of them — Electrical Accessories
@@ -39,12 +40,41 @@ const countLabel = `${count} ${count === 1 ? 'product' : 'products'}`;
 // panel keeps it and the lede stands down. The description still carries the
 // page's meta description.
 const lede = category.status === 'expanding' ? undefined : category.description;
+
+const site = requireSite(Astro.site);
+
+// Mirrors the two crumbs Breadcrumbs renders below; the second is the current
+// page and so carries no URL.
+const trail: Crumb[] = [{ name: 'Catalogue', url: '/catalogue' }, { name: category.name }];
+
+/**
+ * ItemList lists the products in the order the grid renders them, which is the
+ * order `getProducts` returned.
+ *
+ * The two expanding categories emit `numberOfItems: 0` and an empty list rather
+ * than no ItemList at all. Zero is the true count — the range is real and the
+ * brochure has nothing in it yet — and saying so is consistent with the page
+ * itself, which says the same thing in words instead of borrowing a product
+ * from somewhere else.
+ */
+const jsonLd = [itemListJsonLd(products, site), breadcrumbJsonLd(trail, site)];
+
+// The category's own description, plus its size counted from the catalogue —
+// the count is never typed in, so it cannot go stale when the range grows. The
+// expanding pair keep their description alone: appending "0 products" to a
+// sentence that already says the range is expanding reads as an error.
+const metaDescription =
+  count > 0
+    ? `${category.description} ${countLabel} from ${division?.name ?? 'Spartan'}.`
+    : category.description;
 ---
 
 <BaseLayout
   title={`${category.name} — ${division?.name ?? 'Spartan'}`}
-  description={category.description}
+  description={metaDescription}
   darkHeader={false}
+  division={category.divisionId}
+  jsonLd={jsonLd}
 >
   <main id="main">
     <section class="cp">

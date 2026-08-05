@@ -1,6 +1,6 @@
 ---
 import type { ImageMetadata } from 'astro';
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/catalog/Breadcrumbs.astro';
 import Chevron from '../../components/primitives/Chevron.astro';
@@ -11,6 +11,13 @@ import SpecTable from '../../components/catalog/SpecTable.astro';
 import En388Table from '../../components/catalog/En388Table.astro';
 import ProductGrid from '../../components/catalog/ProductGrid.astro';
 import { getCategories, getProducts, getRelatedProducts } from '../../lib/catalog';
+import {
+  breadcrumbJsonLd,
+  productDescription,
+  productJsonLd,
+  requireSite,
+  type Crumb,
+} from '../../lib/seo';
 
 /**
  * One page per product, seventy-two in all. The layout mirrors the home page's
@@ -60,12 +67,63 @@ const hasUntested = product.en388
   ? Object.values(product.en388).some((level) => level === 'X')
   : false;
 
+const site = requireSite(Astro.site);
+
+/**
+ * The trail below is the one Breadcrumbs renders a few lines down, crumb for
+ * crumb — including the last one, which is `product.name` without its variant
+ * label and carries no URL because the user is already here. A BreadcrumbList
+ * that disagrees with the visible breadcrumbs is a mismatch, not extra
+ * information.
+ */
+const trail: Crumb[] = [
+  { name: 'Catalogue', url: '/catalogue' },
+  ...(category ? [{ name: category.name, url: `/catalogue/${category.slug}` }] : []),
+  { name: product.name },
+];
+
+// The same transform <Image> below performs, so the URL in the Product node is
+// a file the build actually emits rather than the unprocessed original — which
+// Astro has no reason to write out at all when only <Image> references it.
+const ldImage = image ? (await getImage({ src: image })).src : undefined;
+
+/**
+ * Product and BreadcrumbList are two independent top-level nodes, so they go out
+ * as two blocks. Note what productJsonLd cannot put in either: no price, no
+ * availability, no rating, no review. See src/lib/seo.ts.
+ */
+const jsonLd = [
+  productJsonLd(product, site, { image: ldImage, category: category?.name }),
+  breadcrumbJsonLd(trail, site),
+];
+
+/**
+ * The meta description was `${fullName}. ${category.description}` until Task 15,
+ * which gave all ten lighting products — and all eleven gloves — an identical
+ * tail. Near-duplicate descriptions across 72 pages are a real defect, and the
+ * fix was already written: the product's own name and its printed spec rows,
+ * cut at 160 for the SERP snippet instead of the 300 the JSON-LD node uses.
+ * All 72 come out distinct. Some are very short, because some brochure entries
+ * say very little; that is the honest length, not a gap to fill with adjectives.
+ */
+const metaDescription = productDescription(product, 160);
+
+// "Safety Helmets — Head & Face Protection — Spartan". The brand goes last: it
+// is the part a searcher needs least, so it is the part Google truncates first
+// on the longest names. Every product has a category, but the shape stays safe
+// if one ever does not — a title reading "— Spartan — Spartan" would be a
+// visible defect on a search results page.
+const pageTitle = category
+  ? `${fullName} — ${category.name} — Spartan`
+  : `${fullName} — Spartan`;
 ---
 
 <BaseLayout
-  title={`${fullName} — ${category?.name ?? 'Spartan'}`}
-  description={`${fullName}. ${category?.description ?? ''}`.trim()}
+  title={pageTitle}
+  description={metaDescription}
   darkHeader={false}
+  division={category?.divisionId}
+  jsonLd={jsonLd}
 >
   <main id="main">
     <section class="pd">

@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import Seo from '../components/Seo.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 
@@ -13,20 +14,30 @@ interface Props {
    * way.
    */
   darkHeader?: boolean;
+  /** Division id, for the social card. See Seo.astro. */
+  division?: string;
+  /** Structured data for this page — one node or several. See Seo.astro. */
+  jsonLd?: object | object[];
 }
 
-const { title, description, darkHeader = true } = Astro.props;
+const { title, description, darkHeader = true, division, jsonLd } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
+    {/*
+      Title, meta description, canonical, Open Graph, Twitter card and JSON-LD
+      all come from here and from nowhere else. This layout emitted the first
+      three itself until Task 15; leaving them in both places would put two
+      titles and two canonicals on every page, and a search engine picks one of
+      each without saying which. The props above are still this layout's, so no
+      page's call site changed — only where the tags are written.
+    */}
+    <Seo title={title} description={description} division={division} jsonLd={jsonLd} />
     <link rel="preload" href="/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/inter-variable.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
     {/*
       The Spartan helmet, cropped from the existing spartan-logo.svg vector to
       the helmet path's own bounding box. Not redrawn — the logo is extracted

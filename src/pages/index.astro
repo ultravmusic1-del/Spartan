@@ -8,11 +8,42 @@ import CategoryGrid from '../components/sections/CategoryGrid.astro';
 import Spotlight from '../components/sections/Spotlight.astro';
 import Faq from '../components/sections/Faq.astro';
 import EnquiryCta from '../components/sections/EnquiryCta.astro';
+import { getCategories, getProducts } from '../lib/catalog';
+import { organizationJsonLd, requireSite } from '../lib/seo';
+
+const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+
+const site = requireSite(Astro.site);
+
+/**
+ * The Organization node is emitted here and on no other page.
+ *
+ * It describes the company rather than the document, so one authoritative
+ * declaration is what search engines want; ninety-six copies are ninety-six
+ * competing statements of the same entity, and the one that gets picked is
+ * whichever the crawler happened to read. The home page is also the URL the
+ * node's own `url` property points at, so the markup lives on the page it
+ * describes.
+ *
+ * What it deliberately does not claim — address, telephone, email, sameAs — is
+ * documented in src/lib/seo.ts: every one of those is still a placeholder in
+ * src/data/site.json, and publishing a placeholder address as structured data
+ * would put a fabricated location into map results.
+ */
+const jsonLd = organizationJsonLd(site, { logo: '/favicon.png' });
+
+/**
+ * The product count used to be typed into this description as "72". It was the
+ * only number on the site that could go stale — every other page already counts
+ * through catalog.ts — so it now counts too, and so does the category total.
+ */
+const description = `Lighting, ventilation and water management alongside protective equipment and workwear. ${products.length} products in ${categories.length} categories, supplied to contractors and distributors.`;
 ---
 
 <BaseLayout
   title="Spartan — Industrial Electrical & Safety Solutions"
-  description="Lighting, ventilation and water management alongside personal protective equipment and workwear. 72 products across two divisions, supplied to contractors, facilities teams and distributors."
+  description={description}
+  jsonLd={jsonLd}
 >
   <main id="main">
     <Hero />

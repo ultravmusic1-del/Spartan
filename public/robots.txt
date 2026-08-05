@@ -1,0 +1,31 @@
+# Spartan — https://spartan.example
+#
+# ============================================================================
+#  BEFORE LAUNCH: THE DOMAIN BELOW IS A PLACEHOLDER AND MUST BE CHANGED.
+#
+#  `spartan.example` is not a real domain. `.example` is reserved by RFC 2606
+#  and can never be registered, so the Sitemap line below currently points
+#  every crawler at nothing.
+#
+#  It has to change in TWO places, and they must match:
+#
+#    1. `site:` in astro.config.mjs   <- canonical, Open Graph and JSON-LD URLs
+#                                        and the sitemap's own contents come
+#                                        from here
+#    2. the Sitemap: line in this file <- this file is served verbatim from
+#                                        public/ and interpolates nothing
+#
+#  Changing only (1) leaves this file pointing at the wrong host. Changing only
+#  (2) leaves every canonical tag on all 96 pages pointing at the wrong host.
+#  Open item 4 in handoff.md section 8; the client has not confirmed a domain.
+# ============================================================================
+
+User-agent: *
+Allow: /
+
+# /api/enquiry is deliberately absent from the sitemap: it is the RFQ submission
+# endpoint, it answers POST, and it is not a page. It is left crawlable rather
+# than disallowed because a Disallow line is a public index of your endpoints,
+# and there is nothing behind this one to find.
+
+Sitemap: https://spartan.example/sitemap-index.xml

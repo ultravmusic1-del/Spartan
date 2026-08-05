@@ -1,0 +1,156 @@
+---
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
+import { BRAND_NAME, requireSite, serialiseJsonLd } from '../lib/seo';
+import electricalPlate from '../assets/hero/electrical.jpg';
+import safetyPlate from '../assets/hero/safety.jpg';
+
+/**
+ * Seo — every tag that describes this document to a machine.
+ *
+ * THIS IS THE ONLY PLACE <title>, the meta description and the canonical link
+ * are emitted. BaseLayout emitted all three until Task 15; a page carrying two
+ * of each is a genuine defect rather than a tidiness one, because a search
+ * engine picks between them without telling you which it took. BaseLayout still
+ * takes `title` and `description` as props — every page already passes them —
+ * but it forwards them here and renders none of them itself.
+ *
+ * The builders in src/lib/seo.ts are pure functions taking a site origin, so
+ * pages assemble their own JSON-LD nodes and hand them over through `jsonLd`.
+ * That prop takes one node or several: a product page emits Product *and*
+ * BreadcrumbList, which are two independent top-level nodes and cannot be
+ * collapsed into one.
+ */
+interface Props {
+  title: string;
+  description: string;
+  /**
+   * Division id — `electricals` or `safety`. Chooses which of the two hero
+   * plates fronts the social card, so a link to an LED floodlight does not
+   * preview as a pair of ear defenders. Anything else, and pages that span both
+   * divisions, fall back to the site-wide plate below.
+   */
+  division?: string;
+  /** One structured-data node, or several. Each is emitted as its own block. */
+  jsonLd?: object | object[];
+}
+
+const { title, description, division, jsonLd } = Astro.props;
+
+const site = requireSite(Astro.site);
+const canonical = new URL(Astro.url.pathname, site);
+
+/**
+ * There is no dedicated social image, so the card is cut from a photograph the
+ * site already ships. Of the five hero plates only three are clean —
+ * `cover.jpg` was deleted for being blank white, and `lighting.jpg` and
+ * `ventilation-water.jpg` carry the brochure's own divider artwork across their
+ * lower half (tools/README.md). `workwear.jpg` is a tight portrait of one
+ * person; any 1.91:1 crop of it is a headless torso or a sliced hard hat.
+ *
+ * That leaves the two division plates, which are also the two images
+ * divisions.json already nominates for those landing pages — so the card a
+ * visitor sees in a chat preview is the photograph they land on.
+ *
+ * `safety.jpg` is the site-wide default. It is the only clean plate showing an
+ * actual workplace with real equipment in it, so at thumbnail size it reads as
+ * "industrial supplier" to someone who has never heard of Spartan.
+ * `electrical.jpg` is abstract light-trail CGI and, on its own, reads as
+ * telecoms rather than as lighting, fans, pumps and cable.
+ */
+const PLATES: Record<string, { image: ImageMetadata; alt: string }> = {
+  electricals: {
+    image: electricalPlate,
+    alt: 'Network cables trailing blue and orange light across a circuit-board pattern.',
+  },
+  safety: {
+    image: safetyPlate,
+    alt: 'Ear defenders and safety goggles beside an angle grinder on a workshop bench.',
+  },
+};
+
+const plate = (division ? PLATES[division] : undefined) ?? PLATES.safety!;
+
+// 1200x630 is Open Graph's recommended size and satisfies Twitter's 2:1
+// summary_large_image at the same time. Both plates are 1225x1418 portrait, so
+// something has to crop them; doing it here at build time gives one predictable
+// frame instead of each platform centre-cropping differently. `bottom` is where
+// the subject of both photographs sits — the PPE on the bench, the cable ends —
+// and a centre crop of safety.jpg decapitates the group of workers.
+//
+// Forced to JPEG rather than left on Astro's WebP default: several link-preview
+// scrapers still do not fetch or render WebP, and a social card that silently
+// fails to appear is the one failure mode nobody notices.
+const OG_WIDTH = 1200;
+const OG_HEIGHT = 630;
+const ogImage = await getImage({
+  src: plate.image,
+  width: OG_WIDTH,
+  height: OG_HEIGHT,
+  fit: 'cover',
+  position: 'bottom',
+  format: 'jpeg',
+});
+const ogImageUrl = new URL(ogImage.src, site);
+
+// One node or several. `serialiseJsonLd` lives in src/lib/seo.ts rather than
+// here because the escaping it performs is the load-bearing part of this
+// component and it is the only part of it a unit test can reach — see the
+// closing-script-tag case in seo.test.ts.
+const nodes = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical.href} />
+
+{/*
+  og:type is `website` on every page, product pages included. `product` is
+  Facebook's commerce vertical and its required properties are
+  `product:price:amount` and `product:price:currency` — this site has no prices,
+  no stock and no cart, and declaring the vertical it cannot fill would be the
+  Open Graph form of the same claim src/lib/seo.ts exists to refuse.
+*/}
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={BRAND_NAME} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical.href} />
+<meta property="og:image" content={ogImageUrl.href} />
+<meta property="og:image:width" content={String(OG_WIDTH)} />
+<meta property="og:image:height" content={String(OG_HEIGHT)} />
+<meta property="og:image:alt" content={plate.alt} />
+{/*
+  Open Graph wants language_TERRITORY, so a territory has to be named. This one
+  describes the copy, not where the company trades: the site's own writing is
+  British English throughout — "Catalogue" in the nav, the URL and every page
+  title. (Spec VALUES keep the brochure's own US spelling, "Colors" included,
+  because those are quoted, not written.) The client has not confirmed a
+  territory and none is claimed anywhere else on the site, so nothing stronger
+  is stated here.
+*/}
+<meta property="og:locale" content="en_GB" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl.href} />
+<meta name="twitter:image:alt" content={plate.alt} />
+{/*
+  No `twitter:site` or `twitter:creator`: the footer's social icons still have no
+  destinations, so there is no handle to name. Same reason `sameAs` is absent
+  from the Organization node.
+*/}
+
+{/*
+  `is:inline` is what Astro would infer anyway, said out loud: this block is
+  data, not code. Without it Astro warns that it is treating the script as
+  inline because it carries an attribute, and the warning invites someone to
+  "fix" it later by removing the type attribute — which would turn the block
+  into JavaScript and break it.
+*/}
+{
+  nodes.map((node) => (
+    <script type="application/ld+json" is:inline set:html={serialiseJsonLd(node)} />
+  ))
+}
