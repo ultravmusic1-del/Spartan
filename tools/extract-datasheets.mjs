@@ -51,6 +51,11 @@ const MANIFEST = [
 
   // --- Mist fans (MFS series) --------------------------------------------
   { pdf: 'SPARTAN - MIST FAN.pdf', page: 3, pick: '730x922', out: 'ds-mist-fan.png' },
+
+  // --- Portable blower (SHT series) --------------------------------------
+  // Three views at 615x922 on this page; nth:3 is the "with A type support
+  // feet" shot, the only one that reads as a complete product at card size.
+  { pdf: 'SPARTAN -PVT -FAN.pdf', page: 3, pick: '615x922', nth: 3, out: 'ds-portable-blower.png' },
 ];
 
 const args = process.argv.slice(2);
