@@ -637,12 +637,40 @@
       {
         "label": "Input Voltage",
         "value": "220-240 V  | 50-60 Hz"
+      },
+      {
+        "label": "Model No.",
+        "value": "ELEINK00210 (20W) | ELEINK00215 (30W) | ELEINK00220 (40W)"
+      },
+      {
+        "label": "Product Size",
+        "value": "40 x 23.7 x 6.5 cm (20W) | 50.4 x 23.7 x 6.5 cm (30W) | 65.8 x 23.7 x 6.5 cm (40W)"
+      },
+      {
+        "label": "High Voltage Grid",
+        "value": "2500-2700 V"
+      },
+      {
+        "label": "UV Tubes",
+        "value": "FSL UV tubes x 2 pcs"
+      },
+      {
+        "label": "Plug",
+        "value": "BS Plug"
+      },
+      {
+        "label": "Warranty",
+        "value": "2 Year Warranty"
+      },
+      {
+        "label": "Application",
+        "value": "Hotel/market/hospital | Canteen & food shop | Cafe & Kitchen"
       }
     ],
     "status": "published",
     "source": {
-      "doc": "brochure",
-      "page": 6
+      "doc": "SPARTAN - INSECT KILLER.pdf",
+      "page": 1
     },
     "order": 1
   },
@@ -702,6 +730,10 @@
       {
         "label": "Application",
         "value": "100Base-TX | 1000Base-T Gigabit Ethernet | ATM"
+      },
+      {
+        "label": "Full Electrical Characteristics",
+        "value": "Attenuation, RL, NEXT, ELFEXT, PS NEXT and PS ELFEXT published 1-550 MHz — available on request"
       }
     ],
     "status": "published",
