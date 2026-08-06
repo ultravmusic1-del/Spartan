@@ -115,19 +115,17 @@ const shape = [
 </section>
 
 <style>
-  /* Pure black, NOT --color-black, and this is the one place on the site where
-     that is right. Whenever the frame is capped the artwork is centred and the
-     section shows beside it, so this colour butts directly against the artwork's
-     own bed — which is #000. Against --color-black (#08080a) that join measures
-     an 8/255 step, and a step that small across a large flat dark field does not
-     read as a gradient, it reads as a visible rectangle around the picture.
-     Measured on a 390px phone: bars rgb(8,8,10) against artwork rgb(1,1,1).
-     Matching the bed drops it to 1/255. The seam this moves to the foot of the
-     section is horizontal, lands on a real section boundary, and is invisible. */
+  /* --color-black, and the edges are dissolved into it rather than matched to it.
+     An earlier artwork was bedded on flat #000, so simply painting the section
+     #000 made every join invisible. This one is not: measured on its own edges,
+     left is #020203 and top #070708 — near enough — but the right edge is a lit
+     wall running to #931211 at y 63-75%, and the floor reaches #41221e around
+     x 60-70%. No single background colour can meet all four, so `.hero__frame`
+     fades the three exposed edges into this one instead. See the note there. */
   .hero {
     display: flex;
     justify-content: center;
-    background: #000;
+    background: var(--color-black);
   }
 
   /* Full width until the artwork would outgrow the window, then bounded by
@@ -142,6 +140,36 @@ const shape = [
   .hero__frame {
     position: relative;
     width: min(100%, calc(100svh * var(--hero-ar-d)));
+  }
+
+  /* Dissolve the artwork's three exposed edges into the page.
+
+     The cap above narrows the frame far more often than it looks: it engages
+     whenever the viewport is wider than 1.777:1, which an ordinary maximised
+     1920×955 browser already is — so roughly 220px of page shows either side
+     on a very common setup, not just on ultra-wide. The artwork's right edge is
+     a lit wall reaching #931211 and its floor reaches #41221e, so against
+     --color-black those joins are hard lines rather than the invisible ones the
+     previous flat-black artwork gave for free.
+
+     Percentages, so the fade scales with the frame. 4% clears the logo, which
+     starts at 5%. The bottom fade begins at 92%, below the CTA row — see the
+     note on .hero__actions. `pointer-events: none` so it never eats a click. */
+  .hero__frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        to right,
+        var(--color-black) 0%,
+        transparent 4%,
+        transparent 96%,
+        var(--color-black) 100%
+      ),
+      linear-gradient(to bottom, transparent 92%, var(--color-black) 100%);
   }
 
   /* The artwork sets its own height. No `object-fit` here, so nothing is ever
@@ -160,12 +188,24 @@ const shape = [
   }
 
   /* x and y are percentages of the artwork itself, which is safe precisely
-     because the image is never cropped. 5.2% lands on the left edge of the
-     logo; 72% is below the red rule and clear of the product cluster. */
+     because the image is never cropped. 5.2% lands on the left edge of the logo.
+
+     82% was measured, not chosen. Peak luminance in the button column
+     (x 5.2-33%), scanned in 1% rows: y 70-76% is the SOLUTIONS headline and the
+     category strip at 255, y 77% drops to 14, and y 78-99% runs 20-57 — dark
+     floor all the way down. The strip's last words extend past x 33%, so the
+     row has to clear it entirely rather than tuck beside it: its final bright
+     row is y 79%, and 82% leaves a 24px gap at 1440. Below that the CTAs stay
+     clear of the bottom fade at every width — at 1280, the tightest case, they
+     end at y 89% against a fade starting at 92%.
+
+     z-index lifts them over the edge-fade overlay, which is a sibling ::after
+     and would otherwise paint on top. Re-measure if the artwork is re-cut. */
   .hero__actions {
     position: absolute;
     left: 5.2%;
-    top: 72%;
+    top: 82%;
+    z-index: 2;
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -191,6 +231,16 @@ const shape = [
        the artwork's edges — which frees the image to letterbox instead. */
     .hero__frame {
       width: 100%;
+    }
+
+    /* No edge fade in portrait. That overlay exists because the landscape
+       artwork has a lit right edge and a warm floor that will not meet
+       --color-black cleanly. The portrait cut is bedded on flat black at every
+       edge — measured rgb(0,0,0) top-left, rgb(5,4,5) bottom-left — so it
+       already joins invisibly, and fading it would only dim the artwork and
+       wash out the strip of floor the composition ends on. */
+    .hero__frame::after {
+      content: none;
     }
 
     .hero__art img {
