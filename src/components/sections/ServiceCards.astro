@@ -25,9 +25,15 @@ const ICONS: Record<string, string> = {
   fans:
     '<circle cx="12" cy="12" r="2.2"/>' +
     '<path d="M12 9.8V4a4 4 0 0 1 3.2 6.4M14.2 12H20a4 4 0 0 1-6.4 3.2M12 14.2V20a4 4 0 0 1-3.2-6.4M9.8 12H4a4 4 0 0 1 6.4-3.2"/>',
+  // A centrifugal pump seen from the side: volute casing with its impeller hub,
+  // the discharge riser and flange on top, the suction inlet at the left, and
+  // the motor body stubbed off to the right. It replaces a factory/warehouse
+  // glyph that had been standing in for this category and described nothing
+  // about it. The hub echoes the fan icon's, which is the family's one existing
+  // convention for "this thing spins".
   pumps:
-    '<path d="M4 20h16M6 20v-7h6v7M12 13V7h4l3 3v10M8.5 16.5h1"/>' +
-    '<circle cx="15.5" cy="9.5" r="1"/>',
+    '<circle cx="10" cy="14" r="5"/><circle cx="10" cy="14" r="1.4"/>' +
+    '<path d="M10 9V4.5M8 4.5h4M5 14H2.5M2.5 12.4v3.2M15 11h3.5a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H15"/>',
   head: '<path d="M3 17h18v2H3zM5 17a7 7 0 0 1 14 0M9.5 10.4V5.6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4.8"/>',
   hand: '<path d="M7 21V10a1.6 1.6 0 0 1 3.2 0V4.6a1.6 1.6 0 0 1 3.2 0V10m0-2.2a1.6 1.6 0 0 1 3.2 0V15a6 6 0 0 1-6 6H7Z"/>',
   foot: '<path d="M4 4h5v9l7 3.2a3 3 0 0 1 1.8 2.8V21H4Zm0 13h13"/>',
