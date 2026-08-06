@@ -20,6 +20,19 @@ Read these first. They are short and they encode decisions that will otherwise b
 
 **The rule that governs every task here:** never invent product data. If a sheet does not print a value, the field is absent. Where two sheets disagree, record what is printed and add it to the conflict log in Task 8 — do not reconcile it yourself. This is safety and electrical equipment; a fabricated rating is a hazard, not a cosmetic flaw.
 
+### Condensation must be lossless
+
+Per-model tables get collapsed into the site's `A | B | C` convention. **That collapse may only ever be a union of the printed values — never a subset, and never a simplification that widens a claim.**
+
+This is the rule that is easiest to break without noticing, because the result still looks like real data. The first draft of the blower record condensed five printed voltage strings to three, which read as "every model takes 220V at 50 or 60Hz". The table restricts four of the eight models to 50Hz only. Nothing was invented in the sense of a made-up number, and the row was still wrong — it asserted frequency support the sheet does not grant, which is the kind of error that sends a customer a blower that will not run on their supply.
+
+Two tests before you write any condensed row:
+
+1. **Union, not sample.** Every distinct printed value appears somewhere in the row.
+2. **No widened claim.** If a value applies to some models and not others, say which — `220V/50Hz (SHT-50, SHT-60)`, the convention the Revolution rows already use. A bare union is only safe when the value genuinely applies across the whole range.
+
+If a row cannot be condensed without breaking either test, keep it long. A wide spec table is a cosmetic problem; a wrong one is not.
+
 **Current baseline** (verify before you start, `npm run test && npm run build`):
 
 - 78 products, 428 spec rows, 16 distinct `source.doc` values
@@ -148,7 +161,7 @@ Add to the end of the array in `src/data/products.json`:
   "specs": [
     { "label": "Size", "value": "8\" | 10\" | 12\" | 14\" | 16\" | 18\" | 20\" | 24\"" },
     { "label": "Power", "value": "230W | 320W | 520W | 750W | 1100W | 1500W" },
-    { "label": "Voltage", "value": "220V/50/60Hz | 110V/50/60Hz | 380V/50Hz" },
+    { "label": "Voltage", "value": "220V/50/60Hz (SHT-20 to 45) | 110V/50/60Hz (SHT-20 to 40) | 110V/60Hz (SHT-45, SHT-50) | 220V/50Hz (SHT-50, SHT-60) | 380V/50Hz (SHT-60)" },
     { "label": "Revolution", "value": "2800 rpm (220V) | 3300 rpm (110V) | 1400 rpm (SHT-60)" },
     { "label": "Air Volume", "value": "25 to 300 m3/min" },
     { "label": "Pressure", "value": "245 to 1050 Pa" },
@@ -157,6 +170,7 @@ Add to the end of the array in `src/data/products.json`:
     { "label": "Series", "value": "SHT Series portable blower" },
     { "label": "Models", "value": "SHT-20 | SHT-25 | SHT-30 | SHT-35 | SHT-40 | SHT-45 | SHT-50 | SHT-60" },
     { "label": null, "value": "High efficiency, light weight, low temperature rise" },
+    { "label": null, "value": "Optimized blade design with a matched air inlet for large air volume at high pressure" },
     { "label": null, "value": "Handle and support feet fitted for easy moving" },
     { "label": null, "value": "Delivers high pressure air over long distance with flexible duct" },
     { "label": null, "value": "Overheat protection device fitted" },
@@ -884,6 +898,55 @@ Expected: 66 unit passed; 0 errors / 0 warnings / 7 hints; build clean at 110 pa
 git add README.md handoff.md tools/README.md
 git commit -m "docs: record the remaining datasheet integration and its conflicts"
 ```
+
+---
+
+## Task 10: Audit the six already-shipped fan records against the condensation rule
+
+The industrial exhaust, stand, wall and mist fan records were written before the condensation rule above was articulated, using the same collapsing convention that produced the blower's voltage defect. They must be re-checked against their tables.
+
+**Files:**
+- Modify: `src/data/products.json` (only if the audit finds defects)
+
+- [ ] **Step 1: Render the three source tables**
+
+```bash
+node --input-type=module -e "
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';import {pathToFileURL} from 'node:url';
+const mupdf=await import(pathToFileURL('./node_modules/mupdf/dist/mupdf.js').href);
+mkdirSync('/tmp/audit',{recursive:true});
+const jobs=[['SPARTAN - EXHAUST FAN.pdf',[3,4]],['SPARTAN - STAND FAN AND WALL FAN.pdf',[3,4]],['SPARTAN - MIST FAN.pdf',[3]]];
+for(const [f,pages] of jobs){
+  const d=mupdf.Document.openDocument(readFileSync('C:/Users/Vivaan/Downloads/'+f),'application/pdf');
+  for(const n of pages) writeFileSync('/tmp/audit/'+f.replace(/[^a-z0-9]/gi,'-')+'-p'+n+'.png',
+    d.loadPage(n-1).toPixmap(mupdf.Matrix.scale(2.2,2.2),mupdf.ColorSpace.DeviceRGB,false,true).asPNG());
+}
+console.log('rendered');
+"
+```
+
+- [ ] **Step 2: Check every condensed row on all six records**
+
+For each of `industrial-exhaust-fan-standard`, `industrial-exhaust-fan-grill`, `industrial-exhaust-fan-shutter`, `industrial-stand-fan`, `industrial-wall-fan` and `mist-fan`, apply both tests from the condensation rule to every `|`-separated row.
+
+The known-suspect row is **Voltage on the three exhaust bodies**, currently `220V/50Hz | 380V/50Hz`. In that table the FAD models are 220V and the FAS models are 380V — no single model offers both. A bare union therefore reads as "available in either", which is true of the *range* but not of any *unit*. Decide whether that needs model qualification, as the blower's did.
+
+- [ ] **Step 3: Fix only what fails, then verify**
+
+```bash
+npm run test && npm run build
+```
+
+Counts do not change; this task edits existing rows only.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/data/products.json
+git commit -m "fix(catalogue): qualify condensed fan specs that widened a printed claim"
+```
+
+If the audit finds nothing, commit nothing and say so.
 
 ---
 
