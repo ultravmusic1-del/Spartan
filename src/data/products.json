@@ -38,11 +38,11 @@
       },
       {
         "label": "Shape",
-        "value": "Round | Square"
+        "value": "Round (18W, 24W, 30W) | Square (18W, 24W)"
       },
       {
         "label": "Installation",
-        "value": "Recessed | Surface"
+        "value": "Recessed (18W, 24W) | Surface (18W, 30W)"
       },
       {
         "label": "Dimensions",
@@ -140,7 +140,7 @@
       },
       {
         "label": "Power",
-        "value": "10W | 20W | 30W"
+        "value": "10W | 20W | 35W"
       },
       {
         "label": "Luminous Flux",
@@ -164,7 +164,7 @@
       },
       {
         "label": "Dimensions",
-        "value": "26×604mm | 26×1198mm"
+        "value": "26×604mm (10W) | 26×1198mm (20W, 35W)"
       },
       {
         "label": "IP Rating",
@@ -636,7 +636,7 @@
       },
       {
         "label": "Input Voltage",
-        "value": "220-240 V  | 50-60 Hz"
+        "value": "220-240 V / 50-60 Hz"
       },
       {
         "label": "Model No.",
@@ -664,7 +664,7 @@
       },
       {
         "label": "Application",
-        "value": "Hotel/market/hospital | Canteen & food shop | Cafe & Kitchen"
+        "value": "Hotel / market / hospital, canteen & food shop, cafe & kitchen (all models)"
       }
     ],
     "status": "published",
@@ -717,7 +717,7 @@
       },
       {
         "label": "Impedance",
-        "value": "100 ± 15 Ω"
+        "value": "100 ± 15 Ω (1-250 MHz) | 100 ± 20 Ω (300-550 MHz)"
       },
       {
         "label": "Rated Temperature",
@@ -729,7 +729,7 @@
       },
       {
         "label": "Application",
-        "value": "100Base-TX | 1000Base-T Gigabit Ethernet | ATM"
+        "value": "100Base-TX | 100VG-AnyLAN | 1000Base-T Gigabit Ethernet | ATM | Noisy Environments"
       },
       {
         "label": "Full Electrical Characteristics",
@@ -870,7 +870,7 @@
     "specs": [
       {
         "label": "Models",
-        "value": "MP-40 | MP-158 | MP-185 | MP-208"
+        "value": "MP-40 | MP-158 | MP-185 | MP-203"
       },
       {
         "label": "Rating",
@@ -882,7 +882,7 @@
       },
       {
         "label": "Impeller",
-        "value": "Brass forged (MP-40) | SS 304 (MP-158) | CI ED-coated (MP-185, MP-208)"
+        "value": "Brass forged (MP-40) | SS 304 (MP-158) | CI ED-coated (MP-185, MP-203)"
       },
       {
         "label": "Winding",
@@ -902,7 +902,7 @@
       },
       {
         "label": "Pipe Size",
-        "value": "1\"×1\" (MP-40, MP-158) | 2\"×2\" (MP-185, MP-208)"
+        "value": "1\"×1\" (MP-40, MP-158) | 2\"×2\" (MP-185, MP-203)"
       },
       {
         "label": "Capacitor Value",
@@ -914,11 +914,11 @@
       },
       {
         "label": "Max. Current",
-        "value": "4.5A | 7.0-9.0A | 8.5-10.5A"
+        "value": "4.5A (MP-158) | 7.0-9.0A (MP-185) | 8.5-10.5A (MP-203)"
       },
       {
         "label": "Temperature Range",
-        "value": "60°-90°C | 60°-95°C"
+        "value": "60°-90°C (MP-40, MP-158) | 60°-95°C (MP-185, MP-203)"
       },
       {
         "label": "Castings",
@@ -2732,7 +2732,7 @@
     "specs": [
       {
         "label": "Size",
-        "value": "8\" | 10\" | 12\" | 14\" | 16\" | 18\" | 20\" | 24\""
+        "value": "8\" (FAD20-4) | 10\" (FAD25-4) | 12\" (FAD30-4) | 14\" (FAD35-4) | 16\" (FAD40-4, FAS40-4) | 18\" (FAD45-4, FAS45-4) | 20\" (FAD50-4, FAS50-4) | 24\" (FAD60-4, FAS60-4)"
       },
       {
         "label": "Power",
@@ -2740,7 +2740,7 @@
       },
       {
         "label": "Voltage",
-        "value": "220V/50Hz | 380V/50Hz"
+        "value": "220V/50Hz (FAD models) | 380V/50Hz (FAS models)"
       },
       {
         "label": "Revolution",
@@ -2797,7 +2797,7 @@
     "specs": [
       {
         "label": "Size",
-        "value": "10\" | 12\" | 14\" | 16\" | 20\""
+        "value": "10\" (FAD25-4) | 12\" (FAD30-4) | 14\" (FAD35-4) | 16\" (FAD40-4, FAS40-4) | 20\" (FAD50-4, FAS50-4)"
       },
       {
         "label": "Power",
@@ -2805,7 +2805,7 @@
       },
       {
         "label": "Voltage",
-        "value": "220V/50Hz | 380V/50Hz"
+        "value": "220V/50Hz (FAD models) | 380V/50Hz (FAS models)"
       },
       {
         "label": "Revolution",
@@ -2858,7 +2858,7 @@
     "specs": [
       {
         "label": "Size",
-        "value": "10\" | 12\" | 14\" | 16\" | 20\""
+        "value": "10\" (FAD25-4) | 12\" (FAD30-4) | 14\" (FAD35-4) | 16\" (FAD40-4, FAS40-4) | 20\" (FAD50-4, FAS50-4)"
       },
       {
         "label": "Power",
@@ -2866,7 +2866,7 @@
       },
       {
         "label": "Voltage",
-        "value": "220V/50Hz | 380V/50Hz"
+        "value": "220V/50Hz (FAD models) | 380V/50Hz (FAS models)"
       },
       {
         "label": "Revolution",
@@ -3077,7 +3077,7 @@
       },
       {
         "label": "Water Tank Capacity",
-        "value": "40L | 60L"
+        "value": "40L (MFS 26, MFS 30) | 60L (MFS26L, MFS30L)"
       },
       {
         "label": "Series",
@@ -3126,7 +3126,7 @@
       },
       {
         "label": "Power",
-        "value": "230W | 320W | 520W | 750W | 1100W | 1500W"
+        "value": "230W (SHT-20) | 320W (SHT-25) | 520W (SHT-30) | 750W (SHT-35) | 1100W (SHT-40) | 1500W (SHT-45, SHT-50, SHT-60)"
       },
       {
         "label": "Voltage",
@@ -3134,7 +3134,7 @@
       },
       {
         "label": "Revolution",
-        "value": "2800 rpm (220V) | 3300 rpm (110V) | 1400 rpm (SHT-60)"
+        "value": "2800 rpm (220V, SHT-20 to SHT-50) | 3300 rpm (110V, SHT-20 to SHT-50) | 1400 rpm (SHT-60)"
       },
       {
         "label": "Air Volume",
