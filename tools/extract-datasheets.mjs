@@ -29,6 +29,7 @@ import { join } from 'node:path';
 import * as mupdf from 'mupdf';
 import sharp from 'sharp';
 import { placedRect, renderImagesOnly } from './lib/pdf.mjs';
+import { keyBackground, opaqueFraction as opaqueOf } from './lib/keying.mjs';
 
 const SRC_DIR = process.env.DATASHEET_DIR ?? 'C:/Users/Vivaan/Downloads';
 const OUT_DIR = 'src/assets/products';
@@ -39,6 +40,11 @@ const OUT_DIR = 'src/assets/products';
  * `pick` selects the image on the page by its native pixel dimensions — stable
  * across re-runs and readable, unlike a bare draw-order index. `out` is the
  * filename written into src/assets/products/ and referenced from products.json.
+ *
+ * `crop` is the second entry kind, for the sheets that are one flattened raster
+ * per page: there is no embedded image to pick, so the entry gives a rect in PDF
+ * points plus `key` ('saturation' | 'luminance') and `threshold`, and the
+ * background is computed by lib/keying.mjs instead of clipped by the PDF.
  */
 const MANIFEST = [
   // --- Industrial exhaust fans (FA series) -------------------------------
@@ -69,6 +75,10 @@ const ONLY = onlyIx >= 0 ? args[onlyIx + 1] : null;
 const LOST_CLIP_OPAQUE = 0.995;
 /** A cutout at or below this is blank: the render produced nothing. */
 const EMPTY_RENDER_OPAQUE = 0.005;
+/** A keyed crop at or above this kept nearly everything: the key did not fire. */
+const KEY_MISSED_OPAQUE = 0.95;
+/** A keyed crop at or below this kept almost nothing: the key ate the subject. */
+const KEY_OVERREACHED_OPAQUE = 0.02;
 
 mkdirSync(OUT_DIR, { recursive: true });
 
@@ -113,6 +123,60 @@ const problems = [];
 
 for (const entry of MANIFEST) {
   if (ONLY && !entry.out.includes(ONLY)) continue;
+
+  // Flattened-page entries carry an explicit crop rect in PDF points plus a
+  // keying mode; there is no embedded image to pick out of the page.
+  if (entry.crop) {
+    const doc = mupdf.Document.openDocument(readFileSync(join(SRC_DIR, entry.pdf)), 'application/pdf');
+    const page = doc.loadPage(entry.page - 1);
+    const [x0, y0, x1, y1] = entry.crop;
+    const scale = entry.scale ?? 3;
+    const pix = page.toPixmap(
+      mupdf.Matrix.scale(scale, scale),
+      mupdf.ColorSpace.DeviceRGB,
+      false,
+      true,
+    );
+    // toPixmap renders the whole page; slice the crop out of it in device px.
+    const cropped = await sharp(Buffer.from(pix.asPNG()))
+      .extract({
+        left: Math.round(x0 * scale),
+        top: Math.round(y0 * scale),
+        width: Math.round((x1 - x0) * scale),
+        height: Math.round((y1 - y0) * scale),
+      })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const keyed = keyBackground(cropped.data, cropped.info.width, cropped.info.height, {
+      mode: entry.key,
+      threshold: entry.threshold,
+    });
+    const frac = opaqueOf(keyed, cropped.info.width, cropped.info.height);
+
+    // Too opaque means the key did nothing; too sparse means it ate the subject.
+    if (frac > KEY_MISSED_OPAQUE || frac < KEY_OVERREACHED_OPAQUE) {
+      problems.push(`${entry.out}: ${(frac * 100).toFixed(1)}% opaque after keying — adjust key/threshold`);
+      continue;
+    }
+
+    const trimmed = await sharp(keyed, {
+      raw: { width: cropped.info.width, height: cropped.info.height, channels: 4 },
+    })
+      .trim({ threshold: 1 })
+      .png()
+      .toBuffer({ resolveWithObject: true });
+
+    writeFileSync(join(OUT_DIR, entry.out), trimmed.data);
+    written++;
+    console.log(
+      `${entry.out.padEnd(32)} keyed ${entry.key}@${entry.threshold} -> ` +
+        `${trimmed.info.width}x${trimmed.info.height}  ${(frac * 100).toFixed(1)}% opaque  ` +
+        `<- ${entry.pdf} p${entry.page}`,
+    );
+    continue;
+  }
 
   const doc = mupdf.Document.openDocument(readFileSync(join(SRC_DIR, entry.pdf)), 'application/pdf');
   const page = doc.loadPage(entry.page - 1);
