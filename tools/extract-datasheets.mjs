@@ -44,7 +44,9 @@ const OUT_DIR = 'src/assets/products';
  * `crop` is the second entry kind, for the sheets that are one flattened raster
  * per page: there is no embedded image to pick, so the entry gives a rect in PDF
  * points plus `key` ('saturation' | 'luminance') and `threshold`, and the
- * background is computed by lib/keying.mjs instead of clipped by the PDF.
+ * background is computed by lib/keying.mjs instead of clipped by the PDF. The
+ * render scale is derived from that page's own raster, so a crop entry is
+ * pinned to the source like every other entry; `scale` overrides it.
  */
 const MANIFEST = [
   // --- Industrial exhaust fans (FA series) -------------------------------
@@ -95,6 +97,20 @@ function imagesOnPage(page) {
   return found;
 }
 
+/**
+ * The scale that reproduces a flattened page's own raster resolution.
+ *
+ * These sheets are one full-page image; rendering at an arbitrary scale either
+ * throws away supplier detail or invents it. Largest image on the page wins,
+ * which is that raster. Falls back to 3 for a page with no image at all.
+ */
+function nativeScale(page) {
+  const pb = page.getBounds();
+  const pageW = pb[2] - pb[0];
+  const widest = imagesOnPage(page).reduce((a, b) => (b.w > (a?.w ?? 0) ? b : a), null);
+  return widest && pageW > 0 ? widest.w / pageW : 3;
+}
+
 /** Fraction of pixels that are fully opaque — a lost clip pushes this to ~1. */
 function opaqueFraction(pix) {
   if (!pix.getAlpha()) return 1;
@@ -125,12 +141,28 @@ for (const entry of MANIFEST) {
   if (ONLY && !entry.out.includes(ONLY)) continue;
 
   // Flattened-page entries carry an explicit crop rect in PDF points plus a
-  // keying mode; there is no embedded image to pick out of the page.
+  // keying mode; there is no embedded image to pick out of the page. The scale
+  // is derived from the page's own raster unless the entry overrides it.
   if (entry.crop) {
     const doc = mupdf.Document.openDocument(readFileSync(join(SRC_DIR, entry.pdf)), 'application/pdf');
     const page = doc.loadPage(entry.page - 1);
     const [x0, y0, x1, y1] = entry.crop;
-    const scale = entry.scale ?? 3;
+    const scale = entry.scale ?? nativeScale(page);
+
+    // Clamp to the page for the same reason the pick branch does: these sheets
+    // place art running off the edge, and sharp's extract throws on an
+    // out-of-bounds region — which, inside this top-level loop, is an unhandled
+    // rejection that kills the run and silently skips every later entry.
+    const pb = page.getBounds();
+    const cx0 = Math.max(x0, pb[0]);
+    const cy0 = Math.max(y0, pb[1]);
+    const cx1 = Math.min(x1, pb[2]);
+    const cy1 = Math.min(y1, pb[3]);
+    if (cx1 - cx0 < 1 || cy1 - cy0 < 1) {
+      problems.push(`${entry.out}: crop [${entry.crop}] does not intersect the page box [${pb.map(Math.round)}]`);
+      continue;
+    }
+
     const pix = page.toPixmap(
       mupdf.Matrix.scale(scale, scale),
       mupdf.ColorSpace.DeviceRGB,
@@ -138,12 +170,18 @@ for (const entry of MANIFEST) {
       true,
     );
     // toPixmap renders the whole page; slice the crop out of it in device px.
+    // Offsets are relative to the page origin, which is not required to be 0,0.
+    const left = Math.round((cx0 - pb[0]) * scale);
+    const top = Math.round((cy0 - pb[1]) * scale);
     const cropped = await sharp(Buffer.from(pix.asPNG()))
       .extract({
-        left: Math.round(x0 * scale),
-        top: Math.round(y0 * scale),
-        width: Math.round((x1 - x0) * scale),
-        height: Math.round((y1 - y0) * scale),
+        left,
+        top,
+        // Clamp the span to the pixmap as well: rounding a fractional native
+        // scale can land a pixel past the edge even for an in-page rect, and
+        // extract rejects that just as hard as a genuinely off-page crop.
+        width: Math.min(Math.round((cx1 - cx0) * scale), pix.getWidth() - left),
+        height: Math.min(Math.round((cy1 - cy0) * scale), pix.getHeight() - top),
       })
       .ensureAlpha()
       .raw()
@@ -171,7 +209,8 @@ for (const entry of MANIFEST) {
     writeFileSync(join(OUT_DIR, entry.out), trimmed.data);
     written++;
     console.log(
-      `${entry.out.padEnd(32)} keyed ${entry.key}@${entry.threshold} -> ` +
+      `${entry.out.padEnd(32)} keyed ${entry.key}@${entry.threshold} @${scale.toFixed(3)}x` +
+        `${entry.scale ? ' (override)' : ' (native)'} -> ` +
         `${trimmed.info.width}x${trimmed.info.height}  ${(frac * 100).toFixed(1)}% opaque  ` +
         `<- ${entry.pdf} p${entry.page}`,
     );
