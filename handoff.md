@@ -223,16 +223,16 @@ grep -rn "getCollection" src/pages src/components || echo "PASS"
 
 ## 6. The data
 
-### Distribution — 79 products, verified
+### Distribution — 85 products, verified
 
-72 come from the brochure. The other 7 are industrial fans taken from the
-per-family datasheet PDFs (see §6a), which is why `fans` is 11 rather than the
-brochure's 4 and Electricals is 26 rather than 19. Safety is untouched.
+72 come from the brochure. The other 13 are fans and air coolers taken from the
+per-family datasheet PDFs (see §6a), which is why `fans` is 17 rather than the
+brochure's 4 and Electricals is 32 rather than 19. Safety is untouched.
 
 | Category | id | Count | Brochure source |
 |---|---|---|---|
 | Lighting | `lighting` | 10 | p4 (7) + p5 (3) |
-| Fans & Ventilation | `fans` | 11 | p10 (4) + datasheets (7) |
+| Fans & Ventilation | `fans` | 17 | p10 (4) + datasheets (13) |
 | Water Pumps & Controls | `pumps` | 3 | p11 |
 | Insect Killers | `insect` | 1 | p6 |
 | Cables | `cables` | 1 | p8 |
@@ -247,42 +247,112 @@ brochure's 4 and Electricals is 26 rather than 19. Safety is untouched.
 | Workwear | `workwear` | 9 | p23 (6) + p24 (3) |
 | **Spill Control** | `spill` | **0 — expanding** | — |
 
-Electricals: 25. Safety: 53.
+Electricals: 32. Safety: 53.
 
-> An earlier draft said **74**. That double-counted two "RESISTANCE SPECIFICATIONS" table headings as products. 72 was the correct brochure figure — if you see 74 anywhere, it is stale. The live total is now **78**; 72 still refers to the brochure subset.
+> An earlier draft said **74**. That double-counted two "RESISTANCE SPECIFICATIONS" table headings as products. 72 was the correct brochure figure — if you see 74 anywhere, it is stale. The live total is now **85**; 72 still refers to the brochure subset. `src/content.config.test.ts` asserts both the per-category counts and the total, so this table cannot drift silently.
 
 ### 6a. The datasheet PDFs — a second source family
 
 The client later supplied 20 per-product-family catalogues and datasheets. They
 are the source for two things:
 
-**Specs on 14 existing Electricals products.** The brochure gave most lighting
+**Specs on 15 existing Electricals products.** The brochure gave most lighting
 products a single "Material" line; the datasheets give full electrical tables.
 Electricals went from ~24 spec rows to 169. Each of those products' `source`
 now names its datasheet rather than the brochure, because that is where the
 values can actually be checked.
 
-**Seven new products**, all in the existing `fans` category — three FA Series
+**Thirteen new products**, all in the existing `fans` category — three FA Series
 exhaust-fan bodies (standard, grill, shutter), an FA Series stand fan and wall
-fan, the MFS Series mist fan, and the SHT Series portable blower. No new
-categories were created.
+fan, the MFS Series mist fan, the SHT Series portable blower, three portable air
+coolers (AY-YD2536, AY-YD2512, AY-YD2518) and three consumer fans (SPTSF-16
+stand fan, AF-40W and FW-40H wall fans). No new categories were created.
+
+28 products in total now carry a datasheet `source` — the 15 re-pointed
+Electricals plus the 13 new ones.
 
 Model tables were collapsed into the site's existing `A | B | C` convention
 rather than split into one product per SKU. The catalogue models product
 families; exploding 12 exhaust-fan model codes into 12 products would
 restructure the site rather than describe it.
 
+#### The condensation rule — load-bearing, do not relax it
+
+> **Condensation must be lossless.** The collapse may only ever be a *union* of
+> the printed values — never a subset, and never a simplification that widens a
+> claim. If a value applies to some models and not others, say which, e.g.
+> `220V/50Hz (SHT-50, SHT-60)`. If a row cannot be condensed without breaking
+> either test, keep it long.
+
+Two tests, applied to every row containing a `|`:
+
+1. **Union, not sample.** Every distinct printed value appears in the row.
+2. **No widened claim.** If a value applies to only some models, the row names
+   them. This fails in two ways: the row reads as "available in either" when no
+   single unit offers both (the exhaust fans' 220V/380V), or the row's entry
+   count does not line up with the `Models` row, so a buyer's left-to-right
+   reading produces a *wrong* model-to-value pairing (the pumps' `Max. Current`).
+
+**This rule was established mid-branch, after four defects had already shipped
+into the data**, and a fifth and sixth were then found on the CAT6 cable. It is
+not a style preference. These failures are easy to miss because the result still
+looks like real data — nothing is fabricated in the sense of a made-up number,
+but the row asserts something the sheet does not grant. On electrical and safety
+equipment that is a hazard, not a cosmetic flaw: a bare `100 ± 15 Ω` on a cable
+whose sheet prints `100 ± 20` above 300 MHz is a tolerance the supplier never
+warranted.
+
+A full audit of all 28 datasheet-sourced products against re-rendered source
+pages was then run; it is recorded below. **Any future spec enrichment must be
+audited the same way before it lands.**
+
+#### The audit — every `|` row on all 28 datasheet products
+
+22 rows on 9 products were corrected. Three classes of failure were found:
+
+- **Subset, not union** — CAT6 `Application` carried 3 of the 5 printed entries
+  (`100VG-AnyLAN` and `Noisy Environments` were missing).
+- **Unqualified band or model** — CAT6 `Impedance` claimed `100 ± 15 Ω` across
+  the whole sweep; the sheet prints `100 ± 20` from 300–550 MHz. The exhaust
+  fans' `Voltage` read as "either", but FAD models are 220V and FAS models 380V
+  and no single unit offers both. Slim panels' `Shape`/`Installation` implied a
+  30W square recessed panel the sheet does not list.
+- **Broken positional correspondence** — the pumps' `Max. Current` listed three
+  values against four models where the *first* model has no printed current, so
+  every naive pairing was shifted by one and therefore wrong. Exhaust `Size`
+  (8 values vs 12 models), mist fan `Water Tank Capacity` (2 vs 4) and blower
+  `Power` (6 vs 8) were qualified for the same reason.
+
+One row was not a condensation defect at all but a plain transcription error,
+found by the same pass: **the third T8 tube is printed `35W`, and the record
+said `30W`.** Corrected.
+
+Rows deliberately left alone, because the naive pairing is merely *truncated*
+rather than wrong: `led-bulbs` `Series` (`A55 | A60` against five wattages —
+and see the A55/A60 conflict below), and the solar flood light's
+`Installation` (`Wall mount | Pole mount` is printed as a whole-range bullet,
+not a per-model column).
+
 **Conflicts left unreconciled, deliberately:**
 
-- The flood light sheet prints power as `50W/150W/300W/400W/1000W/1000W` — six slots, 1000W twice. The five distinct values are recorded. One slot is wrong and only the client can say which.
-- Its photo is captioned `50W IP68`; its spec table says IP65.
+- The flood light sheet prints power as `50W/150W/300W/400W/1000W/1000W` — six slots, 1000W twice. The five distinct values are recorded. One slot is wrong and only the client can say which. **`LED Qty` has the same shape** (`72/252/468/648/1000/1000pcs`), and **`Body Size` prints six *distinct* values** — the two 1000W slots have different bodies (`810*320*220` and `670*450*100`), which is good evidence the two slots are genuinely two different products rather than a duplicated line.
+- Its photo is captioned `50W IP66` — **not IP68, as an earlier draft of this document said** — while its spec table says IP65. All five fixture photos on the page carry `IP66`. The table/photo conflict is real; the digit was wrong here and is now corrected.
 - The waterproof fitting was "ABS + PS" in the brochure and "PC diffuser, ABS grey housing, PC clips" on the datasheet. The datasheet is more specific and won; `source` records that.
-- The highbay sheet gives three LED quantities (168/224/322pcs) for four wattages.
-- **Air volume units disagree between sheets.** The exhaust tables read 780–7200 m3/min while the stand and wall tables read 130–302 m3/min for physically larger fans. One set is almost certainly m3/h. Both are recorded exactly as printed — this needs the client, not a guess.
+- The highbay sheet gives three LED quantities (168/224/322pcs) for four wattages. **`Gross Weight`, `Body Size` and `Packing Size` are all three-for-four in the same way**, so it is one consistent omission across the sheet, not four separate typos.
+- **Air volume units disagree between sheets.** The exhaust tables read 780–7200 m3/min while the stand and wall tables read 130–302 m3/min for physically larger fans. One set is almost certainly m3/h. Both are recorded exactly as printed — this needs the client, not a guess. The SHT blower table reads 25–300 m3/min for 8"–24" units, which corroborates that the *exhaust* figures are the implausible ones.
+- **Air cooler airflow is quoted in m3/h while every fan sheet quotes m3/min.** The AY-YD2536 reads 3600 m3/h; the FA and MFS tables read m3/min. Both are recorded as printed. This compounds the existing exhaust-versus-stand-fan unit conflict — one clarification from the client should settle both.
+- **The 2.0 HP pump has three different model codes across one document.** The spec page prints **`MP-203`**, the same page's invisible PDF text layer says `MP-208`, and the performance charts call it `MP-203` on one page and `MP-205` on the next. The record now carries `MP-203`, the value actually printed on the spec page and corroborated by one of the two charts — consistent with the EN 388 precedent of rendering the literal printed value. The catalogue previously said `MP-208`, which is the one candidate no *visible* part of the document supports. The client must confirm the real code.
+- **The exhaust fan sheet contradicts itself on FAS40-4's air volume**: p3 prints `2800 m3/min`, p4 prints `2880` for the same model. The recorded range (780–7200) spans both, so no site value depends on the answer.
+- **The T8 sheet's `LED BATTEN FITTINGS` table is a separate product family** (ELETUB03020/03025) that no catalogue product maps to. Do not mistake its rows for tube data if the page is re-read.
+- The bulb sheet is titled `A55&A60 BULB`, but its 15W model (ELELBL00215/00216) has a `65*118mm` envelope — neither A55 nor A60. The `Series` row is left as the printed `A55 | A60` rather than being mapped per-wattage, because the sheet prints no per-model series column.
+- The waterproof fitting's 2×9W model (ELETUB04009) has a **text block and a dimensional drawing that disagree**: the text reads `665x120.5x88.5mm`, its own drawing reads `1265mm` long and `77.5mm` wide. The site follows the text. The true 2×9W envelope is unresolved.
+- The insect killer's spec table is on **page 2** of its PDF, not page 1; `source.page` records 1 because page 1 is where the application list and product imagery are. Both pages were read and every value verified.
 
-Still unread at handover: the portable air coolers, insect killer, and CAT6
-electrical-characteristics tables. Their pages are already rendered under the
-extraction tooling's output; nothing blocks picking them up.
+Deliberately **not** integrated, and not blocking: the pump performance curves
+(pages 5–9 of the pump TDS) and the CAT6 frequency sweep. Both are dense
+per-frequency and per-head tables that belong in a downloadable datasheet rather
+than a spec list; the CAT6 record points at them with a
+`Full Electrical Characteristics … available on request` row.
 
 ### The two empty categories
 
@@ -484,6 +554,8 @@ None block development — placeholders are in place and marked.
 4. **Domain** — `astro.config.mjs` has `site: 'https://spartan.example'`. Sitemap and canonical URLs depend on it.
 5. **Confirm the eight "Industries We Serve"** — currently inferred from the product mix, not stated in the brochure. Marked with an HTML comment where used.
 6. **Certifications** — none are claimed anywhere on the site until the client supplies them.
+7. **Product photography for the three air coolers and three consumer fans.** These six ship with `ds-photo-pending.png`: their only source is a flattened page raster with no separable product image. `src/content.config.test.ts` asserts exactly which six, so the list cannot drift. README launch checklist item 7.
+8. **The datasheet conflicts in §6a** — the duplicated 1000W flood-light slot, the air-volume units (m3/min vs m3/h, now spanning the fan *and* cooler sheets), the 2.0 HP pump's `MP-203`/`MP-205`/`MP-208` model code, and the highbay's three-for-four columns. All are recorded exactly as printed; none is guessable from the documents.
 
 Also worth raising: **higher-resolution product photography** would lift the design considerably (see the resolution constraint in §6), and the **brochure PDF needs compressing** before the "Download brochure" buttons can link to it — the source is ~163MB.
 

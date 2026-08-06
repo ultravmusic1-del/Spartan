@@ -248,7 +248,7 @@ CLS is 0.000 and TBT 0 ms on every page. Two scores are worth understanding rath
 
 ## Launch checklist
 
-Six items need the client before this site can go live. Nothing here blocks development — placeholders are in place and marked in the code.
+Seven items need the client before this site can go live. Nothing here blocks development — placeholders are in place and marked in the code.
 
 - [ ] **1. Real contact details** → `src/data/site.json`
       Address, phone and email are placeholders (`+971 00 000 0000`, `sales@spartan.example`, `Address line, City, Country`). They appear in the header utility bar, footer, contact page, trust band and the enquiry form's fallback address. The placeholder address is deliberately kept out of `organizationJsonLd` — publishing a fake address as structured data is worse than publishing none.
@@ -270,6 +270,9 @@ Six items need the client before this site can go live. Nothing here blocks deve
 
 - [ ] **6. Higher-resolution product photography, and a compressed brochure PDF**
       Native product images are 100–440px wide. Sharp at the sizes the design uses (~180px tiles, ~400px spotlight) but hard-capped there — this is what holds mobile Best Practices at 96 on product pages. The source brochure is **~163MB** and must be compressed before the "Download brochure" buttons can link to it; at that size it is not a download anyone will complete.
+
+- [ ] **7. Product photography for the coolers and consumer fans** → `src/assets/products/`
+      Six products ship with `ds-photo-pending.png` because their only source is a flattened page raster with no separable product image (see `tools/README.md`). They need product-only shots on a plain background. `src/content.config.test.ts` asserts exactly which products are affected, so the list cannot drift.
 
 Also unresolved: the **deployment target** is assumed to be Vercel (the adapter is installed and configured) but has not been confirmed.
 
