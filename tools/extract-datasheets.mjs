@@ -29,7 +29,6 @@ import { join } from 'node:path';
 import * as mupdf from 'mupdf';
 import sharp from 'sharp';
 import { placedRect, renderImagesOnly } from './lib/pdf.mjs';
-import { keyBackground, opaqueFraction as opaqueOf } from './lib/keying.mjs';
 
 const SRC_DIR = process.env.DATASHEET_DIR ?? 'C:/Users/Vivaan/Downloads';
 const OUT_DIR = 'src/assets/products';
@@ -41,12 +40,9 @@ const OUT_DIR = 'src/assets/products';
  * across re-runs and readable, unlike a bare draw-order index. `out` is the
  * filename written into src/assets/products/ and referenced from products.json.
  *
- * `crop` is the second entry kind, for the sheets that are one flattened raster
- * per page: there is no embedded image to pick, so the entry gives a rect in PDF
- * points plus `key` ('saturation' | 'luminance') and `threshold`, and the
- * background is computed by lib/keying.mjs instead of clipped by the PDF. The
- * render scale is derived from that page's own raster, so a crop entry is
- * pinned to the source like every other entry; `scale` overrides it.
+ * Every sheet listed here has an embedded product photo to pick. Two of the
+ * datasheets do not, and no entry can be written for them: see the "Two sheets
+ * have no extractable photography" section of tools/README.md.
  */
 const MANIFEST = [
   // --- Industrial exhaust fans (FA series) -------------------------------
@@ -77,10 +73,6 @@ const ONLY = onlyIx >= 0 ? args[onlyIx + 1] : null;
 const LOST_CLIP_OPAQUE = 0.995;
 /** A cutout at or below this is blank: the render produced nothing. */
 const EMPTY_RENDER_OPAQUE = 0.005;
-/** A keyed crop at or above this kept nearly everything: the key did not fire. */
-const KEY_MISSED_OPAQUE = 0.95;
-/** A keyed crop at or below this kept almost nothing: the key ate the subject. */
-const KEY_OVERREACHED_OPAQUE = 0.02;
 
 mkdirSync(OUT_DIR, { recursive: true });
 
@@ -95,20 +87,6 @@ function imagesOnPage(page) {
   page.run(dev, mupdf.Matrix.identity);
   dev.close();
   return found;
-}
-
-/**
- * The scale that reproduces a flattened page's own raster resolution.
- *
- * These sheets are one full-page image; rendering at an arbitrary scale either
- * throws away supplier detail or invents it. Largest image on the page wins,
- * which is that raster. Falls back to 3 for a page with no image at all.
- */
-function nativeScale(page) {
-  const pb = page.getBounds();
-  const pageW = pb[2] - pb[0];
-  const widest = imagesOnPage(page).reduce((a, b) => (b.w > (a?.w ?? 0) ? b : a), null);
-  return widest && pageW > 0 ? widest.w / pageW : 3;
 }
 
 /** Fraction of pixels that are fully opaque — a lost clip pushes this to ~1. */
@@ -139,83 +117,6 @@ const problems = [];
 
 for (const entry of MANIFEST) {
   if (ONLY && !entry.out.includes(ONLY)) continue;
-
-  // Flattened-page entries carry an explicit crop rect in PDF points plus a
-  // keying mode; there is no embedded image to pick out of the page. The scale
-  // is derived from the page's own raster unless the entry overrides it.
-  if (entry.crop) {
-    const doc = mupdf.Document.openDocument(readFileSync(join(SRC_DIR, entry.pdf)), 'application/pdf');
-    const page = doc.loadPage(entry.page - 1);
-    const [x0, y0, x1, y1] = entry.crop;
-    const scale = entry.scale ?? nativeScale(page);
-
-    // Clamp to the page for the same reason the pick branch does: these sheets
-    // place art running off the edge, and sharp's extract throws on an
-    // out-of-bounds region — which, inside this top-level loop, is an unhandled
-    // rejection that kills the run and silently skips every later entry.
-    const pb = page.getBounds();
-    const cx0 = Math.max(x0, pb[0]);
-    const cy0 = Math.max(y0, pb[1]);
-    const cx1 = Math.min(x1, pb[2]);
-    const cy1 = Math.min(y1, pb[3]);
-    if (cx1 - cx0 < 1 || cy1 - cy0 < 1) {
-      problems.push(`${entry.out}: crop [${entry.crop}] does not intersect the page box [${pb.map(Math.round)}]`);
-      continue;
-    }
-
-    const pix = page.toPixmap(
-      mupdf.Matrix.scale(scale, scale),
-      mupdf.ColorSpace.DeviceRGB,
-      false,
-      true,
-    );
-    // toPixmap renders the whole page; slice the crop out of it in device px.
-    // Offsets are relative to the page origin, which is not required to be 0,0.
-    const left = Math.round((cx0 - pb[0]) * scale);
-    const top = Math.round((cy0 - pb[1]) * scale);
-    const cropped = await sharp(Buffer.from(pix.asPNG()))
-      .extract({
-        left,
-        top,
-        // Clamp the span to the pixmap as well: rounding a fractional native
-        // scale can land a pixel past the edge even for an in-page rect, and
-        // extract rejects that just as hard as a genuinely off-page crop.
-        width: Math.min(Math.round((cx1 - cx0) * scale), pix.getWidth() - left),
-        height: Math.min(Math.round((cy1 - cy0) * scale), pix.getHeight() - top),
-      })
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
-
-    const keyed = keyBackground(cropped.data, cropped.info.width, cropped.info.height, {
-      mode: entry.key,
-      threshold: entry.threshold,
-    });
-    const frac = opaqueOf(keyed, cropped.info.width, cropped.info.height);
-
-    // Too opaque means the key did nothing; too sparse means it ate the subject.
-    if (frac > KEY_MISSED_OPAQUE || frac < KEY_OVERREACHED_OPAQUE) {
-      problems.push(`${entry.out}: ${(frac * 100).toFixed(1)}% opaque after keying — adjust key/threshold`);
-      continue;
-    }
-
-    const trimmed = await sharp(keyed, {
-      raw: { width: cropped.info.width, height: cropped.info.height, channels: 4 },
-    })
-      .trim({ threshold: 1 })
-      .png()
-      .toBuffer({ resolveWithObject: true });
-
-    writeFileSync(join(OUT_DIR, entry.out), trimmed.data);
-    written++;
-    console.log(
-      `${entry.out.padEnd(32)} keyed ${entry.key}@${entry.threshold} @${scale.toFixed(3)}x` +
-        `${entry.scale ? ' (override)' : ' (native)'} -> ` +
-        `${trimmed.info.width}x${trimmed.info.height}  ${(frac * 100).toFixed(1)}% opaque  ` +
-        `<- ${entry.pdf} p${entry.page}`,
-    );
-    continue;
-  }
 
   const doc = mupdf.Document.openDocument(readFileSync(join(SRC_DIR, entry.pdf)), 'application/pdf');
   const page = doc.loadPage(entry.page - 1);

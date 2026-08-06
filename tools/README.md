@@ -43,32 +43,22 @@ image by native pixel dimensions rather than draw order, so a re-run cannot
 silently grab a different picture; where several images share a size, `nth`
 counts left-to-right across the page, not in draw order.
 
-### Flattened pages
+### Two sheets have no extractable photography
 
-Two of the datasheets — `SPARTAN - PORTABLE AIR COOLERS.pdf` and
-`Spartan Fans Product Catalog.pdf` — are **a single flattened raster per page**
-(one 2481x3509 image covering the whole layout). There is no clip stack to
-exploit, so the background cannot be knocked out; it has to be computed.
+`SPARTAN - PORTABLE AIR COOLERS.pdf` and `Spartan Fans Product Catalog.pdf` are a
+single flattened raster per page, so there is no clip stack to knock a background
+out with. A keying path was built for them and removed again: measured against the
+real pages, neither is separable.
 
-Those entries use the second manifest kind, `crop`: a rect in PDF points plus a
-`key` mode and a `threshold`, handed to `lib/keying.mjs`. Two things about it:
+The cooler pages are two backgrounds with a hard boundary — a pale wash above, a
+saturated blue band below — and the product straddles it, so subject and background
+overlap in both saturation and luminance. The consumer fan is a white fan shot
+against a brown living-room interior, and its wire guard is see-through, so the
+room is interleaved with the subject at pixel scale.
 
-- **The key mode is per image.** The air coolers are white and grey products on
-  a blue gradient, so keying on brightness erases the product and keying on
-  saturation does not. The consumer fans are the mirror case, dark products on
-  near-white. There is no single mode that works for both.
-- **The mask is flood-filled from the border, not applied globally.** A global
-  threshold punches a hole through every background-coloured region *inside* the
-  subject — a white panel on a white-keyed product. Only background-like pixels
-  reachable from the image edge count as background.
-
-A `crop` entry renders at **the page's own native raster resolution** — derived
-from the widest image on the page divided by the page width, so nothing is
-upscaled or needlessly downsampled — unless the entry sets `scale` to override
-it. Crop rects are clamped to the page box before the slice is taken; a rect
-that misses the page entirely is reported as a problem rather than throwing.
-Keyed cutouts are refused if they come out nearly fully opaque (the key never
-fired) or nearly empty (the key ate the subject).
+Those products ship with `ds-photo-pending.png` until the client supplies
+product-only photography. Do not reintroduce a keying path for these sheets — the
+constraint is the source material, not the algorithm.
 
 ## Two things that will silently break if changed
 
