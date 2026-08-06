@@ -3098,7 +3098,7 @@
       },
       {
         "label": "Voltage",
-        "value": "220V/50/60Hz | 110V/50/60Hz | 380V/50Hz"
+        "value": "220V/50/60Hz (SHT-20 to 45) | 110V/50/60Hz (SHT-20 to 40) | 110V/60Hz (SHT-45, SHT-50) | 220V/50Hz (SHT-50, SHT-60) | 380V/50Hz (SHT-60)"
       },
       {
         "label": "Revolution",
@@ -3139,6 +3139,10 @@
       {
         "label": null,
         "value": "Delivers high pressure air over long distance with flexible duct"
+      },
+      {
+        "label": null,
+        "value": "Optimized blade design with a matched air inlet for large air volume at high pressure"
       },
       {
         "label": null,
