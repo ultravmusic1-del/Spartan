@@ -5,7 +5,7 @@ A catalogue and lead-generation site for **Spartan**, an industrial brand with t
 - **Spartan Electricals** — lighting, fans and ventilation, water pumps, cables, insect killers
 - **Spartan Safety** — head, eye, hearing, hand, foot and body protection, fall arrest, workwear
 
-**72 products across 15 categories.** Built with Astro 7, TypeScript strict, Tailwind CSS 4 and Preact islands; deployed to Vercel.
+**78 products across 15 categories** — 72 from the client's product brochure, plus 6 industrial fans from the per-family datasheet PDFs. Built with Astro 7, TypeScript strict, Tailwind CSS 4 and Preact islands; deployed to Vercel.
 
 ## This is a catalogue, not a shop
 
@@ -169,6 +169,23 @@ Note that `design/direction-b-forge.html` — the approved design and the source
 
 `@font-face` **must** declare `font-weight: 100 900`. One file covers the whole range; declaring discrete weights against the same file collapses every weight to one. Verified by measuring rendered text widths across the axis (772/781/810/887px at weights 100/400/700/900) — a visual check alone would not have caught it.
 
+### The hero artworks — client assets, not extractions
+
+Two supplied files in `src/assets/hero/`, each carrying the logo, the Arabic wordmark and the headline as pixels:
+
+| Asset | Size | Composition |
+|---|---|---|
+| `hero-range-desktop.png` | 1672×941 | copy in the left third, cluster beside it |
+| `hero-range-mobile.png` | 941×1672 | copy stacked above the cluster |
+
+They are **two compositions, not two crops** — neither can be derived from the other. Do not run them through `tools/`; nothing in them is brochure-extracted, and no product record sources data from them.
+
+Because the artwork carries the headline, `Hero.astro` renders none. The `<h1>` is still there, `sr-only` — **do not delete it.** It is the page's only h1 and the text alternative for a headline that exists only as an image.
+
+The file and the layout are chosen by the *same* media condition, `(max-width: 767px), (max-aspect-ratio: 3/4)` — orientation, not width, because an iPad held upright is a portrait canvas whatever its width. That string appears twice (the `PORTRAIT` constant and the `@media` rule) because Astro's scoped styles cannot interpolate frontmatter. **Change one, change the other**, or the page renders portrait artwork under landscape button positioning.
+
+Full detail, including where the buttons sit and why, is in `handoff.md` §7.
+
 ---
 
 ## The extraction tooling — two behaviours that fail silently
@@ -223,7 +240,9 @@ Measured against the built output via `npm run preview`, Lighthouse 12.8.2, head
 CLS is 0.000 and TBT 0 ms on every page. Two scores are worth understanding rather than chasing:
 
 - **Best Practices 96 on the product page (mobile only)** is `image-size-responsive`. The spotlight image is displayed at 257×308 and its source is *natively* 257×308; Lighthouse wants 386×462 for a DPR-2 screen. **This cannot be fixed here.** Product photography extracted from the brochure is 100–440px wide and must never be upscaled. It resolves when the client supplies higher-resolution photography — the components already take `srcset`, so it drops in without markup changes. Desktop scores 100 because DPR is 1.
-- **Home mobile Performance sits at 95–97** across repeat runs. The LCP element is a text paragraph (`.hero__lede`) whose time is ~83% render delay under the mobile throttle, behind 41 KB of render-blocking CSS. Two production factors are *not* reflected here: the preview server sends no `Content-Encoding` and no `Cache-Control`, so Lighthouse's `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) findings both disappear on Vercel, which compresses and sets immutable caching automatically. If it ever needs more headroom, `build.inlineStylesheets: 'always'` is the lever — at the cost of inlining ~41 KB into all 96 pages and losing cross-page CSS caching. It was not taken.
+- **The `/` row is stale and has not been re-run.** It was measured against a hero that has since been replaced twice, and the sentence explaining it named `.hero__lede` — an element deleted back in `87e7471`. Treat the home figure as history until someone re-runs it; the two catalogue rows are unaffected. Locally re-measured on the current build (element identification and CLS only — no network throttling, so not a score): LCP is the hero image, 44 KB AVIF at 1440 and 46 KB at 390, CLS 0.000 on both.
+
+  Two production factors are *not* reflected in any of these numbers: the preview server sends no `Content-Encoding` and no `Cache-Control`, so Lighthouse's `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) findings both disappear on Vercel, which compresses and sets immutable caching automatically. If the home page ever needs more headroom, `build.inlineStylesheets: 'always'` is the lever — at the cost of inlining ~41 KB into all 96 pages and losing cross-page CSS caching. It was not taken.
 
 ---
 

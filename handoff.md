@@ -50,7 +50,7 @@ This is safety equipment. A fabricated protection rating is a genuine hazard, no
 | `design/previews/*.png` | Full-page renders of both directions. |
 | `design/assets/` | Reference copies of all extracted assets. Used for byte-comparison verification — **do not edit**. |
 | `src/assets/products/` | 72 transparent product PNGs (the live set). |
-| `src/assets/hero/` | 5 photographs, text overlays removed. `cover.jpg` was deleted — blank white once the overlay was stripped. |
+| `src/assets/hero/` | 5 brochure photographs (division landings, About), text overlays removed — `cover.jpg` was deleted, blank white once the overlay was stripped — plus the two client hero artworks, `hero-range-desktop.png` and `hero-range-mobile.png`. The artworks are supplied brand assets, not extractions: **do not run them through `tools/`.** |
 | `src/assets/brand/` | Both logo lockups, SVG + PNG. |
 | `src/data/` | `divisions.json` (2), `categories.json` (15), `products.json` (72), `site.json`, `products.raw.json` (extractor output). |
 | `tools/` | PDF extraction scripts. Run only when the brochure is revised. |
@@ -223,12 +223,16 @@ grep -rn "getCollection" src/pages src/components || echo "PASS"
 
 ## 6. The data
 
-### Distribution — 72 products, verified
+### Distribution — 78 products, verified
+
+72 come from the brochure. The other 6 are industrial fans taken from the
+per-family datasheet PDFs (see §6a), which is why `fans` is 10 rather than the
+brochure's 4 and Electricals is 25 rather than 19. Safety is untouched.
 
 | Category | id | Count | Brochure source |
 |---|---|---|---|
 | Lighting | `lighting` | 10 | p4 (7) + p5 (3) |
-| Fans & Ventilation | `fans` | 4 | p10 |
+| Fans & Ventilation | `fans` | 10 | p10 (4) + datasheets (6) |
 | Water Pumps & Controls | `pumps` | 3 | p11 |
 | Insect Killers | `insect` | 1 | p6 |
 | Cables | `cables` | 1 | p8 |
@@ -243,9 +247,42 @@ grep -rn "getCollection" src/pages src/components || echo "PASS"
 | Workwear | `workwear` | 9 | p23 (6) + p24 (3) |
 | **Spill Control** | `spill` | **0 — expanding** | — |
 
-Electricals: 19. Safety: 53.
+Electricals: 25. Safety: 53.
 
-> An earlier draft said **74**. That double-counted two "RESISTANCE SPECIFICATIONS" table headings as products. 72 is correct — if you see 74 anywhere, it is stale.
+> An earlier draft said **74**. That double-counted two "RESISTANCE SPECIFICATIONS" table headings as products. 72 was the correct brochure figure — if you see 74 anywhere, it is stale. The live total is now **78**; 72 still refers to the brochure subset.
+
+### 6a. The datasheet PDFs — a second source family
+
+The client later supplied 20 per-product-family catalogues and datasheets. They
+are the source for two things:
+
+**Specs on 14 existing Electricals products.** The brochure gave most lighting
+products a single "Material" line; the datasheets give full electrical tables.
+Electricals went from ~24 spec rows to 169. Each of those products' `source`
+now names its datasheet rather than the brochure, because that is where the
+values can actually be checked.
+
+**Six new products**, all in the existing `fans` category — three FA Series
+exhaust-fan bodies (standard, grill, shutter), an FA Series stand fan and wall
+fan, and the MFS Series mist fan. No new categories were created.
+
+Model tables were collapsed into the site's existing `A | B | C` convention
+rather than split into one product per SKU. The catalogue models product
+families; exploding 12 exhaust-fan model codes into 12 products would
+restructure the site rather than describe it.
+
+**Conflicts left unreconciled, deliberately:**
+
+- The flood light sheet prints power as `50W/150W/300W/400W/1000W/1000W` — six slots, 1000W twice. The five distinct values are recorded. One slot is wrong and only the client can say which.
+- Its photo is captioned `50W IP68`; its spec table says IP65.
+- The waterproof fitting was "ABS + PS" in the brochure and "PC diffuser, ABS grey housing, PC clips" on the datasheet. The datasheet is more specific and won; `source` records that.
+- The highbay sheet gives three LED quantities (168/224/322pcs) for four wattages.
+- **Air volume units disagree between sheets.** The exhaust tables read 780–7200 m3/min while the stand and wall tables read 130–302 m3/min for physically larger fans. One set is almost certainly m3/h. Both are recorded exactly as printed — this needs the client, not a guess.
+
+Still unread at handover: the portable air coolers, insect killer, CAT6
+electrical-characteristics tables, and the portable blower (SHT series). Their
+pages are already rendered under the extraction tooling's output; nothing
+blocks picking them up.
 
 ### The two empty categories
 
@@ -336,19 +373,33 @@ The SSR bundle is **not** left in `dist/server/` — the adapter moves it to `.v
 
 Current output: 96 `index.html` + `404.html` — 72 product pages, 15 category pages, the catalogue index, and 8 top-level pages, plus `sitemap-index.xml`.
 
-### The hero is a scroll-scrubbed film
+### The hero is two client artworks, art-directed
 
-`src/components/sections/Hero.astro`. The section is a tall scroll track (240svh desktop, 220svh mobile) with a sticky one-viewport stage; scroll progress drives `video.currentTime`. Assets are in `public/video/` — H.264 only, **4-frame GOP**, ~1.46 MB each, one downloaded per device via `<source media>`.
+`src/components/sections/Hero.astro`. Static images. The scroll-scrubbed video that used to live here is gone — along with `public/video/` and the two poster JPEGs — replaced by supplied brand artwork that already carries the logo, the Arabic wordmark and the headline.
+
+Two files, because they are two compositions rather than two crops of one:
+
+| Asset | Size | Composition |
+|---|---|---|
+| `src/assets/hero/hero-range-desktop.png` | 1672×941 (1.777) | copy in the left third, product cluster beside it |
+| `src/assets/hero/hero-range-mobile.png` | 941×1672 (0.563) | copy stacked above the cluster |
+
+**The component renders no visible headline.** The artwork has it. The `<h1>` is still there and still says "Home and Industrial Solutions" — it is `sr-only`. Do not delete it: it is the page's only h1 and the text alternative for a headline that now exists solely as pixels. The `<img>` carries a descriptive alt for the product range, which the h1 does not duplicate.
 
 Things that will look like bugs but are deliberate:
 
-- **The dense keyframes are the point.** Scrubbing seeks constantly and every seek to a non-keyframe makes the decoder walk back. Re-encoding with a normal long GOP will halve the file and make the scroll judder. Measured: GOP 1 = 2965 KB, GOP 4 = 1459 KB, GOP 8 = 1002 KB.
-- **No WebM, on purpose.** VP9 at a 4-frame GOP is *larger* than H.264 (1691 vs 1459 KB) — dense keyframes remove the long-GOP prediction VP9 wins on.
-- **The copy is anchored from the top, not centred.** Sampling the left half of every frame for pixels above 190 luma, the bright mass never rises above y=43%. Centred, the accent line sat inside it at 1.56:1. Do not re-centre it.
-- **The poster is a `<picture>`, not the `poster` attribute** — that attribute takes one URL and the two clips need different stills.
-- **No pause control.** The motion is entirely scroll-driven, so there is no auto-playing content and WCAG 2.2.2 does not apply. Reintroducing autoplay would require one.
+- **The switch is orientation, not width.** `const PORTRAIT = '(max-width: 767px), (max-aspect-ratio: 3/4)'` — narrow *or* taller than 4:3. An iPad held upright is a portrait canvas whatever its width; on a pure width breakpoint it got the landscape cut as a stubby 432px band in a 1024px-tall window.
+- **That condition is written twice and must stay identical.** It governs `<source media>` (which file is fetched) *and* the `@media` block (where the buttons go). Astro's scoped `<style>` cannot interpolate a frontmatter value, so the constant drives the markup and the stylesheet repeats it verbatim. If they ever disagree you get portrait artwork under landscape button positioning.
+- **`.hero__frame` shrink-wraps the picture; the buttons are positioned against *it*, not the viewport.** In landscape they sit at `left: 5.2%; top: 72%` — percentages of the artwork, valid only because the artwork is never cropped. The frame caps itself at `min(100%, 100svh × aspect)`, so on a short or ultra-wide window it narrows instead of overflowing. Capping the image inside a full-width box would letterbox it and slide the artwork out from under the buttons.
+- **`background: #000`, not `--color-black`.** Wherever the frame is capped, the section shows beside the artwork and butts against its bed, which is pure black. Against `--color-black` (#08080a) that join measures an 8/255 step — which on a large flat dark field reads as a rectangle drawn around the picture, not as a gradient. Measured on a 390px phone: bars rgb(8,8,10) against artwork rgb(1,1,1). Matching the bed drops it to 1/255.
+- **The portrait artwork is capped in height on purpose.** At full width it stands 693px on a 390px phone, which with the 128px header put both buttons past the fold — "Browse catalogue" was not on screen at first paint. The `contain` letterbox this creates is invisible for the reason above.
+- **No pause control, no reduced-motion branch.** Nothing moves.
 
-Worst-case contrast, brightest pixel under each element sampled every 0.5s: desktop white 17.4 / red 3.20 / eyebrow 5.05 / pill 11.8; mobile 15.6 / 3.28 / 5.02 / 18.3. Re-measure if the copy moves — the margins on the red line are thin by design, because it sits as low as it can while staying clear of the light.
+Where the buttons sit was measured, not guessed. Peak luminance in the landscape artwork's left 42%, in 40 horizontal bands (0–255): y 22–58% is 108–169 (the copy block), y 65% is 47 (the red rule), y 70–95% is 32–74 (empty floor). Hence y 72%. Behind the pill — the only control without an opaque fill — the brightest pixel is rgb(217,3,17), giving its white label 5.29:1. **Re-measure if the artwork is ever re-cut.**
+
+> **Resolved:** the first portrait cut printed the floodlight as **IP65** against the landscape cut's **IP66**. The client reissued it and both now read IP66. Neither file is catalogue data — no product record sources anything from them — but on a site whose whole claim is that specifications are not invented, the same product must not advertise two ratings.
+>
+> One thing carried over from that fix: in the reissued portrait the label has a **retouching artifact** — a ~4px vertical tick between the digits where the `5` was painted into a `6`, and a slightly malformed final glyph. At the size the artwork is actually displayed this is roughly one device pixel and resolves visually as a clean "IP66" (checked against the real phone render, not just the master). It is invisible in situ and not worth blocking on. It would show if this artwork is ever reused at a larger scale — print, social, or as a desktop cut — so ask for a clean re-render before doing that.
 
 ### Two test/tooling traps
 
@@ -387,11 +438,17 @@ Lighthouse 12.8.2 against `npm run preview`, headless Chrome, Lighthouse's own m
 | `/products/grip-guard-gp5` | mobile | 98 | 100 | **96** | 100 |
 | all three | desktop | 100 | 100 | 100 | 100 |
 
+> **The `/` row predates the hero rewrite and has not been re-run.** It was measured against a hero that no longer exists — first a photograph, then a ~1.46 MB scroll-scrubbed video, now a 44 KB still. The two catalogue rows are unaffected; the home figure should be re-measured before it is quoted anywhere. What *has* been re-measured locally (no network throttling, so element identification and CLS only, not scores): LCP is now the hero image itself — 44 KB AVIF at 1440, 46 KB portrait AVIF at 390 under a 4× CPU throttle — and CLS is 0.000 on both.
+
 CLS 0.000 and TBT 0 ms everywhere. Two numbers are worth understanding:
 
 **Best Practices 96 on the product page is `image-size-responsive`, and it is not fixable here.** The spotlight image is displayed at 257×308 and its source is natively 257×308; Lighthouse wants 386×462 for a DPR-2 screen. This is exactly the resolution constraint in §6 — the brochure-extracted photography is 100–440px and must never be upscaled. Desktop scores 100 because DPR is 1. It resolves when the client supplies real photography, with no markup change (`srcset` is already in place). **Do not "fix" this by adding `widths` that upscale.**
 
-**Home mobile Performance is 95–97 across five runs**, the lowest headroom on the site. LCP is a *text* element (`.hero__lede`), ~83% render delay under the 4× CPU throttle, behind 41 KB of render-blocking CSS. Two production factors are absent from the measurement: the preview server sends no `Content-Encoding` and no `Cache-Control`, so `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) both vanish on Vercel. The remaining lever is `build.inlineStylesheets: 'always'`, which was **not** taken — it inlines ~41 KB into all 96 pages and loses cross-page CSS caching, which is a worse trade at a score that already clears the bar.
+**Home mobile Performance was 95–97 across five runs**, the lowest headroom on the site — but read the caveat above before quoting it. That measurement named `.hero__lede` as the LCP element, and **`.hero__lede` has not existed since `87e7471`**, which replaced the photographic hero with the video. The prose was never updated to follow it, so the figure was already describing a hero two rewrites out of date. It is recorded here as history, not as a current number.
+
+What still holds regardless of which hero is in place: two production factors are absent from any measurement taken this way, because the preview server sends no `Content-Encoding` and no `Cache-Control`, so `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) both vanish on Vercel. The remaining lever is `build.inlineStylesheets: 'always'`, which was **not** taken — it inlines ~41 KB into all 96 pages and loses cross-page CSS caching.
+
+The lesson is worth more than the number: **a measured figure and the prose explaining it rot at different rates.** The score stayed plausible while the element it named was deleted. If you re-run Lighthouse, re-read the sentence underneath it.
 
 ### One defect Lighthouse found that axe did not
 

@@ -7,6 +7,39 @@ brochure is revised — output is committed, so a normal build never runs these.
     npm run extract:logo    -- "path/to/brochure.pdf"
     npm run extract:heroes  -- "path/to/brochure.pdf"
 
+There is a fourth script for the per-family datasheet PDFs, which are a
+different kind of source and are handled differently:
+
+    node tools/extract-datasheets.mjs [--verify] [--only <substring>]
+
+## Why `extract-datasheets` is separate
+
+`extract-catalog` reads the one brochure and derives products, specs and images
+together from its layout. The datasheets are 20 unrelated supplier documents
+with no shared structure, so there is nothing to infer — those products and
+specs are authored by hand in `products.json` and the script only lifts the
+photography.
+
+It hits **the same black-box problem** described below, and solves it the same
+way: pulling an embedded image out directly gives an opaque rectangle (sampled
+from these PDFs the bed is `#000` with no alpha channel at all), because the
+knock-out lives in the page's clip stack rather than in the image. So it goes
+through the same `renderImagesOnly` helper.
+
+Two things it does that the brochure pipeline does not need:
+
+- **Clips the crop to the page.** Several sheets place a tall photo running off
+  the bottom edge — the exhaust-fan sheet puts a 420pt image at y=602 on a 792pt
+  page — and rendering the whole placed rect pads the cutout with empty space.
+- **Trims the transparent border.** These layouts sit a subject on a canvas far
+  larger than itself; the shuttered fan covers under 4% of its own frame.
+  Untrimmed, that padding is what gets scaled to fit the card's 150px media box,
+  leaving the product a quarter of its proper size.
+
+`--verify` refuses any cutout that came out fully opaque, which is what a lost
+clip looks like. Entries select their image by native pixel dimensions rather
+than draw order, so a re-run cannot silently grab a different picture.
+
 ## Two things that will silently break if changed
 
 1. **Clip forwarding.** Product photos are rectangles with opaque black
