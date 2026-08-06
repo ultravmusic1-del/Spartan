@@ -1,375 +1,225 @@
 ---
 import { getImage } from 'astro:assets';
-import desktopPoster from '../../assets/hero/hero-desktop-poster.jpg';
-import mobilePoster from '../../assets/hero/hero-mobile-poster.jpg';
-import Eyebrow from '../primitives/Eyebrow.astro';
+import heroDesktop from '../../assets/hero/hero-range-desktop.png';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
 
 /**
- * Hero — a scroll-scrubbed film of the Spartan product range.
+ * Hero — the Spartan range shot, art-directed.
  *
- * HOW IT WORKS. The <section> is a tall scroll track; the stage inside it is
- * `position: sticky` and one viewport high. Scroll progress through the track
- * maps to `video.currentTime`, so the clip advances only as fast as the visitor
- * scrolls and stops when they stop.
+ * THE ARTWORK CARRIES THE COPY. The supplied image already contains the logo,
+ * the Arabic wordmark and "HOME AND INDUSTRIAL SOLUTIONS", so this component
+ * renders no visible headline — a second one beside it would be a duplicate.
+ * The <h1> below is still present and still says the same words; it is only
+ * visually hidden. Dropping it outright would leave the site's most important
+ * page with no heading at all for search engines or screen readers, and no
+ * text alternative for a headline that exists solely as pixels.
  *
- * ENCODED FOR SEEKING, NOT PLAYBACK. A normal web encode puts a keyframe every
- * couple of seconds because playback only moves forward. Scrubbing seeks
- * constantly, and every seek to a non-keyframe makes the decoder walk back to
- * the previous one — that is what makes cheap scroll-video judder. These are
- * H.264 with a 4-frame GOP: 37 keyframes across 145 frames, so no seek decodes
- * more than three frames. Measured cost of the GOP choice, desktop clip:
- * GOP 1 (all keyframes) 2965 KB · GOP 4 1459 KB · GOP 8 1002 KB.
+ * NOT CROPPED, EVER. The image is a composed 16:9 scene: the copy block sits in
+ * the left 5-42%, the product cluster fills the rest, and cropping either
+ * damages the composition. So the artwork sets the hero's height (width: 100%,
+ * height: auto) rather than being poured into a fixed-height box with
+ * `object-fit: cover`. That also means the percentage offsets below map exactly
+ * onto the artwork at every viewport width — there is no crop to drift against.
  *
- * NO WEBM. VP9 at a 4-frame GOP came out *larger* than H.264 (1691 vs 1459 KB)
- * — its advantage is long-GOP inter-prediction, which dense keyframes remove.
- * One universal format is smaller and simpler here.
+ * WHERE THE BUTTONS SIT was measured off the artwork, not guessed. Sampling the
+ * left 42% for peak luminance in 40 horizontal bands (0-255):
  *
- * TWO CLIPS, ONE DOWNLOAD. Landscape (1168x784) and portrait (784x1168) are
- * different compositions, not crops. `<source media>` fetches exactly one —
- * verified in Chrome: at 390px `currentSrc` is hero-mobile.mp4 at 784x1168, at
- * 1440px hero-desktop.mp4 at 1168x784.
+ *   y 22-58%  : 108-169  the logo, wordmark and headline
+ *   y 65%     : 47       the thin red rule under SOLUTIONS
+ *   y 70-95%  : 32-74    empty floor, faint red arcs only
  *
- * WHERE THE COPY SITS was measured. Every frame of both clips was reduced to a
- * per-pixel MAXIMUM luminance across the whole 6.04s, because text must survive
- * the worst frame, not the average one. 95th-percentile worst-case luma, 0-255:
+ * So the actions go at y 72%, left-aligned to the artwork's own text column at
+ * x 5.2% — directly beneath the red rule, in the emptiest part of the frame.
+ * Peak luminance behind them is 74/255, which a white-on-red fill and a bordered
+ * pill both clear comfortably. If the artwork is ever re-cut, re-measure.
  *
- *   Desktop, left third   : 11 / 49 / 52 / 46 / 34 / 20  (top row to bottom)
- *   Desktop, centre third : the products, 155-244 — unusable
- *   Mobile,  top third    : 20-27 across the full width — exceptionally clean
- *   Mobile,  middle       : the products, 149-241 — unusable
+ * TWO SOURCES, ONE DOWNLOAD. `<source media>` fetches exactly one file. These
+ * are two different compositions, not two crops of one: landscape puts the copy
+ * in the left third beside the cluster, portrait stacks it above. Neither can be
+ * derived from the other, which is why both files exist.
  *
- * So desktop copy sits high and hard left, clear of the cluster; mobile splits,
- * with the headline in the clean top band and the buttons pushed to the foot of
- * the frame, below the products rather than across them.
+ * THE SWITCH IS ORIENTATION, NOT WIDTH. Two orientation-specific artworks should
+ * be chosen by the viewport's orientation — an iPad held upright is a portrait
+ * canvas whatever its width, and pouring the landscape cut into it leaves a
+ * stubby 432px band in a 1024px-tall window. Hence `PORTRAIT` below, which is
+ * "narrow OR taller-than-4:3".
  *
- * REDUCED MOTION AND NO JAVASCRIPT both collapse the track to a single
- * viewport and keep the poster — no scrubbing, nothing that moves on its own.
- * Because the motion is entirely scroll-driven there is no auto-playing content
- * here, so WCAG 2.2.2 does not apply and no pause control is needed.
+ * The same condition governs BOTH the <source media> (which file is fetched) and
+ * the @media block (where the buttons go), and the two MUST stay identical: if
+ * they ever disagree the page renders portrait artwork under landscape button
+ * positioning, or vice versa. Astro's scoped <style> cannot interpolate a
+ * frontmatter value, so the constant drives the markup and the stylesheet
+ * repeats it verbatim. If you change one, change the other — it is written out
+ * in full at the @media rule for exactly that reason.
  */
 
-const posterDesktop = await getImage({
-  src: desktopPoster,
-  widths: [960, 1168],
-  format: 'avif',
-});
-const posterMobile = await getImage({
-  src: mobilePoster,
-  widths: [640, 784],
-  format: 'avif',
-});
+import heroMobile from '../../assets/hero/hero-range-mobile.png';
+
+/** Narrow, or a viewport taller than 4:3. See the note above — used in two places. */
+const PORTRAIT = '(max-width: 767px), (max-aspect-ratio: 3/4)';
+
+const WIDTHS_DESKTOP = [1024, 1280, 1440, 1672];
+// Capped at the portrait source's own 941px — Astro clamps anything larger, and
+// asking for an upscale is how you get a soft hero on a 3x phone.
+const WIDTHS_MOBILE = [390, 480, 640, 780, 941];
+
+const desktopAvif = await getImage({ src: heroDesktop, widths: WIDTHS_DESKTOP, format: 'avif' });
+const desktopWebp = await getImage({ src: heroDesktop, widths: WIDTHS_DESKTOP, format: 'webp' });
+const mobileAvif = await getImage({ src: heroMobile, widths: WIDTHS_MOBILE, format: 'avif' });
+const mobileWebp = await getImage({ src: heroMobile, widths: WIDTHS_MOBILE, format: 'webp' });
+
+/**
+ * Both shapes go to CSS: the `w/h` pair reserves the box before the image
+ * decodes (CLS 0), and the bare decimal lets the frame below cap itself against
+ * viewport height in a `calc()`, which cannot take a `w/h` ratio. Both are
+ * derived from the imports, so replacing an artwork updates them for free.
+ */
+const shape = [
+  `--hero-ratio-d:${heroDesktop.width}/${heroDesktop.height}`,
+  `--hero-ratio-m:${heroMobile.width}/${heroMobile.height}`,
+  `--hero-ar-d:${(heroDesktop.width / heroDesktop.height).toFixed(4)}`,
+  `--hero-ar-m:${(heroMobile.width / heroMobile.height).toFixed(4)}`,
+].join(';');
 ---
 
-<section class="hero" data-hero>
-  <div class="hero__stage">
-    <div class="hero__media">
-      <picture class="hero__poster">
-        <source
-          media="(max-width: 767px)"
-          srcset={posterMobile.srcSet.attribute}
-          sizes="100vw"
-          type="image/avif"
-        />
-        <img
-          src={posterDesktop.src}
-          srcset={posterDesktop.srcSet.attribute}
-          sizes="100vw"
-          alt=""
-          width={desktopPoster.width}
-          height={desktopPoster.height}
-          fetchpriority="high"
-          decoding="async"
-        />
-      </picture>
+<section class="hero" style={shape}>
+  {/* Visually hidden, deliberately — the artwork renders these words. See the
+      note above: this is the page's only h1 and the artwork's text alternative. */}
+  <h1 class="sr-only">Home and Industrial Solutions</h1>
 
-      <video
-        class="hero__video"
-        muted
-        playsinline
-        preload="auto"
-        aria-hidden="true"
-        tabindex="-1"
-        data-hero-video
-      >
-        <source src="/video/hero-mobile.mp4" type="video/mp4" media="(max-width: 767px)" />
-        <source src="/video/hero-desktop.mp4" type="video/mp4" />
-      </video>
+  {/* The frame shrink-wraps the artwork, so the overlay offsets below are
+      percentages OF THE PICTURE rather than of the viewport. That is what keeps
+      the buttons welded to the red rule when the frame is capped on a short
+      window — capping the image inside a full-width box would letterbox it and
+      slide the artwork out from under them. */}
+  <div class="hero__frame">
+    <picture class="hero__art">
+      <source media={PORTRAIT} type="image/avif" srcset={mobileAvif.srcSet.attribute} sizes="100vw" />
+      <source media={PORTRAIT} type="image/webp" srcset={mobileWebp.srcSet.attribute} sizes="100vw" />
+      <source type="image/avif" srcset={desktopAvif.srcSet.attribute} sizes="100vw" />
+      <source type="image/webp" srcset={desktopWebp.srcSet.attribute} sizes="100vw" />
+      <img
+        src={desktopWebp.src}
+        alt="The Spartan range — LED panels, floodlights, a solar panel, ventilation fan, water pump and cable alongside a safety helmet, goggles, ear defenders, gloves, coveralls and safety boots."
+        fetchpriority="high"
+        decoding="async"
+      />
+    </picture>
 
-      <div class="hero__scrim"></div>
-    </div>
-
-    <div class="hero__inner">
-      <div class="hero__copy">
-        <Eyebrow>Spartan</Eyebrow>
-        <h1 class="hero__title">
-          <span class="hero__title-line">Home and Industrial</span>
-          <span class="hero__title-line hero__title-line--accent">Solutions.</span>
-        </h1>
-      </div>
-
-      <div class="hero__actions">
-        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-        <PillButton href="/enquiry">Request a quote</PillButton>
-      </div>
+    <div class="hero__actions">
+      <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+      <PillButton href="/enquiry">Request a quote</PillButton>
     </div>
   </div>
 </section>
 
-<script is:inline>
-  (() => {
-    const track = document.querySelector('[data-hero]');
-    const video = document.querySelector('[data-hero-video]');
-    if (!track || !video) return;
-
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (reduce.matches) return; // track stays one viewport tall; poster only
-
-    let duration = 0;
-    let wanted = 0;
-    let frame = 0;
-
-    // iOS will not seek a video that has never been handed to the decoder, so
-    // prime it with a play/pause the visitor never sees. Muted + playsinline is
-    // what makes that allowed without a gesture.
-    const prime = () => {
-      const p = video.play();
-      if (p && typeof p.then === 'function') p.then(() => video.pause()).catch(() => {});
-      else video.pause();
-    };
-
-    const ready = () => {
-      duration = video.duration || 0;
-      if (!duration) return;
-      video.classList.add('is-ready');
-      prime();
-      onScroll();
-    };
-
-    const apply = () => {
-      frame = 0;
-      // Sub-frame seeks are wasted work; 24fps means anything under ~0.04s is
-      // the same picture.
-      if (Math.abs(video.currentTime - wanted) > 0.02) video.currentTime = wanted;
-    };
-
-    const onScroll = () => {
-      if (!duration) return;
-      const r = track.getBoundingClientRect();
-      const scrollable = r.height - window.innerHeight;
-      if (scrollable <= 0) return;
-      const progress = Math.min(1, Math.max(0, -r.top / scrollable));
-      wanted = progress * duration;
-      if (!frame) frame = requestAnimationFrame(apply);
-    };
-
-    if (video.readyState >= 1) ready();
-    else video.addEventListener('loadedmetadata', ready, { once: true });
-
-    addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', onScroll, { passive: true });
-  })();
-</script>
-
 <style>
-  /* Without scripting the track is a plain one-viewport hero, so nothing
-     depends on a scrub that cannot happen. The tall track is opted into only
-     once `data-js` confirms the scroll handler can drive it. */
+  /* Pure black, NOT --color-black, and this is the one place on the site where
+     that is right. Whenever the frame is capped the artwork is centred and the
+     section shows beside it, so this colour butts directly against the artwork's
+     own bed — which is #000. Against --color-black (#08080a) that join measures
+     an 8/255 step, and a step that small across a large flat dark field does not
+     read as a gradient, it reads as a visible rectangle around the picture.
+     Measured on a 390px phone: bars rgb(8,8,10) against artwork rgb(1,1,1).
+     Matching the bed drops it to 1/255. The seam this moves to the foot of the
+     section is horizontal, lands on a real section boundary, and is invisible. */
   .hero {
-    position: relative;
-    height: 100svh;
-    background: var(--color-black);
-  }
-
-  :global(html[data-js]) .hero {
-    height: 240svh;
-  }
-
-  .hero__stage {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-    overflow: hidden;
-  }
-
-  .hero__media {
-    position: absolute;
-    inset: 0;
-  }
-
-  .hero__poster,
-  .hero__video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* Biased left so a tall, narrow window crops the right edge rather than
-       eating into the measured text-safe zone. */
-    object-position: 42% 50%;
-  }
-
-  .hero__poster :global(img) {
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    object-fit: cover;
-    object-position: inherit;
-  }
-
-  .hero__video {
-    opacity: 0;
-    transition: opacity 500ms var(--ease-out);
-  }
-
-  .hero__video.is-ready {
-    opacity: 1;
-  }
-
-  /* Directional scrim. Held near-opaque down the left so the copy always clears
-     AA, releasing by ~68% so the product cluster stays the subject. */
-  .hero__scrim {
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(
-        95deg,
-        rgba(8, 8, 10, 0.95) 0%,
-        rgba(8, 8, 10, 0.88) 26%,
-        rgba(8, 8, 10, 0.55) 48%,
-        rgba(8, 8, 10, 0.12) 68%,
-        rgba(8, 8, 10, 0.3) 100%
-      ),
-      linear-gradient(180deg, rgba(8, 8, 10, 0.8) 0%, transparent 22%),
-      linear-gradient(0deg, var(--color-black) 0%, transparent 26%);
-  }
-
-  /* Deliberately NOT the centred `.wrap`: the copy is pulled toward the left
-     edge, away from the product cluster, rather than sitting on the page grid. */
-  .hero__inner {
-    position: relative;
-    z-index: 5;
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    height: 100%;
-    padding-inline: clamp(20px, 4vw, 72px);
-    /* Anchored from the top rather than centred, because the constraint is a
-       hard edge rather than a proportion. Sampling the left half of every frame
-       for pixels above 190 luma, the bright mass never rises above y=43% — it
-       climbs from 50% at t=0 to 43% at t=6 as the cluster grows. Centred, the
-       accent line landed at y 45-52%, right inside that band, and measured
-       1.56:1. Lifting the block so the accent line finishes at that edge takes
-       it to 3.20:1, over the 3:1 bar for large text. Note the measurement is
-       deliberately pessimistic — it takes the single brightest pixel anywhere in
-       the element's box, including the gaps between letters, so the perceived
-       contrast is better than the number. Must clear the 128px header, hence
-       the floor. */
-    padding-top: clamp(150px, 15vh, 190px);
+    justify-content: center;
+    background: #000;
   }
 
-  .hero__copy {
-    max-width: 34rem;
+  /* Full width until the artwork would outgrow the window, then bounded by
+     height instead. `100svh × aspect` is the widest the picture can be and
+     still fit vertically, so on a short or ultra-wide window the frame narrows
+     and the artwork sits centred on the page's own black — which is the same
+     black it is bedded on, so the margins are invisible.
+
+     Without this the picture keeps growing with the viewport width: at
+     2560×1080 it stood 1441px tall and pushed "Browse catalogue" 7px past the
+     fold, and a phone held sideways lost it by 2px. */
+  .hero__frame {
+    position: relative;
+    width: min(100%, calc(100svh * var(--hero-ar-d)));
   }
 
-  .hero__title {
-    margin-top: 22px;
-    font-size: clamp(40px, 4.6vw, 68px);
-    font-weight: 800;
-    letter-spacing: -0.035em;
-    line-height: 0.96;
-    text-transform: uppercase;
-  }
-
-  .hero__title-line {
+  /* The artwork sets its own height. No `object-fit` here, so nothing is ever
+     cropped and the offsets below stay true to the frame. */
+  .hero__art,
+  .hero__art img {
     display: block;
-    color: #fff;
+    width: 100%;
   }
 
-  .hero__title-line--accent {
-    color: var(--color-red);
+  .hero__art img {
+    height: auto;
+    /* Reserves the exact box before the image decodes — CLS 0. The ratio comes
+       from the imported asset, so it tracks a swapped file automatically. */
+    aspect-ratio: var(--hero-ratio-d);
   }
 
+  /* x and y are percentages of the artwork itself, which is safe precisely
+     because the image is never cropped. 5.2% lands on the left edge of the
+     logo; 72% is below the red rule and clear of the product cluster. */
   .hero__actions {
+    position: absolute;
+    left: 5.2%;
+    top: 72%;
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 34px;
   }
 
-  /* ---------- mobile ---------- */
-  @media (max-width: 767px) {
-    :global(html[data-js]) .hero {
-      height: 220svh;
+  /* ---------- portrait ----------
+     This condition MUST match the `PORTRAIT` constant in the frontmatter, which
+     selects the artwork. Astro's scoped styles cannot read a frontmatter value,
+     so it is written out in full here. Change one, change the other. */
+  @media (max-width: 767px), (max-aspect-ratio: 3/4) {
+    /* Clears the 44px utility bar and the 84px nav, both of which are absolute
+       over this section. The artwork starts below them rather than under them —
+       the band reads as page background because the image is bedded on black.
+       Overlaying instead is not an option: the portrait cut puts the logo at
+       y 4%, which the nav would sit straight on top of. */
+    .hero {
+      padding-top: 128px;
     }
 
-    .hero__poster,
-    .hero__video {
-      object-position: 50% 50%;
-    }
-
-    /* Heavier at both ends than desktop: the headline sits in the clean top
-       band and the buttons at the foot, with the products between them. */
-    .hero__scrim {
-      background:
-        linear-gradient(
-          180deg,
-          rgba(8, 8, 10, 0.95) 0%,
-          rgba(8, 8, 10, 0.91) 30%,
-          rgba(8, 8, 10, 0.62) 42%,
-          rgba(8, 8, 10, 0.1) 58%,
-          rgba(8, 8, 10, 0.42) 78%,
-          rgba(8, 8, 10, 0.86) 100%
-        ),
-        linear-gradient(0deg, var(--color-black) 0%, transparent 14%);
-    }
-
-    /* Headline top, buttons bottom — the products own the middle. */
-    .hero__inner {
-      justify-content: space-between;
-      padding-top: 136px;
-      padding-bottom: 48px;
-    }
-
-    .hero__copy {
-      max-width: none;
-    }
-
-    /* Stacked and full-bleed. Side by side they total ~387px against 350px of
-       available width, and a wrapped row leaves a ragged half-width pill. */
-    .hero__actions {
-      display: grid;
-      gap: 10px;
-      margin-top: 0;
-    }
-
-    .hero__actions :global(.solid),
-    .hero__actions :global(.pill) {
+    /* Full width again. The frame's landscape cap is a `calc()` on the landscape
+       aspect and would be nonsense here; more to the point the buttons are in
+       flow below rather than overlaid, so nothing depends on the frame tracking
+       the artwork's edges — which frees the image to letterbox instead. */
+    .hero__frame {
       width: 100%;
     }
 
-    /* The outlined pill carries no fill of its own, and the foot of the frame
-       still catches light off the floor. A backdrop is the honest fix — dimming
-       the scrim far enough to rescue a transparent control would bury the
-       product shot the film exists to show. */
+    .hero__art img {
+      aspect-ratio: var(--hero-ratio-m);
+      /* At full width the portrait cut is 693px tall on a 390px phone, which
+         with the header puts both buttons past the fold — the catalogue link
+         would not be on screen at first paint. Capping the artwork pulls them
+         back up. The letterbox this creates costs nothing visually: `contain`
+         bars and the artwork's own bed are both pure black on the page's
+         --color-black, so the frame simply reads as smaller. */
+      max-height: calc(100svh - 128px - 12rem);
+      object-fit: contain;
+    }
+
+    /* Out of the overlay and into flow. The portrait cut has no empty quarter to
+       borrow — its products run from y30% to y85%, and the dark floor below them
+       is ~80px at phone scale, enough for one button and not two. */
+    .hero__actions {
+      position: static;
+      display: grid;
+      gap: 10px;
+      padding: 24px var(--wrap-pad) 40px;
+    }
+
+    /* Side by side they total ~387px against ~350px of usable width, and a
+       wrapped row leaves a ragged half-width pill. */
+    .hero__actions :global(.solid),
     .hero__actions :global(.pill) {
-      background: rgba(8, 8, 10, 0.72);
-      border-color: rgba(255, 255, 255, 0.45);
-      backdrop-filter: blur(8px);
-    }
-  }
-
-  /* Scroll-linked motion is the visitor's own doing, but scrubbing still means
-     a moving picture. Collapse to a single still viewport. */
-  @media (prefers-reduced-motion: reduce) {
-    :global(html[data-js]) .hero,
-    .hero {
-      height: 100svh;
-    }
-
-    .hero__video {
-      display: none;
+      width: 100%;
     }
   }
 </style>
