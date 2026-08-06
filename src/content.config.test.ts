@@ -39,19 +39,19 @@ describe('content data', () => {
   });
 
   it('category product counts match the authoritative distribution', () => {
-    // 72 brochure products + 6 from the industrial-fan datasheets, which is
-    // why `fans` is 10 rather than the brochure's 4. Update deliberately: this
+    // 72 brochure products + 7 from the industrial-fan datasheets, which is
+    // why `fans` is 11 rather than the brochure's 4. Update deliberately: this
     // assertion exists to make an accidental duplicate or a lost record fail
     // loudly, so a number that changes without a matching data change is a bug.
     const expected: Record<string, number> = {
-      lighting: 10, fans: 10, pumps: 3, insect: 1, cables: 1, accessories: 0,
+      lighting: 10, fans: 11, pumps: 3, insect: 1, cables: 1, accessories: 0,
       head: 7, eye: 6, hearing: 6, hand: 11, foot: 8, harness: 2, body: 4,
       workwear: 9, spill: 0,
     };
     const actual: Record<string, number> = {};
     for (const p of products) actual[p.categoryId] = (actual[p.categoryId] ?? 0) + 1;
     for (const [id, n] of Object.entries(expected)) expect(actual[id] ?? 0).toBe(n);
-    expect(products).toHaveLength(78);
+    expect(products).toHaveLength(79);
   });
 
   it('every product image file exists on disk', async () => {

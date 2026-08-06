@@ -3078,5 +3078,82 @@
       "page": 3
     },
     "order": 10
+  },
+  {
+    "slug": "portable-blower",
+    "name": "Portable Blower",
+    "variantLabel": null,
+    "categoryId": "fans",
+    "images": [
+      "ds-portable-blower.png"
+    ],
+    "specs": [
+      {
+        "label": "Size",
+        "value": "8\" | 10\" | 12\" | 14\" | 16\" | 18\" | 20\" | 24\""
+      },
+      {
+        "label": "Power",
+        "value": "230W | 320W | 520W | 750W | 1100W | 1500W"
+      },
+      {
+        "label": "Voltage",
+        "value": "220V/50/60Hz | 110V/50/60Hz | 380V/50Hz"
+      },
+      {
+        "label": "Revolution",
+        "value": "2800 rpm (220V) | 3300 rpm (110V) | 1400 rpm (SHT-60)"
+      },
+      {
+        "label": "Air Volume",
+        "value": "25 to 300 m3/min"
+      },
+      {
+        "label": "Pressure",
+        "value": "245 to 1050 Pa"
+      },
+      {
+        "label": "Noise",
+        "value": "63 to 88 dB(A)"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP54"
+      },
+      {
+        "label": "Series",
+        "value": "SHT Series portable blower"
+      },
+      {
+        "label": "Models",
+        "value": "SHT-20 | SHT-25 | SHT-30 | SHT-35 | SHT-40 | SHT-45 | SHT-50 | SHT-60"
+      },
+      {
+        "label": null,
+        "value": "High efficiency, light weight, low temperature rise"
+      },
+      {
+        "label": null,
+        "value": "Handle and support feet fitted for easy moving"
+      },
+      {
+        "label": null,
+        "value": "Delivers high pressure air over long distance with flexible duct"
+      },
+      {
+        "label": null,
+        "value": "Overheat protection device fitted"
+      },
+      {
+        "label": null,
+        "value": "Suitable for welding plants, floor drying, underground and tunnel ventilation"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "SPARTAN -PVT -FAN.pdf",
+      "page": 3
+    },
+    "order": 11
   }
 ]
