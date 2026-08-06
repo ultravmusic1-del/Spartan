@@ -54,6 +54,12 @@ describe('content data', () => {
     expect(products).toHaveLength(79);
   });
 
+  it('the README headline count matches the data', async () => {
+    const fs = await import('node:fs');
+    const readme = fs.readFileSync('README.md', 'utf8');
+    expect(readme).toContain(`**${products.length} products across ${categories.length} categories**`);
+  });
+
   it('every product image file exists on disk', async () => {
     const fs = await import('node:fs');
     for (const p of products) {

@@ -113,10 +113,10 @@ In `tools/extract-datasheets.mjs`, append to `MANIFEST`:
 - [ ] **Step 3: Extract and verify**
 
 ```bash
-node tools/extract-datasheets.mjs --verify --only ds-portable-blower
+node tools/extract-datasheets.mjs --only ds-portable-blower
 ```
 
-Expected: one line reporting the cutout size and an opaque percentage between 2% and 40%. The script exits non-zero if the result is >99.5% opaque, which is what a lost clip looks like.
+Expected: one line reporting the cutout size and an opaque percentage between 10% and 65%. The script exits non-zero if the result is >99.5% opaque, which is what a lost clip looks like, or <0.5% opaque, which is what an empty render looks like. Both checks always run.
 
 - [ ] **Step 4: Eyeball it against the real card colour**
 
@@ -161,7 +161,7 @@ Add to the end of the array in `src/data/products.json`:
   "specs": [
     { "label": "Size", "value": "8\" | 10\" | 12\" | 14\" | 16\" | 18\" | 20\" | 24\"" },
     { "label": "Power", "value": "230W | 320W | 520W | 750W | 1100W | 1500W" },
-    { "label": "Voltage", "value": "220V/50/60Hz (SHT-20 to 45) | 110V/50/60Hz (SHT-20 to 40) | 110V/60Hz (SHT-45, SHT-50) | 220V/50Hz (SHT-50, SHT-60) | 380V/50Hz (SHT-60)" },
+    { "label": "Voltage", "value": "220V/50/60Hz (SHT-20 to SHT-45) | 110V/50/60Hz (SHT-20 to SHT-40) | 110V/60Hz (SHT-45, SHT-50) | 220V/50Hz (SHT-50, SHT-60) | 380V/50Hz (SHT-60)" },
     { "label": "Revolution", "value": "2800 rpm (220V) | 3300 rpm (110V) | 1400 rpm (SHT-60)" },
     { "label": "Air Volume", "value": "25 to 300 m3/min" },
     { "label": "Pressure", "value": "245 to 1050 Pa" },
@@ -170,9 +170,9 @@ Add to the end of the array in `src/data/products.json`:
     { "label": "Series", "value": "SHT Series portable blower" },
     { "label": "Models", "value": "SHT-20 | SHT-25 | SHT-30 | SHT-35 | SHT-40 | SHT-45 | SHT-50 | SHT-60" },
     { "label": null, "value": "High efficiency, light weight, low temperature rise" },
-    { "label": null, "value": "Optimized blade design with a matched air inlet for large air volume at high pressure" },
     { "label": null, "value": "Handle and support feet fitted for easy moving" },
     { "label": null, "value": "Delivers high pressure air over long distance with flexible duct" },
+    { "label": null, "value": "Optimised blade design with a matched air inlet for large air volume at high pressure" },
     { "label": null, "value": "Overheat protection device fitted" },
     { "label": null, "value": "Suitable for welding plants, floor drying, underground and tunnel ventilation" }
   ],
@@ -483,10 +483,10 @@ Inside the `for (const entry of MANIFEST)` loop, immediately after the `if (ONLY
 - [ ] **Step 3: Confirm the existing entries still extract unchanged**
 
 ```bash
-node tools/extract-datasheets.mjs --verify
+node tools/extract-datasheets.mjs
 ```
 
-Expected: the seven existing cutouts re-extract with the same dimensions and opaque percentages as before (`ds-exhaust-fan-standard.png 615x615 -> 348x432 5.1% opaque`, etc). Any change here is a regression in Task 4's edit.
+Expected: the seven existing cutouts re-extract with the same dimensions and opaque percentages as before (`ds-exhaust-fan-standard.png 615x615 -> 348x432 22.4% opaque`, etc). Any change here is a regression in Task 4's edit.
 
 - [ ] **Step 4: Commit**
 

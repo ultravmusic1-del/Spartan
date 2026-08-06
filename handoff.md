@@ -223,16 +223,16 @@ grep -rn "getCollection" src/pages src/components || echo "PASS"
 
 ## 6. The data
 
-### Distribution — 78 products, verified
+### Distribution — 79 products, verified
 
-72 come from the brochure. The other 6 are industrial fans taken from the
-per-family datasheet PDFs (see §6a), which is why `fans` is 10 rather than the
-brochure's 4 and Electricals is 25 rather than 19. Safety is untouched.
+72 come from the brochure. The other 7 are industrial fans taken from the
+per-family datasheet PDFs (see §6a), which is why `fans` is 11 rather than the
+brochure's 4 and Electricals is 26 rather than 19. Safety is untouched.
 
 | Category | id | Count | Brochure source |
 |---|---|---|---|
 | Lighting | `lighting` | 10 | p4 (7) + p5 (3) |
-| Fans & Ventilation | `fans` | 10 | p10 (4) + datasheets (6) |
+| Fans & Ventilation | `fans` | 11 | p10 (4) + datasheets (7) |
 | Water Pumps & Controls | `pumps` | 3 | p11 |
 | Insect Killers | `insect` | 1 | p6 |
 | Cables | `cables` | 1 | p8 |
@@ -262,9 +262,10 @@ Electricals went from ~24 spec rows to 169. Each of those products' `source`
 now names its datasheet rather than the brochure, because that is where the
 values can actually be checked.
 
-**Six new products**, all in the existing `fans` category — three FA Series
+**Seven new products**, all in the existing `fans` category — three FA Series
 exhaust-fan bodies (standard, grill, shutter), an FA Series stand fan and wall
-fan, and the MFS Series mist fan. No new categories were created.
+fan, the MFS Series mist fan, and the SHT Series portable blower. No new
+categories were created.
 
 Model tables were collapsed into the site's existing `A | B | C` convention
 rather than split into one product per SKU. The catalogue models product
@@ -279,10 +280,9 @@ restructure the site rather than describe it.
 - The highbay sheet gives three LED quantities (168/224/322pcs) for four wattages.
 - **Air volume units disagree between sheets.** The exhaust tables read 780–7200 m3/min while the stand and wall tables read 130–302 m3/min for physically larger fans. One set is almost certainly m3/h. Both are recorded exactly as printed — this needs the client, not a guess.
 
-Still unread at handover: the portable air coolers, insect killer, CAT6
-electrical-characteristics tables, and the portable blower (SHT series). Their
-pages are already rendered under the extraction tooling's output; nothing
-blocks picking them up.
+Still unread at handover: the portable air coolers, insect killer, and CAT6
+electrical-characteristics tables. Their pages are already rendered under the
+extraction tooling's output; nothing blocks picking them up.
 
 ### The two empty categories
 
