@@ -17,7 +17,7 @@ const product = {
   images: ['p15-safety-helmets.png'],
   specs: [{ label: 'Shell', value: 'HDPE compound + nylon ratchet' }],
   status: 'published' as const,
-  sourcePage: 15,
+  source: { doc: 'brochure', page: 15 },
   order: 1,
 };
 

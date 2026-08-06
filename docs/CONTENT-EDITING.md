@@ -61,7 +61,7 @@ Open `src/data/products.json` and add a record. Here is a real one, complete:
     { "label": "Cuff Style", "value": "Knit wrist" }
   ],
   "status": "published",
-  "sourcePage": 16,
+  "source": { "doc": "brochure", "page": 16 },
   "order": 3,
   "en388": {
     "abrasion": "4",
@@ -84,7 +84,7 @@ Field by field:
 | `images` | yes | A list of filenames in `src/assets/products/`. At least one. Only the first is currently displayed. |
 | `specs` | yes | A list of `{ "label", "value" }` pairs. Use `"label": null` for a feature bullet that has no "Label:" prefix. An empty list `[]` is allowed and simply shows no spec table. |
 | `status` | no | `"published"` or `"draft"`. Defaults to `"published"`. A draft is excluded from every page, count and sitemap, so it is the safe way to stage a product that is not ready. |
-| `sourcePage` | yes | The brochure page number the data came from. This is provenance — it is how anyone later can check a value against the source. |
+| `source` | yes | Where the data came from: `{ "doc": ..., "page": ... }`. This is provenance — it is how anyone later can check a value against the source. Use `"doc": "brochure"` for the original product brochure, or the datasheet PDF's **filename exactly as it is** (e.g. `"SPARTAN - HIGHBAY.pdf"`) for a product taken from one of the per-family catalogues. `page` is the page within *that* document. It was a bare `sourcePage` number while the brochure was the only source; it is an object now because it no longer is. |
 | `order` | yes | Position within its own category, low numbers first. **Ordering is per-category**, so it is normal and correct for a `1` to appear in several categories. |
 | `en388` | no | **Leave this out entirely unless the brochure prints a rating.** See the EN 388 section. |
 

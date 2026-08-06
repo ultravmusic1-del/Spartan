@@ -48,7 +48,24 @@ export const productSchema = z.object({
     })
     .optional(),
   status: z.enum(['published', 'draft']).default('published'),
-  sourcePage: z.number().int(),
+  /**
+   * Provenance — where every value on this record can be checked against.
+   *
+   * This was `sourcePage: number` while there was exactly one source document.
+   * There are now 21: the original brochure plus a per-product-family datasheet
+   * for most of the Electricals range. A bare page number can no longer say
+   * which document it indexes into, and "page 1" meaning a standalone datasheet
+   * sitting beside "page 5" meaning brochure page 5 is worse than useless — it
+   * reads as provenance while pointing nowhere.
+   *
+   * `doc` is `'brochure'` for the original 72 records, otherwise the source
+   * PDF's filename verbatim. Not shown to users; this exists so a later
+   * maintainer can audit a spec back to the page it was read off.
+   */
+  source: z.object({
+    doc: z.string(),
+    page: z.number().int(),
+  }),
   order: z.number().int(),
 });
 

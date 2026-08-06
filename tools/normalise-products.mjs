@@ -149,7 +149,11 @@ for (const page of pages) {
       images: [raw.image],
       specs: raw.specs,
       status: 'published',
-      sourcePage: page.page,
+      // This extractor only ever reads the original brochure, so `doc` is
+      // constant here. Products sourced from the per-family datasheets are
+      // authored by hand and carry that PDF's filename instead — see the
+      // `source` note in src/content.config.ts.
+      source: { doc: 'brochure', page: page.page },
       order,
     };
 
