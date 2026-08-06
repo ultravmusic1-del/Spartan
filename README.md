@@ -5,7 +5,7 @@ A catalogue and lead-generation site for **Spartan**, an industrial brand with t
 - **Spartan Electricals** — lighting, fans and ventilation, water pumps, cables, insect killers
 - **Spartan Safety** — head, eye, hearing, hand, foot and body protection, fall arrest, workwear
 
-**79 products across 15 categories** — 72 from the client's product brochure, plus 7 industrial fans from the per-family datasheet PDFs. Built with Astro 7, TypeScript strict, Tailwind CSS 4 and Preact islands; deployed to Vercel.
+**82 products across 15 categories** — 72 from the client's product brochure, plus 10 from the per-family datasheet PDFs. Built with Astro 7, TypeScript strict, Tailwind CSS 4 and Preact islands; deployed to Vercel.
 
 ## This is a catalogue, not a shop
 

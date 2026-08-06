@@ -399,7 +399,7 @@ test('a corrupt basket in localStorage does not break the page', async ({ page }
   // The inline head script reads the same key, so it is exercised too.
   await page.goto('/catalogue');
   await expect(page.locator('.cf')).not.toHaveClass(/cf--pending/);
-  await expect(page.locator('li[data-product]')).toHaveCount(79);
+  await expect(page.locator('li[data-product]')).toHaveCount(82);
   await expect(badge(page)).toHaveCount(0);
 
   await page.goto('/enquiry');

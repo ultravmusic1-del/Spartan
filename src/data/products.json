@@ -3159,5 +3159,83 @@
       "page": 3
     },
     "order": 11
+  },
+  {
+    "slug": "portable-air-cooler-ay-yd2536",
+    "name": "Portable Air Cooler",
+    "variantLabel": "AY-YD2536",
+    "categoryId": "fans",
+    "images": ["ds-photo-pending.png"],
+    "specs": [
+      { "label": "Power", "value": "120 W" },
+      { "label": "Voltage", "value": "220-240V / 50-60Hz" },
+      { "label": "Airflow", "value": "3600 m3/h" },
+      { "label": "Water Tank Capacity", "value": "40 L" },
+      { "label": "Water Pump Power", "value": "18 W" },
+      { "label": "Blade Size", "value": "400 mm" },
+      { "label": "Air Outlet Size", "value": "45 x 43 cm" },
+      { "label": "Air Distance", "value": "6 m" },
+      { "label": "Application Area", "value": "18-23 m2" },
+      { "label": "Noise Level", "value": "<=65 dB(A)" },
+      { "label": "Machine Size", "value": "93 x 62 x 40 cm" },
+      { "label": "Packing Size", "value": "82 x 64 x 42 cm" },
+      { "label": "Net Weight", "value": "16.1 kg" },
+      { "label": "Loading Capacity (40HQ)", "value": "269 pcs full unit | 500 pcs CKD" }
+    ],
+    "status": "published",
+    "source": { "doc": "SPARTAN - PORTABLE AIR COOLERS.pdf", "page": 2 },
+    "order": 12
+  },
+  {
+    "slug": "portable-air-cooler-ay-yd2512",
+    "name": "Portable Air Cooler",
+    "variantLabel": "AY-YD2512",
+    "categoryId": "fans",
+    "images": ["ds-photo-pending.png"],
+    "specs": [
+      { "label": "Power", "value": "450 W" },
+      { "label": "Voltage", "value": "220-240V / 50-60Hz & 110-120V / 50-60Hz" },
+      { "label": "Airflow", "value": "12,000 m3/h" },
+      { "label": "Water Tank Capacity", "value": "150 L" },
+      { "label": "Water Pump Power", "value": "38 W" },
+      { "label": "Blade Size", "value": "610 mm" },
+      { "label": "Air Outlet Size", "value": "63 x 63 cm" },
+      { "label": "Air Distance", "value": "18 m" },
+      { "label": "Application Area", "value": "100-150 m2" },
+      { "label": "Noise Level", "value": "<=68 dB(A)" },
+      { "label": "Machine Size", "value": "139 x 100 x 60 cm" },
+      { "label": "Packing Size", "value": "131 x 102 x 62 cm" },
+      { "label": "Net Weight", "value": "42.5 kg" },
+      { "label": "Loading Capacity (40HQ)", "value": "80 pcs full unit | 190 pcs CKD" }
+    ],
+    "status": "published",
+    "source": { "doc": "SPARTAN - PORTABLE AIR COOLERS.pdf", "page": 3 },
+    "order": 13
+  },
+  {
+    "slug": "portable-air-cooler-ay-yd2518",
+    "name": "Portable Air Cooler",
+    "variantLabel": "AY-YD2518",
+    "categoryId": "fans",
+    "images": ["ds-photo-pending.png"],
+    "specs": [
+      { "label": "Power", "value": "720 W" },
+      { "label": "Voltage", "value": "220-240V / 50-60Hz & 110-120V / 50-60Hz" },
+      { "label": "Airflow", "value": "18,000 m3/h" },
+      { "label": "Water Tank Capacity", "value": "160 L" },
+      { "label": "Water Pump Power", "value": "38 W" },
+      { "label": "Blade Size", "value": "750 mm" },
+      { "label": "Air Outlet Size", "value": "82 x 82 cm" },
+      { "label": "Air Distance", "value": "20 m" },
+      { "label": "Application Area", "value": "100-200 m2" },
+      { "label": "Noise Level", "value": "<=68 dB(A)" },
+      { "label": "Machine Size", "value": "150 x 116 x 64 cm" },
+      { "label": "Packing Size", "value": "142 x 119 x 66 cm" },
+      { "label": "Net Weight", "value": "52 kg" },
+      { "label": "Loading Capacity (40HQ)", "value": "57 pcs full unit | 160 pcs CKD" }
+    ],
+    "status": "published",
+    "source": { "doc": "SPARTAN - PORTABLE AIR COOLERS.pdf", "page": 4 },
+    "order": 14
   }
 ]
