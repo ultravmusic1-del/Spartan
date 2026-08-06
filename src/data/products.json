@@ -3237,5 +3237,79 @@
     "status": "published",
     "source": { "doc": "SPARTAN - PORTABLE AIR COOLERS.pdf", "page": 4 },
     "order": 14
+  },
+  {
+    "slug": "stand-fan-sptsf-16",
+    "name": "Stand Fan",
+    "variantLabel": "SPTSF-16",
+    "categoryId": "fans",
+    "images": ["ds-photo-pending.png"],
+    "specs": [
+      { "label": "Fan Size", "value": "16 inches" },
+      { "label": "Power", "value": "45W" },
+      { "label": "Voltage", "value": "220-240V" },
+      { "label": "Frequency", "value": "50/60Hz" },
+      { "label": "Speed Control", "value": "Multi-Speed" },
+      { "label": "Oscillation", "value": "Yes" },
+      { "label": "Height Adjustment", "value": "Yes" },
+      { "label": "Power Supply", "value": "AC" },
+      { "label": "Safety Standard", "value": "CB certified" },
+      { "label": "Application", "value": "Home/Office/Indoor" },
+      { "label": null, "value": "Adjustable Height: telescopic pole allows for customized airflow levels" },
+      { "label": null, "value": "3-Speed Control: Low (1), Medium (2) and High (3) settings" },
+      { "label": null, "value": "Oscillation: wide-angle oscillation to cover large rooms" },
+      { "label": null, "value": "Tilting Head: vertical adjustment to direct air exactly where needed" }
+    ],
+    "status": "published",
+    "source": { "doc": "Spartan Fans Product Catalog.pdf", "page": 2 },
+    "order": 15
+  },
+  {
+    "slug": "wall-fan-af-40w",
+    "name": "Wall Fan",
+    "variantLabel": "AF-40W",
+    "categoryId": "fans",
+    "images": ["ds-photo-pending.png"],
+    "specs": [
+      { "label": "Fan Size", "value": "16 inches" },
+      { "label": "Power", "value": "45W" },
+      { "label": "Voltage", "value": "220-240V" },
+      { "label": "Frequency", "value": "50/60Hz" },
+      { "label": "Mount Type", "value": "Wall Mounted" },
+      { "label": "Speed Setting", "value": "Multiple" },
+      { "label": "Oscillation", "value": "Yes" },
+      { "label": "Tilt Adjustment", "value": "Yes" },
+      { "label": "Power Supply", "value": "AC" },
+      { "label": null, "value": "Dual Pull-Cord Control: traditional pull cords for easy speed adjustment and oscillation control when mounted high" },
+      { "label": null, "value": "Reinforced Safety Grills: durable front and rear guards for protection" },
+      { "label": null, "value": "Easy Installation: designed for secure wall mounting with a stable bracket system" }
+    ],
+    "status": "published",
+    "source": { "doc": "Spartan Fans Product Catalog.pdf", "page": 3 },
+    "order": 16
+  },
+  {
+    "slug": "wall-fan-fw-40h",
+    "name": "Wall Fan",
+    "variantLabel": "FW-40H",
+    "categoryId": "fans",
+    "images": ["ds-photo-pending.png"],
+    "specs": [
+      { "label": "Fan Size", "value": "16 inches" },
+      { "label": "Power", "value": "45W" },
+      { "label": "Voltage", "value": "220-240V" },
+      { "label": "Frequency", "value": "50/60Hz" },
+      { "label": "Mounting", "value": "Wall" },
+      { "label": "Speed Setting", "value": "Multiple" },
+      { "label": "Oscillation", "value": "Yes" },
+      { "label": "Tilt Adjustment", "value": "Yes" },
+      { "label": "Power Supply", "value": "AC" },
+      { "label": null, "value": "Precision Blades: high-efficiency blade design for maximum air delivery with minimal noise" },
+      { "label": null, "value": "Streamlined Controls: accessible control panel for speed and oscillation" },
+      { "label": null, "value": "Thermal Protection: built-in safety mechanisms to prevent motor overheating" }
+    ],
+    "status": "published",
+    "source": { "doc": "Spartan Fans Product Catalog.pdf", "page": 4 },
+    "order": 17
   }
 ]

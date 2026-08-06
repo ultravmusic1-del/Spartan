@@ -14,9 +14,9 @@ import { expect, test, type Page } from '@playwright/test';
  *    rating.
  */
 
-// 72 from the brochure + 10 from the datasheet PDFs: 7 industrial fans and
-// 3 portable air coolers.
-const TOTAL_PRODUCTS = 82;
+// 72 from the brochure + 13 from the datasheet PDFs: 7 industrial fans,
+// 3 portable air coolers and 3 consumer fans.
+const TOTAL_PRODUCTS = 85;
 const TOTAL_CATEGORIES = 15;
 
 /** The filter island is `client:idle` and ships inert; this is it becoming live. */
@@ -72,9 +72,9 @@ test.describe('catalogue index', () => {
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
 
     await page.getByRole('radio', { name: 'Spartan Electricals' }).check();
-    // 19 brochure products + 10 from the datasheets: 7 industrial fans and 3
-    // portable air coolers.
-    await expect(visible).toHaveCount(29);
+    // 19 brochure products + 13 from the datasheets: 7 industrial fans, 3
+    // portable air coolers and 3 consumer fans.
+    await expect(visible).toHaveCount(32);
 
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
