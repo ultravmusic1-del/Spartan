@@ -14,7 +14,8 @@ import { expect, test, type Page } from '@playwright/test';
  *    rating.
  */
 
-const TOTAL_PRODUCTS = 72;
+// 72 from the brochure + 6 industrial fans from the datasheet PDFs.
+const TOTAL_PRODUCTS = 78;
 const TOTAL_CATEGORIES = 15;
 
 /** The filter island is `client:idle` and ships inert; this is it becoming live. */
@@ -43,7 +44,7 @@ test.describe('catalogue index', () => {
     expect(statuses).toEqual(hrefs.map((href) => [href, 200]));
   });
 
-  test('all 72 products are server-rendered and the filter bar hydrates', async ({ page }) => {
+  test('every product is server-rendered and the filter bar hydrates', async ({ page }) => {
     await page.goto('/catalogue');
 
     await expect(page.locator('li[data-product]')).toHaveCount(TOTAL_PRODUCTS);
@@ -53,7 +54,7 @@ test.describe('catalogue index', () => {
     );
   });
 
-  test('filters narrow the visible products and clearing restores all 72', async ({ page }) => {
+  test('filters narrow the visible products and clearing restores them all', async ({ page }) => {
     await page.goto('/catalogue');
     await filtersReady(page);
 
@@ -70,7 +71,8 @@ test.describe('catalogue index', () => {
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
 
     await page.getByRole('radio', { name: 'Spartan Electricals' }).check();
-    await expect(visible).toHaveCount(19);
+    // 19 brochure products + 6 industrial fans from the datasheets.
+    await expect(visible).toHaveCount(25);
 
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
@@ -96,7 +98,7 @@ test.describe('catalogue index', () => {
 test.describe('catalogue index without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
-  test('all 72 products are listed and the filter bar is hidden', async ({ page }) => {
+  test('every product is listed and the filter bar is hidden', async ({ page }) => {
     await page.goto('/catalogue');
 
     // Not just present in the DOM — actually rendered, since the whole point is

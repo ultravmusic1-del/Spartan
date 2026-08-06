@@ -114,7 +114,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
 
   <div class="card__actions">
     <slot name="action">
-      {/* `client:visible`, so a 72-card catalogue page does not hydrate 72
+      {/* `client:visible`, so a full catalogue page does not hydrate every one of its
           islands before any of them is scrolled to. */}
       <EnquiryButton client:visible slug={product.slug} name={fullName} />
     </slot>

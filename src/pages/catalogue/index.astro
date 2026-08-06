@@ -12,7 +12,7 @@ import CatalogueFilters, {
 import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
 
 /**
- * The whole catalogue on one page: all 15 categories and all 72 products are
+ * The whole catalogue on one page: all 15 categories and every product are
  * server-rendered, so the page is complete for a crawler and complete with
  * JavaScript switched off. `CatalogueFilters` narrows what is *visible* by
  * toggling `hidden` on the list items below — it never fetches, and it never
@@ -266,7 +266,7 @@ const rows = products.map((product) => {
      accessibility tree while it keeps the exact box it will occupy, so
      revealing it shifts nothing (measured: 0px, CLS 0.000). Without JavaScript
      `data-js` is never set, the bar collapses to nothing instead of leaving a
-     gap, and all 72 products are listed below regardless.
+     gap, and every product is listed below regardless.
 
      This is a class rather than the `hidden` attribute on purpose: Tailwind 4's
      preflight ships `[hidden]:where(...){display:none!important}`, which no

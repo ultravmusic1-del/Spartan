@@ -22,7 +22,7 @@ interface Props {
 /**
  * CatalogueFilters — narrows the catalogue listing by division and category.
  *
- * It filters the DOM that is already on the page. Every one of the 72 products
+ * It filters the DOM that is already on the page. Every one of the products
  * and all 15 categories are server-rendered by `/catalogue`; this island only
  * toggles `hidden` on the `<li>`s the page owns, keyed off their `data-`
  * attributes. Nothing is fetched, nothing is re-rendered, and the full list
@@ -42,7 +42,7 @@ interface Props {
  * division. Mirroring those as `/catalogue?category=lighting` would publish a
  * second URL for content that already has a canonical one, and — because this
  * island filters the DOM rather than rendering it — a shared link would show
- * all 72 products until hydration and then visibly cut down. So this is an
+ * every product until hydration and then visibly cut down. So this is an
  * in-page scanning aid, the category tiles and breadcrumbs are the navigation,
  * and Back leaves the page rather than unwinding filter steps.
  */

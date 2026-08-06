@@ -10,11 +10,54 @@
     "specs": [
       {
         "label": "Material",
-        "value": "white Aluminium frame iron back cover + glass LGB"
+        "value": "White aluminium frame + iron back cover + glass LGB"
+      },
+      {
+        "label": "Power",
+        "value": "18W | 24W | 30W"
+      },
+      {
+        "label": "Luminous Flux",
+        "value": "1260 lm | 1680 lm | 2100 lm"
+      },
+      {
+        "label": "Input Voltage",
+        "value": "175-265V"
+      },
+      {
+        "label": "Power Factor",
+        "value": "0.5"
+      },
+      {
+        "label": "CRI",
+        "value": ">70"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "6500K (30W model 2700-6500K)"
+      },
+      {
+        "label": "Shape",
+        "value": "Round | Square"
+      },
+      {
+        "label": "Installation",
+        "value": "Recessed | Surface"
+      },
+      {
+        "label": "Dimensions",
+        "value": "Φ220×7mm to Φ290×32mm"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP20"
       }
     ],
     "status": "published",
-    "sourcePage": 4,
+    "source": {
+      "doc": "e-catalog-SLIM panels (1).pdf",
+      "page": 1
+    },
     "order": 1
   },
   {
@@ -28,11 +71,58 @@
     "specs": [
       {
         "label": "Material",
-        "value": "white With PC Diffuser + PBT coated Aluminium housing"
+        "value": "PC diffuser + aluminium and PC white housing"
+      },
+      {
+        "label": "Series",
+        "value": "A55 | A60"
+      },
+      {
+        "label": "Power",
+        "value": "5W | 7W | 9W | 12W | 15W"
+      },
+      {
+        "label": "Luminous Flux",
+        "value": "400 lm | 560 lm | 720 lm | 960 lm | 1200 lm"
+      },
+      {
+        "label": "Light Source",
+        "value": "LED SMD2835"
+      },
+      {
+        "label": "CRI",
+        "value": ">80"
+      },
+      {
+        "label": "Power Factor",
+        "value": ">0.5"
+      },
+      {
+        "label": "Beam Angle",
+        "value": "200°"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "3000K-6500K"
+      },
+      {
+        "label": "Voltage",
+        "value": "220-240V"
+      },
+      {
+        "label": "Product Size",
+        "value": "55×98mm to 65×118mm"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP20"
       }
     ],
     "status": "published",
-    "sourcePage": 4,
+    "source": {
+      "doc": "SPARTAN bulbs.pdf",
+      "page": 1
+    },
     "order": 2
   },
   {
@@ -46,11 +136,46 @@
     "specs": [
       {
         "label": "Material",
-        "value": "glass tube + PC cover"
+        "value": "Glass tube + LED strip + PC cover"
+      },
+      {
+        "label": "Power",
+        "value": "10W | 20W | 30W"
+      },
+      {
+        "label": "Luminous Flux",
+        "value": "800 lm | 1600 lm | 3000 lm"
+      },
+      {
+        "label": "Input Voltage",
+        "value": "175-265V"
+      },
+      {
+        "label": "Power Factor",
+        "value": "0.5"
+      },
+      {
+        "label": "CRI",
+        "value": ">70"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "2700-6500K"
+      },
+      {
+        "label": "Dimensions",
+        "value": "26×604mm | 26×1198mm"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP20"
       }
     ],
     "status": "published",
-    "sourcePage": 4,
+    "source": {
+      "doc": "e-catalog-tube&battan (1).pdf",
+      "page": 1
+    },
     "order": 3
   },
   {
@@ -64,11 +189,50 @@
     "specs": [
       {
         "label": "Material",
-        "value": "Aluminium ring + iron back cover + P S Diffuser"
+        "value": "Aluminium ring + iron back cover + LED strip + PS diffuser"
+      },
+      {
+        "label": "Power",
+        "value": "48W | 80W"
+      },
+      {
+        "label": "Luminous Flux",
+        "value": "3200 lm | 5600 lm"
+      },
+      {
+        "label": "Input Voltage",
+        "value": "175-265V"
+      },
+      {
+        "label": "Power Factor",
+        "value": "0.5"
+      },
+      {
+        "label": "CRI",
+        "value": ">80"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "6500K"
+      },
+      {
+        "label": "Installation",
+        "value": "Recessed"
+      },
+      {
+        "label": "Dimensions",
+        "value": "595×595×30mm (48W) | 595×595×20mm (80W)"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP20"
       }
     ],
     "status": "published",
-    "sourcePage": 4,
+    "source": {
+      "doc": "e-catalog-panel light 80w.pdf",
+      "page": 1
+    },
     "order": 4
   },
   {
@@ -82,11 +246,50 @@
     "specs": [
       {
         "label": "Material",
-        "value": "Fe + PP IP20"
+        "value": "Fe + LED strip + PS"
+      },
+      {
+        "label": "Power",
+        "value": "18W | 36W"
+      },
+      {
+        "label": "Luminous Flux",
+        "value": "1300 lm | 2600 lm"
+      },
+      {
+        "label": "Input Voltage",
+        "value": "175-265V"
+      },
+      {
+        "label": "Power Factor",
+        "value": "0.5"
+      },
+      {
+        "label": "CRI",
+        "value": ">80"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "6500K"
+      },
+      {
+        "label": "Installation",
+        "value": "Surface mounted"
+      },
+      {
+        "label": "Dimensions",
+        "value": "600×64×23mm | 1200×64×23mm"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP20"
       }
     ],
     "status": "published",
-    "sourcePage": 4,
+    "source": {
+      "doc": "e-catalog-arc wall lamp.pdf",
+      "page": 1
+    },
     "order": 5
   },
   {
@@ -100,11 +303,50 @@
     "specs": [
       {
         "label": "Material",
-        "value": "Fe + PP IP20"
+        "value": "Fe + LED strip + PP"
+      },
+      {
+        "label": "Power",
+        "value": "18W"
+      },
+      {
+        "label": "Luminous Flux",
+        "value": "1200 lm"
+      },
+      {
+        "label": "Input Voltage",
+        "value": "175-265V"
+      },
+      {
+        "label": "Power Factor",
+        "value": "0.5"
+      },
+      {
+        "label": "CRI",
+        "value": ">80"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "6500K"
+      },
+      {
+        "label": "Installation",
+        "value": "Surface mounted"
+      },
+      {
+        "label": "Dimensions",
+        "value": "600×75×24mm"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP20"
       }
     ],
     "status": "published",
-    "sourcePage": 4,
+    "source": {
+      "doc": "e-catalog-arc wall lamp.pdf",
+      "page": 1
+    },
     "order": 6
   },
   {
@@ -118,11 +360,50 @@
     "specs": [
       {
         "label": "Material",
-        "value": "ABS + PS"
+        "value": "PC transparent diffuser + ABS grey housing + PC clips"
+      },
+      {
+        "label": "Lamp Type",
+        "value": "For T8 LED lamps"
+      },
+      {
+        "label": "Power",
+        "value": "1×9W | 2×9W | 2×18W"
+      },
+      {
+        "label": "Beam Angle",
+        "value": "110°"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "2700K-6500K"
+      },
+      {
+        "label": "Voltage",
+        "value": "AC 220-240V"
+      },
+      {
+        "label": "Housing Colour",
+        "value": "Grey"
+      },
+      {
+        "label": "Dimensions",
+        "value": "665×77.5×88.5mm | 665×120.5×88.5mm | 1265×120.5×88.5mm"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP65"
+      },
+      {
+        "label": "Impact Rating",
+        "value": "IK03"
       }
     ],
     "status": "published",
-    "sourcePage": 4,
+    "source": {
+      "doc": "SPARTAN D -catalog.pdf",
+      "page": 1
+    },
     "order": 7
   },
   {
@@ -135,16 +416,75 @@
     ],
     "specs": [
       {
-        "label": null,
-        "value": "Highbay lighting LED lights"
-      },
-      {
         "label": "Power",
         "value": "100W | 150W | 200W | 300W"
+      },
+      {
+        "label": "Luminous Efficacy",
+        "value": "150-180 lm/W"
+      },
+      {
+        "label": "LED Source",
+        "value": "Cree 3030 SMD"
+      },
+      {
+        "label": "LED Quantity",
+        "value": "168pcs | 224pcs | 322pcs"
+      },
+      {
+        "label": "LED Driver",
+        "value": "Meanwell or Sosen"
+      },
+      {
+        "label": "Input Voltage",
+        "value": "85-277V AC 50/60Hz"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "3000K | 4000K | 5000K | 6500K"
+      },
+      {
+        "label": "CRI",
+        "value": ">80"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP65"
+      },
+      {
+        "label": "Beam Angle",
+        "value": "60° | 90° | 120°"
+      },
+      {
+        "label": "Housing Colour",
+        "value": "Black | Grey | White"
+      },
+      {
+        "label": "Body Material",
+        "value": "Die-cast aluminium housing"
+      },
+      {
+        "label": "Working Life",
+        "value": ">22,000 hours"
+      },
+      {
+        "label": "Working Temperature",
+        "value": "-40°C to +70°C"
+      },
+      {
+        "label": "Gross Weight",
+        "value": "2.8kg | 3.8kg | 4.8kg"
+      },
+      {
+        "label": "Warranty",
+        "value": "2 years"
       }
     ],
     "status": "published",
-    "sourcePage": 5,
+    "source": {
+      "doc": "SPARTAN - HIGHBAY.pdf",
+      "page": 1
+    },
     "order": 8
   },
   {
@@ -157,16 +497,67 @@
     ],
     "specs": [
       {
-        "label": null,
-        "value": "Aluminium tempered glass cover"
+        "label": "Power",
+        "value": "50W | 150W | 300W | 400W | 1000W"
       },
       {
-        "label": null,
-        "value": "Good heat dissipation"
+        "label": "Luminous Efficacy",
+        "value": "120 lm/W"
+      },
+      {
+        "label": "LED Source",
+        "value": "Sanan 2835/3030"
+      },
+      {
+        "label": "LED Quantity",
+        "value": "72pcs | 252pcs | 468pcs | 648pcs | 1000pcs"
+      },
+      {
+        "label": "Input Voltage",
+        "value": "220V AC 50/60Hz"
+      },
+      {
+        "label": "Colour Temperature",
+        "value": "3000K | 4000K | 6500K"
+      },
+      {
+        "label": "CRI",
+        "value": ">80"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP65"
+      },
+      {
+        "label": "Beam Angle",
+        "value": "120°"
+      },
+      {
+        "label": "Housing Colour",
+        "value": "Black"
+      },
+      {
+        "label": "Body Material",
+        "value": "Die-cast aluminium housing"
+      },
+      {
+        "label": "Working Life",
+        "value": ">20,000 hours"
+      },
+      {
+        "label": "Working Temperature",
+        "value": "-20°C to +50°C"
+      },
+      {
+        "label": "Warranty",
+        "value": "2 years"
       }
     ],
     "status": "published",
-    "sourcePage": 5,
+    "source": {
+      "doc": "flood light catalog new.pdf",
+      "page": 1
+    },
     "order": 9
   },
   {
@@ -179,20 +570,51 @@
     ],
     "specs": [
       {
-        "label": "Material",
-        "value": "Die-cast Aluminium + IP66 Rated"
-      },
-      {
         "label": "Power",
         "value": "50W | 100W | 150W | 200W | 300W"
       },
       {
-        "label": "Panel",
+        "label": "Luminous Flux",
+        "value": "6,000 lm | 12,000 lm | 18,000 lm | 24,000 lm | 36,000 lm"
+      },
+      {
+        "label": "Battery Capacity",
+        "value": "3.2V 10Ah | 20Ah | 25Ah | 30Ah | 40Ah"
+      },
+      {
+        "label": "Solar Panel",
         "value": "6V 10W | 20W | 25W | 30W | 40W"
+      },
+      {
+        "label": "LED Type",
+        "value": "SMD 5730"
+      },
+      {
+        "label": "Material",
+        "value": "Die-cast aluminium + tempered glass"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP66"
+      },
+      {
+        "label": "Installation",
+        "value": "Wall mount | Pole mount"
+      },
+      {
+        "label": "Working Temperature",
+        "value": "-20°C to +60°C"
+      },
+      {
+        "label": null,
+        "value": "Supplied with remote control"
       }
     ],
     "status": "published",
-    "sourcePage": 5,
+    "source": {
+      "doc": "Spartan-Solar.pdf",
+      "page": 1
+    },
     "order": 10
   },
   {
@@ -218,7 +640,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 6,
+    "source": {
+      "doc": "brochure",
+      "page": 6
+    },
     "order": 1
   },
   {
@@ -231,16 +656,59 @@
     ],
     "specs": [
       {
-        "label": null,
-        "value": "CAT.6 UTP"
+        "label": "Item No.",
+        "value": "215102-1 | 215102-2"
       },
       {
-        "label": null,
-        "value": "Network cable indoor PVC"
+        "label": "Construction",
+        "value": "CAT.6 UTP, 4 pairs"
+      },
+      {
+        "label": "Conductor",
+        "value": "Bare solid copper, 23AWG"
+      },
+      {
+        "label": "Conductor Dimension",
+        "value": "0.565mm | 0.574mm"
+      },
+      {
+        "label": "Core Dimension",
+        "value": "1.03mm | 1.05mm"
+      },
+      {
+        "label": "Nominal OD",
+        "value": "6.3mm | 6.4mm"
+      },
+      {
+        "label": "Jacket",
+        "value": "PVC (PE or LSZH available), RoHS compliant"
+      },
+      {
+        "label": "Bandwidth",
+        "value": "250 MHz | 550 MHz"
+      },
+      {
+        "label": "Impedance",
+        "value": "100 ± 15 Ω"
+      },
+      {
+        "label": "Rated Temperature",
+        "value": "60°C | 75°C | 90°C"
+      },
+      {
+        "label": "Standards",
+        "value": "TIA/EIA-568B | ISO/IEC 11801"
+      },
+      {
+        "label": "Application",
+        "value": "100Base-TX | 1000Base-T Gigabit Ethernet | ATM"
       }
     ],
     "status": "published",
-    "sourcePage": 8,
+    "source": {
+      "doc": "Spartan CAT6 CATLOG.pdf",
+      "page": 1
+    },
     "order": 1
   },
   {
@@ -266,7 +734,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 10,
+    "source": {
+      "doc": "brochure",
+      "page": 10
+    },
     "order": 1
   },
   {
@@ -292,7 +763,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 10,
+    "source": {
+      "doc": "brochure",
+      "page": 10
+    },
     "order": 2
   },
   {
@@ -318,7 +792,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 10,
+    "source": {
+      "doc": "brochure",
+      "page": 10
+    },
     "order": 3
   },
   {
@@ -344,7 +821,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 10,
+    "source": {
+      "doc": "brochure",
+      "page": 10
+    },
     "order": 4
   },
   {
@@ -357,12 +837,75 @@
     ],
     "specs": [
       {
-        "label": null,
-        "value": "Aluminium die-cast, anti-rust treated, lubricant-oil rinsed, with Thermal Overload Protector (TOP)"
+        "label": "Models",
+        "value": "MP-40 | MP-158 | MP-185 | MP-208"
+      },
+      {
+        "label": "Rating",
+        "value": "0.37kW/0.5HP | 0.75kW/1.0HP | 1.1kW/1.5HP | 1.5kW/2.0HP, 1Ph"
+      },
+      {
+        "label": "Motor Body",
+        "value": "Aluminium die-cast"
+      },
+      {
+        "label": "Impeller",
+        "value": "Brass forged (MP-40) | SS 304 (MP-158) | CI ED-coated (MP-185, MP-208)"
+      },
+      {
+        "label": "Winding",
+        "value": "99.9% pure copper"
+      },
+      {
+        "label": "Shaft",
+        "value": "SS 410"
+      },
+      {
+        "label": "Voltage",
+        "value": "220 to 240V"
+      },
+      {
+        "label": "Frequency",
+        "value": "50 Hz"
+      },
+      {
+        "label": "Pipe Size",
+        "value": "1\"×1\" (MP-40, MP-158) | 2\"×2\" (MP-185, MP-208)"
+      },
+      {
+        "label": "Capacitor Value",
+        "value": "10 mfd | 20 mfd | 36 mfd | 50 mfd"
+      },
+      {
+        "label": "Max. Head Range",
+        "value": "30-38m | 28-32m | 16-18m | 18-20m"
+      },
+      {
+        "label": "Max. Current",
+        "value": "4.5A | 7.0-9.0A | 8.5-10.5A"
+      },
+      {
+        "label": "Temperature Range",
+        "value": "60°-90°C | 60°-95°C"
+      },
+      {
+        "label": "Castings",
+        "value": "Casing & bracket ED coated"
+      },
+      {
+        "label": "Rust Prevention",
+        "value": "Anti-rust preventive & lubricant oil rinsed"
+      },
+      {
+        "label": "Thermal Protection",
+        "value": "Thermal Overload Protector (TOP)"
       }
     ],
     "status": "published",
-    "sourcePage": 11,
+    "source": {
+      "doc": "SPARTAN PUMP TDS NEW.pdf",
+      "page": 1
+    },
     "order": 1
   },
   {
@@ -385,10 +928,21 @@
       {
         "label": "Frequency",
         "value": "50/60 Hz"
+      },
+      {
+        "label": "Max. Operating Temperature",
+        "value": "60°C"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP67"
       }
     ],
     "status": "published",
-    "sourcePage": 11,
+    "source": {
+      "doc": "CATALOGUE - SPARTAN - PUMP CONTROLLER AND FLOAT SWITCH.pdf",
+      "page": 1
+    },
     "order": 2
   },
   {
@@ -410,11 +964,38 @@
       },
       {
         "label": "Maximum Intensity",
-        "value": "10 A-1.1 kW"
+        "value": "10A - 1.1 kW"
+      },
+      {
+        "label": "Starting Pressure",
+        "value": "1.5 bar"
+      },
+      {
+        "label": "Maximum Pressure",
+        "value": "10 bar"
+      },
+      {
+        "label": "Connecting Threads",
+        "value": "G 1 - ISO 228"
+      },
+      {
+        "label": "Operating Temperature",
+        "value": "0-60°C"
+      },
+      {
+        "label": "IP Rating",
+        "value": "IP65"
+      },
+      {
+        "label": "Warranty",
+        "value": "1 year"
       }
     ],
     "status": "published",
-    "sourcePage": 11,
+    "source": {
+      "doc": "CATALOGUE - SPARTAN - PUMP CONTROLLER AND FLOAT SWITCH.pdf",
+      "page": 2
+    },
     "order": 3
   },
   {
@@ -436,7 +1017,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 13,
+    "source": {
+      "doc": "brochure",
+      "page": 13
+    },
     "order": 1
   },
   {
@@ -458,7 +1042,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 13,
+    "source": {
+      "doc": "brochure",
+      "page": 13
+    },
     "order": 2
   },
   {
@@ -484,7 +1071,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 13,
+    "source": {
+      "doc": "brochure",
+      "page": 13
+    },
     "order": 3
   },
   {
@@ -506,7 +1096,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 13,
+    "source": {
+      "doc": "brochure",
+      "page": 13
+    },
     "order": 4
   },
   {
@@ -532,7 +1125,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 13,
+    "source": {
+      "doc": "brochure",
+      "page": 13
+    },
     "order": 5
   },
   {
@@ -558,7 +1154,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 13,
+    "source": {
+      "doc": "brochure",
+      "page": 13
+    },
     "order": 6
   },
   {
@@ -584,7 +1183,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 14,
+    "source": {
+      "doc": "brochure",
+      "page": 14
+    },
     "order": 1
   },
   {
@@ -606,7 +1208,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 14,
+    "source": {
+      "doc": "brochure",
+      "page": 14
+    },
     "order": 2
   },
   {
@@ -628,7 +1233,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 14,
+    "source": {
+      "doc": "brochure",
+      "page": 14
+    },
     "order": 3
   },
   {
@@ -650,7 +1258,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 14,
+    "source": {
+      "doc": "brochure",
+      "page": 14
+    },
     "order": 4
   },
   {
@@ -672,7 +1283,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 14,
+    "source": {
+      "doc": "brochure",
+      "page": 14
+    },
     "order": 5
   },
   {
@@ -694,7 +1308,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 14,
+    "source": {
+      "doc": "brochure",
+      "page": 14
+    },
     "order": 6
   },
   {
@@ -716,7 +1333,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 15,
+    "source": {
+      "doc": "brochure",
+      "page": 15
+    },
     "order": 1
   },
   {
@@ -738,7 +1358,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 15,
+    "source": {
+      "doc": "brochure",
+      "page": 15
+    },
     "order": 2
   },
   {
@@ -756,7 +1379,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 15,
+    "source": {
+      "doc": "brochure",
+      "page": 15
+    },
     "order": 3
   },
   {
@@ -782,7 +1408,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 15,
+    "source": {
+      "doc": "brochure",
+      "page": 15
+    },
     "order": 4
   },
   {
@@ -812,7 +1441,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 15,
+    "source": {
+      "doc": "brochure",
+      "page": 15
+    },
     "order": 5
   },
   {
@@ -838,7 +1470,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 15,
+    "source": {
+      "doc": "brochure",
+      "page": 15
+    },
     "order": 6
   },
   {
@@ -860,7 +1495,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 15,
+    "source": {
+      "doc": "brochure",
+      "page": 15
+    },
     "order": 7
   },
   {
@@ -890,7 +1528,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 16,
+    "source": {
+      "doc": "brochure",
+      "page": 16
+    },
     "order": 1,
     "en388": {
       "abrasion": "4",
@@ -927,7 +1568,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 16,
+    "source": {
+      "doc": "brochure",
+      "page": 16
+    },
     "order": 2,
     "en388": {
       "abrasion": "3",
@@ -964,7 +1608,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 16,
+    "source": {
+      "doc": "brochure",
+      "page": 16
+    },
     "order": 3,
     "en388": {
       "abrasion": "4",
@@ -1001,7 +1648,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 16,
+    "source": {
+      "doc": "brochure",
+      "page": 16
+    },
     "order": 4,
     "en388": {
       "abrasion": "4",
@@ -1042,7 +1692,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 17,
+    "source": {
+      "doc": "brochure",
+      "page": 17
+    },
     "order": 5,
     "en388": {
       "abrasion": "4",
@@ -1079,7 +1732,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 17,
+    "source": {
+      "doc": "brochure",
+      "page": 17
+    },
     "order": 6,
     "en388": {
       "abrasion": "2",
@@ -1124,7 +1780,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 17,
+    "source": {
+      "doc": "brochure",
+      "page": 17
+    },
     "order": 7
   },
   {
@@ -1158,7 +1817,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 17,
+    "source": {
+      "doc": "brochure",
+      "page": 17
+    },
     "order": 8
   },
   {
@@ -1188,7 +1850,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 18,
+    "source": {
+      "doc": "brochure",
+      "page": 18
+    },
     "order": 9
   },
   {
@@ -1214,7 +1879,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 18,
+    "source": {
+      "doc": "brochure",
+      "page": 18
+    },
     "order": 10
   },
   {
@@ -1244,7 +1912,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 18,
+    "source": {
+      "doc": "brochure",
+      "page": 18
+    },
     "order": 11
   },
   {
@@ -1274,7 +1945,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 19,
+    "source": {
+      "doc": "brochure",
+      "page": 19
+    },
     "order": 1
   },
   {
@@ -1304,7 +1978,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 19,
+    "source": {
+      "doc": "brochure",
+      "page": 19
+    },
     "order": 2
   },
   {
@@ -1334,7 +2011,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 19,
+    "source": {
+      "doc": "brochure",
+      "page": 19
+    },
     "order": 3
   },
   {
@@ -1360,7 +2040,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 19,
+    "source": {
+      "doc": "brochure",
+      "page": 19
+    },
     "order": 4
   },
   {
@@ -1390,7 +2073,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 19,
+    "source": {
+      "doc": "brochure",
+      "page": 19
+    },
     "order": 1
   },
   {
@@ -1420,7 +2106,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 19,
+    "source": {
+      "doc": "brochure",
+      "page": 19
+    },
     "order": 2
   },
   {
@@ -1450,7 +2139,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 20,
+    "source": {
+      "doc": "brochure",
+      "page": 20
+    },
     "order": 1
   },
   {
@@ -1484,7 +2176,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 20,
+    "source": {
+      "doc": "brochure",
+      "page": 20
+    },
     "order": 2
   },
   {
@@ -1518,7 +2213,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 20,
+    "source": {
+      "doc": "brochure",
+      "page": 20
+    },
     "order": 3
   },
   {
@@ -1552,7 +2250,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 20,
+    "source": {
+      "doc": "brochure",
+      "page": 20
+    },
     "order": 4
   },
   {
@@ -1586,7 +2287,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 20,
+    "source": {
+      "doc": "brochure",
+      "page": 20
+    },
     "order": 5
   },
   {
@@ -1624,7 +2328,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 20,
+    "source": {
+      "doc": "brochure",
+      "page": 20
+    },
     "order": 6
   },
   {
@@ -1654,7 +2361,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 21,
+    "source": {
+      "doc": "brochure",
+      "page": 21
+    },
     "order": 7
   },
   {
@@ -1684,7 +2394,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 21,
+    "source": {
+      "doc": "brochure",
+      "page": 21
+    },
     "order": 8
   },
   {
@@ -1714,7 +2427,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 23,
+    "source": {
+      "doc": "brochure",
+      "page": 23
+    },
     "order": 1
   },
   {
@@ -1744,7 +2460,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 23,
+    "source": {
+      "doc": "brochure",
+      "page": 23
+    },
     "order": 2
   },
   {
@@ -1774,7 +2493,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 23,
+    "source": {
+      "doc": "brochure",
+      "page": 23
+    },
     "order": 3
   },
   {
@@ -1804,7 +2526,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 23,
+    "source": {
+      "doc": "brochure",
+      "page": 23
+    },
     "order": 4
   },
   {
@@ -1838,7 +2563,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 23,
+    "source": {
+      "doc": "brochure",
+      "page": 23
+    },
     "order": 5
   },
   {
@@ -1868,7 +2596,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 23,
+    "source": {
+      "doc": "brochure",
+      "page": 23
+    },
     "order": 6
   },
   {
@@ -1894,7 +2625,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 24,
+    "source": {
+      "doc": "brochure",
+      "page": 24
+    },
     "order": 7
   },
   {
@@ -1916,7 +2650,10 @@
       }
     ],
     "status": "published",
-    "sourcePage": 24,
+    "source": {
+      "doc": "brochure",
+      "page": 24
+    },
     "order": 8
   },
   {
@@ -1946,7 +2683,400 @@
       }
     ],
     "status": "published",
-    "sourcePage": 24,
+    "source": {
+      "doc": "brochure",
+      "page": 24
+    },
     "order": 9
+  },
+  {
+    "slug": "industrial-exhaust-fan-standard",
+    "name": "Industrial Exhaust Fan",
+    "variantLabel": "Standard",
+    "categoryId": "fans",
+    "images": [
+      "ds-exhaust-fan-standard.png"
+    ],
+    "specs": [
+      {
+        "label": "Size",
+        "value": "8\" | 10\" | 12\" | 14\" | 16\" | 18\" | 20\" | 24\""
+      },
+      {
+        "label": "Power",
+        "value": "40W to 350W"
+      },
+      {
+        "label": "Voltage",
+        "value": "220V/50Hz | 380V/50Hz"
+      },
+      {
+        "label": "Revolution",
+        "value": "1400 rpm"
+      },
+      {
+        "label": "Air Volume",
+        "value": "780 to 7200 m3/min"
+      },
+      {
+        "label": "Noise",
+        "value": "50 to 77 dB(A)"
+      },
+      {
+        "label": "Series",
+        "value": "FA Series square industrial exhaust fan"
+      },
+      {
+        "label": "Models",
+        "value": "FAD20-4 | FAD25-4 | FAD30-4 | FAD35-4 | FAD40-4 | FAS40-4 | FAD45-4 | FAS45-4 | FAD50-4 | FAS50-4 | FAD60-4 | FAS60-4"
+      },
+      {
+        "label": null,
+        "value": "Structural parts in high quality punching steel"
+      },
+      {
+        "label": null,
+        "value": "Ball bearing motor for long service life"
+      },
+      {
+        "label": null,
+        "value": "CAD optimised blade — strong air volume, low noise"
+      },
+      {
+        "label": null,
+        "value": "Suitable for ventilation in factories, offices, hotels and residences"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "SPARTAN - EXHAUST FAN.pdf",
+      "page": 3
+    },
+    "order": 5
+  },
+  {
+    "slug": "industrial-exhaust-fan-grill",
+    "name": "Industrial Exhaust Fan",
+    "variantLabel": "Front and back grill",
+    "categoryId": "fans",
+    "images": [
+      "ds-exhaust-fan-grill.png"
+    ],
+    "specs": [
+      {
+        "label": "Size",
+        "value": "10\" | 12\" | 14\" | 16\" | 20\""
+      },
+      {
+        "label": "Power",
+        "value": "40W to 250W"
+      },
+      {
+        "label": "Voltage",
+        "value": "220V/50Hz | 380V/50Hz"
+      },
+      {
+        "label": "Revolution",
+        "value": "1400 rpm"
+      },
+      {
+        "label": "Air Volume",
+        "value": "840 to 5100 m3/min"
+      },
+      {
+        "label": "Noise",
+        "value": "52 to 70 dB(A)"
+      },
+      {
+        "label": "Series",
+        "value": "FA Series square industrial exhaust fan with front and back grill"
+      },
+      {
+        "label": "Models",
+        "value": "FAD25-4 | FAD30-4 | FAD35-4 | FAD40-4 | FAS40-4 | FAD50-4 | FAS50-4"
+      },
+      {
+        "label": null,
+        "value": "Structural parts in high quality punching steel"
+      },
+      {
+        "label": null,
+        "value": "Ball bearing motor for long service life"
+      },
+      {
+        "label": null,
+        "value": "CAD optimised blade — strong air volume, low noise"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "SPARTAN - EXHAUST FAN.pdf",
+      "page": 4
+    },
+    "order": 6
+  },
+  {
+    "slug": "industrial-exhaust-fan-shutter",
+    "name": "Industrial Exhaust Fan",
+    "variantLabel": "With shutter",
+    "categoryId": "fans",
+    "images": [
+      "ds-exhaust-fan-shutter.png"
+    ],
+    "specs": [
+      {
+        "label": "Size",
+        "value": "10\" | 12\" | 14\" | 16\" | 20\""
+      },
+      {
+        "label": "Power",
+        "value": "40W to 250W"
+      },
+      {
+        "label": "Voltage",
+        "value": "220V/50Hz | 380V/50Hz"
+      },
+      {
+        "label": "Revolution",
+        "value": "1400 rpm"
+      },
+      {
+        "label": "Air Volume",
+        "value": "840 to 5100 m3/min"
+      },
+      {
+        "label": "Noise",
+        "value": "52 to 70 dB(A)"
+      },
+      {
+        "label": "Series",
+        "value": "FA Series square industrial exhaust fan with shutter"
+      },
+      {
+        "label": "Models",
+        "value": "FAD25-4 | FAD30-4 | FAD35-4 | FAD40-4 | FAS40-4 | FAD50-4 | FAS50-4"
+      },
+      {
+        "label": null,
+        "value": "Structural parts in high quality punching steel"
+      },
+      {
+        "label": null,
+        "value": "Ball bearing motor for long service life"
+      },
+      {
+        "label": null,
+        "value": "CAD optimised blade — strong air volume, low noise"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "SPARTAN - EXHAUST FAN.pdf",
+      "page": 4
+    },
+    "order": 7
+  },
+  {
+    "slug": "industrial-stand-fan",
+    "name": "Industrial Stand Fan",
+    "variantLabel": null,
+    "categoryId": "fans",
+    "images": [
+      "ds-industrial-stand-fan.png"
+    ],
+    "specs": [
+      {
+        "label": "Size",
+        "value": "20\" | 24\" | 26\" | 30\""
+      },
+      {
+        "label": "Power",
+        "value": "130W | 170W | 187W | 240W"
+      },
+      {
+        "label": "Voltage",
+        "value": "220V/50Hz | 110V/60Hz"
+      },
+      {
+        "label": "Revolution",
+        "value": "1400 rpm (220V) | 1700 rpm (110V)"
+      },
+      {
+        "label": "Air Volume",
+        "value": "130 | 195 | 220 | 302 m3/min"
+      },
+      {
+        "label": "Noise",
+        "value": "62 | 70 | 70 | 73 dB(A)"
+      },
+      {
+        "label": "Series",
+        "value": "FA Series powerful industrial stand fan (economic type)"
+      },
+      {
+        "label": "Models",
+        "value": "FA50T | FA60T | FA65T | FA75T"
+      },
+      {
+        "label": null,
+        "value": "Three speeds, chroming or powder coating guard, two or three blades"
+      },
+      {
+        "label": null,
+        "value": "Pitch angle adjustable for a large wind covering area"
+      },
+      {
+        "label": null,
+        "value": "5 speeds with adjustable oscillation angle"
+      },
+      {
+        "label": null,
+        "value": "Overload protection fitted"
+      },
+      {
+        "label": null,
+        "value": "Suitable for cooling and ventilation in factories, workshops and warehouses"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "SPARTAN - STAND FAN AND WALL FAN.pdf",
+      "page": 3
+    },
+    "order": 8
+  },
+  {
+    "slug": "industrial-wall-fan",
+    "name": "Industrial Wall Fan",
+    "variantLabel": null,
+    "categoryId": "fans",
+    "images": [
+      "ds-industrial-wall-fan.png"
+    ],
+    "specs": [
+      {
+        "label": "Size",
+        "value": "20\" | 24\" | 26\" | 30\""
+      },
+      {
+        "label": "Power",
+        "value": "130W | 170W | 187W | 240W"
+      },
+      {
+        "label": "Voltage",
+        "value": "220V/50Hz | 110V/60Hz"
+      },
+      {
+        "label": "Revolution",
+        "value": "1400 rpm (220V) | 1700 rpm (110V)"
+      },
+      {
+        "label": "Air Volume",
+        "value": "130 | 195 | 220 | 302 m3/min"
+      },
+      {
+        "label": "Noise",
+        "value": "62 | 70 | 70 | 73 dB(A)"
+      },
+      {
+        "label": "Series",
+        "value": "FA Series powerful industrial wall fan (economic type)"
+      },
+      {
+        "label": "Models",
+        "value": "FA50T/FA50TW | FA60T/FA60TW | FA65T/FA65TW | FA75T/FA75TW"
+      },
+      {
+        "label": null,
+        "value": "Stable performance, safe and hard wearing"
+      },
+      {
+        "label": null,
+        "value": "Three speeds, chroming or powder coating guard, two or three blades"
+      },
+      {
+        "label": null,
+        "value": "Pitch angle adjustable for a large wind covering area"
+      },
+      {
+        "label": null,
+        "value": "Overload protection fitted"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "SPARTAN - STAND FAN AND WALL FAN.pdf",
+      "page": 4
+    },
+    "order": 9
+  },
+  {
+    "slug": "mist-fan",
+    "name": "Mist Fan",
+    "variantLabel": null,
+    "categoryId": "fans",
+    "images": [
+      "ds-mist-fan.png"
+    ],
+    "specs": [
+      {
+        "label": "Size",
+        "value": "650mm (26\") | 750mm (30\")"
+      },
+      {
+        "label": "Power",
+        "value": "187W | 240W"
+      },
+      {
+        "label": "Voltage",
+        "value": "220V/50Hz | 110V/60Hz"
+      },
+      {
+        "label": "Revolution",
+        "value": "1400 rpm (220V) | 1700 rpm (110V)"
+      },
+      {
+        "label": "Air Volume",
+        "value": "210 | 230 m3/min"
+      },
+      {
+        "label": "Noise",
+        "value": "70 | 74 dB(A)"
+      },
+      {
+        "label": "Water Tank Capacity",
+        "value": "40L | 60L"
+      },
+      {
+        "label": "Series",
+        "value": "MFS Series mist fan (economic type)"
+      },
+      {
+        "label": "Models",
+        "value": "MFS 26 | MFS 30 | MFS26L | MFS30L"
+      },
+      {
+        "label": null,
+        "value": "Centrifugal atomisation, no nozzle and no water-filtration equipment needed"
+      },
+      {
+        "label": null,
+        "value": "3 speeds with adjustable misting volume"
+      },
+      {
+        "label": null,
+        "value": "Atomisation and air delivery run on separate motors for easier maintenance"
+      },
+      {
+        "label": null,
+        "value": "Suitable for livestock farms, greenhouses, gymnasiums and gardens"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "SPARTAN - MIST FAN.pdf",
+      "page": 3
+    },
+    "order": 10
   }
 ]

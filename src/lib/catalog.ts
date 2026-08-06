@@ -98,7 +98,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
   return products.filter(
     (p) =>
       p.name.toLowerCase().includes(q) ||
-      // variantLabel is null on 56 of 72 products.
+      // variantLabel is null on most products.
       (p.variantLabel?.toLowerCase().includes(q) ?? false) ||
       p.specs.some((s) => s.value.toLowerCase().includes(q)),
   );

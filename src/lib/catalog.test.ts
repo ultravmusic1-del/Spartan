@@ -30,8 +30,8 @@ describe('catalog repository', () => {
     expect(c.every((x) => x.divisionId === 'electricals')).toBe(true);
   });
 
-  it('returns all 72 products', async () => {
-    expect(await getProducts()).toHaveLength(72);
+  it('returns all 78 products', async () => {
+    expect(await getProducts()).toHaveLength(78);
   });
 
   it('filters products by category', async () => {
@@ -39,7 +39,9 @@ describe('catalog repository', () => {
   });
 
   it('filters products by division across its categories', async () => {
-    expect(await getProducts({ divisionId: 'electricals' })).toHaveLength(19);
+    // Electricals is 19 brochure products + 6 industrial fans from the
+    // datasheets. Safety is untouched by that work.
+    expect(await getProducts({ divisionId: 'electricals' })).toHaveLength(25);
     expect(await getProducts({ divisionId: 'safety' })).toHaveLength(53);
   });
 

@@ -15,7 +15,7 @@ interface Props {
 /**
  * EnquiryButton — adds one product to the basket.
  *
- * Hydrated with `client:visible`, so a page of 72 cards does not pay for 72
+ * Hydrated with `client:visible`, so a full page of cards does not pay for as many
  * islands before they are scrolled to.
  *
  * Two things are deliberately not left to colour alone. The confirmation

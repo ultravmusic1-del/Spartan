@@ -45,7 +45,7 @@ export const enquiryPayloadSchema = z.object({
   /**
    * Empty is legitimate: a buyer can arrive at /enquiry with nothing collected
    * and send a general enquiry. 200 lines is far beyond any real RFQ against a
-   * 72-product catalogue and exists only to bound the request.
+   * catalogue as it stands and exists only to bound the request.
    */
   items: z.array(enquiryItemSchema).max(200),
   /**

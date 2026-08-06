@@ -1,6 +1,6 @@
 /**
  * EN 388 is the European standard for gloves offering mechanical protection.
- * Six of the 72 products carry a printed rating; the other 66 have none, and a
+ * Six products carry a printed rating; every other one has none, and a
  * missing rating must read as missing rather than as a default.
  *
  * The five levels always appear in this fixed order on the pictogram, so the
