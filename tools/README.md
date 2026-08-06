@@ -10,7 +10,7 @@ brochure is revised — output is committed, so a normal build never runs these.
 There is a fourth script for the per-family datasheet PDFs, which are a
 different kind of source and are handled differently:
 
-    node tools/extract-datasheets.mjs [--verify] [--only <substring>]
+    node tools/extract-datasheets.mjs [--only <substring>]
 
 ## Why `extract-datasheets` is separate
 
@@ -36,9 +36,12 @@ Two things it does that the brochure pipeline does not need:
   Untrimmed, that padding is what gets scaled to fit the card's 150px media box,
   leaving the product a quarter of its proper size.
 
-`--verify` refuses any cutout that came out fully opaque, which is what a lost
-clip looks like. Entries select their image by native pixel dimensions rather
-than draw order, so a re-run cannot silently grab a different picture.
+Every run refuses any cutout that came out fully opaque, which is what a lost
+clip looks like, or empty, which is what a dropped render looks like. Those
+checks are unconditional — there is no flag to skip them. Entries select their
+image by native pixel dimensions rather than draw order, so a re-run cannot
+silently grab a different picture; where several images share a size, `nth`
+counts left-to-right across the page, not in draw order.
 
 ## Two things that will silently break if changed
 

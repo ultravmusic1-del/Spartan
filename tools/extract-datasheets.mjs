@@ -18,10 +18,11 @@
  *
  * SCALE IS PINNED TO THE SOURCE. Each entry renders at the scale that maps the
  * placed rectangle back to the image's own pixel dimensions, so nothing is ever
- * upscaled. `--verify` reports the result and refuses anything that came out
- * fully opaque, which is what a lost clip looks like.
+ * upscaled. Every run refuses anything that came out fully opaque, which is
+ * what a lost clip looks like, or empty, which is what a dropped render looks
+ * like. Those checks are unconditional — there is no flag to skip them.
  *
- *   node tools/extract-datasheets.mjs [--verify] [--only <substring>]
+ *   node tools/extract-datasheets.mjs [--only <substring>]
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -53,15 +54,21 @@ const MANIFEST = [
   { pdf: 'SPARTAN - MIST FAN.pdf', page: 3, pick: '730x922', out: 'ds-mist-fan.png' },
 
   // --- Portable blower (SHT series) --------------------------------------
-  // Three views at 615x922 on this page; nth:3 is the "with A type support
-  // feet" shot, the only one that reads as a complete product at card size.
+  // Three views at 615x922, cascading left-to-right (placed x = -32, 154, 347).
+  // The sheet captions them 8"-14", 16"-24" and "With A type support feet" at
+  // x = 110, 299, 462 — all real text in the PDF's text layer. nth is spatial,
+  // so nth:3 is the rightmost, the A-type-support-feet shot.
   { pdf: 'SPARTAN -PVT -FAN.pdf', page: 3, pick: '615x922', nth: 3, out: 'ds-portable-blower.png' },
 ];
 
 const args = process.argv.slice(2);
-const VERIFY = args.includes('--verify');
 const onlyIx = args.indexOf('--only');
 const ONLY = onlyIx >= 0 ? args[onlyIx + 1] : null;
+
+/** A cutout at or above this is a rectangle: the clip was lost. */
+const LOST_CLIP_OPAQUE = 0.995;
+/** A cutout at or below this is blank: the render produced nothing. */
+const EMPTY_RENDER_OPAQUE = 0.005;
 
 mkdirSync(OUT_DIR, { recursive: true });
 
@@ -80,14 +87,23 @@ function imagesOnPage(page) {
 
 /** Fraction of pixels that are fully opaque — a lost clip pushes this to ~1. */
 function opaqueFraction(pix) {
-  const d = pix.getPixels();
-  const n = pix.getNumberOfComponents() + (pix.getAlpha() ? 1 : 0);
   if (!pix.getAlpha()) return 1;
+  const d = pix.getPixels();
+  // getNumberOfComponents() is pix->n, which ALREADY counts alpha: an RGBA
+  // pixmap reports 4, not 3. Adding 1 stepped the buffer by 5 and read R/G/B
+  // bytes 4 samples in 5. Against these sheets' #000 bed that made a fully
+  // lost clip measure ~26% and pass the 99.5% guard — the black-box check was
+  // decorative. Measured on a clip-dropped render: 26.5% before, 100.0% after.
+  const n = pix.getNumberOfComponents();
   let opaque = 0;
   let total = 0;
   for (let i = n - 1; i < d.length; i += n) {
     total++;
-    if (d[i] === 255) opaque++;
+    // >= 250, not === 255: this PDF's soft mask quantises the subject to
+    // 250-254, which made a good blower cutout report 0.4%. Broadening only
+    // raises the fraction, so the lost-clip guard gets strictly more
+    // sensitive, never less — a lost clip is alpha exactly 255 either way.
+    if (d[i] >= 250) opaque++;
   }
   return total ? opaque / total : 1;
 }
@@ -102,7 +118,12 @@ for (const entry of MANIFEST) {
   const page = doc.loadPage(entry.page - 1);
   const images = imagesOnPage(page);
 
-  const matches = images.filter((im) => im.px === entry.pick);
+  const matches = images
+    .filter((im) => im.px === entry.pick)
+    // Spatial, not display-list, order: `pick` exists because draw order is
+    // opaque, and `nth` would otherwise reinstate exactly that. Left-to-right
+    // then top-to-bottom matches how the sheets caption their variants.
+    .sort((a, b) => a.bbox[0] - b.bbox[0] || a.bbox[1] - b.bbox[1]);
   const target = matches[(entry.nth ?? 1) - 1];
   if (!target) {
     problems.push(`${entry.out}: no image ${entry.pick}#${entry.nth ?? 1} on ${entry.pdf} p${entry.page} (found ${images.map((i) => i.px).join(', ')})`);
@@ -133,8 +154,12 @@ for (const entry of MANIFEST) {
   const pix = renderImagesOnly(page, box, scale, [{ bbox: target.bbox }]);
   const frac = opaqueFraction(pix);
 
-  if (frac > 0.995) {
+  if (frac > LOST_CLIP_OPAQUE) {
     problems.push(`${entry.out}: ${(frac * 100).toFixed(1)}% opaque — the clip was lost, this would render as a black box`);
+    continue;
+  }
+  if (frac < EMPTY_RENDER_OPAQUE) {
+    problems.push(`${entry.out}: ${(frac * 100).toFixed(1)}% opaque — the render came out empty, nothing was drawn`);
     continue;
   }
 
@@ -163,4 +188,3 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(`\n${written} cutouts written to ${OUT_DIR}`);
-if (VERIFY) console.log('All rendered with partial transparency — no black boxes.');
