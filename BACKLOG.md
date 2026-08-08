@@ -107,8 +107,7 @@ see `handoff.md`). Priorities are P0 highest.
 - [x] **Add `vercel.json` with security headers and long-cache rules.** Done —
       see Done below.
 
-- [ ] **Add CI.** No `.github/` exists. 146 tests that only run when somebody
-      remembers. A workflow running `npm run verify -- --full` on push is enough.
+- [x] **Add CI.** Done — see Done below.
 
 - [ ] **Analytics and error monitoring.** Zero references anywhere in `src/`.
       A lead-generation site with no measurement of the funnel it exists to
@@ -153,6 +152,18 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-09** — Added `.github/workflows/verify.yml`. Runs
+  `npm run verify -- --full` — the identical command a developer runs and the
+  one `/improve` requires before committing — on every push and PR, so CI
+  cannot drift from what people actually run, and any gate added to
+  `tools/verify.mjs` arrives in CI for free. Chromium only (both Playwright
+  projects use it), report uploaded on failure, superseded runs cancelled.
+
+  Verified by running the exact CI sequence locally from a clean
+  `npm ci`: 10/10 gates, 137 e2e. That mattered — `npm ci` re-runs the install
+  that npm 11 blocks scripts for, and had `allowScripts` not covered esbuild,
+  CI would have failed on its first step with the binary missing.
 
 - **2026-08-09** — Added search to the catalogue filter bar. `searchProducts()`
   had been written and tested since Task 5 and called from nowhere.
