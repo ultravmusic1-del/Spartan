@@ -10,6 +10,13 @@ import CatalogueFilters, {
   type FilterDivision,
 } from '../../components/catalog/CatalogueFilters.tsx';
 import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+/*
+ * The same rule `searchProducts` uses, baked into each card's `data-search` at
+ * build time. The island searches the DOM rather than calling the repository,
+ * so this is how it gets the server's definition of "matches" instead of a
+ * second one that can drift from it.
+ */
+import { productSearchText } from '../../lib/search';
 
 /**
  * The whole catalogue on one page: all 15 categories and all 72 products are
@@ -117,19 +124,48 @@ const rows = products.map((product) => {
         <ul class="cat__grid" data-product-grid>
           {
             rows.map(({ product, categorySlug, division }) => (
-              <li data-product data-division={division} data-category={categorySlug}>
+              <li
+                data-product
+                data-division={division}
+                data-category={categorySlug}
+                data-search={productSearchText(product)}
+              >
                 <ProductCard product={product} />
               </li>
             ))
           }
         </ul>
 
-        {/* Only reachable by filtering to one of the two expanding ranges. */}
+        {/*
+          Two empty states, because an empty result means two different things
+          and only one of them is about Spartan's range.
+
+          Reached by filtering to one of the two expanding ranges: the range is
+          real and the products are not published yet.
+        */}
         <div class="cat__none" data-product-none hidden>
           <p class="cat__none-title">No products in this range yet.</p>
           <p class="cat__none-note">
             Contact us for current availability and lead times — we can quote against your
             specification while the published range catches up.
+          </p>
+          <div class="cat__none-action">
+            <SolidButton href="/enquiry">Send an enquiry</SolidButton>
+          </div>
+        </div>
+
+        {/*
+          Reached by a search that matched nothing. Saying "no products in this
+          range yet" here would be a claim about the catalogue when the honest
+          statement is about the search term — and it would tell a buyer the
+          range is empty when it is not.
+        */}
+        <div class="cat__none" data-product-none-search hidden>
+          <p class="cat__none-title">Nothing matches that search.</p>
+          <p class="cat__none-note">
+            Search covers product names and their printed specifications. Try a shorter term, or
+            browse by category above — and if you cannot find it, ask us: we source beyond the
+            published catalogue.
           </p>
           <div class="cat__none-action">
             <SolidButton href="/enquiry">Send an enquiry</SolidButton>
@@ -372,6 +408,37 @@ const rows = products.map((product) => {
     font-family: var(--font-body);
     font-size: 14px;
     color: #fff;
+  }
+
+  /* Matches .cf__select exactly — same surface, border, type and 44px minimum.
+     The two sit side by side and any difference between them reads as one of
+     them being broken. */
+  .cf__search {
+    min-width: 250px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    padding: 11px 14px;
+    background: #0b0b0e;
+    border: 1px solid var(--color-line);
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: #fff;
+  }
+
+  /* The mockup's #5C5C64 placeholder measures 3.2:1 on this field background,
+     below AA. --color-grey is 4.6:1 here — the same substitution the footer and
+     the contact form make. */
+  .cf__search::placeholder {
+    color: var(--color-grey);
+  }
+
+  /* Safari draws its own clear button and it inherits none of this. Left alone
+     it is a light glyph on a near-black field at the wrong size; the field is
+     already clearable from the keyboard with Escape and by the bar's own
+     "Clear filters" control. */
+  .cf__search::-webkit-search-cancel-button {
+    filter: invert(1) opacity(0.55);
   }
 
   .cf__status {

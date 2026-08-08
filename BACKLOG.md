@@ -93,11 +93,16 @@ see `handoff.md`). Priorities are P0 highest.
 
 - [x] **Add `/catalogue` to the primary navigation.** Done — see Done below.
 
-- [ ] **Build the search UI.** `searchProducts()` is implemented and tested in
-      `src/lib/catalog.ts:94` and called from **nowhere**. 72 products across 15
-      categories with no search box. The function exists; this is a UI task.
-      Follow `CatalogueFilters.tsx` for the island pattern and its pending-state
-      class (never the `hidden` attribute — see `handoff.md` §7).
+- [x] **Build the search UI.** Done — see Done below.
+
+- [ ] **Consider surfacing search outside `/catalogue`.** It now lives in the
+      catalogue filter bar, which is the right home for it, but a buyer on a
+      product page or the home page has no search affordance — they have to know
+      to go to `/catalogue` first. A header search would need real thought: the
+      nav row already measured 55px of clearance at 1081px with 7 items, so
+      there is no room for an inline field, and a toggle/overlay is a new
+      interaction pattern for this design. Not obviously worth it — raise with
+      the client before building.
 
 - [x] **Add `vercel.json` with security headers and long-cache rules.** Done —
       see Done below.
@@ -148,6 +153,34 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-09** — Added search to the catalogue filter bar. `searchProducts()`
+  had been written and tested since Task 5 and called from nowhere.
+
+  The matching rule moved to `src/lib/search.ts` and is now shared:
+  `searchProducts` uses it server-side, and the page bakes the same string into
+  each card's `data-search` at build time so the island applies the identical
+  test in the browser. Two implementations would drift, and a product findable
+  one way but not the other reads to a buyer as missing stock. Search combines
+  with the division and category filters rather than replacing them, and
+  narrows the DOM already on the page — nothing is fetched, so the page stays
+  complete for a crawler and with JavaScript off.
+
+  A second empty state was needed: "No products in this range yet" is a claim
+  about Spartan's catalogue and is wrong for a search miss, which is a
+  statement about the term. 9 unit + 8 e2e added; verify 10/10, 137 e2e.
+
+  *Worth knowing:* the fields are joined with `\n`, not a space, so a query
+  cannot span two of them — joined with a space, "muff abs" would match a
+  product named "Ear Muff" whose first spec began "ABS", a hit no single field
+  makes. There is a test for exactly that.
+
+  *Worth knowing:* two of the new e2e assertions were silently useless at
+  first. Waiting on "the safety-helmets card is visible" settles instantly
+  because it is already true of the unfiltered 72, so the count read afterwards
+  was still 72 — it passed when run alone and failed in the full suite. When
+  waiting for a filter to apply, assert something **false before it applies**:
+  the status line changing, or a sibling product having *disappeared*.
 
 - **2026-08-09** — Added `vercel.json`: CSP, HSTS, X-Content-Type-Options,
   Referrer-Policy, Permissions-Policy, X-Frame-Options, COOP/CORP, plus

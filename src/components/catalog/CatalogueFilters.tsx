@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { searchTextMatches } from '../../lib/search';
 
 export interface FilterDivision {
   slug: string;
@@ -50,8 +51,10 @@ export default function CatalogueFilters({ divisions, categories, total }: Props
   const [ready, setReady] = useState(false);
   const [division, setDivision] = useState('');
   const [category, setCategory] = useState('');
+  const [query, setQuery] = useState('');
   const [shown, setShown] = useState(total);
   const rootRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setReady(true), []);
 
@@ -62,7 +65,12 @@ export default function CatalogueFilters({ divisions, categories, total }: Props
     for (const li of document.querySelectorAll<HTMLElement>('[data-product]')) {
       const match =
         (division === '' || li.dataset.division === division) &&
-        (category === '' || li.dataset.category === category);
+        (category === '' || li.dataset.category === category) &&
+        // `data-search` carries the same text `searchProducts` would build,
+        // written at build time — see src/lib/search.ts. An empty box narrows
+        // nothing, which is why the emptiness is tested here and not inside
+        // `searchTextMatches`.
+        (query.trim() === '' || searchTextMatches(li.dataset.search ?? '', query));
       li.hidden = !match;
       if (match) visible += 1;
     }
@@ -86,16 +94,26 @@ export default function CatalogueFilters({ divisions, categories, total }: Props
       grid.style.setProperty('--cols-md', String(Math.min(Math.max(visible, 1), 3)));
       grid.style.setProperty('--cols-sm', String(Math.min(Math.max(visible, 1), 2)));
     }
+    /*
+     * Two empty states, and which one is right depends on why the result is
+     * empty. A search that matches nothing is a statement about the term; an
+     * empty category is a statement about the range. Showing the range message
+     * for a failed search would tell a buyer the catalogue is empty when it is
+     * not, so the search message wins whenever there is a query.
+     */
+    const searching = query.trim() !== '';
     const none = document.querySelector<HTMLElement>('[data-product-none]');
-    if (none) none.hidden = visible > 0;
+    if (none) none.hidden = visible > 0 || searching;
+    const noneSearch = document.querySelector<HTMLElement>('[data-product-none-search]');
+    if (noneSearch) noneSearch.hidden = visible > 0 || !searching;
 
     setShown(visible);
-  }, [ready, division, category]);
+  }, [ready, division, category, query]);
 
   // Categories are offered within the chosen division only, so the two controls
   // cannot be combined into an empty result.
   const options = division ? categories.filter((c) => c.divisionSlug === division) : categories;
-  const filtered = division !== '' || category !== '';
+  const filtered = division !== '' || category !== '' || query.trim() !== '';
 
   const onDivision = (slug: string) => {
     setDivision(slug);
@@ -105,7 +123,12 @@ export default function CatalogueFilters({ divisions, categories, total }: Props
   const reset = () => {
     setDivision('');
     setCategory('');
-    rootRef.current?.querySelector<HTMLElement>('input')?.focus();
+    setQuery('');
+    // Focus the search box by ref rather than "the first input in the bar".
+    // That used to be the All-divisions radio and is now the search field, and
+    // a reset that moves focus somewhere different depending on markup order is
+    // the kind of thing that changes silently.
+    searchRef.current?.focus();
   };
 
   return (
@@ -117,6 +140,32 @@ export default function CatalogueFilters({ divisions, categories, total }: Props
        shift, CLS 0.042. It stays an attribute on the list items below, where
        `display: none` is exactly what is wanted. */
     <div class={ready ? 'cf' : 'cf cf--pending'} ref={rootRef}>
+      <div class="cf__group cf__group--search">
+        <label class="cf__legend" for="cf-search">
+          Search
+        </label>
+        {/*
+          `type="search"`, not `type="text"`: it gives the platform clear
+          control and the Escape-to-clear behaviour buyers already expect, at no
+          cost. There is no submit — this narrows what is already on the page as
+          you type, so a form would imply a round trip that does not happen.
+
+          Not debounced. The whole corpus is 72 `data-search` strings already in
+          the DOM and the test is `String.includes`; the work per keystroke is
+          too small to be worth the delay a debounce would add.
+        */}
+        <input
+          id="cf-search"
+          ref={searchRef}
+          class="cf__search"
+          type="search"
+          value={query}
+          placeholder="Name, size, material…"
+          autocomplete="off"
+          onInput={(e) => setQuery((e.currentTarget as HTMLInputElement).value)}
+        />
+      </div>
+
       <fieldset class="cf__group">
         <legend class="cf__legend">Division</legend>
         <div class="cf__radios">

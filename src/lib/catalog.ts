@@ -17,6 +17,7 @@ import { getCollection } from 'astro:content';
 // instance (v4) the schemas in content.config.ts are built with.
 import type { z } from 'astro/zod';
 import type { productSchema, categorySchema, divisionSchema } from '../content.config';
+import { matchesQuery } from './search';
 
 export type Division = z.infer<typeof divisionSchema>;
 export type Product = z.infer<typeof productSchema>;
@@ -86,20 +87,14 @@ export async function getRelatedProducts(slug: string, limit = 4): Promise<Produ
  * Case-insensitive substring match over a product's name, variant label and
  * spec values. Deliberately not fuzzy, tokenised or ranked.
  *
- * `variantLabel` is searched because it is the only field distinguishing
- * otherwise near-identical variants: the two ear muffs differ solely by
- * "NRR 25dB" vs "NRR 20dB", which appears nowhere in their name or specs, so
- * without it those products are unreachable by the terms buyers actually use.
+ * The rule itself lives in `src/lib/search.ts`, because the catalogue page's
+ * filter island needs the same one and runs in the browser against text baked
+ * into the DOM rather than against these records. Two implementations would
+ * drift, and a product findable by one route and not the other reads to a buyer
+ * as missing stock.
  */
 export async function searchProducts(query: string): Promise<Product[]> {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
+  if (!query.trim()) return [];
   const products = await publishedProducts();
-  return products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      // variantLabel is null on 56 of 72 products.
-      (p.variantLabel?.toLowerCase().includes(q) ?? false) ||
-      p.specs.some((s) => s.value.toLowerCase().includes(q)),
-  );
+  return products.filter((p) => matchesQuery(p, query));
 }
