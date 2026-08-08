@@ -124,6 +124,7 @@ function bodyFor(payload: EnquiryPayload): string {
     `Email:    ${payload.email}`,
     `Phone:    ${payload.phone || '—'}`,
     `Country:  ${payload.country || '—'}`,
+    `Division: ${payload.division || '—'}`,
     '',
     'MESSAGE',
     payload.message || '—',

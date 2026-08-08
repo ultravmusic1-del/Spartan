@@ -21,7 +21,11 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P0 — losing leads right now
 
-- [ ] **Wire the three inert forms to `/api/enquiry`.**
+- [x] **Wire the inert enquiry forms to `/api/enquiry`.** Done for the home CTA
+      and the /contact form — see Done below. The footer field was split out as
+      its own item (next) because it is a newsletter subscribe, not an enquiry,
+      and wiring it to an RFQ endpoint would misrepresent what the buyer asked
+      for. Original note kept below for context.
       `src/components/sections/EnquiryCta.astro:45`, `src/pages/contact.astro:97`,
       `src/components/layout/Footer.astro:82` all carry the comment *"No endpoint
       until Task 14"*. Task 14 shipped. `/api/enquiry` exists, works, and already
@@ -36,6 +40,29 @@ see `handoff.md`). Priorities are P0 highest.
       the existing `EnquiryForm.tsx` already models this correctly — copy its
       pending/ready gate and its error handling rather than inventing a second
       pattern.
+
+- [ ] **Decide what the footer email field is for.** `Footer.astro:82`, on all 97
+      pages, still `onsubmit="return false"`. It is labelled *Enter email
+      address* with a Submit button — a newsletter subscribe, not an enquiry.
+      Three reasons it was not wired alongside the other two:
+      1. There is no newsletter infrastructure of any kind in the repo.
+      2. `enquiryPayloadSchema` requires a name; an email-only submit cannot
+         satisfy it without weakening a bound the /enquiry form depends on.
+      3. Posting it to `/api/enquiry` would send sales an RFQ from someone who
+         believed they were subscribing to a mailing list. That is the same
+         class of error as claiming an enquiry was sent when it was not.
+      **Needs a human decision**, and the honest default is removal — a control
+      that cannot do what it says is worse than no control. Options: remove it;
+      relabel it as "send me the catalogue" and wire it to `/api/enquiry` with a
+      marker; or add a real mailing-list integration.
+
+- [ ] **Confirm the Name field added to the home CTA.** Wiring the CTA required
+      one: `enquiryPayloadSchema` requires a name and the form collected only
+      company, division and email, so every submission would have failed
+      validation. The alternative was relaxing that bound for every caller
+      including /enquiry, where it is required, tested and correct. This is a
+      visible change to the approved design (`design/direction-b-forge.html`
+      shows three fields, the form now has four) and a person should sign it off.
 
 - [ ] **Footer social icons link nowhere.** Three `href="#"` on all 97 pages
       (`Footer.astro`). Either the client supplies URLs or the icons come out.
@@ -132,4 +159,16 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## Done
 
-Nothing yet. Append here with the date and the commit, newest first.
+- **2026-08-08** — Wired the home CTA and the /contact form to `/api/enquiry`.
+  Both were `type="button"` inside a form whose `onsubmit` returned false, so a
+  buyer could complete the Contact page and press Send with no request, no
+  error and no message. Added `division` to `enquiryPayloadSchema` (optional,
+  defaults empty) and to the email body rather than dropping the field the two
+  forms collect. Behaviour is a shared progressive-enhancement script,
+  `src/scripts/quick-enquiry.ts`, not a Preact island — an island would have
+  meant moving both forms' scoped CSS out of their components for no gain, and
+  no zod on the client keeps the home page (least Lighthouse headroom on the
+  site) from carrying a duplicate of a check the server already makes.
+  `delivered: false` is reported as recorded-not-sent, never as success.
+  Submit controls are `html[data-js]`-gated with a real fallback route.
+  3 unit tests + 10 e2e across both projects; verify 8/8, 93 e2e passing.

@@ -10,12 +10,20 @@ import { getDivisions } from '../lib/catalog';
 /**
  * Contact.
  *
- * THE FORM IS PRESENTATIONAL. `/api/enquiry` does not exist until Task 14, so
- * there is no action and no method; the submit is `type="button"` inside a form
- * whose `onsubmit` returns false, which means Enter in a field cannot navigate
- * either. It must never show a success message — telling someone their enquiry
- * was sent when nothing was sent is worse than an inert control. Same
- * arrangement as EnquiryCta and the footer newsletter field.
+ * THE FORM SUBMITS TO `/api/enquiry`. It was presentational until that endpoint
+ * existed; it no longer is. Behaviour lives in `src/scripts/quick-enquiry.ts`,
+ * shared with the home page CTA — see that file for why it enhances this markup
+ * in place rather than becoming a Preact island.
+ *
+ * It must never show a success message for an enquiry that was not delivered:
+ * the endpoint returns `delivered: false` while the client's Resend credentials
+ * are absent, and that outcome is reported differently and plainly. Telling
+ * someone their enquiry was sent when nothing was sent is worse than an inert
+ * control.
+ *
+ * The submit control is gated on `html[data-js]` — without JavaScript there is
+ * no way to post this form, so it is not shown and the contact details in the
+ * left column are the route instead.
  *
  * Every field has a real, visible <label> tied to it by id, and the division
  * options come from the catalogue rather than being typed in twice.
@@ -92,15 +100,25 @@ const details = [
           </div>
         </div>
 
-        <!-- No endpoint until Task 14. This form must not navigate and must not
-             claim to have sent anything. -->
-        <form class="cf2" onsubmit="return false" aria-labelledby="cf2-title">
+        <form
+          class="cf2"
+          data-enquiry-form
+          data-enquiry-email={site.email}
+          aria-labelledby="cf2-title"
+        >
           <h2 class="cb__h2" id="cf2-title">General enquiry</h2>
 
           <div class="cf2__row">
             <div class="cf2__field">
               <label for="c-name">Name</label>
-              <input id="c-name" name="name" type="text" autocomplete="name" placeholder="Your name" />
+              <input
+                id="c-name"
+                name="name"
+                type="text"
+                autocomplete="name"
+                placeholder="Your name"
+                required
+              />
             </div>
 
             <div class="cf2__field">
@@ -124,6 +142,7 @@ const details = [
                 type="email"
                 autocomplete="email"
                 placeholder="you@company.com"
+                required
               />
             </div>
 
@@ -150,14 +169,36 @@ const details = [
               placeholder="What are you looking for?"></textarea>
           </div>
 
+          {/* Honeypot. Hidden from sight, from assistive technology and from the
+              tab order, so no real user can reach it — a value means a script
+              filled every input it found. Not the `hidden` attribute: Tailwind
+              4's preflight marks `[hidden]` `display:none!important`, which
+              puts it in the group bots skip. */}
+          <div class="cf2__hp" aria-hidden="true">
+            <label for="c-website">Website</label>
+            <input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off" value="" />
+          </div>
+
+          <p class="cf2__status" data-enquiry-status role="status" aria-live="polite"></p>
+
           {/* Sized through a wrapper this file owns. A Tailwind class handed to
               SolidButton would sit in `@layer utilities` and lose to its own
               unlayered scoped styles — and `mt-*` would additionally lose to
               global.css's unlayered `* { margin: 0 }`. */}
           <div class="cf2__submit">
-            <SolidButton type="button">Send enquiry</SolidButton>
+            <SolidButton type="submit">Send enquiry</SolidButton>
           </div>
+
+          <p class="cf2__nojs">
+            Sending this form needs JavaScript. Please email
+            <a href={mailHref}>{site.email}</a> or call <a href={telHref}>{site.phone}</a>.
+          </p>
         </form>
+
+        <script>
+          import { initQuickEnquiry } from '../scripts/quick-enquiry';
+          initQuickEnquiry();
+        </script>
       </div>
     </section>
   </main>
@@ -300,8 +341,67 @@ const details = [
     color: var(--color-grey);
   }
 
+  /* Honeypot. Off-screen rather than `display: none`, which the cruder bots
+     know to skip, and out of the tab order and the accessibility tree via
+     `tabindex="-1"` and `aria-hidden` in the markup. Matches `.ef-hp`. */
+  .cf2__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* Empty until the script says something, and it must not reserve space while
+     empty — a permanent blank line above the button reads as a rendering fault.
+     `:empty` collapses it without the `hidden` attribute, which Tailwind 4's
+     preflight would make `!important` and unstyleable. */
+  .cf2__status {
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-grey-lt);
+  }
+
+  .cf2__status:empty {
+    display: none;
+  }
+
+  /* `.cf2` is --color-card, where brand red measures 4.23:1 and fails AA for
+     normal text. Small red text on a dark surface uses the light red
+     (4.62:1) — handoff.md §3. */
+  .cf2[data-state='error'] .cf2__status {
+    color: var(--color-red-light);
+  }
+
+  /* Two states, and they are different on purpose. Without JavaScript there is
+     no way to post this form, so the submit control is not shown at all and the
+     `.cf2__nojs` line takes its place; a button that cannot work is worse than
+     no button. `data-js` is set before <body> renders, so neither state
+     flashes. */
   .cf2__submit {
+    display: none;
     margin-top: 6px;
+  }
+
+  html[data-js] .cf2__submit {
+    display: block;
+  }
+
+  .cf2__nojs {
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-grey-lt);
+  }
+
+  .cf2__nojs a {
+    color: var(--color-red-light);
+    text-decoration: underline;
+  }
+
+  html[data-js] .cf2__nojs {
+    display: none;
   }
 
   /* The button belongs to SolidButton, so this has to be :global — and it wins

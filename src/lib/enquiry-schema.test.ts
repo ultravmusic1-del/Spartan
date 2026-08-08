@@ -33,6 +33,25 @@ describe('enquiryPayloadSchema', () => {
     expect(() => enquiryPayloadSchema.parse({ ...valid, items: [] })).not.toThrow();
   });
 
+  /*
+   * The compact forms on the home page and /contact send a division; the full
+   * /enquiry form does not, because its product list already says which
+   * divisions are involved. Both shapes have to parse, and an unrecognised
+   * value must not cost the enquiry — the field is routing information for a
+   * human, not a lookup.
+   */
+  it('defaults division to empty when the form does not send one', () => {
+    expect(enquiryPayloadSchema.parse(valid).division).toBe('');
+  });
+
+  it('keeps a division the compact forms send', () => {
+    expect(enquiryPayloadSchema.parse({ ...valid, division: 'safety' }).division).toBe('safety');
+  });
+
+  it('accepts a division it does not recognise rather than losing the enquiry', () => {
+    expect(() => enquiryPayloadSchema.parse({ ...valid, division: 'both' })).not.toThrow();
+  });
+
   it('rejects more than 200 items', () => {
     const items = Array.from({ length: 201 }, (_, i) => ({
       slug: `s${i}`,

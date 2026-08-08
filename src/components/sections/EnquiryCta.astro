@@ -9,17 +9,25 @@ import { getDivisions } from '../../lib/catalog';
  * EnquiryCta — the mockup's `.cta` block. Copy on the left, a compact form
  * card on the right.
  *
- * THE FORM IS PRESENTATIONAL. `/api/enquiry` does not exist until Task 14, so
- * there is no action, no method and no submit handler: the button is
- * `type="button"` inside a form whose `onsubmit` returns false, which means
- * Enter in a field cannot navigate either. It must never show a success
- * message — claiming an enquiry was sent when nothing was sent is worse than
- * an inert control. This mirrors the footer newsletter field, which is inert
- * for the same reason.
+ * THE FORM SUBMITS TO `/api/enquiry`. It was presentational until that endpoint
+ * existed; it no longer is. Behaviour lives in `src/scripts/quick-enquiry.ts`,
+ * shared with the general enquiry form on /contact — see that file for why it
+ * enhances this markup in place rather than becoming a Preact island.
+ *
+ * It must never show a success message for an enquiry that was not delivered.
+ * The endpoint returns `delivered: false` while the client's Resend credentials
+ * are absent, and the script reports that outcome differently.
+ *
+ * The submit control is gated on `html[data-js]`: without JavaScript there is
+ * no way to post this form, so the button is not shown at all and a line
+ * pointing at the enquiry page takes its place. A control that does nothing is
+ * worse than no control.
  *
  * Every field has a real, visible <label> tied to it by id, and the division
  * options come from the catalogue rather than being typed in twice.
  */
+import site from '../../data/site.json';
+
 const divisions = await getDivisions();
 ---
 
@@ -40,9 +48,19 @@ const divisions = await getDivisions();
       </div>
     </div>
 
-    <!-- No endpoint until Task 14. This form must not navigate and must not
-         claim to have sent anything. -->
-    <form class="cta__box" onsubmit="return false">
+    <form class="cta__box" data-enquiry-form data-enquiry-email={site.email}>
+      {/*
+        Not in the original mockup, which collected company, division and email
+        only. `enquiryPayloadSchema` requires a name, and the alternative was to
+        relax that bound for every caller — including the full /enquiry form,
+        where it is required, asserted by a test, and correct. One field here is
+        a smaller change than weakening a shared contract.
+      */}
+      <div class="cta__field">
+        <label for="cta-name">Name</label>
+        <input id="cta-name" name="name" type="text" autocomplete="name" placeholder="Your name" required />
+      </div>
+
       <div class="cta__field">
         <label for="cta-company">Company</label>
         <input
@@ -70,17 +88,40 @@ const divisions = await getDivisions();
           type="email"
           autocomplete="email"
           placeholder="you@company.com"
+          required
         />
       </div>
+
+      {/* Honeypot. Hidden from sight, from assistive technology and from the
+          tab order, so no real user can reach it — a value means a script
+          filled every input it found. Not the `hidden` attribute: Tailwind 4's
+          preflight marks `[hidden]` `display:none!important`, which puts it in
+          the group bots skip. */}
+      <div class="cta__hp" aria-hidden="true">
+        <label for="cta-website">Website</label>
+        <input id="cta-website" name="website" type="text" tabindex="-1" autocomplete="off" value="" />
+      </div>
+
+      <p class="cta__status" data-enquiry-status role="status" aria-live="polite"></p>
 
       {/* Sized through a wrapper this component owns. A Tailwind class handed
           to SolidButton would sit in `@layer utilities` and lose to its own
           unlayered scoped styles — and `mt-*` would additionally lose to
           global.css's unlayered `* { margin: 0 }`. */}
       <div class="cta__submit">
-        <SolidButton type="button">Send enquiry</SolidButton>
+        <SolidButton type="submit">Send enquiry</SolidButton>
       </div>
+
+      <p class="cta__nojs">
+        Sending this form needs JavaScript. <a href="/enquiry">Open the enquiry page</a> or email
+        <a href={`mailto:${site.email}`}>{site.email}</a>.
+      </p>
     </form>
+
+    <script>
+      import { initQuickEnquiry } from '../../scripts/quick-enquiry';
+      initQuickEnquiry();
+    </script>
   </div>
 </section>
 
@@ -99,6 +140,54 @@ const divisions = await getDivisions();
     grid-template-columns: 1.15fr 0.85fr;
     gap: 60px;
     align-items: center;
+  }
+
+  /* Honeypot. Off-screen rather than `display: none`, which the cruder bots
+     know to skip, and out of the tab order and the accessibility tree via
+     `tabindex="-1"` and `aria-hidden` in the markup. Matches `.ef-hp`. */
+  .cta__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* Empty until the script says something, and it must not reserve space while
+     empty — an always-present blank line under the last field reads as a
+     rendering fault. `:empty` collapses it without the `hidden` attribute,
+     which Tailwind 4's preflight would make `!important` and unstyleable. */
+  .cta__status {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-grey-lt);
+  }
+
+  .cta__status:empty {
+    display: none;
+  }
+
+  /* Small text on a dark card, so the light red — brand red measures 4.23:1
+     here and fails AA for normal text (handoff.md §3). */
+  .cta__box[data-state='error'] .cta__status {
+    color: var(--color-red-light);
+  }
+
+  .cta__nojs {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-grey-lt);
+  }
+
+  .cta__nojs a {
+    color: var(--color-red-light);
+    text-decoration: underline;
+  }
+
+  html[data-js] .cta__nojs {
+    display: none;
   }
 
   .cta__title {
@@ -159,8 +248,18 @@ const divisions = await getDivisions();
     color: var(--color-grey);
   }
 
+  /* Two states, and they are different on purpose. Without JavaScript there is
+     no way to post this form, so the submit control is not shown at all and the
+     `.cta__nojs` line takes its place; a button that cannot work is worse than
+     no button. `data-js` is set before <body> renders, so neither state
+     flashes. */
   .cta__submit {
+    display: none;
     margin-top: 6px;
+  }
+
+  html[data-js] .cta__submit {
+    display: block;
   }
 
   /* The button belongs to SolidButton, so this has to be :global — and it wins

@@ -41,6 +41,16 @@ export const enquiryPayloadSchema = z.object({
   email: z.string().trim().max(254).pipe(z.email('Please enter a valid email address')),
   phone: z.string().trim().max(40).default(''),
   country: z.string().trim().max(80).default(''),
+  /**
+   * Which division the buyer is asking about, from the compact forms on the
+   * home page and /contact. Free text rather than an enum keyed on the two
+   * division slugs: the value is routing information for a human reading the
+   * email, not a lookup, and a schema that rejects an unrecognised division
+   * would lose the whole enquiry over a field nobody needs to be right. The
+   * full /enquiry form omits it — the product list already says which
+   * divisions are involved — so it defaults to empty and stays optional.
+   */
+  division: z.string().trim().max(80).default(''),
   message: z.string().trim().max(4000).default(''),
   /**
    * Empty is legitimate: a buyer can arrive at /enquiry with nothing collected
