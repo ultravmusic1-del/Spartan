@@ -77,9 +77,26 @@ const year = new Date().getFullYear();
         </div>
       </div>
 
-      <!-- No endpoint until Task 14: this must not navigate and must not
-           pretend to have subscribed anyone. -->
-      <form class="f-form" onsubmit="return false">
+      <!--
+        A <div>, not a <form>, and that is the whole mechanism keeping it inert.
+
+        This is a newsletter subscribe with no mailing list behind it, and what
+        it should become is an open question (see BACKLOG.md) — it must not
+        navigate and must not pretend to have subscribed anyone in the meantime.
+        It used to hold that line with `onsubmit="return false"`, an inline
+        event handler, which was the single thing on the site making a strict
+        `script-src` impossible: it appeared on all 97 pages and inline handlers
+        need `'unsafe-inline'` or `'unsafe-hashes'` to run.
+
+        Removing the element rather than the attribute is what makes it safe.
+        `type="button"` alone would not: a form with a single text input submits
+        on Enter whether or not it has a submit button, so the field would have
+        navigated to a URL carrying the address in a query string. With no form
+        element there is nothing to submit, with or without JavaScript.
+
+        The class stays `.f-form`, so not one line of the scoped CSS changes.
+      -->
+      <div class="f-form">
         <label class="sr-only" for="footer-email">Email address</label>
         <input
           id="footer-email"
@@ -105,7 +122,7 @@ const year = new Date().getFullYear();
             <path d="m9 5 7 7-7 7"></path>
           </svg>
         </button>
-      </form>
+      </div>
     </div>
   </div>
 

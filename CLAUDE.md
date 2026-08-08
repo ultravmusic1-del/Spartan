@@ -42,11 +42,18 @@ bold alone does not make text large. Measured ratios for every pair are in
 ```bash
 npm run verify            # typecheck, unit tests, invariants, build, output sweeps
 npm run verify -- --full  # ... and the Playwright e2e suite
+npm run csp               # regenerate vercel.json's CSP hashes after a build
 ```
 
 `npm run verify` is the gate. It enforces the admin seam, the catalogue's shape,
-and that no price or rating ever reaches structured data. **Never weaken a gate
-to make it pass.**
+that no price or rating ever reaches structured data, and that the CSP still
+covers every inline script the build emits. **Never weaken a gate to make it
+pass.**
+
+`script-src` is hash-based with no `'unsafe-inline'`, so **any new inline script
+needs `npm run csp` re-run and `vercel.json` committed.** A stale hash does not
+fail the build — it ships a site that renders and never hydrates. Never add an
+inline event handler (`onclick=`, `onsubmit=`); they cannot be hashed.
 
 Stop the dev server before any e2e run — Playwright attaches to whatever is
 already on :4321 instead of building, which produces confident, unrelated

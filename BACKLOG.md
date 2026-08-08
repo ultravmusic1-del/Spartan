@@ -41,9 +41,13 @@ see `handoff.md`). Priorities are P0 highest.
       pending/ready gate and its error handling rather than inventing a second
       pattern.
 
-- [ ] **Decide what the footer email field is for.** `Footer.astro:82`, on all 97
-      pages, still `onsubmit="return false"`. It is labelled *Enter email
-      address* with a Submit button — a newsletter subscribe, not an enquiry.
+- [ ] **Decide what the footer email field is for.** Still inert on all 97
+      pages. It is labelled *Enter email address* with a Submit button — a
+      newsletter subscribe, not an enquiry.
+      *(Its `onsubmit="return false"` is gone: it was the only inline event
+      handler on the site and blocked a hash-based `script-src`. It is now a
+      `<div>` rather than a `<form>`, which keeps it inert with and without
+      JavaScript and decides nothing about its future.)*
       Three reasons it was not wired alongside the other two:
       1. There is no newsletter infrastructure of any kind in the repo.
       2. `enquiryPayloadSchema` requires a name; an email-only submit cannot
@@ -95,15 +99,8 @@ see `handoff.md`). Priorities are P0 highest.
       Follow `CatalogueFilters.tsx` for the island pattern and its pending-state
       class (never the `hidden` attribute — see `handoff.md` §7).
 
-- [ ] **Add `vercel.json` with security headers and long-cache rules.**
-      Nothing emits CSP, HSTS, X-Content-Type-Options, Referrer-Policy or
-      Permissions-Policy today. A CSP is unusually cheap here because the site
-      loads **no third-party scripts at all** — but it must allow the inline
-      `is:inline` bootstrap in `BaseLayout.astro` and Astro's island scripts.
-      Same file fixes caching: only `/_astro/` gets `immutable`, so 84 KB of
-      preloaded fonts and **2.9 MB of hero video** in `public/` are revalidated
-      on every visit. Verify the CSP against a real page load before committing —
-      a CSP that breaks hydration is worse than none.
+- [x] **Add `vercel.json` with security headers and long-cache rules.** Done —
+      see Done below.
 
 - [ ] **Add CI.** No `.github/` exists. 146 tests that only run when somebody
       remembers. A workflow running `npm run verify -- --full` on push is enough.
@@ -151,6 +148,32 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-09** — Added `vercel.json`: CSP, HSTS, X-Content-Type-Options,
+  Referrer-Policy, Permissions-Policy, X-Frame-Options, COOP/CORP, plus
+  year-long immutable caching for `/fonts/` and `/video/` (2.9 MB of hero video
+  and 84 KB of preloaded fonts were revalidated on every visit — only
+  `/_astro/` had a cache rule).
+
+  `script-src` is **hash-based, not `'unsafe-inline'`**. Measured first: 172
+  distinct inline scripts in the output, but only **7 are executable** — the
+  rest are JSON-LD data blocks, which browsers do not execute. 7 is small
+  enough to hash. `tools/csp.mjs` derives them from the build (`npm run csp`)
+  and a verify gate re-derives and fails on drift, because a stale hash does
+  not fail the build — it ships and the site never hydrates.
+
+  `tests/preview-server.mjs` now applies vercel.json's header rules, which is
+  what makes any of this testable: a preview serving no policy cannot show that
+  the policy breaks the site. 20 e2e added, including a real hydration and a
+  real enquiry POST under the live policy. verify 10/10, 129 e2e passing.
+
+  *Worth knowing:* the blocker was the footer's `onsubmit="return false"` —
+  the site's only inline event handler, on all 97 pages, and inline handlers
+  need `'unsafe-inline'` or `'unsafe-hashes'`. It is now a `<div>` not a
+  `<form>`. Removing the element rather than the attribute is what makes it
+  safe: a form with a single text input submits on Enter whether or not it has
+  a submit button, so `type="button"` alone would have let it navigate with the
+  address in a query string.
 
 - **2026-08-09** — Replaced `public/robots.txt` with `src/pages/robots.txt.ts`,
   which derives the `Sitemap:` URL from `Astro.site` at build time. The domain

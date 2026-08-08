@@ -12,6 +12,7 @@
     "astro": "astro",
     "test": "vitest run",
     "verify": "node tools/verify.mjs",
+    "csp": "node tools/csp.mjs --write",
     "normalise": "node tools/normalise-products.mjs",
     "extract:catalog": "node tools/extract-catalog.mjs",
     "extract:logo": "node tools/extract-logo.mjs",
