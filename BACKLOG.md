@@ -89,12 +89,7 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P1 — discoverability and hardening
 
-- [ ] **Add `/catalogue` to the primary navigation.** `Header.astro:40` reads
-      Home · About · Electricals · Safety · Industries · Contact. The catalogue
-      index of a catalogue site is not in the nav on desktop or mobile
-      (`MobileNav.tsx` takes the same array). From a product page or About there
-      is no persistent route to the full range. Highest value per line changed on
-      this list.
+- [x] **Add `/catalogue` to the primary navigation.** Done — see Done below.
 
 - [ ] **Build the search UI.** `searchProducts()` is implemented and tested in
       `src/lib/catalog.ts:94` and called from **nowhere**. 72 products across 15
@@ -158,6 +153,21 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-09** — Added Catalogue to the primary navigation, heading the three
+  product-browsing routes. `NavItem` gained an optional `section` prefix and a
+  shared `isCurrentNavItem()` so the desktop menu and the mobile panel cannot
+  disagree about which link is lit; Catalogue lights on all 15 category pages
+  but takes `aria-current="page"` only on the index itself. Product pages light
+  nothing — they sit at `/products/…` and their breadcrumb already says where
+  they are. Measured at 1081px, the narrowest width the desktop menu is shown
+  at: 55px clearance either side, no overflow. 10 e2e added (first coverage the
+  primary nav has had); verify 8/8, 103 e2e passing.
+
+  *Worth knowing:* a bare `/* … */` comment between JSX attributes parses as
+  attributes. `astro build` succeeded and all 103 e2e passed with `is`, `not`
+  and `and` being emitted into the markup — only `astro check` caught it. Put
+  explanatory comments above the `return`, never between attributes.
 
 - **2026-08-08** — Wired the home CTA and the /contact form to `/api/enquiry`.
   Both were `type="button"` inside a form whose `onsubmit` returned false, so a

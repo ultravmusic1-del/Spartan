@@ -3,6 +3,28 @@ import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 export interface NavItem {
   href: string;
   label: string;
+  /**
+   * Path prefix this item also owns, for links that head a section rather than
+   * naming a single page. Catalogue is the only one: `/catalogue` is the index
+   * and the 15 category pages live beneath it, so an exact-match-only rule
+   * would leave the nav unmarked on 15 of the 16 pages the item covers.
+   *
+   * Product pages are deliberately NOT included — they live at `/products/…`
+   * and reach the catalogue through their breadcrumb, which already says where
+   * they sit.
+   */
+  section?: string;
+}
+
+/**
+ * Whether a nav item is the page you are on, or the section you are in.
+ * Shared by the desktop menu in Header.astro and the panel below, so the two
+ * can never disagree about which link is lit.
+ */
+export function isCurrentNavItem(item: NavItem, current: string | undefined): boolean {
+  if (!current) return false;
+  if (current === item.href) return true;
+  return item.section ? current.startsWith(`${item.section}/`) : false;
 }
 
 interface Props {
@@ -133,13 +155,18 @@ export default function MobileNav({ items, current }: Props) {
           </div>
           <nav class="mnav-list" aria-label="Primary">
             {items.map((i) => {
-              const isCurrent = current === i.href;
+              const isCurrent = isCurrentNavItem(i, current);
+              // `aria-current="page"` only for an exact match. On a category
+              // page the Catalogue link is lit, because that is the section you
+              // are in, but it is not the page you are on — and saying otherwise
+              // would tell a screen reader the user is somewhere they are not.
+              const isPage = current === i.href;
               return (
                 <a
                   key={i.href}
                   href={i.href}
                   class={isCurrent ? 'mnav-link mnav-link--on' : 'mnav-link'}
-                  aria-current={isCurrent ? 'page' : undefined}
+                  aria-current={isPage ? 'page' : undefined}
                 >
                   {i.label}
                 </a>
