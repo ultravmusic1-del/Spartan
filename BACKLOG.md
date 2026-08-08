@@ -70,16 +70,14 @@ see `handoff.md`). Priorities are P0 highest.
       no icon — and leave `sameAs` correspondingly absent from
       `organizationJsonLd`. This is a build decision, not a client one.
 
-- [ ] **Replace `public/robots.txt` with `src/pages/robots.txt.ts`.**
-      The domain has to match `site` in `astro.config.mjs` and today it is
-      hard-coded in a file that interpolates nothing. A static endpoint emits the
-      real value at build time and makes the divergence impossible. Do this now
-      even though the domain is still a placeholder — it is the mechanism, not
-      the value, that is wrong.
+- [x] **Replace `public/robots.txt` with `src/pages/robots.txt.ts`.** Done — see
+      Done below.
 
 - [!] **Set the real domain.** Blocked: client has not confirmed one.
       `spartan.example` is RFC 2606 reserved and can never resolve, so all 96
       canonicals, every OG URL and the whole sitemap point at nothing.
+      **Now a one-line edit** to `site` in `astro.config.mjs` — robots.txt
+      follows from it and can no longer be left behind.
 - [!] **Real contact details.** Blocked: client. `+971 00 000 0000` renders as a
       live `tel:` link in the header of all 97 pages; `sales@spartan.example` is
       a dead mailbox. `src/data/site.json`.
@@ -153,6 +151,20 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-09** — Replaced `public/robots.txt` with `src/pages/robots.txt.ts`,
+  which derives the `Sitemap:` URL from `Astro.site` at build time. The domain
+  is now written in exactly one place, so setting it is a single edit that can
+  no longer half-happen. Added a verify gate asserting the emitted robots.txt
+  names the same origin as the home page's canonical, and that a
+  `public/robots.txt` has not come back to shadow the endpoint — proved against
+  a planted violation. Updated the now-false paragraphs in README.md §3 and
+  handoff.md §7. 6 e2e added; verify 9/9, 109 e2e passing.
+
+  *Worth knowing:* a prerendered endpoint's `Response` headers never reach the
+  wire — Astro writes the body to a file and the host labels it by extension.
+  The robots.txt body is therefore pure ASCII rather than relying on a
+  `charset` header that gets discarded.
 
 - **2026-08-09** — Added Catalogue to the primary navigation, heading the three
   product-browsing routes. `NavItem` gained an optional `section` prefix and a

@@ -237,11 +237,10 @@ Six items need the client before this site can go live. Nothing here blocks deve
 - [ ] **2. Resend API key and destination address** → `.env`
       Set `RESEND_API_KEY` and `ENQUIRY_TO_EMAIL`. Until both are set, `/api/enquiry` returns `delivered: false` and logs instead of sending. Set `ENQUIRY_FROM_EMAIL` too once a domain is verified in Resend.
 
-- [ ] **3. The domain — TWO files, and they must match**
-      - `astro.config.mjs` → `site:` (currently `https://spartan.example`). This drives every canonical tag, Open Graph URL, JSON-LD URL and the sitemap's contents.
-      - `public/robots.txt` → the `Sitemap:` line. **This file is served verbatim from `public/` and interpolates nothing**, so it hard-codes the domain. Changing only `astro.config.mjs` leaves robots.txt pointing crawlers at a host that cannot exist — `.example` is reserved by RFC 2606.
+- [ ] **3. The domain — ONE file**
+      `astro.config.mjs` → `site:` (currently `https://spartan.example`, which is reserved by RFC 2606 and can never resolve). This drives every canonical tag, Open Graph URL, JSON-LD URL, the sitemap's contents **and** the `Sitemap:` line in robots.txt.
 
-      Doing this properly at the same time: replacing `public/robots.txt` with a `src/pages/robots.txt.ts` static endpoint would emit the real value at build time and make this failure mode impossible.
+      It used to be two files that had to match: `public/robots.txt` was served verbatim and hard-coded the domain, so changing one without the other silently pointed crawlers at the wrong host. That file is gone — `src/pages/robots.txt.ts` now emits the value from `site` at build time, so the two cannot diverge. Setting the domain is a single edit.
 
 - [ ] **4. Confirm the eight "Industries We Serve"** → `src/data/site.json`
       Construction, Oil & Gas, Manufacturing, Warehousing, Facilities, Marine & Ports, Utilities, Hospitality. These are **inferred from the product mix**, not stated in the brochure. Flagged by `industriesPendingClientConfirmation: true` in the same file and by an HTML comment where they are used. Remove the flag once confirmed.

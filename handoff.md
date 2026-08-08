@@ -374,7 +374,7 @@ JSON-LD goes through `set:html` (a plain expression HTML-escapes the quotes and 
 
 `og:image` is a build-time 1200×630 JPEG crop of the division hero, `position: bottom` (a centre crop of `safety.jpg` decapitates the workers). `safety.jpg` site-wide, `electrical.jpg` on Electricals pages. Forced to JPEG because several link-preview scrapers still will not render WebP.
 
-**`public/robots.txt` hard-codes the sitemap URL** and `site` is still a placeholder, so it will be wrong until the domain is set. A `src/pages/robots.txt.ts` static endpoint would emit the real value at build time and make that failure impossible — worth doing when the domain lands.
+**robots.txt is now `src/pages/robots.txt.ts`, not a static file.** It was `public/robots.txt`, which is served verbatim and interpolates nothing, so the sitemap URL was a second hand-typed copy of `site` — and changing either without the other was silent. The endpoint derives it from `Astro.site` at build time, so the domain is written in one place only. `site` is still the `spartan.example` placeholder, so the value is still wrong; the difference is that setting it is now a single edit and can no longer half-happen.
 
 ### Lighthouse — measured, Task 17
 
