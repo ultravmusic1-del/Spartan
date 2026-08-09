@@ -149,7 +149,8 @@ Both self-hosted variable fonts at `public/fonts/`. **`@font-face` must declare 
 | Content | Astro Content Layer + Zod |
 | Islands | Preact (`compat: false`) |
 | State | nanostores + `@nanostores/persistent` (Task 12) |
-| Email | Resend (Task 14) |
+| Enquiry storage | Supabase Postgres, project `spartan` — the system of record |
+| Email | Resend (Task 14) — the notification, no longer the record |
 | Rendering | `output: 'static'`; only `/api/enquiry` will set `prerender = false` |
 | Hosting | Vercel adapter |
 | Tests | Vitest (unit), Playwright + axe (e2e) |
@@ -401,11 +402,37 @@ Fixed by deriving the name from the visible label: `` `${visible}: ${name}` ``.
 
 **Two harnesses missed it.** axe's rule for this is experimental and off by default, so the e2e axe pass never ran it; Lighthouse weights it 0, so it never showed up in the accessibility score either — the category read 100 with a serious WCAG A failure present on 72 product cards. **A green axe run is not a claim that a page passes WCAG.**
 
+### Enquiries are stored, not just emailed
+
+Added 2026-08-09. Design doc: `docs/superpowers/specs/2026-08-09-enquiry-collection-design.md`.
+
+`/api/enquiry` had no storage of any kind — an enquiry existed only as an email. The branch that ran when Resend threw returned 502, asked the buyer to try again, and **discarded the payload without logging it**: a validated, willing buyer lost silently on both sides.
+
+The enquiry is now written to Postgres first and the email is a notification. Supabase project `spartan` (`wslylysakixrirxkozih`), one `enquiries` table with `items jsonb`, plus an `enquiry_lines` view unnesting it so product demand is a `group by`. A single insert is atomic without an RPC, which is why it is not two normalised tables.
+
+Things that will look like bugs but are deliberate:
+
+- **RLS is enabled with zero policies, and that is the design.** `anon` can neither read nor write; only the service-role key can insert, and it never leaves the serverless function. Supabase's linter reports `rls_enabled_no_policy` at INFO forever — do not "fix" it by adding a policy. Verified as `anon`: zero rows from both the table and the view while a row existed.
+- **`enquiry_lines` carries `security_invoker = true`.** Postgres views default to definer semantics and would otherwise read straight past the RLS on the table beneath them.
+- **`unconfigured` is not `failed`.** A channel with no credentials was never asked to carry the enquiry. Treating the two alike returns 502 for every submission in CI, which holds no secrets for either channel. The 502 rule is *every **configured** channel failed*. `decideOutcome` is a pure function so all nine combinations are asserted directly.
+- **The response gained `recorded`.** Both clients key their honest-failure message off `recorded || delivered`, not `delivered` alone — with the row written, a mail outage is a success, not a caveat. The e2e assertions on the response body are exhaustive `toEqual`s and will fail if the shape changes again; that is intended.
+- **The browser never talks to Supabase.** No anon key in the page, and `connect-src` needs no new origin.
+
+A verify gate fails if the service-role key reaches `dist/client`, or if anything under `src/components`, `src/scripts`, `src/stores` or `src/layouts` names it or imports `enquiry-store.ts`. Vite inlines `import.meta.env.*` at build time, so a client-side reference would substitute the literal secret into a shipped bundle with nothing warning.
+
+One trap worth keeping: **a data-modifying CTE's rows are not visible to the rest of the same statement.** The first round-trip check inserted a row and read the view in one statement, got 0 lines, and looked like a broken view. The view was fine.
+
+### The footer email field is gone
+
+It was a newsletter subscribe with no mailing list behind it and — per the client, 2026-08-09 — never intended as one. Removed rather than wired: posting it to `/api/enquiry` would have sent sales an RFQ from someone who believed they were subscribing. The contact strip now carries address, phone and email.
+
+`design/direction-b-forge.html` still shows the field. That is a deliberate departure from the approved design, like the Name field added to the home CTA, and is recorded in the component.
+
 ### What a next session picks up
 
 The build is done. Three things follow it, in rough order:
 
-1. **Deployment.** Vercel is assumed and configured but never confirmed with the client (§8 item 3), and nothing has been deployed. The domain has to land first — it changes `astro.config.mjs` *and* `public/robots.txt`, and both must match (§7 SEO). Doing it properly means replacing `public/robots.txt` with a `src/pages/robots.txt.ts` endpoint so the two can never diverge again. `.env` needs the Resend credentials in Vercel's project settings, not just locally.
+1. **Deployment.** Vercel is assumed and configured but never confirmed with the client (§8 item 3), and nothing has been deployed. The domain has to land first — that is now a **single** edit to `site` in `astro.config.mjs`, since `src/pages/robots.txt.ts` derives the sitemap URL from it and `public/robots.txt` is gone. Vercel's project settings need `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (without them every RFQ in production is a log line), and the Resend pair for the notification.
 
 2. **The admin dashboard.** This is what §5 exists for. Replace `file()` in `content.config.ts` with a database loader; `catalog.ts` and all 96 pages are untouched. The Zod schemas become the write-validation contract. Two things to carry across: `serialiseJsonLd()` escaping matters the moment arbitrary text can enter the catalogue (§7), and the "never invent product data" rule needs to survive contact with a UI that has empty fields inviting to be filled — `docs/CONTENT-EDITING.md` is the statement of that rule for whoever maintains data in the meantime.
 

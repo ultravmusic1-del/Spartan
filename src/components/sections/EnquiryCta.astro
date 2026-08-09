@@ -14,9 +14,11 @@ import { getDivisions } from '../../lib/catalog';
  * shared with the general enquiry form on /contact — see that file for why it
  * enhances this markup in place rather than becoming a Preact island.
  *
- * It must never show a success message for an enquiry that was not delivered.
- * The endpoint returns `delivered: false` while the client's Resend credentials
- * are absent, and the script reports that outcome differently.
+ * It must never show a success message for an enquiry nothing durable holds.
+ * The endpoint reports two channels — `recorded` (the database row) and
+ * `delivered` (the notification email) — and either is enough. When both are
+ * false neither channel is configured on this deployment, and the script
+ * reports that outcome differently and plainly.
  *
  * The submit control is gated on `html[data-js]`: without JavaScript there is
  * no way to post this form, so the button is not shown at all and a line
@@ -48,7 +50,12 @@ const divisions = await getDivisions();
       </div>
     </div>
 
-    <form class="cta__box" data-enquiry-form data-enquiry-email={site.email}>
+    <form
+      class="cta__box"
+      data-enquiry-form
+      data-enquiry-email={site.email}
+      data-enquiry-source="home-cta"
+    >
       {/*
         Not in the original mockup, which collected company, division and email
         only. `enquiryPayloadSchema` requires a name, and the alternative was to

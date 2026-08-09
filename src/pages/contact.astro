@@ -15,11 +15,12 @@ import { getDivisions } from '../lib/catalog';
  * shared with the home page CTA — see that file for why it enhances this markup
  * in place rather than becoming a Preact island.
  *
- * It must never show a success message for an enquiry that was not delivered:
- * the endpoint returns `delivered: false` while the client's Resend credentials
- * are absent, and that outcome is reported differently and plainly. Telling
- * someone their enquiry was sent when nothing was sent is worse than an inert
- * control.
+ * It must never show a success message for an enquiry nothing durable holds:
+ * the endpoint reports two channels — `recorded` (the database row) and
+ * `delivered` (the notification email) — and either is enough. When both are
+ * false neither channel is configured on this deployment, and that outcome is
+ * reported differently and plainly. Telling someone their enquiry was sent when
+ * nothing holds it is worse than an inert control.
  *
  * The submit control is gated on `html[data-js]` — without JavaScript there is
  * no way to post this form, so it is not shown and the contact details in the
@@ -104,6 +105,7 @@ const details = [
           class="cf2"
           data-enquiry-form
           data-enquiry-email={site.email}
+          data-enquiry-source="contact"
           aria-labelledby="cf2-title"
         >
           <h2 class="cb__h2" id="cf2-title">General enquiry</h2>

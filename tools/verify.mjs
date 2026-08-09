@@ -317,6 +317,78 @@ console.log('\nverify — Spartan\n');
   );
 }
 
+/* --------------------------------------- 11. the service-role key is server -- */
+
+/*
+ * `SUPABASE_SERVICE_ROLE_KEY` bypasses row-level security completely. The
+ * enquiries table is protected by RLS with zero policies, so that key is the
+ * only thing standing between the public internet and every name, email address
+ * and phone number the site has ever collected.
+ *
+ * Two ways it could leak, both silent:
+ *
+ *  1. A client-side module referencing it. Vite inlines `import.meta.env.*` at
+ *     build time, so the literal secret would be substituted into a bundle and
+ *     served. Nothing warns; the site works perfectly.
+ *  2. A component importing `enquiry-store.ts`, which would drag the client and
+ *     its credential into the browser graph.
+ *
+ * The source check is decidable on every run. The output sweep only bites when
+ * the build had real credentials — which is exactly the build that could leak
+ * one — so both are here rather than either alone.
+ */
+{
+  const problems = [];
+  const clientDirs = ['src/components', 'src/scripts', 'src/stores', 'src/layouts'];
+
+  const walk = (dir, hit) => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, hit);
+      else if (/\.(astro|ts|tsx|js)$/.test(entry.name) && !entry.name.includes('.test.')) hit(full);
+    }
+  };
+
+  for (const base of clientDirs) {
+    walk(path.join(root, base), (file) => {
+      const text = fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
+      const rel = path.relative(root, file).replace(/\\/g, '/');
+      if (text.includes('SUPABASE_SERVICE_ROLE_KEY')) problems.push(`${rel} names the service-role key`);
+      if (/from\s+['"][^'"]*enquiry-store['"]/.test(text)) problems.push(`${rel} imports enquiry-store`);
+    });
+  }
+
+  // Built output. `service_role` is in the payload of every such JWT, so it
+  // catches a leaked key whatever variable carried it there.
+  const secret = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
+  const assets = [];
+  const collect = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) collect(full);
+      else if (/\.(html|js|css|json)$/.test(entry.name)) assets.push(full);
+    }
+  };
+  collect(path.join(root, 'dist/client'));
+
+  for (const file of assets) {
+    const text = fs.readFileSync(file, 'utf8');
+    const rel = path.relative(root, file).replace(/\\/g, '/');
+    if (text.includes('service_role')) problems.push(`${rel} contains a service_role token`);
+    else if (secret && text.includes(secret)) problems.push(`${rel} contains the service-role key`);
+  }
+
+  record(
+    'service-role key never reaches the client',
+    problems.length === 0,
+    problems.length
+      ? problems.slice(0, 5).join('; ')
+      : `${assets.length} built assets clean, ${clientDirs.length} client dirs clean`,
+  );
+}
+
 /* ------------------------------------------------------------ 9. e2e (opt) -- */
 
 if (full) {

@@ -10,10 +10,15 @@ import { expect, test } from '@playwright/test';
  * exist so that cannot come back silently.
  *
  * Nothing is mocked. `/api/enquiry` is the real built endpoint served by
- * tests/preview-server.mjs, and with no `RESEND_API_KEY` in the environment it
- * answers `200 { ok: true, delivered: false }` — so the assertions below check
- * for the *honest* "recorded but not sent" wording and never for a claim that
- * an email went out.
+ * tests/preview-server.mjs. With neither `SUPABASE_*` nor `RESEND_*` in the
+ * environment both channels report `unconfigured`, so it answers
+ * `200 { ok: true, recorded: false, delivered: false }` — so the assertions
+ * below check for the *honest* "nothing holds this" wording and never for a
+ * claim that the enquiry reached anyone.
+ *
+ * `unconfigured` is deliberately not `failed`: a channel with no credentials was
+ * never asked to carry the enquiry. Were the endpoint to treat the two alike,
+ * every submission in this file would come back 502.
  *
  * The endpoint rate-limits 5 submissions per IP per 10 minutes in one process's
  * memory, and `reuseExistingServer` lets that process outlive a run. Each
@@ -52,10 +57,12 @@ test.describe('the compact enquiry forms', () => {
     ]);
 
     expect(response.status()).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, delivered: false });
+    // Exhaustive on purpose: a field silently appearing in or vanishing from the
+    // response contract is exactly what the two clients key their honesty off.
+    expect(await response.json()).toEqual({ ok: true, recorded: false, delivered: false });
 
-    // The one assertion this file exists for: no credentials means the enquiry
-    // was recorded and NOT sent, and the form has to say so.
+    // The one assertion this file exists for: with neither channel configured
+    // nothing durable holds the enquiry, and the form has to say so.
     await expect(form).toHaveAttribute('data-state', 'sent');
     const status = form.locator('[data-enquiry-status]');
     await expect(status).toContainText('not configured');

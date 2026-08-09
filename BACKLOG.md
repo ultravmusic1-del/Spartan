@@ -41,24 +41,9 @@ see `handoff.md`). Priorities are P0 highest.
       pending/ready gate and its error handling rather than inventing a second
       pattern.
 
-- [ ] **Decide what the footer email field is for.** Still inert on all 97
-      pages. It is labelled *Enter email address* with a Submit button — a
-      newsletter subscribe, not an enquiry.
-      *(Its `onsubmit="return false"` is gone: it was the only inline event
-      handler on the site and blocked a hash-based `script-src`. It is now a
-      `<div>` rather than a `<form>`, which keeps it inert with and without
-      JavaScript and decides nothing about its future.)*
-      Three reasons it was not wired alongside the other two:
-      1. There is no newsletter infrastructure of any kind in the repo.
-      2. `enquiryPayloadSchema` requires a name; an email-only submit cannot
-         satisfy it without weakening a bound the /enquiry form depends on.
-      3. Posting it to `/api/enquiry` would send sales an RFQ from someone who
-         believed they were subscribing to a mailing list. That is the same
-         class of error as claiming an enquiry was sent when it was not.
-      **Needs a human decision**, and the honest default is removal — a control
-      that cannot do what it says is worse than no control. Options: remove it;
-      relabel it as "send me the catalogue" and wire it to `/api/enquiry` with a
-      marker; or add a real mailing-list integration.
+- [x] **Decide what the footer email field is for.** Decided by the client on
+      2026-08-09: **a newsletter was never intended.** Removed rather than
+      wired — see Done below.
 
 - [ ] **Confirm the Name field added to the home CTA.** Wiring the CTA required
       one: `enquiryPayloadSchema` requires a name and the form collected only
@@ -85,9 +70,18 @@ see `handoff.md`). Priorities are P0 highest.
 - [!] **Real contact details.** Blocked: client. `+971 00 000 0000` renders as a
       live `tel:` link in the header of all 97 pages; `sales@spartan.example` is
       a dead mailbox. `src/data/site.json`.
-- [!] **Resend credentials in Vercel.** Blocked: client. Without them
-      `/api/enquiry` logs and returns `{ ok: true, delivered: false }` — correct
-      locally, but in production every RFQ becomes a log line nobody reads.
+- [ ] **Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.** The
+      table, the policies and the code are all in place; the deployment simply
+      has no credentials yet, so production would still return
+      `recorded: false`. The service-role key is a full-access credential and
+      must be set as a Vercel environment variable only — never committed, and
+      never exposed to the browser (a verify gate enforces the second half).
+      Project `spartan`: `https://wslylysakixrirxkozih.supabase.co`.
+
+- [ ] **Resend credentials in Vercel.** No longer a data-loss risk — with the
+      database configured the enquiry is safe and the email is only the nudge —
+      but until it is set nobody is told an RFQ arrived, so somebody has to
+      watch the Supabase table.
 
 ## P1 — discoverability and hardening
 
@@ -152,6 +146,55 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-09** — **Enquiries are now stored, not just emailed.** Until this
+  landed `/api/enquiry` had no storage of any kind: an enquiry existed only as
+  an email, and the branch that ran when Resend threw returned 502 and
+  **discarded the payload without logging it** — a validated, willing buyer lost
+  with no trace on either side.
+
+  The enquiry is now written to Postgres first and the email is a notification.
+  Supabase project `spartan`, one `enquiries` table with `items jsonb`, plus an
+  `enquiry_lines` view that unnests it so "which products are actually asked
+  about" is a `group by`. Single insert, so atomicity needs no RPC. RLS on with
+  zero policies — `anon` can neither read nor write, and only the service-role
+  key, which never leaves the serverless function, can insert. The browser never
+  talks to Supabase, so `connect-src` is untouched.
+
+  Design doc: `docs/superpowers/specs/2026-08-09-enquiry-collection-design.md`.
+  13 unit tests added; verify 11/11.
+
+  *Worth knowing:* `unconfigured` and `failed` had to be different channel
+  states, and treating them alike would have 502'd every enquiry in the e2e
+  suite — CI holds no secrets for either channel, so both come back
+  unconfigured, and "nothing carried it" is only a lost lead if something was
+  asked to. The rule is *every **configured** channel failed*, and
+  `decideOutcome` is a pure function precisely so all nine combinations are
+  asserted directly rather than inferred from a passing e2e run.
+
+  *Worth knowing:* the view needs `security_invoker = true`. Postgres views
+  default to definer semantics, so without it `enquiry_lines` would have read
+  straight past the RLS on the table it reads from — verified by querying both
+  as `anon` and getting zero rows from each while a row existed.
+
+  *Worth knowing:* a data-modifying CTE's rows are not visible to the rest of
+  the same statement, so the first round-trip check reported the view returning
+  0 lines for a row it had just inserted. The view was fine; the test was wrong.
+
+- **2026-08-09** — Removed the footer email field. It was labelled *Enter email
+  address* with a Submit button — a newsletter subscribe, with no mailing list
+  behind it and, per the client, never intended as one. A control that cannot do
+  what it says is worse than no control, and wiring it to `/api/enquiry` would
+  have sent sales an RFQ from someone who believed they were subscribing.
+
+  The contact strip now carries address, phone and email — three real facts —
+  with the email as a `mailto:` on the same 44px target treatment the phone
+  number already had, and `justify-content: space-between` so the row does not
+  bunch left where the field used to sit. `--f-input-bg` went with it.
+
+  The mockup (`design/direction-b-forge.html`) still shows the field; this is a
+  deliberate departure from the approved design, recorded in the component. No
+  test referenced it.
 
 - **2026-08-09** — Added `.github/workflows/verify.yml`. Runs
   `npm run verify -- --full` — the identical command a developer runs and the

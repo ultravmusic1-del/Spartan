@@ -28,15 +28,22 @@
  *
  * THE ONE RULE THIS FILE EXISTS TO KEEP
  *
- * `{ ok: true, delivered: false }` is not success. Until the client supplies a
- * Resend key the endpoint records the enquiry and sends nothing, and a form
- * that reports "sent" would leave a buyer waiting on a reply that was never
- * coming. Both outcomes are reported honestly and differently. This mirrors
- * `EnquiryForm.tsx`, which solved the same problem first.
+ * An enquiry is only "received" if something durable holds it. The endpoint
+ * reports two independent channels — `recorded` (written to Postgres) and
+ * `delivered` (the notification email) — and either one is enough: with the row
+ * written, a mail outage costs a nudge rather than a buyer.
+ *
+ * `{ ok: true, recorded: false, delivered: false }` is the case that is *not*
+ * success. It means neither channel is configured on this deployment, so the
+ * enquiry exists only as a line in a server log, and a form reporting "sent"
+ * would leave a buyer waiting on a reply nobody knows to make. That outcome is
+ * reported honestly and differently. This mirrors `EnquiryForm.tsx`, which
+ * solved the same problem first.
  */
 
 interface EnquiryResponse {
   ok?: boolean;
+  recorded?: boolean;
   delivered?: boolean;
   errors?: Record<string, string>;
   message?: string;
@@ -64,7 +71,13 @@ function enhance(form: HTMLFormElement): void {
     if (form.dataset.state === 'sending') return;
 
     const data = new FormData(form);
-    const payload: Record<string, unknown> = { items: [] };
+    // `source` records which form converted. The schema `.catch()`es an
+    // unrecognised value to 'unknown' rather than rejecting, so a stale cached
+    // copy of this script can never cost an enquiry.
+    const payload: Record<string, unknown> = {
+      items: [],
+      source: form.dataset.enquirySource ?? 'unknown',
+    };
     for (const field of FIELDS) {
       // `name` and `email` are the only fields the server requires. Sending a
       // key the schema defaults is harmless; omitting one it requires is not,
@@ -98,14 +111,15 @@ function enhance(form: HTMLFormElement): void {
     const body = (await response.json().catch(() => ({}))) as EnquiryResponse;
 
     if (response.ok && body.ok) {
-      if (body.delivered === false) {
-        // Recorded, not sent. Said plainly — see the note at the top of this
-        // file. This branch disappears on its own once the credentials exist.
+      if (!body.recorded && !body.delivered) {
+        // Neither channel is configured, so nothing durable holds this. Said
+        // plainly — see the note at the top of this file. This branch
+        // disappears on its own once either channel has credentials.
         say(
           'sent',
           fallbackEmail
-            ? `Enquiry received, but email delivery is not configured on this deployment yet, so it has not reached the Spartan team. Please email ${fallbackEmail} directly.`
-            : 'Enquiry received, but email delivery is not configured on this deployment yet, so it has not reached the Spartan team.',
+            ? `Enquiry received, but this deployment is not configured to store or send enquiries yet, so it has not reached the Spartan team. Please email ${fallbackEmail} directly.`
+            : 'Enquiry received, but this deployment is not configured to store or send enquiries yet, so it has not reached the Spartan team.',
         );
       } else {
         say('sent', 'Enquiry received. Our team will come back to you shortly.');

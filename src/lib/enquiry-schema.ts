@@ -59,6 +59,17 @@ export const enquiryPayloadSchema = z.object({
    */
   items: z.array(enquiryItemSchema).max(200),
   /**
+   * Which of the three forms converted. Stored so "does the home CTA actually
+   * work" is a query rather than a guess.
+   *
+   * `.catch()` rather than a bare enum: this field is telemetry, and a payload
+   * carrying an unrecognised value — a stale cached script after a rename, say —
+   * must not cost the enquiry. An unknown source degrades to `'unknown'`; it
+   * never returns a 400. The four values match the CHECK constraint on
+   * `public.enquiries.source`.
+   */
+  source: z.enum(['enquiry', 'home-cta', 'contact', 'unknown']).catch('unknown'),
+  /**
    * Honeypot. The field is present in the form but hidden from sight and from
    * assistive technology and removed from the tab order, so no real user can
    * put anything in it. A value means a bot filled every input it found.

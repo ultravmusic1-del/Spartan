@@ -34,6 +34,29 @@ describe('enquiryPayloadSchema', () => {
   });
 
   /*
+   * `source` is telemetry: which of the three forms converted. It must never be
+   * able to cost an enquiry, so an unrecognised value degrades rather than
+   * rejecting — a browser holding a stale cached copy of quick-enquiry.ts after
+   * a rename would otherwise have its submissions 400'd.
+   */
+  describe('source', () => {
+    it('defaults to unknown when absent', () => {
+      expect(enquiryPayloadSchema.parse(valid).source).toBe('unknown');
+    });
+
+    it('keeps each of the three real values', () => {
+      for (const source of ['enquiry', 'home-cta', 'contact'] as const) {
+        expect(enquiryPayloadSchema.parse({ ...valid, source }).source).toBe(source);
+      }
+    });
+
+    it('degrades an unrecognised value to unknown instead of rejecting', () => {
+      const parsed = enquiryPayloadSchema.parse({ ...valid, source: 'newsletter-footer' });
+      expect(parsed.source).toBe('unknown');
+    });
+  });
+
+  /*
    * The compact forms on the home page and /contact send a division; the full
    * /enquiry form does not, because its product list already says which
    * divisions are involved. Both shapes have to parse, and an unrecognised

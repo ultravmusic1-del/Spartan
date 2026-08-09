@@ -5,11 +5,11 @@ import { expect, test, type Page } from '@playwright/test';
  *
  * Nothing here is mocked. `/api/enquiry` is the real built endpoint, served by
  * tests/preview-server.mjs out of the bundle the Vercel adapter produced. With
- * no `RESEND_API_KEY` in the environment it answers
- * `200 { ok: true, delivered: false }` and logs the enquiry, which is exactly
- * what a deployment without credentials does today — so the tests assert the
- * confirmation and the *honest* "not delivered" notice, and never that an email
- * was sent.
+ * neither `SUPABASE_*` nor `RESEND_*` in the environment both channels report
+ * `unconfigured`, so it answers `200 { ok: true, recorded: false,
+ * delivered: false }` and logs the enquiry — exactly what a deployment without
+ * credentials does. The tests assert the confirmation and the *honest* "nothing
+ * holds this" notice, and never that the enquiry reached anyone.
  *
  * Two mechanical notes.
  *
@@ -320,7 +320,7 @@ test.describe('/enquiry', () => {
 
     // No credentials in this environment, so the site says so rather than
     // implying a mail that was never sent. This is the honest path, not a stub.
-    expect(await response.json()).toEqual({ ok: true, delivered: false });
+    expect(await response.json()).toEqual({ ok: true, recorded: false, delivered: false });
     await expect(page.locator('.ef-done__pending')).toBeVisible();
 
     expect(await readBasket(page)).toEqual([]);
@@ -383,7 +383,7 @@ test.describe('/enquiry', () => {
     ]);
 
     expect(response.status()).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, delivered: false });
+    expect(await response.json()).toEqual({ ok: true, recorded: false, delivered: false });
     await expect(page.getByRole('heading', { name: 'Enquiry received.' })).toBeVisible();
   });
 });

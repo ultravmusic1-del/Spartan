@@ -25,6 +25,7 @@
     "@astrojs/vercel": "^11.0.4",
     "@nanostores/persistent": "^0.10.2",
     "@nanostores/preact": "^0.5.2",
+    "@supabase/supabase-js": "^2.112.2",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.1.6",
     "nanostores": "^0.11.4",

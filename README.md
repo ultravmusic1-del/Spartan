@@ -62,23 +62,43 @@ A plain static file server would not work either. Adding the site's one server-r
 
 ## Environment variables
 
-Copy `.env.example` to `.env`. `.env` is gitignored — never commit real values. Both variables are read **at request time** by `src/pages/api/enquiry.ts`.
+Copy `.env.example` to `.env`. `.env` is gitignored — never commit real values. All variables are read **at request time** by `src/pages/api/enquiry.ts`.
 
 | Variable | Purpose |
 |---|---|
+| `SUPABASE_URL` | Supabase project URL. Project `spartan`: `https://wslylysakixrirxkozih.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Service role**, not the publishable key. Server-side only — see below. |
 | `RESEND_API_KEY` | Resend API key. https://resend.com/api-keys |
-| `ENQUIRY_TO_EMAIL` | The client's sales inbox — where enquiries are delivered. |
+| `ENQUIRY_TO_EMAIL` | The client's sales inbox — where the notification is delivered. |
 | `ENQUIRY_FROM_EMAIL` | Optional. Must be on a domain verified in the Resend account. |
+
+### Two channels, and why the distinction matters
+
+An enquiry is **written to Postgres first**, then an email notification is sent. Either channel carrying it is enough for the submission to succeed, so a mail outage costs a notification rather than a lead. The response reports both:
+
+```json
+{ "ok": true, "recorded": true, "delivered": false }
+```
+
+Before this existed an enquiry was only ever an email, and the branch that ran when Resend threw returned 502 and discarded the payload — a validated buyer lost with no trace on either side.
 
 ### What happens when they are unset
 
-While **either** `RESEND_API_KEY` or `ENQUIRY_TO_EMAIL` is empty, the endpoint validates the payload as normal, logs the full enquiry to the server console, and returns:
+A channel with no credentials is **`unconfigured`, which is not the same as `failed`**. It was never asked to carry the enquiry, so it has lost nothing. With *neither* channel configured the endpoint validates as normal, logs the full enquiry, and returns:
 
 ```json
-{ "ok": true, "delivered": false }
+{ "ok": true, "recorded": false, "delivered": false }
 ```
 
-`delivered: false` is deliberate and load-bearing. The whole flow stays exercisable end to end before credentials exist, and **the site never reports an enquiry as sent when it was not** — a site that claims to have sent an RFQ it dropped loses the lead silently.
+Both forms then say plainly that nothing reached the Spartan team. That is what keeps the whole flow exercisable locally and in CI without secrets — collapsing the two states would return 502 for every enquiry in the e2e suite. A 502 is reserved for the one real failure: **every configured channel failed**, where nothing was written and a retry therefore cannot duplicate.
+
+**The site never reports an enquiry as received when nothing durable holds it.**
+
+### The service-role key
+
+`public.enquiries` has row-level security enabled with **zero policies**, so the publishable key can neither read nor write it. Only `service_role`, which bypasses RLS, can insert — and it must never leave the server. The browser never talks to Supabase at all, which is also why `connect-src` in `vercel.json` needs no Supabase origin.
+
+`npm run verify` fails if the key reaches `dist/client`, or if anything under `src/components`, `src/scripts`, `src/stores` or `src/layouts` names it or imports `enquiry-store.ts`.
 
 With `ENQUIRY_FROM_EMAIL` left empty the endpoint sends from Resend's own always-verified `onboarding@resend.dev`, which works with any key. Replies reach the enquirer either way, via `Reply-To`.
 
@@ -234,8 +254,11 @@ Six items need the client before this site can go live. Nothing here blocks deve
 - [ ] **1. Real contact details** → `src/data/site.json`
       Address, phone and email are placeholders (`+971 00 000 0000`, `sales@spartan.example`, `Address line, City, Country`). They appear in the header utility bar, footer, contact page, trust band and the enquiry form's fallback address. The placeholder address is deliberately kept out of `organizationJsonLd` — publishing a fake address as structured data is worse than publishing none.
 
-- [ ] **2. Resend API key and destination address** → `.env`
-      Set `RESEND_API_KEY` and `ENQUIRY_TO_EMAIL`. Until both are set, `/api/enquiry` returns `delivered: false` and logs instead of sending. Set `ENQUIRY_FROM_EMAIL` too once a domain is verified in Resend.
+- [ ] **2a. Supabase credentials** → Vercel project settings
+      Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. The table, the policies and the code are in place; without these production returns `recorded: false` and enquiries survive only as function logs. This is the one that must not be missed — it is the difference between capturing leads and losing them.
+
+- [ ] **2b. Resend API key and destination address** → `.env` / Vercel
+      Set `RESEND_API_KEY` and `ENQUIRY_TO_EMAIL`. With Supabase configured this is no longer a data-loss risk — the enquiry is already safe and the email is the nudge — but until it is set nobody is told an RFQ arrived, so somebody has to watch the Supabase table. Set `ENQUIRY_FROM_EMAIL` too once a domain is verified in Resend.
 
 - [ ] **3. The domain — ONE file**
       `astro.config.mjs` → `site:` (currently `https://spartan.example`, which is reserved by RFC 2606 and can never resolve). This drives every canonical tag, Open Graph URL, JSON-LD URL, the sitemap's contents **and** the `Sitemap:` line in robots.txt.

@@ -42,7 +42,13 @@ export default function EnquiryForm({ email }: Props) {
   const [status, setStatus] = useState<Status>('idle');
   const [errors, setErrors] = useState<EnquiryFieldErrors>({});
   const [formError, setFormError] = useState('');
-  const [delivered, setDelivered] = useState(true);
+  /**
+   * Whether anything durable actually holds the enquiry — the database row or
+   * the notification email, either will do. False only when neither channel is
+   * configured on this deployment, which is the one case the confirmation must
+   * not dress up as success.
+   */
+  const [captured, setCaptured] = useState(true);
   /** Bumped on every failed attempt so the focus effect re-runs after render. */
   const [attempt, setAttempt] = useState(0);
 
@@ -112,6 +118,9 @@ export default function EnquiryForm({ email }: Props) {
       message: text('message'),
       website: text('website'),
       items: enquiry.get(),
+      // The only form that submits a basket, so its source is fixed rather than
+      // read from the DOM.
+      source: 'enquiry' as const,
     };
 
     const parsed = enquiryPayloadSchema.safeParse(candidate);
@@ -150,13 +159,16 @@ export default function EnquiryForm({ email }: Props) {
 
     const body = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
+      recorded?: boolean;
       delivered?: boolean;
       errors?: EnquiryFieldErrors;
       message?: string;
     };
 
     if (response.ok && body.ok) {
-      setDelivered(body.delivered !== false);
+      // Either channel holding the enquiry is enough. With the row written, a
+      // mail outage costs a notification rather than the lead.
+      setCaptured(Boolean(body.recorded) || Boolean(body.delivered));
       setStatus('sent');
       setErrors({});
       setFormError('');
@@ -215,16 +227,15 @@ export default function EnquiryForm({ email }: Props) {
           and pricing.
         </p>
 
-        {/* Never dressed up. Until the client supplies a Resend key and a
-            destination address the endpoint records the enquiry and sends
-            nothing, and saying otherwise would mean a buyer waiting on a reply
-            that was never going to come. This paragraph disappears on its own
-            the moment the credentials exist. */}
-        {!delivered && (
+        {/* Never dressed up. When neither the database nor the mail provider is
+            configured, the enquiry exists only as a line in a server log, and
+            saying otherwise would mean a buyer waiting on a reply nobody knows
+            to make. This paragraph disappears on its own the moment either
+            channel has credentials. */}
+        {!captured && (
           <p class="ef-done__pending">
-            Email delivery is not configured on this deployment yet, so this enquiry was recorded on
-            the server but has not been sent to the Spartan team. Please email{' '}
-            <a href={`mailto:${email}`}>{email}</a> directly.
+            This deployment is not configured to store or send enquiries yet, so this one has not
+            reached the Spartan team. Please email <a href={`mailto:${email}`}>{email}</a> directly.
           </p>
         )}
 
