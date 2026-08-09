@@ -13,8 +13,9 @@
  * WHY THIS IS GENERATED AND NOT HAND-WRITTEN
  *
  * Astro emits the inline bootstraps itself: the island custom element, one
- * short shim per client directive in use, plus this repo's own two (the
- * `data-js` flag in BaseLayout and the hero's scroll scrubber). An Astro
+ * short shim per client directive in use, plus this repo's own (the `data-js`
+ * flag in BaseLayout — the hero's scroll scrubber was a second one until the
+ * film was replaced with a static still and its script deleted). An Astro
  * upgrade can change any of them by a byte, and a stale hash does not fail the
  * build — it fails in production, as a page whose islands never hydrate. So the
  * hashes are derived from the actual output and `npm run verify` re-derives

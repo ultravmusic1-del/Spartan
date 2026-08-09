@@ -1,196 +1,117 @@
 ---
 import { getImage } from 'astro:assets';
-import desktopPoster from '../../assets/hero/hero-desktop-poster.jpg';
-import mobilePoster from '../../assets/hero/hero-mobile-poster.jpg';
+import desktopStill from '../../assets/hero/hero-desktop-poster.jpg';
+import mobileStill from '../../assets/hero/hero-mobile-poster.jpg';
 import Eyebrow from '../primitives/Eyebrow.astro';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
 
 /**
- * Hero — a scroll-scrubbed film of the Spartan product range.
+ * Hero — a static, art-directed still of the Spartan product range.
  *
- * HOW IT WORKS. The <section> is a tall scroll track; the stage inside it is
- * `position: sticky` and one viewport high. Scroll progress through the track
- * maps to `video.currentTime`, so the clip advances only as fast as the visitor
- * scrolls and stops when they stop.
+ * WAS A SCROLL-SCRUBBED FILM (commit 87e7471), removed 2026-08-09 at the
+ * client's request. The scroll track, the sticky stage, the <video> and the
+ * scrubbing script are all gone, along with 2.9 MB of MP4. What remains is the
+ * same composition as a single image, which is what the clip opened and closed
+ * on anyway.
  *
- * ENCODED FOR SEEKING, NOT PLAYBACK. A normal web encode puts a keyframe every
- * couple of seconds because playback only moves forward. Scrubbing seeks
- * constantly, and every seek to a non-keyframe makes the decoder walk back to
- * the previous one — that is what makes cheap scroll-video judder. These are
- * H.264 with a 4-frame GOP: 37 keyframes across 145 frames, so no seek decodes
- * more than three frames. Measured cost of the GOP choice, desktop clip:
- * GOP 1 (all keyframes) 2965 KB · GOP 4 1459 KB · GOP 8 1002 KB.
+ * TWO COMPOSITIONS, NOT TWO CROPS. Landscape (1168x784) and portrait (784x1168)
+ * are separately composed: the landscape spreads the cluster across the frame
+ * with clear space at the left, the portrait stacks it centrally. `<source
+ * media>` picks exactly one, so only one is ever downloaded.
  *
- * NO WEBM. VP9 at a 4-frame GOP came out *larger* than H.264 (1691 vs 1459 KB)
- * — its advantage is long-GOP inter-prediction, which dense keyframes remove.
- * One universal format is smaller and simpler here.
+ * RESOLUTION IS THE CEILING, AND IT IS A SOURCE CONSTRAINT. 1168x784 is the
+ * largest version of this composition that exists. It is not in the brochure —
+ * page 1 carries no embedded raster at all — so it cannot be re-extracted at a
+ * higher size, and the video frames are the same dimensions. On a viewport wider
+ * than 1168px `object-fit: cover` scales it up, and above ~2300px that exceeds
+ * the 2x ceiling this project holds itself to elsewhere. The fix is a
+ * higher-resolution render from the client, which drops straight in here with no
+ * markup change. Do NOT add larger entries to `widths` — Astro clamps to the
+ * source anyway, and asking for them only invents an expectation.
  *
- * TWO CLIPS, ONE DOWNLOAD. Landscape (1168x784) and portrait (784x1168) are
- * different compositions, not crops. `<source media>` fetches exactly one —
- * verified in Chrome: at 390px `currentSrc` is hero-mobile.mp4 at 784x1168, at
- * 1440px hero-desktop.mp4 at 1168x784.
+ * AVIF WITH A REAL JPEG FALLBACK. The previous version emitted AVIF into the
+ * <img> itself, so a browser without AVIF support got no image at all rather
+ * than a worse one. Each composition now offers AVIF first and JPEG second.
  *
- * WHERE THE COPY SITS was measured. Every frame of both clips was reduced to a
- * per-pixel MAXIMUM luminance across the whole 6.04s, because text must survive
- * the worst frame, not the average one. 95th-percentile worst-case luma, 0-255:
+ * WHERE THE COPY SITS was measured against this still, not inherited from the
+ * film. Sampling the region under each element for its single brightest pixel —
+ * the pessimistic case, including the gaps between letters — the copy block
+ * clears the product cluster on both compositions. Numbers are in handoff.md §7.
+ * Re-measure if the copy moves or the image is replaced.
  *
- *   Desktop, left third   : 11 / 49 / 52 / 46 / 34 / 20  (top row to bottom)
- *   Desktop, centre third : the products, 155-244 — unusable
- *   Mobile,  top third    : 20-27 across the full width — exceptionally clean
- *   Mobile,  middle       : the products, 149-241 — unusable
- *
- * So desktop copy sits high and hard left, clear of the cluster; mobile splits,
- * with the headline in the clean top band and the buttons pushed to the foot of
- * the frame, below the products rather than across them.
- *
- * REDUCED MOTION AND NO JAVASCRIPT both collapse the track to a single
- * viewport and keep the poster — no scrubbing, nothing that moves on its own.
- * Because the motion is entirely scroll-driven there is no auto-playing content
- * here, so WCAG 2.2.2 does not apply and no pause control is needed.
+ * The image is decorative: the headline carries the meaning, so `alt` is empty.
+ * It is the LCP element on the home page, hence eager + fetchpriority high. It
+ * must never be made lazy.
  */
 
-const posterDesktop = await getImage({
-  src: desktopPoster,
-  widths: [960, 1168],
-  format: 'avif',
-});
-const posterMobile = await getImage({
-  src: mobilePoster,
-  widths: [640, 784],
-  format: 'avif',
-});
+// Astro clamps `widths` down to the source's native size, so none of these can
+// upscale. The largest entry in each list IS the native width.
+const desktopAvif = await getImage({ src: desktopStill, widths: [640, 960, 1168], format: 'avif' });
+const desktopJpeg = await getImage({ src: desktopStill, widths: [640, 960, 1168], format: 'jpeg' });
+const mobileAvif = await getImage({ src: mobileStill, widths: [400, 640, 784], format: 'avif' });
+const mobileJpeg = await getImage({ src: mobileStill, widths: [400, 640, 784], format: 'jpeg' });
 ---
 
-<section class="hero" data-hero>
-  <div class="hero__stage">
-    <div class="hero__media">
-      <picture class="hero__poster">
-        <source
-          media="(max-width: 767px)"
-          srcset={posterMobile.srcSet.attribute}
-          sizes="100vw"
-          type="image/avif"
-        />
-        <img
-          src={posterDesktop.src}
-          srcset={posterDesktop.srcSet.attribute}
-          sizes="100vw"
-          alt=""
-          width={desktopPoster.width}
-          height={desktopPoster.height}
-          fetchpriority="high"
-          decoding="async"
-        />
-      </picture>
+<section class="hero">
+  <div class="hero__media">
+    <picture class="hero__still">
+      <source
+        media="(max-width: 767px)"
+        type="image/avif"
+        srcset={mobileAvif.srcSet.attribute}
+        sizes="100vw"
+      />
+      <source
+        media="(max-width: 767px)"
+        type="image/jpeg"
+        srcset={mobileJpeg.srcSet.attribute}
+        sizes="100vw"
+      />
+      <source type="image/avif" srcset={desktopAvif.srcSet.attribute} sizes="100vw" />
+      <img
+        src={desktopJpeg.src}
+        srcset={desktopJpeg.srcSet.attribute}
+        sizes="100vw"
+        alt=""
+        width={desktopStill.width}
+        height={desktopStill.height}
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
+      />
+    </picture>
 
-      <video
-        class="hero__video"
-        muted
-        playsinline
-        preload="auto"
-        aria-hidden="true"
-        tabindex="-1"
-        data-hero-video
-      >
-        <source src="/video/hero-mobile.mp4" type="video/mp4" media="(max-width: 767px)" />
-        <source src="/video/hero-desktop.mp4" type="video/mp4" />
-      </video>
+    <div class="hero__scrim"></div>
+  </div>
 
-      <div class="hero__scrim"></div>
+  <div class="hero__inner">
+    <div class="hero__copy">
+      <Eyebrow>Spartan</Eyebrow>
+      <h1 class="hero__title">
+        {/* The space before the second line is load-bearing: without it the
+            accessible name and any text extraction read
+            "Home and IndustrialSolutions." as one word. */}
+        <span class="hero__title-line">Home and Industrial</span>{' '}
+        <span class="hero__title-line hero__title-line--accent">Solutions.</span>
+      </h1>
     </div>
 
-    <div class="hero__inner">
-      <div class="hero__copy">
-        <Eyebrow>Spartan</Eyebrow>
-        <h1 class="hero__title">
-          <span class="hero__title-line">Home and Industrial</span>
-          <span class="hero__title-line hero__title-line--accent">Solutions.</span>
-        </h1>
-      </div>
-
-      <div class="hero__actions">
-        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-        <PillButton href="/enquiry">Request a quote</PillButton>
-      </div>
+    <div class="hero__actions">
+      <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+      <PillButton href="/enquiry">Request a quote</PillButton>
     </div>
   </div>
 </section>
 
-<script is:inline>
-  (() => {
-    const track = document.querySelector('[data-hero]');
-    const video = document.querySelector('[data-hero-video]');
-    if (!track || !video) return;
-
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (reduce.matches) return; // track stays one viewport tall; poster only
-
-    let duration = 0;
-    let wanted = 0;
-    let frame = 0;
-
-    // iOS will not seek a video that has never been handed to the decoder, so
-    // prime it with a play/pause the visitor never sees. Muted + playsinline is
-    // what makes that allowed without a gesture.
-    const prime = () => {
-      const p = video.play();
-      if (p && typeof p.then === 'function') p.then(() => video.pause()).catch(() => {});
-      else video.pause();
-    };
-
-    const ready = () => {
-      duration = video.duration || 0;
-      if (!duration) return;
-      video.classList.add('is-ready');
-      prime();
-      onScroll();
-    };
-
-    const apply = () => {
-      frame = 0;
-      // Sub-frame seeks are wasted work; 24fps means anything under ~0.04s is
-      // the same picture.
-      if (Math.abs(video.currentTime - wanted) > 0.02) video.currentTime = wanted;
-    };
-
-    const onScroll = () => {
-      if (!duration) return;
-      const r = track.getBoundingClientRect();
-      const scrollable = r.height - window.innerHeight;
-      if (scrollable <= 0) return;
-      const progress = Math.min(1, Math.max(0, -r.top / scrollable));
-      wanted = progress * duration;
-      if (!frame) frame = requestAnimationFrame(apply);
-    };
-
-    if (video.readyState >= 1) ready();
-    else video.addEventListener('loadedmetadata', ready, { once: true });
-
-    addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', onScroll, { passive: true });
-  })();
-</script>
-
 <style>
-  /* Without scripting the track is a plain one-viewport hero, so nothing
-     depends on a scrub that cannot happen. The tall track is opted into only
-     once `data-js` confirms the scroll handler can drive it. */
+  /* One viewport, always. The 240svh scroll track existed only to drive the
+     film's currentTime; with nothing to scrub it would just be dead space. */
   .hero {
     position: relative;
     height: 100svh;
-    background: var(--color-black);
-  }
-
-  :global(html[data-js]) .hero {
-    height: 240svh;
-  }
-
-  .hero__stage {
-    position: sticky;
-    top: 0;
-    height: 100svh;
     overflow: hidden;
+    background: var(--color-black);
   }
 
   .hero__media {
@@ -198,33 +119,22 @@ const posterMobile = await getImage({
     inset: 0;
   }
 
-  .hero__poster,
-  .hero__video {
+  .hero__still {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
     /* Biased left so a tall, narrow window crops the right edge rather than
        eating into the measured text-safe zone. */
     object-position: 42% 50%;
   }
 
-  .hero__poster :global(img) {
+  .hero__still :global(img) {
     width: 100%;
     height: 100%;
     max-width: none;
     object-fit: cover;
     object-position: inherit;
-  }
-
-  .hero__video {
-    opacity: 0;
-    transition: opacity 500ms var(--ease-out);
-  }
-
-  .hero__video.is-ready {
-    opacity: 1;
   }
 
   /* Directional scrim. Held near-opaque down the left so the copy always clears
@@ -255,17 +165,10 @@ const posterMobile = await getImage({
     justify-content: flex-start;
     height: 100%;
     padding-inline: clamp(20px, 4vw, 72px);
-    /* Anchored from the top rather than centred, because the constraint is a
-       hard edge rather than a proportion. Sampling the left half of every frame
-       for pixels above 190 luma, the bright mass never rises above y=43% — it
-       climbs from 50% at t=0 to 43% at t=6 as the cluster grows. Centred, the
-       accent line landed at y 45-52%, right inside that band, and measured
-       1.56:1. Lifting the block so the accent line finishes at that edge takes
-       it to 3.20:1, over the 3:1 bar for large text. Note the measurement is
-       deliberately pessimistic — it takes the single brightest pixel anywhere in
-       the element's box, including the gaps between letters, so the perceived
-       contrast is better than the number. Must clear the 128px header, hence
-       the floor. */
+    /* Anchored from the top rather than centred. The bright mass of the product
+       cluster begins around y=43% and the copy has to finish above it; centred,
+       the accent line landed inside that band. Must also clear the 128px
+       header, hence the floor. */
     padding-top: clamp(150px, 15vh, 190px);
   }
 
@@ -300,12 +203,7 @@ const posterMobile = await getImage({
 
   /* ---------- mobile ---------- */
   @media (max-width: 767px) {
-    :global(html[data-js]) .hero {
-      height: 220svh;
-    }
-
-    .hero__poster,
-    .hero__video {
+    .hero__still {
       object-position: 50% 50%;
     }
 
@@ -352,24 +250,11 @@ const posterMobile = await getImage({
     /* The outlined pill carries no fill of its own, and the foot of the frame
        still catches light off the floor. A backdrop is the honest fix — dimming
        the scrim far enough to rescue a transparent control would bury the
-       product shot the film exists to show. */
+       product shot the image exists to show. */
     .hero__actions :global(.pill) {
       background: rgba(8, 8, 10, 0.72);
       border-color: rgba(255, 255, 255, 0.45);
       backdrop-filter: blur(8px);
-    }
-  }
-
-  /* Scroll-linked motion is the visitor's own doing, but scrubbing still means
-     a moving picture. Collapse to a single still viewport. */
-  @media (prefers-reduced-motion: reduce) {
-    :global(html[data-js]) .hero,
-    .hero {
-      height: 100svh;
-    }
-
-    .hero__video {
-      display: none;
     }
   }
 </style>

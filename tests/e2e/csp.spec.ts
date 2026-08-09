@@ -62,15 +62,18 @@ test.describe('the security headers', () => {
     expect(scriptSrc).toContain('sha256-');
   });
 
-  test('fonts and video are cached for a year', async ({ request }) => {
-    // 2.9 MB of hero video and 84 KB of preloaded fonts sat on unhashed URLs
-    // with no cache header, so both were revalidated on every visit.
+  test('fonts are cached for a year', async ({ request }) => {
+    // 84 KB of preloaded fonts sat on unhashed URLs with no cache header, so
+    // they were revalidated on every visit.
+    //
+    // This covered /video/ too until the scroll-scrubbed hero was replaced with
+    // a static still and 2.9 MB of MP4 was deleted. The rule went with it; there
+    // is no /video/ to cache. Astro's own /_astro/ assets are content-hashed and
+    // were already covered.
     const font = (await request.get('/fonts/archivo-variable.woff2')).headers();
-    const video = (await request.get('/video/hero-desktop.mp4')).headers();
 
     expect(font['cache-control']).toContain('immutable');
     expect(font['cache-control']).toContain('max-age=31536000');
-    expect(video['cache-control']).toContain('immutable');
   });
 });
 

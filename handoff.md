@@ -337,19 +337,32 @@ The SSR bundle is **not** left in `dist/server/` — the adapter moves it to `.v
 
 Current output: 96 `index.html` + `404.html` — 72 product pages, 15 category pages, the catalogue index, and 8 top-level pages, plus `sitemap-index.xml`.
 
-### The hero is a scroll-scrubbed film
+### The hero is a static still (was a scroll-scrubbed film)
 
-`src/components/sections/Hero.astro`. The section is a tall scroll track (240svh desktop, 220svh mobile) with a sticky one-viewport stage; scroll progress drives `video.currentTime`. Assets are in `public/video/` — H.264 only, **4-frame GOP**, ~1.46 MB each, one downloaded per device via `<source media>`.
+`src/components/sections/Hero.astro`. **Changed 2026-08-09 at the client's request.** It was a tall scroll track (240svh) with a sticky stage whose scroll progress drove `video.currentTime`. The track, the sticky stage, the `<video>`, the scrubbing script and 2.9 MB of MP4 in `public/video/` are all gone. The composition is unchanged — the still is the same product-cluster shot the film played through.
+
+**Do not try to restore a higher-resolution image; there isn't one.** 1168×784 (landscape) and 784×1168 (portrait) are the largest versions of this composition that exist. It is **not in the brochure** — page 1 carries no embedded raster at all, so `extract:heroes` cannot produce it — and the video frames were the same dimensions. Above ~1168px viewport width `object-fit: cover` scales it up, and past ~2300px that exceeds the 2× ceiling this project holds itself to. The fix is a higher-resolution render from the client; `srcset` and the `<picture>` are already in place so it drops in with no markup change. **Do not add larger entries to `widths`** — Astro clamps to the source anyway, so it changes nothing except the expectation.
 
 Things that will look like bugs but are deliberate:
 
-- **The dense keyframes are the point.** Scrubbing seeks constantly and every seek to a non-keyframe makes the decoder walk back. Re-encoding with a normal long GOP will halve the file and make the scroll judder. Measured: GOP 1 = 2965 KB, GOP 4 = 1459 KB, GOP 8 = 1002 KB.
-- **No WebM, on purpose.** VP9 at a 4-frame GOP is *larger* than H.264 (1691 vs 1459 KB) — dense keyframes remove the long-GOP prediction VP9 wins on.
-- **The copy is anchored from the top, not centred.** Sampling the left half of every frame for pixels above 190 luma, the bright mass never rises above y=43%. Centred, the accent line sat inside it at 1.56:1. Do not re-centre it.
-- **The poster is a `<picture>`, not the `poster` attribute** — that attribute takes one URL and the two clips need different stills.
-- **No pause control.** The motion is entirely scroll-driven, so there is no auto-playing content and WCAG 2.2.2 does not apply. Reintroducing autoplay would require one.
+- **Two compositions, not two crops.** Landscape spreads the cluster with clear space at the left; portrait stacks it centrally. `<source media>` fetches exactly one.
+- **AVIF *and* JPEG.** The film-era version put AVIF in the `<img>` itself, so a browser without AVIF got no image rather than a worse one. Each composition now offers AVIF first, JPEG second.
+- **The copy is anchored from the top, not centred.** The bright mass of the cluster begins around y=43% and the copy has to finish above it. Centred, the accent line sat inside that band. Do not re-centre it.
+- **The `{' '}` between the two headline spans is load-bearing.** Without it `textContent` reads `Home and IndustrialSolutions.` as one word, which is what extraction and some screen readers get.
 
-Worst-case contrast, brightest pixel under each element sampled every 0.5s: desktop white 17.4 / red 3.20 / eyebrow 5.05 / pill 11.8; mobile 15.6 / 3.28 / 5.02 / 18.3. Re-measure if the copy moves — the margins on the red line are thin by design, because it sits as low as it can while staying clear of the light.
+Worst-case contrast, re-measured against the actual rendered still rather than inherited from the film — brightest single pixel in each element's box, copy hidden with `visibility: hidden` so the boxes stay put:
+
+| | desktop | mobile |
+|---|---|---|
+| headline white | 19.00 | 18.43 |
+| headline accent red | **3.77** | **3.91** |
+| eyebrow | 5.05 | 5.05 |
+| solid button | 19.76 | 6.44 |
+| pill button | 11.99 | 12.88 |
+
+All pass; the accent line carries the thinnest margin by design, against a 3:1 large-text bar. Every number improved on the film's, because a single frame is never as bright as the worst frame across six seconds. **Re-measure if the copy moves or the image is replaced** — and measure with the copy hidden, or you sample the headline against itself and get 1.00:1 for everything.
+
+Removing the scrubber's `<script is:inline>` took the CSP from **7 inline-script hashes to 6**. `npm run csp` must be re-run and `vercel.json` committed after any change like this; a stale hash does not fail the build, it ships a site that never hydrates.
 
 ### Two test/tooling traps
 

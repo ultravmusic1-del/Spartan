@@ -118,15 +118,22 @@ see `handoff.md`). Priorities are P0 highest.
       structural: category-level application text, better cross-linking, and
       surfacing the related-products strip. Per-product prose needs the client.
 
-- [ ] **`preload="auto"` on a 1.46 MB hero video** (`Hero.astro:91`) competes for
-      bandwidth with the render-blocking CSS behind the LCP text element — the
-      metric with the least headroom (mobile Perf 95–97). Scrubbing genuinely
-      needs the buffer, so **measure before changing**, and do not touch the GOP
-      (see Do Not Touch).
+- [x] **`preload="auto"` on a 1.46 MB hero video.** Moot — the video is gone.
+      The scroll-scrubbed film was replaced with a static still on 2026-08-09
+      and 2.9 MB of MP4 was deleted. See Done below.
 
-- [ ] **Home `h1` reads `Home and IndustrialSolutions.`** in `textContent` — the
-      `<br>` leaves no space for string extraction. Cosmetic for sighted users,
-      affects extraction and some screen readers.
+- [x] **Home `h1` reads `Home and IndustrialSolutions.`** Fixed in the same
+      change: the two headline spans are now separated by `{' '}`, and the built
+      `textContent` reads `Home and Industrial Solutions.` Verified against
+      `dist/client/index.html`.
+
+- [!] **Higher-resolution hero artwork.** Blocked: client. 1168×784 / 784×1168
+      is the largest version of the product-cluster composition that exists —
+      it is not in the brochure (page 1 has no embedded raster) and the video
+      frames were the same size. Above ~1168px the still is scaled up by
+      `object-fit: cover`, and past ~2300px that exceeds the 2× ceiling this
+      project holds elsewhere. `<picture>` and `srcset` are already in place, so
+      a better render drops in with no markup change.
 
 - [!] **Real product photography.** Blocked: client. Native sizes are 100–440px,
       which is the ceiling on the design and the cause of the one Lighthouse 96.
@@ -146,6 +153,36 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-09** — Replaced the scroll-scrubbed hero film with a static still,
+  at the client's request. The 240svh scroll track, the sticky stage, the
+  `<video>`, the scrubbing script and 2.9 MB of MP4 are gone. The composition is
+  unchanged — the still is the same product-cluster shot the film played
+  through, and it is the right hero for a catalogue: it shows Spartan's actual
+  products, where the pre-film photograph (`safety.jpg`) was generic stock
+  safety imagery.
+
+  Contrast was **re-measured against the rendered still** rather than inherited
+  from the film, and every number improved — a single frame is never as bright
+  as the worst frame across six seconds. Desktop white 19.00, accent red 3.77,
+  eyebrow 5.05; mobile 18.43 / 3.91 / 5.05. All pass; the accent line carries
+  the thinnest margin by design against a 3:1 bar.
+
+  Also fixed the `Home and IndustrialSolutions.` extraction bug in passing, and
+  gave each composition a real JPEG fallback — the film-era markup put AVIF in
+  the `<img>` itself, so a browser without AVIF support got no image rather than
+  a worse one.
+
+  *Worth knowing:* removing the scrubber's `<script is:inline>` took the CSP
+  from 7 inline-script hashes to 6. `npm run csp` had to be re-run and
+  `vercel.json` committed — a stale hash does not fail the build, it ships a
+  site that renders and never hydrates.
+
+  *Worth knowing:* the first contrast measurement reported 1.00:1 for every
+  element. Sampling the brightest pixel inside a text element's box finds the
+  text — white headline against white. The copy has to be hidden with
+  `visibility: hidden`, which keeps every box exactly where it was, so the
+  measurement addresses the same pixels but sees the image and scrim behind.
 
 - **2026-08-09** — **Enquiries are now stored, not just emailed.** Until this
   landed `/api/enquiry` had no storage of any kind: an enquiry existed only as
