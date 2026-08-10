@@ -38,6 +38,9 @@ export default getViteConfig({
     // those files call `test.describe`, which Vitest resolves to its own `test`
     // and then fails to collect. Vitest's default `include` swept them up as
     // soon as Task 16 added them.
-    include: ['src/**/*.test.ts'],
+    // `tools/` is added for the same reason it is safe: it holds build and
+    // verification scripts and no Playwright specs, so widening to it cannot
+    // resurrect the collection failure above.
+    include: ['src/**/*.test.ts', 'tools/**/*.test.ts'],
   },
 });

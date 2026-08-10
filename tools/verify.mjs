@@ -423,6 +423,37 @@ console.log('\nverify — Spartan\n');
   );
 }
 
+/* ------------------------------------ 13. instructional docs name real paths -- */
+
+/*
+ * See tools/doc-paths.mjs for why this exists and why handoff.md is exempt.
+ *
+ * `docs/TRAPS.md` may not exist yet when this gate first lands; a missing file
+ * in the list is skipped rather than failed, because the gate's job is to check
+ * the references inside a document, not to assert which documents exist. The
+ * counts gate below would notice a document that vanished.
+ */
+{
+  const { INSTRUCTIONAL, extractPaths, resolves } = await import('./doc-paths.mjs');
+  const problems = [];
+  let checked = 0;
+
+  for (const rel of INSTRUCTIONAL) {
+    const file = path.join(root, rel);
+    if (!fs.existsSync(file)) continue;
+    for (const token of extractPaths(fs.readFileSync(file, 'utf8'))) {
+      checked += 1;
+      if (!resolves(root, token)) problems.push(`${rel} names \`${token}\`, which does not exist`);
+    }
+  }
+
+  record(
+    'instructional docs name real paths',
+    problems.length === 0,
+    problems.length ? problems.slice(0, 5).join('; ') : `${checked} references, all resolve`,
+  );
+}
+
 /* ------------------------------------------------------------ 9. e2e (opt) -- */
 
 if (full) {
