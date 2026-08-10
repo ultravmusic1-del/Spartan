@@ -454,6 +454,47 @@ console.log('\nverify — Spartan\n');
   );
 }
 
+/* --------------------------------------- 14. the enquiry clients tell the truth -- */
+
+/*
+ * Rule 2: never report an enquiry as sent when it was not — and, just as
+ * importantly, never report one as lost when it was kept.
+ *
+ * An enquiry travels two independent channels. It is written to Postgres, which
+ * is the system of record, and an email notification is sent. Either is enough
+ * for the submission to be a success: with the row written, a mail outage costs
+ * a notification, not a lead. So the honest signal is `recorded || delivered`,
+ * and a client keying off `delivered` alone tells a willing buyer their enquiry
+ * failed while the row sits in the database.
+ *
+ * That is not hypothetical. CLAUDE.md described exactly that wrong contract
+ * until 2026-08-10, so an agent following the guidance would have introduced
+ * it.
+ *
+ * The e2e suite already pins the response SHAPE with exhaustive toEqual
+ * assertions. This pins that the UI reads it. Comments are stripped first
+ * because both files explain the two-channel model in prose, and a naive grep
+ * would pass on the explanation while the code did the wrong thing.
+ */
+{
+  const clients = ['src/components/enquiry/EnquiryForm.tsx', 'src/scripts/quick-enquiry.ts'];
+  const problems = [];
+
+  for (const rel of clients) {
+    const code = fs
+      .readFileSync(path.join(root, rel), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
+    if (!/\brecorded\b/.test(code))
+      problems.push(`${rel} never reads \`recorded\` — it can only report a stored enquiry as lost`);
+  }
+
+  record(
+    'enquiry clients honour `recorded`',
+    problems.length === 0,
+    problems.length ? problems.join('; ') : `${clients.length} clients read both channels`,
+  );
+}
+
 /* ------------------------------------------------------------ 9. e2e (opt) -- */
 
 if (full) {
