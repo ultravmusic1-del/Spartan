@@ -475,17 +475,34 @@ console.log('\nverify — Spartan\n');
  * assertions. This pins that the UI reads it. Comments are stripped first
  * because both files explain the two-channel model in prose, and a naive grep
  * would pass on the explanation while the code did the wrong thing.
+ *
+ * Matching both identifiers in one expression, rather than `recorded` alone,
+ * came out of review: the bare-identifier version passed on a client that kept
+ * the field in its response type and keyed the branch off `delivered`.
  */
 {
   const clients = ['src/components/enquiry/EnquiryForm.tsx', 'src/scripts/quick-enquiry.ts'];
+
+  /*
+   * Both identifiers, in one expression. `[^;]` is the whole trick: the real
+   * code combines the two channels in a single expression
+   * (`Boolean(body.recorded) || Boolean(body.delivered)`), while the type
+   * declarations that merely name them are separate statements with a `;`
+   * between. Matching the bare identifier would accept a client that kept
+   * `recorded?: boolean;` in its response type and changed only the branch —
+   * the exact regression this gate is for.
+   */
+  const COMBINED = /\brecorded\b[^;]{0,120}\bdelivered\b|\bdelivered\b[^;]{0,120}\brecorded\b/;
   const problems = [];
 
   for (const rel of clients) {
     const code = fs
       .readFileSync(path.join(root, rel), 'utf8')
       .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
-    if (!/\brecorded\b/.test(code))
-      problems.push(`${rel} never reads \`recorded\` — it can only report a stored enquiry as lost`);
+    if (!COMBINED.test(code))
+      problems.push(
+        `${rel} never combines \`recorded\` with \`delivered\` — it can only report a stored enquiry as lost`,
+      );
   }
 
   record(
