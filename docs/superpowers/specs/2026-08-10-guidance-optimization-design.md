@@ -49,12 +49,17 @@ properly; only `CLAUDE.md` was never told.
 ### Stale counts
 
 Docs state **63** unit tests in five places — `handoff.md:8`, `:167`, `:314` and
-`README.md:41`, `:209`. There are **104**. `improve.md:137` argues "146 tests
+`README.md:41`, `:209`. There are **112**. `improve.md:137` argues "146 tests
 exist because each one was worth writing" — a good argument resting on a dead
 number.
 
 The spread matters more than the error. Five copies of one number, in three
 files, none of which reads the test suite.
+
+An earlier draft of this document said **104**, counted by grepping for `it(`
+and `test(`. Vitest reports 112. The error was made while writing the argument
+for why derived counts cannot be trusted, which is the argument itself: the
+gate takes its number from the test runner, never from a grep.
 
 `handoff.md:249` reads: *"72 is correct — if you see 74 anywhere, it is stale."*
 The project already knows stale counts are its failure mode and is defending

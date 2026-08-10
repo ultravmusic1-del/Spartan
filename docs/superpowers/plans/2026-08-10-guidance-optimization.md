@@ -953,7 +953,7 @@ npm run build && npm run counts
 
 Expected: `CLAUDE.md and AGENTS.md updated — <N> unit tests, 97 pages.`
 
-**Do not expect 104.** That was the count before this plan started. Task 2 added 9 tests and Step 1 of this task added 9 more, so `<N>` is around 122. Read the number the tool prints and use it in the next steps — do not carry one from this document. A plan that hardcodes a count is the defect this task exists to fix.
+**Do not expect a number from this document.** The count before this plan started was 112 (vitest's own figure — an earlier draft said 104, from a grep, and was wrong). Task 2 added 9 tests and Step 1 of this task added 9 more, so `<N>` is somewhere near 130. Read the number the tool prints and use it in the next steps. A plan that hardcodes a count is the defect this task exists to fix.
 
 Confirm both files now carry the same populated block:
 
