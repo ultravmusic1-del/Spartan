@@ -3,7 +3,7 @@
 A catalogue and lead-generation site for an industrial brand with two divisions
 (Electricals, Safety). Not e-commerce: no prices, no cart, no checkout, no
 public accounts. The conversion mechanism is a multi-product enquiry basket that
-submits one RFQ. There is an authenticated admin area at `/admin`; a buyer never
+submits one RFQ. `/admin/*` is an authenticated staff namespace; a buyer never
 signs in.
 
 Astro 7 · TypeScript strict · Tailwind 4 · Preact islands · nanostores ·
@@ -67,7 +67,9 @@ bold alone does not make text large. Measured ratios for every pair are in
 `/admin/*` and `/api/admin/*` are guarded by `src/middleware.ts`; sign-in is
 Supabase Auth plus a membership check against the `admins` allow-list table, in
 `src/lib/admin/auth.ts`. The browser never talks to Supabase — the session is an
-HttpOnly cookie and every read runs server-side.
+HttpOnly cookie and every read runs server-side. The guard landed ahead of the
+pages it guards: there is no `/admin` index yet, so a successful sign-in
+currently redirects to a route that does not exist (`handoff.md` §7).
 
 The middleware runs for **every** route, and for the prerendered pages that means
 at build time. Its early return is correctness, not speed: without it the public
@@ -94,9 +96,20 @@ npm run counts            # regenerate the counts block above after a build
 ```
 
 `npm run verify` is the gate, and `.github/workflows/verify.yml` runs it with
-`--full` on every push, so CI cannot drift from what you run locally. It enforces
-every rule above, plus the catalogue's shape and the built output's.
+`--full` on every push, so CI cannot drift from what you run locally.
 **Never weaken a gate to make it pass.**
+
+A green run is not a claim that all four rules hold, so know which ones it
+speaks for. It enforces rules 2 and 3 outright, plus the built output: no price
+or rating in structured data, one title and one canonical per page, one origin
+in robots.txt, CSP hashes that match the build, the service-role key absent from
+every client directory and every emitted asset. Rule 1 is gated in **shape
+only** — the product, category and EN 388 totals holding still, and a
+`sourcePage` on every record. Nothing here can compare a value against a
+brochure that is not on this machine, so an invented specification passes. Rule
+4 is not machine-checkable at all: no static check knows a rendered font size
+against a resolved background. Contrast is yours to measure, and `handoff.md` §3
+has the ratios.
 
 Four of its gates watch this guidance rather than the site, because prose does
 not fail on its own: `CLAUDE.md` and `AGENTS.md` must stay byte-identical, every

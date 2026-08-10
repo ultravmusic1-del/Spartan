@@ -229,8 +229,16 @@ Playwright run on every regeneration — minutes, every time — and a tool
 expensive enough to avoid is a tool that gets avoided. An omitted number
 costs less than an unused gate.
 
-Instructional prose makes no other count claims. `handoff.md`'s numbers stay, as
-dated history.
+Instructional prose makes no other **status** count claims — no second copy of
+"how many products there are today". Measurements quoted inside an explanation
+are not status counts and stay: `docs/TRAPS.md` needs "26 referenced images
+produced 52 variants" and "~41 KB inlined per page" to be actionable, and a
+figure that is part of an argument does not drift the way a status line does.
+`handoff.md`'s numbers stay too, as dated history.
+
+*Corrected 2026-08-10, after the whole-branch review.* As first written this
+paragraph said "no other count claims" flatly, which would have condemned the
+figures `docs/TRAPS.md` was written to carry.
 
 `README.md` is the exception to §7's "out of scope": it is not agent guidance,
 but `README.md:41` and `:209` state the test count and are wrong by the same

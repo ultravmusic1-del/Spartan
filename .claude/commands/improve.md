@@ -12,9 +12,7 @@ and leaving the repository in a state a person would be happy to find.
 `$ARGUMENTS` — if non-empty, work on that instead of choosing from the backlog.
 If empty, choose.
 
-Read `BACKLOG.md` first. Read `handoff.md` before touching anything you have not
-touched before — it is long, but it is the record of what has already been tried
-and what failed silently.
+Read `BACKLOG.md` first — it is the queue you are choosing from.
 
 ## Before you start
 
@@ -23,7 +21,14 @@ not restate them — restating them is how this file came to defend a video that
 had been deleted for eleven commits.
 
 `docs/TRAPS.md` holds what fails silently and what only looks like a defect.
-Read it before touching an area you have not touched before.
+Read it before touching an area you have not touched before. It is the short
+list, and it is the whole of what you need up front.
+
+`handoff.md` is the record of what happened, not a briefing. Reading it before
+every change is the cost this guidance split exists to remove — it is longer
+than everything else here put together. Go to it when you need the *reasoning*
+behind something you intend to change: a measurement, a rejected alternative,
+why a section is shaped the way it is. Go to the section, not the file.
 
 ## The loop
 

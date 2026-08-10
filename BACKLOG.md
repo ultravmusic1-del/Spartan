@@ -310,6 +310,14 @@ see `handoff.md`). Priorities are P0 highest.
   a submit button, so `type="button"` alone would have let it navigate with the
   address in a query string.
 
+  *Correction, 2026-08-10:* the `/video/` cache rule described above no longer
+  exists. `d6808db` replaced the hero film with a static still later the same
+  day and took `public/video/`, the rule and the scrubber's inline script with
+  it — which is also what dropped the CSP from 7 hashes to 6. `/fonts/` still
+  has its rule. Left as written rather than rewritten, because this section is
+  the record of what was done on the day; a later commit undoing part of it is
+  a second fact, not a reason to make the first one disappear.
+
 - **2026-08-09** — Replaced `public/robots.txt` with `src/pages/robots.txt.ts`,
   which derives the `Sitemap:` URL from `Astro.site` at build time. The domain
   is now written in exactly one place, so setting it is a single edit that can

@@ -89,10 +89,12 @@ in `handoff.md`; this file states the trap and moves on.
   standing between the public internet and every name, email address and
   phone number the site has collected. A client-side module referencing it
   would have the literal secret substituted into a shipped bundle with
-  nothing warning at build time. `tools/verify.mjs` §11 scans
-  `src/components`, `src/scripts`, `src/stores` and `src/layouts` for the
-  identifier and for any import of the enquiry store module, then sweeps
-  built output for the JWT payload string it would leave behind.
+  nothing warning at build time. The **service-role key never reaches the
+  client** gate in `tools/verify.mjs` scans `src/components`, `src/scripts`,
+  `src/stores` and `src/layouts` for the identifier and for any import of the
+  enquiry store module, then sweeps built output for the JWT payload string it
+  would leave behind. Named, not numbered: the gates are ordered by cost and
+  the numbers in that file's comments move whenever one is inserted.
 
 - **`src/lib/env.ts` reads `process.env` first, and the order is the whole
   point.** Vite inlines `import.meta.env.*` at build time, and the build runs

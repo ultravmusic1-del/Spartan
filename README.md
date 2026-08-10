@@ -223,7 +223,11 @@ npm run build       # static pages to dist/client/ + the SSR routes
 **Never weaken a gate to make it pass.** The live counts — products, categories,
 built pages, server-rendered routes, CSP hashes, unit tests — are generated into
 `CLAUDE.md` by `npm run counts` and gated by `verify`. That block is the only
-place in the repository a current number belongs; do not copy one here.
+place a live **status count** belongs — do not copy one here, or anywhere else,
+because a second copy has nothing keeping it current. A measurement quoted inside
+an explanation is a different thing and stays: `docs/TRAPS.md` saying 26
+referenced images produced 52 variants, or that `build.inlineStylesheets:
+'always'` would inline ~41 KB per page, is the reasoning, not a status line.
 
 **The e2e tests run against the built output, not the dev server.** Almost everything they assert — the prerendered pages, the no-JavaScript catalogue listing, hydration boundaries, the `dist/client/` split — is a property of the build rather than of the source. `playwright.config.ts` therefore runs `npm run build && npm run preview` itself, with `reuseExistingServer: true` so an already-running preview is used as-is during iterative work.
 
