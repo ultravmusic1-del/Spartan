@@ -1126,7 +1126,7 @@ Create `docs/TRAPS.md` with exactly two sections. Source every entry from the ex
 
 **Section 2, "Looks like a defect, is not"** — moved verbatim from `.claude/commands/improve.md`, **minus the hero-video GOP entry**, which describes a file deleted in `d6808db`:
 
-- The black panel in `p19-safety-vests.png` and `p19-safety-vests-2.png` — a deliberate DAY | NIGHT reflectivity comparison from brochure page 19. All 72 assets were scanned; only these two, both legitimate. Reported as a regression twice already.
+- The black panel in `p19-safety-vests.png` and `p19-safety-vests-2.png` — a deliberate DAY | NIGHT reflectivity comparison from brochure page 19. All 72 assets were scanned; only these two, both legitimate. Reported as a regression once already — handoff.md:282 says once, and an earlier draft of this plan said twice.
 - The hero copy's top anchoring — the bright mass of the composition begins around y=43% and centred copy put the accent line inside it.
 - `image-size-responsive` (Lighthouse Best Practices 96) on product pages — source photography is natively 100–440px and must never be upscaled beyond ~2×.
 - The 3 `npm audit` high findings — one chain, no upstream fix, build-time only. **Never run `npm audit fix --force`**; its only offered fix reintroduces 8 XSS advisories.
@@ -1165,7 +1165,7 @@ bite me, and how will I know.
 
 The "looks like a defect" list moves out of improve.md wholesale.
 Nothing about it was loop-specific -- the DAY | NIGHT panel in the two
-safety-vest images has been reported as a regression twice, and that can
+safety-vest images has been reported as a regression once, and that can
 happen in any session.
 
 The hero video's 4-frame GOP entry does not come across. d6808db deleted

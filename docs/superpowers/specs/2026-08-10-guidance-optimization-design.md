@@ -151,9 +151,16 @@ CSP hashes going stale without failing the build; the service-role key and
 
 **Looks like a defect, is not** — moved wholesale from `improve.md`, because
 nothing about it is loop-specific. The DAY|NIGHT panel in the two safety-vest
-images has been reported as a regression twice; that can happen in any session,
-not only inside `/improve`. The hero-GOP entry is deleted here rather than
-carried across.
+images has been reported as a regression once (`handoff.md:282`); that can
+happen in any session, not only inside `/improve`. The hero-GOP entry is deleted
+here rather than carried across.
+
+An earlier draft of this document said **twice**. The sources say once, and the
+error propagated from here into the plan and then into `docs/TRAPS.md` before
+review caught it. It is recorded rather than quietly corrected because it is the
+same failure this document is about — a number written from memory, copied
+forward by people trusting the copy, in a project whose first rule is that no
+value ships without a source that can be named.
 
 ### `handoff.md`
 
