@@ -16,95 +16,14 @@ Read `BACKLOG.md` first. Read `handoff.md` before touching anything you have not
 touched before — it is long, but it is the record of what has already been tried
 and what failed silently.
 
-## The rules that are not negotiable
+## Before you start
 
-**1. Never invent product data.** No specification, certification, rating,
-dimension, material or description may be written unless you can name its
-source. Every catalogue value traces to the client's brochure PDF, and **that
-PDF is not in this repository and not on this machine** — so in practice you
-cannot source a new product fact at all. Where data is missing it stays missing
-and gets an honest empty state.
+`CLAUDE.md` holds the four rules. They are not negotiable and this command does
+not restate them — restating them is how this file came to defend a video that
+had been deleted for eleven commits.
 
-This is safety equipment. A fabricated protection rating is a genuine hazard,
-not a cosmetic defect. Two categories legitimately have zero products and say so.
-
-You *may* change the **shape** of catalogue data — add an optional field, fix a
-verified typo, reorder, restructure. You may not add or alter a product **fact**.
-If a task seems to require one, it is blocked; mark it `[!]` and pick something
-else.
-
-**2. Never claim something was sent when it was not.** The enquiry path is the
-only conversion mechanism on the site. A form that reports success on a dropped
-submission loses the lead silently and is worse than a form that does nothing.
-
-**3. The admin seam holds.** No page or component may import from `src/data/*`
-(except `site.json`) or call `getCollection`. Everything goes through
-`src/lib/catalog.ts`. `npm run verify` enforces this.
-
-**4. Colour is measured, not chosen.** Small red text on a dark surface uses
-`--color-red-light`; red *surfaces* carrying white text use `--color-red-fill`;
-small red text on light uses `--color-red-deep`. "Large" means ≥24px, or
-≥18.66px bold — **bold alone does not make text large**. `handoff.md` §3 has the
-measured ratio for every pair. Do not reason about contrast from memory; look it
-up or measure it.
-
-## Do not "fix" these
-
-Every one of these looks like a defect and is not. Several have already been
-reported as regressions by someone who did not check. Changing one is a
-regression *you* are introducing.
-
-- **The black panel in `p19-safety-vests.png` and `p19-safety-vests-2.png`.**
-  It is a deliberate DAY | NIGHT reflectivity comparison from brochure page 19,
-  not a clip-forwarding failure. All 72 assets were scanned; only these two, both
-  legitimate.
-- **The hero video's 4-frame GOP.** Dense keyframes are the point — scrubbing
-  seeks constantly. A normal long GOP halves the file and makes the scroll
-  judder. No WebM either: VP9 at this GOP is *larger* than H.264.
-- **The hero copy's top anchoring.** It is not centred because the bright mass of
-  the film never rises above y=43%; centred, the accent line sat at 1.56:1.
-- **`image-size-responsive` (Lighthouse Best Practices 96) on product pages.**
-  The source photography is natively 100–440px and must never be upscaled beyond
-  ~2×. It resolves when the client supplies real photography. Adding `widths`
-  that upscale is not a fix.
-- **The 3 `npm audit` high findings.** One chain, no upstream fix, build-time
-  only, no attacker-controlled input reaches it. **Never run
-  `npm audit fix --force`** — its only offered fix reintroduces 8 XSS advisories.
-- **`build.inlineStylesheets: 'always'`.** Considered and rejected: it inlines
-  ~41 KB into all 96 pages and loses cross-page CSS caching.
-- **The two empty categories.** Spill Control and Electrical Accessories have no
-  products because the brochure has none. They get honest pages, not invented
-  products.
-
-## Traps that fail silently
-
-You will not get an error from any of these. `astro check` passes through all of
-them.
-
-- **Playwright attaches to a dev server on :4321 instead of building.** Stop the
-  dev server before any e2e run, or you get confident failures unrelated to your
-  change.
-- **Astro's dev server serves stale scoped CSS** after a component is rewritten
-  wholesale. If computed styles disagree with the file you just wrote, restart
-  the dev server and clear `node_modules/.vite`.
-- **Tailwind utilities lose to Astro scoped styles.** Utilities compile into
-  `@layer utilities`; scoped component styles are unlayered, and unlayered CSS
-  beats every layer regardless of specificity. Passing `max-sm:hidden` to a
-  component that sets `display` itself does nothing.
-- **The `hidden` attribute can never hold its space** — Tailwind 4's preflight
-  makes it `!important`. Use a class for "not yet hydrated" placeholders. Using
-  `hidden` cost 134px of layout shift once already.
-- **Any island reading a persistent nanostore needs a `mounted`/`ready` gate.**
-  `useStore` returns `store.get()` on first client render, which restores from
-  `localStorage` — so hydration renders a basket the server could not have. See
-  `EnquiryBadge.tsx` and `EnquiryForm.tsx` for the fix.
-- **`client:visible` islands do not hydrate in a background browser tab.** The
-  rendering pipeline is frozen and IntersectionObserver never fires. Not a bug.
-- **`astro:assets` cannot take a runtime string path.** Use the
-  `import.meta.glob` pattern in `handoff.md` §7.
-- **A green axe run is not a claim that a page passes WCAG.** axe missed a
-  serious WCAG A failure on 72 product cards; Lighthouse weights it 0, so the
-  accessibility score read 100 with the defect present.
+`docs/TRAPS.md` holds what fails silently and what only looks like a defect.
+Read it before touching an area you have not touched before.
 
 ## The loop
 
@@ -134,8 +53,8 @@ Work through these in order. Use TodoWrite to track them.
 
 6. **Verify.** `npm run verify` must pass. If your change touches anything
    interactive, hydrated, or user-facing, run `npm run verify -- --full` for the
-   e2e suite. **Add or extend a test for what you changed** — 146 tests exist
-   because each one was worth writing.
+   e2e suite. **Add or extend a test for what you changed** — every test here
+   was worth writing.
 
    If verification fails, fix it. If you cannot fix it, revert your change,
    record what you learned in the backlog item, and stop. **Never commit a red
