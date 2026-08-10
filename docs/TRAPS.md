@@ -109,10 +109,10 @@ in `handoff.md`; this file states the trap and moves on.
   production.
 
 - **The middleware's early return is not an optimisation — it runs at build
-  time for all 96 prerendered pages.** `src/middleware.ts` runs for every
-  route, including the 96 prerendered pages, and for those it runs at build
+  time for all 97 prerendered pages.** `src/middleware.ts` runs for every
+  route, including the 97 prerendered pages, and for those it runs at build
   time, where there is no meaningful request. Without the early return, the
-  build would make 96 pointless auth round trips and the public site's build
+  build would make 97 pointless auth round trips and the public site's build
   would start depending on Supabase being reachable. `/api/admin/*` needs
   guarding as much as `/admin/*` — protecting only the pages leaves every
   endpoint they call wide open, and the endpoints are the more valuable

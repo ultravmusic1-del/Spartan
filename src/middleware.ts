@@ -3,10 +3,10 @@
  *
  * TWO THINGS THAT WILL BITE IF FORGOTTEN
  *
- * 1. This runs for EVERY route, including the 96 prerendered pages — and for
+ * 1. This runs for EVERY route, including the 97 prerendered pages — and for
  *    those it runs at BUILD time, where there is no meaningful request. The
  *    early return is therefore not an optimisation. Without it the build makes
- *    96 pointless auth round trips, and the public site's build starts depending
+ *    97 pointless auth round trips, and the public site's build starts depending
  *    on Supabase being reachable.
  *
  * 2. `/api/admin/*` needs guarding as much as `/admin/*`. Protecting only the

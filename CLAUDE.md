@@ -107,9 +107,11 @@ every client directory and every emitted asset. Rule 1 is gated in **shape
 only** — the product, category and EN 388 totals holding still, and a
 `sourcePage` on every record. Nothing here can compare a value against a
 brochure that is not on this machine, so an invented specification passes. Rule
-4 is not machine-checkable at all: no static check knows a rendered font size
-against a resolved background. Contrast is yours to measure, and `handoff.md` §3
-has the ratios.
+4 has no static gate — nothing here resolves a rendered font size against its
+background — but `--full` runs axe over 13 sampled paths, which caught the 11px
+labels and still missed `.en td` at 4.48:1 and a serious Label in Name failure
+on all 72 product cards. A green axe run is a floor, not a certificate.
+Contrast is yours to measure, and `handoff.md` §3 has the ratios.
 
 Four of its gates watch this guidance rather than the site, because prose does
 not fail on its own: `CLAUDE.md` and `AGENTS.md` must stay byte-identical, every
