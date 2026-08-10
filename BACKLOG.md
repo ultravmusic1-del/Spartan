@@ -40,6 +40,17 @@ see `handoff.md`). Priorities are P0 highest.
       the existing `EnquiryForm.tsx` already models this correctly — copy its
       pending/ready gate and its error handling rather than inventing a second
       pattern.
+      **Correction, 2026-08-10 — the "Must" above is no longer the rule, and is
+      left in place only as the record of what this item was written against.**
+      When it was written, email was the only channel. Since `de4b299` an
+      enquiry travels down two independent channels — it is written to Postgres,
+      the system of record, and an email notification is sent — and **either one
+      alone is a success**. The honest signal is therefore `recorded ||
+      delivered`, never `delivered` alone: with the row written, a mail outage
+      costs a notification rather than a lead, and telling the buyer to try again
+      would write a duplicate. `src/lib/enquiry-outcome.ts` is the implementation
+      and `decideOutcome` asserts all nine combinations. Both clients read both
+      fields, and `npm run verify` has a gate that fails if either stops.
 
 - [x] **Decide what the footer email field is for.** Decided by the client on
       2026-08-09: **a newsletter was never intended.** Removed rather than

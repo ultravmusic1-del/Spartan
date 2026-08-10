@@ -5,11 +5,14 @@ import { markNotified, recordEnquiry } from '../../lib/enquiry-store';
 import { configured, env } from '../../lib/env';
 
 /**
- * /api/enquiry — the site's only server-rendered route.
+ * /api/enquiry — the RFQ submission endpoint, and the first route to opt out of
+ * prerendering.
  *
- * Everything else is `output: 'static'`. This one endpoint opts out, so the
- * Vercel adapter emits 96 static pages plus a single serverless function.
- * Nothing else in the repo may set this flag without a reason as good.
+ * The site is `output: 'static'`. Opting out pushes the Vercel adapter into
+ * hybrid mode, so this lands in the serverless function rather than in
+ * `dist/client`. The admin routes have since opted out too, for a reason
+ * recorded in docs/superpowers/specs/2026-08-09-admin-dashboard-design.md —
+ * nothing else may set this flag without one as good.
  */
 export const prerender = false;
 

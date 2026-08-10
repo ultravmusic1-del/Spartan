@@ -38,8 +38,11 @@ npm run dev
 | `npm run dev` | Astro dev server. Astro 7 supports `astro dev --background`, then `astro dev stop` / `status` / `logs`. |
 | `npm run build` | Production build. Output is **`dist/client/`**, not `dist/` — see below. |
 | `npm run preview` | **A custom server** (`tests/preview-server.mjs`), *not* `astro preview`. See below. |
-| `npm run test` | Vitest unit tests — **63 tests**. |
-| `npm run test:e2e` | Playwright + axe — **83 tests + 1 skipped**, across desktop and mobile projects. |
+| `npm run test` | Vitest unit tests. |
+| `npm run test:e2e` | Playwright + axe, across desktop and mobile projects. Stop the dev server first. |
+| `npm run verify` | **The gate.** Typecheck, unit tests, invariants, build, output sweeps. `-- --full` adds Playwright. |
+| `npm run csp` | Regenerate `vercel.json`'s CSP hashes from `dist/client` after a build. |
+| `npm run counts` | Regenerate `CLAUDE.md`'s counts block from the repo. `npm run verify` fails when it is stale. |
 | `npx astro check` | Type/template check — 0 errors, 0 warnings, 7 hints (unused params in `tools/*.mjs`). |
 | `npm run extract:catalog -- "path/to/brochure.pdf"` | Regenerate products and product PNGs from the brochure. |
 | `npm run extract:logo -- "path/to/brochure.pdf"` | Re-extract the logo lockups. |
@@ -52,7 +55,7 @@ The four extraction scripts are run **only when the brochure is revised**. Their
 
 `astro preview` does not work in this repo. `@astrojs/vercel` ships no preview entrypoint and exits with *"The @astrojs/vercel adapter does not support the preview command."*
 
-A plain static file server would not work either. Adding the site's one server-rendered route split the build in two: static pages land in `dist/client/`, and the SSR bundle is moved by the adapter to `.vercel/output/functions/_render.func` (`dist/server/` is deleted). A static server would therefore serve 96 of the 97 routes and 404 the one that matters — `/api/enquiry`, the end of the only conversion path.
+A plain static file server would not work either. Adding the first server-rendered route split the build in two: static pages land in `dist/client/`, and the SSR bundle is moved by the adapter to `.vercel/output/functions/_render.func` (`dist/server/` is deleted). A static server would therefore serve the prerendered pages and 404 every route that opts out — including `/api/enquiry`, the end of the only conversion path, and the whole of the admin area.
 
 `tests/preview-server.mjs` serves both halves the way Vercel does: filesystem first out of `dist/client/`, then anything matching a `dest: "_render"` route in `.vercel/output/config.json` goes to the real built SSR handler, then `404.html` with a 404 status. The route table is read from the emitted config rather than hard-coded, so it cannot drift from what actually deploys. Nothing in it is a stub.
 
@@ -62,12 +65,13 @@ A plain static file server would not work either. Adding the site's one server-r
 
 ## Environment variables
 
-Copy `.env.example` to `.env`. `.env` is gitignored — never commit real values. All variables are read **at request time** by `src/pages/api/enquiry.ts`.
+Copy `.env.example` to `.env`. `.env` is gitignored — never commit real values. All variables are read **at request time**, in the server-rendered routes and in the middleware that guards them — never at build time, and never in the browser.
 
 | Variable | Purpose |
 |---|---|
 | `SUPABASE_URL` | Supabase project URL. Project `spartan`: `https://wslylysakixrirxkozih.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Service role**, not the publishable key. Server-side only — see below. |
+| `SUPABASE_ANON_KEY` | Admin sign-in only (`signInWithPassword`). Never used for data. |
 | `RESEND_API_KEY` | Resend API key. https://resend.com/api-keys |
 | `ENQUIRY_TO_EMAIL` | The client's sales inbox — where the notification is delivered. |
 | `ENQUIRY_FROM_EMAIL` | Optional. Must be on a domain verified in the Resend account. |
@@ -206,13 +210,22 @@ Related trap: **do not "fix" the black panel in `p19-safety-vests.png` and `p19-
 ## Testing
 
 ```bash
-npm run test        # vitest — 63 unit tests
-npm run test:e2e    # playwright + axe — 83 tests + 1 skipped
+npm run verify            # THE GATE — typecheck, unit tests, invariants, build, sweeps
+npm run verify -- --full  # ... and the Playwright suite
+
+npm run test        # vitest unit tests
+npm run test:e2e    # playwright + axe
 npx astro check     # 0 errors, 0 warnings, 7 hints
-npm run build       # 96 pages + 404 + 1 SSR endpoint
+npm run build       # static pages to dist/client/ + the SSR routes
 ```
 
-**The e2e tests run against the built output, not the dev server.** Almost everything they assert — 96 prerendered pages, the no-JavaScript catalogue listing, hydration boundaries, the `dist/client/` split — is a property of the build rather than of the source. `playwright.config.ts` therefore runs `npm run build && npm run preview` itself, with `reuseExistingServer: true` so an already-running preview is used as-is during iterative work.
+`npm run verify` is what CI runs (`.github/workflows/verify.yml`, on every push).
+**Never weaken a gate to make it pass.** The live counts — products, categories,
+built pages, server-rendered routes, CSP hashes, unit tests — are generated into
+`CLAUDE.md` by `npm run counts` and gated by `verify`. That block is the only
+place in the repository a current number belongs; do not copy one here.
+
+**The e2e tests run against the built output, not the dev server.** Almost everything they assert — the prerendered pages, the no-JavaScript catalogue listing, hydration boundaries, the `dist/client/` split — is a property of the build rather than of the source. `playwright.config.ts` therefore runs `npm run build && npm run preview` itself, with `reuseExistingServer: true` so an already-running preview is used as-is during iterative work.
 
 Two things that will waste your time otherwise:
 
@@ -243,7 +256,7 @@ Measured against the built output via `npm run preview`, Lighthouse 12.8.2, head
 CLS is 0.000 and TBT 0 ms on every page. Two scores are worth understanding rather than chasing:
 
 - **Best Practices 96 on the product page (mobile only)** is `image-size-responsive`. The spotlight image is displayed at 257×308 and its source is *natively* 257×308; Lighthouse wants 386×462 for a DPR-2 screen. **This cannot be fixed here.** Product photography extracted from the brochure is 100–440px wide and must never be upscaled. It resolves when the client supplies higher-resolution photography — the components already take `srcset`, so it drops in without markup changes. Desktop scores 100 because DPR is 1.
-- **Home mobile Performance sits at 95–97** across repeat runs. The LCP element is a text paragraph (`.hero__lede`) whose time is ~83% render delay under the mobile throttle, behind 41 KB of render-blocking CSS. Two production factors are *not* reflected here: the preview server sends no `Content-Encoding` and no `Cache-Control`, so Lighthouse's `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) findings both disappear on Vercel, which compresses and sets immutable caching automatically. If it ever needs more headroom, `build.inlineStylesheets: 'always'` is the lever — at the cost of inlining ~41 KB into all 96 pages and losing cross-page CSS caching. It was not taken.
+- **Home mobile Performance sits at 95–97** across repeat runs. The LCP element is a text paragraph (`.hero__lede`) whose time is ~83% render delay under the mobile throttle, behind 41 KB of render-blocking CSS. Two production factors are *not* reflected here: the preview server sends no `Content-Encoding` and no `Cache-Control`, so Lighthouse's `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) findings both disappear on Vercel, which compresses and sets immutable caching automatically. If it ever needs more headroom, `build.inlineStylesheets: 'always'` is the lever — at the cost of inlining ~41 KB into every prerendered page and losing cross-page CSS caching. It was not taken.
 
 ---
 

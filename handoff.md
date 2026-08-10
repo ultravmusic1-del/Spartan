@@ -1,8 +1,12 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-05
-**Branch:** `feat/catalogue-site` (all work lives here; `main` tracks it)
-**State:** **All 17 tasks complete and verified. The build is finished.** The site builds end to end — 96 pages plus a 404 and one server-rendered endpoint — and the full enquiry path works from product card to submitted RFQ.
+**Last updated:** 2026-08-10
+**Branch:** `agent/improvements` (all work lives here; `main` tracks it)
+**State:** **The catalogue build is complete and verified. The admin subsystem is in progress.** The public site builds end to end and the full enquiry path works from product card to submitted RFQ. Admin Phase 1 has landed its auth foundation — sign-in, sign-out, the session guard and the CSV serialiser — but no dashboard page exists yet. See §7 "The admin subsystem".
+
+Live counts — built pages, server-rendered routes, CSP hashes, unit tests — are generated into `CLAUDE.md` by `npm run counts` and gated by `npm run verify`. That block is the only place a current number belongs. Every number in this document is a dated record of what was true when it was written.
+
+**As of 2026-08-05:**
 
 ```
 vitest        63 passed
@@ -12,9 +16,9 @@ astro build   clean — 96 pages + 404 + 1 SSR endpoint
 lighthouse    >= 95 on all four categories, all three page types
 ```
 
-**Nothing in the build is outstanding. What remains is deployment and the client-supplied items in §8** — see §7 "What a next session picks up".
+**Nothing in the catalogue build is outstanding. What remains is deployment, the rest of admin Phase 1, and the client-supplied items in §8** — see §7 "What a next session picks up".
 
-**Start here, in this order:** `README.md` (setup, scripts, architecture, launch checklist) → this document (the history and the traps) → `docs/CONTENT-EDITING.md` if you are touching catalogue data.
+**Start here, in this order:** `CLAUDE.md` (the rules, and which file answers which question) → `docs/TRAPS.md` (the things that pass `astro check` and are wrong anyway) → `README.md` (setup, scripts, architecture, launch checklist) → this document for the reasoning behind a decision → `docs/CONTENT-EDITING.md` if you are touching catalogue data.
 
 ---
 
@@ -151,7 +155,7 @@ Both self-hosted variable fonts at `public/fonts/`. **`@font-face` must declare 
 | State | nanostores + `@nanostores/persistent` (Task 12) |
 | Enquiry storage | Supabase Postgres, project `spartan` — the system of record |
 | Email | Resend (Task 14) — the notification, no longer the record |
-| Rendering | `output: 'static'`; only `/api/enquiry` will set `prerender = false` |
+| Rendering | `output: 'static'`; `/api/enquiry` and the admin routes set `prerender = false`, and `src/middleware.ts` runs on everything. The live count is in `CLAUDE.md`'s generated block |
 | Hosting | Vercel adapter |
 | Tests | Vitest (unit), Playwright + axe (e2e) |
 
@@ -164,8 +168,8 @@ npm install
 npm run dev            # astro dev  (Astro 7: --background / astro dev stop)
 npm run build          # -> dist/client/ + .vercel/output/
 npm run preview        # tests/preview-server.mjs, NOT astro preview — see README
-npm run test           # vitest run — 63 passing
-npm run test:e2e       # playwright — 83 passing, 1 skipped
+npm run test           # vitest run
+npm run test:e2e       # playwright — stop the dev server first
 npx astro check        # 0 errors, 0 warnings, 7 hints (unused params in tools/*.mjs)
 
 npm run extract:catalog -- "path/to/brochure.pdf"   # regenerate products + PNGs
@@ -173,6 +177,42 @@ npm run extract:logo    -- "path/to/brochure.pdf"
 npm run extract:heroes  -- "path/to/brochure.pdf"
 npm run normalise                                   # raw extraction -> products.json
 ```
+
+### The tooling that arrived after this document was first written
+
+None of it existed when §4's command list was drafted, and all of it is now the
+way work is checked in rather than an extra:
+
+```bash
+npm run verify            # THE GATE. typecheck, unit tests, invariants,
+                          # build, output sweeps. Never weaken one to pass.
+npm run verify -- --full  # ... and the Playwright suite
+npm run csp               # regenerate vercel.json's CSP hashes from dist/client
+npm run counts            # regenerate CLAUDE.md's counts block from the repo
+node tools/brand-sheet.mjs   # the brand & asset contact sheet
+```
+
+`npm run verify` (`tools/verify.mjs`) is what enforces the admin seam, the
+catalogue's shape, that no price or rating reaches structured data, that the
+service-role key never reaches `dist/client`, that `CLAUDE.md` and `AGENTS.md`
+cannot diverge, that the instructional docs name paths that resolve, that both
+enquiry clients read `recorded` and not `delivered` alone, and that the
+generated counts block is not stale. `.github/workflows/verify.yml` runs it on
+every push, so a gate that goes red is not something a local session can skip.
+
+`npm run counts` (`tools/counts.mjs`) is why this document no longer carries
+live numbers. The catalogue counts, the built-page count, the server-rendered
+route count, the CSP hash count and the unit-test count are derived from the
+repository and written into one generated block in `CLAUDE.md`; the gate fails
+if the block and the repository disagree. **Everything in this document is a
+dated snapshot** — if you want a current number, run `npm run counts` and read
+that block, and do not copy it anywhere.
+
+`docs/TRAPS.md` was extracted from this document for the same reason. It carries
+the silent failures — the things that pass `astro check` and are wrong anyway —
+so they can be read in two minutes before touching an unfamiliar area, instead
+of being found in §7 after the fact. The reasoning stays here; the warning lives
+there.
 
 ### Version traps discovered the hard way
 
@@ -311,7 +351,7 @@ Because of that panel, Body Protection's `heroProductSlug` is **`nonwoven-dispos
 | 16 | End-to-end tests | Playwright + axe, desktop and mobile — 83 passing, 1 skipped |
 | 17 | Launch readiness | Lighthouse, seam verification, README, content-editing guide, launch checklist |
 
-**63 unit tests and 83 e2e tests passing (1 skipped). `astro check` 0 errors, 0 warnings, 7 hints. `astro build` clean — 96 pages + 404 + one SSR endpoint.**
+**At Task 17's completion, 2026-08-05: 63 unit tests and 83 e2e tests passing (1 skipped). `astro check` 0 errors, 0 warnings, 7 hints. `astro build` clean — 96 pages + 404 + one SSR endpoint.** Every one of those numbers has since moved; the current ones are in `CLAUDE.md`'s generated block.
 
 Task 7's defects, for the record: focus escaped the modal panel when a click landed on a non-focusable part of it; footer socials measured 38×38 not 44×44 (an `::after` overlay enlarged the hit area but not the reported box); a text-glyph chevron survived; and a hover-specificity collision turned social icons red on a red fill, making them vanish.
 
@@ -331,7 +371,7 @@ Root-absolute pattern gives root-absolute keys, so it works unchanged from any d
 
 ### Build output moved to `dist/client/`
 
-Adding the first server-rendered route (`/api/enquiry`, the only one) switched the Vercel adapter into hybrid mode. Static pages now emit to **`dist/client/`**, not `dist/`. Any script or check that globs `dist/products` or `dist/catalogue` needs the `client/` segment.
+Adding the first server-rendered route (`/api/enquiry`) switched the Vercel adapter into hybrid mode. Static pages now emit to **`dist/client/`**, not `dist/`. Any script or check that globs `dist/products` or `dist/catalogue` needs the `client/` segment.
 
 The SSR bundle is **not** left in `dist/server/` — the adapter moves it to `.vercel/output/functions/_render.func` and removes the staging directory, so `dist/` ends up containing only `client/`. To confirm the endpoint built, check that function exists and that `.vercel/output/config.json` routes `^/api/enquiry/?$` to `_render`.
 
@@ -435,6 +475,133 @@ A verify gate fails if the service-role key reaches `dist/client`, or if anythin
 
 One trap worth keeping: **a data-modifying CTE's rows are not visible to the rest of the same statement.** The first round-trip check inserted a row and read the view in one statement, got 0 lines, and looked like a broken view. The view was fine.
 
+### The admin subsystem — Phase 1's auth foundation
+
+Added 2026-08-09 in six commits, `a28603c`..`1f74bdc`. Design doc:
+`docs/superpowers/specs/2026-08-09-admin-dashboard-design.md`. Phase 1's
+executable plan: `docs/superpowers/plans/2026-08-09-admin-phase-1-auth-and-enquiries.md`.
+
+This is what §5's admin seam exists for, and it is the "reason as good" that
+`/api/enquiry`'s comment demanded before anything else set `prerender = false`.
+The design doc §1 records the four decisions: the public site stays
+`output: 'static'` with a deploy hook firing on publish, the admin lives in this
+repo so the Zod schemas stay one contract, Supabase Storage becomes the image
+record with the build pulling images in, and the programme ships in four phases
+each of which is independently shippable.
+
+**What has actually landed is the auth foundation, not all of Phase 1.**
+`public.admins`, cookie parsing, the auth module, the middleware guard, the
+sign-in and sign-out endpoints, the login page and `AdminLayout`. **There is no
+`/admin` index page yet**, so a successful sign-in currently redirects to a route
+that does not exist. The enquiry inbox, the detail view, the status workflow, the
+product-demand report and the CSV export route are all still to come — the CSV
+*serialiser* shipped ahead of the endpoint that will use it, and `toCsv` has
+tests but no caller.
+
+**Identity and authority are separate facts, established separately.**
+`src/lib/admin/auth.ts`:
+
+1. The session cookie proves **who** the request is — Supabase Auth, anon key.
+2. A row in `public.admins` proves they **may** be here — service-role key.
+
+A valid Supabase account is therefore not enough. Public signup is disabled in
+the Supabase dashboard, but a setting nobody re-reads is not a control; the
+allow-list is what makes it hold by design. `public.admins` has RLS enabled with
+zero policies, exactly like `public.enquiries`, so only the service-role key can
+read it — from a function that has already verified a session.
+
+`currentAdmin()` uses `getUser()`, **not** `getSession()`. `getSession` decodes
+the cookie and trusts what it finds, and the cookie is sent by the browser.
+`getUser` verifies the token with the auth server. For the check that decides
+whether to hand over every enquiry the site has ever taken, the round trip is
+worth it.
+
+**The browser never talks to Supabase.** Sign-in is a plain form POST to
+`/api/admin/login`, the session comes back as an HttpOnly cookie, and every read
+runs server-side. That is why `connect-src 'self'` in `vercel.json` still needs
+no Supabase origin, why no anon key reaches any page, and why `public.enquiries`
+can keep RLS with zero policies rather than growing an "authenticated admins can
+select" policy that would widen the surface for nothing.
+
+The cookie options are forced in `authClient()` regardless of what
+`@supabase/ssr` suggests: `httpOnly`, `secure`, `sameSite: 'lax'`, `path: '/'`.
+The token is never read by page script so `httpOnly` costs nothing, and a session
+cookie without `sameSite` is a CSRF foothold on an area whose forms change data.
+
+Things that will look like bugs but are deliberate:
+
+- **The middleware's early return is correctness, not an optimisation.**
+  `src/middleware.ts` runs for **every** route, and for the prerendered public
+  pages it runs at **build** time, where there is no meaningful request. Without
+  the early return the build makes one pointless auth round trip per page — and,
+  far worse, the public site's build starts depending on Supabase being
+  reachable. A static catalogue that cannot be built offline because of an admin
+  guard is the tail wagging the dog.
+- **`/api/admin/*` is guarded as hard as `/admin/*`.** Protecting only the pages
+  leaves every endpoint they call wide open, and the endpoints are the more
+  valuable target — the pages only render what those hand over.
+- **An unauthenticated API call gets 401 JSON; an unauthenticated page gets a
+  302.** Redirecting a `fetch` would hand the caller an HTML login page under a
+  200, which reads as success.
+- **`guarded()` strips trailing slashes before matching.** Otherwise
+  `/admin/login/` misses the `OPEN` set and `/admin/` misses `/admin`. Both
+  failures are silent and in opposite directions.
+- **`parseCookies` splits on the FIRST `=` only.** Supabase session cookies are
+  base64 and routinely end in `=` padding; splitting on every `=` truncates the
+  token. The symptom is an admin being signed out at random, which looks nothing
+  like a parse bug.
+- **Auth never fails open.** Any throw inside `currentAdmin` is logged and
+  returns `null`. "Could not establish authority" has to read the same as "does
+  not have it".
+- **Sign-out is POST-only.** A GET would let a prefetch, an `<img>` or a link in
+  an email end someone's session for them.
+- **Wrong address and wrong password give the same message.** Distinguishing
+  them tells anyone who asks which admin addresses exist.
+- **`noindex` WITHOUT a `robots.txt` `Disallow`, and that pair is the point.**
+  The design doc §3 called for both; the implementation deliberately took only
+  the meta tag. `Disallow` stops a crawler fetching the page, so it never sees
+  the `noindex` and the URL can still surface from an external link — and a
+  `Disallow` line is a public index of your endpoints. `src/pages/robots.txt.ts`
+  makes the same argument about `/api/enquiry`.
+- **`AdminLayout` is not `BaseLayout`.** `BaseLayout` emits title, canonical,
+  Open Graph and JSON-LD through `Seo.astro`, all of which describe a public
+  document, and it would put the admin on the public site's CSS and JS budget for
+  nothing. Because admin routes are SSR they never enter the sitemap either, so
+  the "97 pages, one title and one canonical each" gate does not move.
+
+**The CSP trap this subsystem must not fall into.** `npm run csp` derives
+`script-src`'s hashes from `dist/client`, and SSR admin pages are never in
+`dist/client`. An inline `<script>` on an admin page would ship unhashed, be
+blocked at runtime, and **nothing would fail** — not the build, not `astro
+check`, not the CSP gate. The page would render and silently not work. So: admin
+pages emit no inline scripts and no client-side islands. Server-rendered forms,
+and if behaviour is ever genuinely needed, an Astro `<script>` tag that bundles
+to an external `/_astro/*.js` file which `'self'` already allows — never
+`is:inline`. The login page's `error` query parameter is rendered as text
+content, never as markup, because that value is in the URL and therefore
+anyone's to set.
+
+**CSV export carries a formula-injection guard.** `src/lib/admin/csv.ts` is
+RFC 4180 with one departure: a field beginning `=`, `+`, `-` or `@` is executed
+as a formula by Excel and Google Sheets, and enquiry messages are free text
+written by strangers. Exporting them verbatim hands whoever opens the file a
+script somebody else wrote. Prefixing with a single quote is the standard
+neutralisation and spreadsheets strip it on display, so nothing is lost to a
+human reader; a neutralised field is always quoted, because an unquoted leading
+apostrophe is not reliably honoured. **The cost is that a genuinely negative
+number becomes text** — free here, because the only numerics exported are
+quantities and line counts and both are bounded at 1 by `enquiryPayloadSchema`.
+It would not be free in a financial export, so do not lift this module into one
+without re-taking that decision.
+
+**What Phase 1 still owes.** The design doc's acceptance conditions for the phase
+include e2e coverage of the auth boundary — an unauthenticated request to every
+admin route redirects, and an authenticated non-admin is refused — and zero CSP
+violations on every admin page behind a real login. **Neither test exists yet;
+`tests/e2e/` has no admin spec.** Until they do, the guard is verified by reading
+it rather than by running it, which is exactly the standard the rest of this
+project does not accept.
+
 ### The footer email field is gone
 
 It was a newsletter subscribe with no mailing list behind it and — per the client, 2026-08-09 — never intended as one. Removed rather than wired: posting it to `/api/enquiry` would have sent sales an RFQ from someone who believed they were subscribing. The contact strip now carries address, phone and email.
@@ -443,11 +610,13 @@ It was a newsletter subscribe with no mailing list behind it and — per the cli
 
 ### What a next session picks up
 
-The build is done. Three things follow it, in rough order:
+The catalogue build is done. Three things follow it, in rough order:
 
 1. **Deployment.** Vercel is assumed and configured but never confirmed with the client (§8 item 3), and nothing has been deployed. The domain has to land first — that is now a **single** edit to `site` in `astro.config.mjs`, since `src/pages/robots.txt.ts` derives the sitemap URL from it and `public/robots.txt` is gone. Vercel's project settings need `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (without them every RFQ in production is a log line), and the Resend pair for the notification.
 
-2. **The admin dashboard.** This is what §5 exists for. Replace `file()` in `content.config.ts` with a database loader; `catalog.ts` and all 96 pages are untouched. The Zod schemas become the write-validation contract. Two things to carry across: `serialiseJsonLd()` escaping matters the moment arbitrary text can enter the catalogue (§7), and the "never invent product data" rule needs to survive contact with a UI that has empty fields inviting to be filled — `docs/CONTENT-EDITING.md` is the statement of that rule for whoever maintains data in the meantime.
+2. **The rest of the admin dashboard.** Phase 1's auth foundation has landed — see "The admin subsystem" above — and what remains of Phase 1 is the part that has a user: an `/admin` index (sign-in currently redirects to a route that does not exist), the enquiry inbox and detail view, the `new → contacted → quoted → closed` status workflow, the product-demand report over the `enquiry_lines` view, and the CSV export route that `src/lib/admin/csv.ts` is waiting for. Phase 1 also owes its two acceptance tests: the auth boundary and zero CSP violations on every admin page.
+
+   Then Phase 2, which is what §5 exists for: replace `file()` in `content.config.ts` with a database loader; `catalog.ts` and every catalogue page are untouched, and the acceptance test is a **byte-identical** build — build from JSON, migrate, build from Postgres, diff. It ships alone, behind its own verification, with nothing else in the commit. Three things to carry across: `serialiseJsonLd()` escaping matters the moment arbitrary text can enter the catalogue (§7); the "never invent product data" rule needs to survive contact with a UI full of empty fields inviting to be filled, and `docs/CONTENT-EDITING.md` is the statement of that rule for whoever maintains data in the meantime; and once the catalogue lives in Postgres and images live in Storage, **no build works offline** — that is inherent to the choice, which is why Phase 2 keeps a documented `CATALOGUE_SOURCE=json|postgres` escape hatch rather than pretending otherwise.
 
 3. **Arabic localisation, deferred.** The brochure cover carries an Arabic wordmark (سبارتان) that is unused in this build. A second locale means RTL, a translated content model, and `hreflang` — it is a project, not a task.
 
