@@ -389,6 +389,40 @@ console.log('\nverify — Spartan\n');
   );
 }
 
+/* ------------------------------------------- 12. CLAUDE.md and AGENTS.md -- */
+
+/*
+ * These two files are one document with two names, because Claude Code reads
+ * the first and other harnesses read the second. They were byte-identical when
+ * this gate was written and nothing whatsoever enforced it — the copy existed
+ * only because someone had remembered to make it.
+ *
+ * That is the same mechanism that let `.claude/commands/improve.md` go on
+ * defending the hero video's GOP for eleven commits after the video was
+ * deleted. Duplicated guidance with no gate drifts, and the drift is invisible
+ * because prose does not fail.
+ *
+ * Line endings are normalised before comparing: this repo is developed on
+ * Windows and git rewrites LF to CRLF in the working copy, which an editor can
+ * apply to one file and not the other. That difference is not the drift this
+ * gate is looking for.
+ */
+{
+  const read = (rel) =>
+    fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
+  const claude = read('CLAUDE.md');
+  const agents = read('AGENTS.md');
+  const same = claude === agents;
+
+  record(
+    'CLAUDE.md and AGENTS.md agree',
+    same,
+    same
+      ? `${claude.length} chars, identical`
+      : 'diverged — copy one over the other, do not merge by hand',
+  );
+}
+
 /* ------------------------------------------------------------ 9. e2e (opt) -- */
 
 if (full) {
