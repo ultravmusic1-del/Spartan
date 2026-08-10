@@ -130,7 +130,7 @@ did not check. Changing one is a regression *you* would be introducing.
 - **The black panel in `p19-safety-vests.png` and `p19-safety-vests-2.png`.**
   A deliberate DAY | NIGHT reflectivity comparison from brochure page 19, not
   a clip-forwarding failure. All 72 assets were scanned; only these two, both
-  legitimate. Reported as a regression twice already.
+  legitimate. Reported as a regression once already.
 
 - **The hero copy's top anchoring.** The hero is a static still now, not the
   scroll-scrubbed film it used to be. The bright mass of the composition
