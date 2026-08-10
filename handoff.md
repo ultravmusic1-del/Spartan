@@ -1,7 +1,7 @@
 # Spartan Catalogue Website — Handoff
 
 **Last updated:** 2026-08-10
-**Branch:** `agent/improvements` (all work lives here; `main` tracks it)
+**Branch:** `agent/improvements` — all work lands here. **`main` no longer tracks it**, despite what this line said through the `feat/catalogue-site` era; it has fallen behind and nothing merges it forward automatically. `git log main..agent/improvements` is the difference.
 **State:** **The catalogue build is complete and verified. The admin subsystem is in progress.** The public site builds end to end and the full enquiry path works from product card to submitted RFQ. Admin Phase 1 has landed its auth foundation — sign-in, sign-out, the session guard and the CSV serialiser — but no dashboard page exists yet. See §7 "The admin subsystem".
 
 Live counts — built pages, server-rendered routes, CSP hashes, unit tests — are generated into `CLAUDE.md` by `npm run counts` and gated by `npm run verify`. That block is the only place a current number belongs. Every number in this document is a dated record of what was true when it was written.

@@ -20,7 +20,7 @@ import { absoluteUrl, requireSite } from '../lib/seo';
  * robots.txt advertising `undefined/sitemap-index.xml` is worse than a build
  * that stops and names the cause.
  *
- * Prerendered — `output: 'static'` is the default and only `/api/enquiry` opts
+ * Prerendered — `output: 'static'` is the default and this route does not opt
  * out. This file must never become a serverless function; it is one string that
  * cannot change between requests.
  */
