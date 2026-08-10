@@ -217,7 +217,10 @@ Asserted: product, category and division counts from `src/data/*.json`; SSR
 routes by `prerender = false`; built pages from `dist/client`; inline-script
 hashes from `vercel.json`; and the unit-test count taken from the vitest run
 `verify` already performs — the exact number, not a grep. The e2e count is
-asserted only under `--full`, since only then is it known.
+**excluded**, decided during implementation. Writing it would mean a full
+Playwright run on every regeneration — minutes, every time — and a tool
+expensive enough to avoid is a tool that gets avoided. An omitted number
+costs less than an unused gate.
 
 Instructional prose makes no other count claims. `handoff.md`'s numbers stay, as
 dated history.

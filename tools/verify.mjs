@@ -94,9 +94,14 @@ console.log('\nverify — Spartan\n');
 
 /* ---------------------------------------------------------- 2. unit tests -- */
 
+// Hoisted: the counts gate below reuses this rather than running the suite a
+// second time, which would double the slowest gate in the file.
+let unitTests = null;
+
 {
   const r = run('npx', ['vitest', 'run']);
   const m = r.out.match(/Tests\s+(\d+) passed/);
+  if (m) unitTests = Number(m[1]);
   record('vitest', r.ok, m ? `${m[1]} passed` : r.ok ? 'passed' : 'see output above');
   if (!r.ok) console.log(r.out.slice(-2000));
 }
@@ -512,7 +517,40 @@ console.log('\nverify — Spartan\n');
   );
 }
 
-/* ------------------------------------------------------------ 9. e2e (opt) -- */
+/* --------------------------------------------- 15. the counts are current -- */
+
+/*
+ * See tools/counts.mjs for the history. The short version: five copies of one
+ * number, in three files, none of which read the test suite.
+ *
+ * Skipped when vitest did not report a count — a failed test run has already
+ * failed the suite, and reporting a stale-counts error on top of it would point
+ * the next reader at the wrong problem.
+ */
+{
+  const { computeCounts, renderBlock, replaceBlock, TARGETS } = await import('./counts.mjs');
+
+  if (unitTests === null) {
+    console.log('  skip   counts (vitest reported no count)');
+  } else {
+    const expected = renderBlock(computeCounts({ unitTests }));
+    const problems = [];
+
+    for (const rel of TARGETS) {
+      const text = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
+      if (replaceBlock(text, expected) === null) problems.push(`${rel} has no counts block`);
+      else if (!text.includes(expected)) problems.push(`${rel} is stale — run \`npm run counts\``);
+    }
+
+    record(
+      'counts match the repo',
+      problems.length === 0,
+      problems.length ? problems.join('; ') : `${unitTests} tests, generated block current`,
+    );
+  }
+}
+
+/* ----------------------------------------------------------- 16. e2e (opt) -- */
 
 if (full) {
   /*
