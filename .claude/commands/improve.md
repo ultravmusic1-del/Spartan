@@ -40,6 +40,9 @@ Work through these in order. Use TodoWrite to track them.
    If every unblocked item is done, do not invent filler work. Re-audit instead:
    look for a real defect, add it to the backlog with evidence, and stop.
 
+   If an item turns out to need a product fact that cannot be sourced, it is
+   blocked: mark it `[!]` and pick something else.
+
 3. **Mark it `[~]` in `BACKLOG.md`** before you start, so a crashed iteration is
    visible as unfinished rather than lost.
 

@@ -39,7 +39,9 @@ dimension or description unless you can name its source. Every value traces to
 the client's brochure PDF, which is **not in this repo and not on this machine**
 — so in practice a new product fact cannot be sourced at all. Missing data stays
 missing and gets an honest empty state. This is safety equipment: a fabricated
-protection rating is a hazard, not a cosmetic defect.
+protection rating is a hazard, not a cosmetic defect. You may change the
+**shape** of catalogue data: add an optional field, fix a verified typo,
+reorder, restructure. You may not add or alter a product **fact**.
 
 **2. Never report an enquiry as sent when it was not — and never report one as
 lost when it was kept.** An enquiry travels two independent channels: it is
