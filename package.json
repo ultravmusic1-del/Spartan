@@ -11,6 +11,9 @@
     "preview": "node tests/preview-server.mjs",
     "astro": "astro",
     "test": "vitest run",
+    "verify": "node tools/verify.mjs",
+    "csp": "node tools/csp.mjs --write",
+    "counts": "node tools/counts.mjs --write",
     "normalise": "node tools/normalise-products.mjs",
     "extract:catalog": "node tools/extract-catalog.mjs",
     "extract:logo": "node tools/extract-logo.mjs",
@@ -23,6 +26,8 @@
     "@astrojs/vercel": "^11.0.4",
     "@nanostores/persistent": "^0.10.2",
     "@nanostores/preact": "^0.5.2",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.2",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.1.6",
     "nanostores": "^0.11.4",
@@ -41,5 +46,8 @@
     "sharp": "^0.35.3",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
   }
 }

@@ -4,11 +4,11 @@ import { defineConfig, devices } from '@playwright/test';
  * End-to-end configuration.
  *
  * TESTS RUN AGAINST THE BUILT OUTPUT, NOT THE DEV SERVER. The site is
- * `output: 'static'` with exactly one server-rendered route, and almost
- * everything these tests assert — 96 prerendered pages, the no-JavaScript
- * catalogue listing, hydration boundaries, the `dist/client/` split — is a
- * property of the build rather than of the source. A dev-server run would test
- * a different artefact from the one that ships.
+ * `output: 'static'` with a handful of routes opting out, and almost everything
+ * these tests assert — the prerendered pages, the no-JavaScript catalogue
+ * listing, hydration boundaries, the `dist/client/` split — is a property of the
+ * build rather than of the source. A dev-server run would test a different
+ * artefact from the one that ships.
  *
  * `webServer.command` BUILDS FIRST, deliberately. The alternative — assuming a
  * build is already there — fails in the worst possible way: the suite passes

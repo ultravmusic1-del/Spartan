@@ -55,6 +55,119 @@ test.describe('catalogue index', () => {
     );
   });
 
+  /*
+   * Search narrows the same server-rendered DOM the division and category
+   * controls do. `searchProducts` in catalog.ts and this box share one rule
+   * (src/lib/search.ts), baked into each card's `data-search` at build time —
+   * so these are also the check that the two routes agree. A product findable
+   * one way and not the other reads to a buyer as missing stock.
+   */
+  test('search narrows by name and by printed specification', async ({ page }) => {
+    await page.goto('/catalogue');
+    await filtersReady(page);
+
+    const visible = page.locator('li[data-product]:not([hidden])');
+    const search = page.getByLabel('Search', { exact: true });
+
+    /*
+     * Wait on the count line, not on a product being visible.
+     *
+     * "the safety-helmets card is visible" is already true of the unfiltered
+     * page — it is one of the 72 — so it settles instantly and the count read
+     * after it can still be the unfiltered 72. The status line is the only
+     * assertion here that is false before the filter applies and true after.
+     */
+    const count = page.locator('.cf__count');
+    const unfiltered = `Showing ${TOTAL_PRODUCTS} of ${TOTAL_PRODUCTS} products`;
+
+    await search.fill('helmet');
+    await expect(count).not.toHaveText(unfiltered);
+    await expect(
+      page.locator('li[data-product]:not([hidden]) a[href="/products/safety-helmets"]'),
+    ).toHaveCount(1);
+    const forHelmet = await visible.count();
+    expect(forHelmet).toBeGreaterThan(0);
+    expect(forHelmet).toBeLessThan(TOTAL_PRODUCTS);
+
+    // A spec value, not a name — the term appears in no product title, so a
+    // name-only search would return nothing here.
+    await search.fill('polycarbonate');
+    await expect(count).not.toHaveText(unfiltered);
+    await expect(count).not.toHaveText(`Showing 0 of ${TOTAL_PRODUCTS} products`);
+    expect(await visible.count()).toBeGreaterThan(0);
+
+    /*
+     * The variant label, which is the only thing telling the two ear muffs
+     * apart: the difference appears in no other field. Asserting the 20dB one
+     * is *gone* is the point — it is visible before the filter applies, so this
+     * cannot pass on an unsettled page the way "the 25dB one is here" could.
+     */
+    await search.fill('NRR 25');
+    await expect(
+      page.locator('li[data-product]:not([hidden]) a[href="/products/ear-muff-nrr-20db"]'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('li[data-product]:not([hidden]) a[href="/products/ear-muff-nrr-25db"]'),
+    ).toHaveCount(1);
+
+    await search.fill('');
+    await expect(visible).toHaveCount(TOTAL_PRODUCTS);
+  });
+
+  test('search combines with the category filter rather than replacing it', async ({ page }) => {
+    await page.goto('/catalogue');
+    await filtersReady(page);
+
+    const visible = page.locator('li[data-product]:not([hidden])');
+
+    await page.locator('#cf-category').selectOption('hand-protection');
+    await expect(visible).toHaveCount(11);
+
+    await page.getByLabel('Search', { exact: true }).fill('glove');
+    // Waits on the status line, which is the only thing here that is false
+    // before the search applies on top of the category filter.
+    await expect(page.locator('.cf__count')).not.toHaveText(
+      `Showing 11 of ${TOTAL_PRODUCTS} products`,
+    );
+    const narrowed = await visible.count();
+    expect(narrowed).toBeGreaterThan(0);
+    expect(narrowed).toBeLessThan(11);
+
+    await page.getByRole('button', { name: 'Clear filters' }).click();
+    await expect(visible).toHaveCount(TOTAL_PRODUCTS);
+  });
+
+  /*
+   * The two empty states say different things and only one of them is about
+   * Spartan's range. Telling a buyer "no products in this range yet" because
+   * their search term missed would be a claim about the catalogue that is not
+   * true.
+   */
+  test('a search that matches nothing says so, and does not blame the range', async ({ page }) => {
+    await page.goto('/catalogue');
+    await filtersReady(page);
+
+    await page.getByLabel('Search', { exact: true }).fill('zzzznotaproduct');
+
+    await expect(page.locator('li[data-product]:not([hidden])')).toHaveCount(0);
+    await expect(page.locator('[data-product-none-search]')).toBeVisible();
+    await expect(page.locator('[data-product-none-search]')).toContainText('Nothing matches');
+    await expect(page.locator('[data-product-none]')).toBeHidden();
+    await expect(page.locator('.cf__count')).toHaveText(`Showing 0 of ${TOTAL_PRODUCTS} products`);
+  });
+
+  test('an empty range still blames the range, not the search', async ({ page }) => {
+    await page.goto('/catalogue');
+    await filtersReady(page);
+
+    // Spill Control is one of the two categories with no published products.
+    await page.locator('#cf-category').selectOption('spill-control');
+
+    await expect(page.locator('[data-product-none]')).toBeVisible();
+    await expect(page.locator('[data-product-none]')).toContainText('No products in this range yet');
+    await expect(page.locator('[data-product-none-search]')).toBeHidden();
+  });
+
   test('filters narrow the visible products and clearing restores them all', async ({ page }) => {
     await page.goto('/catalogue');
     await filtersReady(page);
@@ -62,12 +175,13 @@ test.describe('catalogue index', () => {
     const visible = page.locator('li[data-product]:not([hidden])');
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
 
-    // Hand Protection holds 11 of the 72.
+    // Hand Protection holds 11, all from the brochure — the datasheet products
+    // all landed in `fans`, so this figure is unchanged by that integration.
     await page.locator('#cf-category').selectOption('hand-protection');
     await expect(visible).toHaveCount(11);
     await expect(page.locator('.cf__count')).toHaveText(`Showing 11 of ${TOTAL_PRODUCTS} products`);
 
-    // Narrowing by division alone: Spartan Electricals holds 19.
+    // Narrowing by division alone.
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
 

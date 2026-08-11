@@ -7,9 +7,15 @@
  * categories or divisions. (`site.json` is chrome, not catalogue content, and
  * is exempt.)
  *
- * The newsletter field is deliberately inert. No endpoint exists until Task 14,
- * so the form is a no-op that cannot navigate, and it never claims to have
- * subscribed anyone.
+ * The contact strip carries three facts — address, phone, email — and nothing
+ * else. It used to end in an email field with a Submit button, which was a
+ * newsletter subscribe with no mailing list behind it and no intention of one.
+ * A control that cannot do what it says is worse than no control, so it was
+ * removed rather than wired: posting it to /api/enquiry would have sent sales
+ * an RFQ from someone who believed they were subscribing.
+ *
+ * The mockup (design/direction-b-forge.html) still shows the field. This is a
+ * deliberate departure from the approved design, not drift.
  *
  * Dark surface, so this takes the **light** logo lockup (red helmet, white
  * wordmark).
@@ -73,39 +79,22 @@ const year = new Date().getFullYear();
         </span>
         <div>
           <small>Trade enquiries</small>
-          <a class="f-item__value f-item__tel" href={telHref}>{site.phone}</a>
+          <a class="f-item__value f-item__link" href={telHref}>{site.phone}</a>
         </div>
       </div>
 
-      <!-- No endpoint until Task 14: this must not navigate and must not
-           pretend to have subscribed anyone. -->
-      <form class="f-form" onsubmit="return false">
-        <label class="sr-only" for="footer-email">Email address</label>
-        <input
-          id="footer-email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          placeholder="Enter email address"
-        />
-        <!-- The mockup sets this chevron as a › character. Text glyphs render
-             inconsistently across platforms, so it is an inline SVG here. -->
-        <button type="button">
-          Submit
-          <svg
-            class="f-form__chev"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="m9 5 7 7-7 7"></path>
+      <div class="f-item">
+        <span class="f-item__ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+            <path d="m3.6 6.6 8.4 5.9 8.4-5.9"></path>
           </svg>
-        </button>
-      </form>
+        </span>
+        <div>
+          <small>Email</small>
+          <a class="f-item__value f-item__link" href={`mailto:${site.email}`}>{site.email}</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -167,7 +156,6 @@ const year = new Date().getFullYear();
     --f-bg: #000;
     --f-divider: #1a1a1f;
     --f-circle: #26262c;
-    --f-input-bg: #131317;
     --f-link: #c2c2c9;
 
     background: var(--f-bg);
@@ -179,10 +167,14 @@ const year = new Date().getFullYear();
     padding: 34px 0;
   }
 
+  /* Three contact items spread across the strip. `gap` is the floor they can
+     close to before wrapping; space-between distributes whatever is left over
+     so the row does not sit bunched at the left on a wide viewport. */
   .f-top__inner {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
+    justify-content: space-between;
     gap: 48px;
   }
 
@@ -217,75 +209,24 @@ const year = new Date().getFullYear();
     color: var(--color-grey);
   }
 
+  /* Every value row is 44px tall, links and the address alike.
+     44px is the WCAG 2.5.5 minimum target, which the phone and email links must
+     meet — they are only ~22px of text. The address is not a link and needs no
+     target, but it carries the same height so the three labels sit on one line:
+     `.f-item` centres its contents, so a shorter third item drops its "Head
+     office" label 11px below "Trade enquiries" and "Email". Measured. */
   .f-item__value {
-    display: block;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     font-size: 14px;
     color: #fff;
   }
 
-  /* 44px target for a phone number that is only 22px of text. */
-  .f-item__tel {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-  }
-
   /* Hover turns 14px body text red, which is small text and carries the same
-     4.5:1 obligation as the resting state. */
-  .f-item__tel:hover {
+     4.5:1 obligation as the resting state. Only the two links hover. */
+  .f-item__link:hover {
     color: var(--color-red-light);
-  }
-
-  .f-form {
-    display: flex;
-    min-width: 330px;
-    margin-left: auto;
-  }
-
-  .f-form input {
-    flex: 1;
-    min-width: 0;
-    padding: 13px 15px;
-    background: var(--f-input-bg);
-    border: 1px solid var(--f-circle);
-    border-right: none;
-    font-family: var(--font-body);
-    font-size: 13.5px;
-    color: #fff;
-  }
-
-  /* The mockup's #5C5C64 placeholder measures 3.2:1 — below AA. --color-grey
-     is 5.4:1 on the input's background and keeps the same recessive role. */
-  .f-form input::placeholder {
-    color: var(--color-grey);
-  }
-
-  .f-form button {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    /* WCAG 2.5.5 minimum touch target — do not reduce. */
-    min-height: 44px;
-    padding: 13px 22px;
-    /* Red surface behind white text, so the fill token, not brand red. */
-    background: var(--color-red-fill);
-    border: none;
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-    cursor: pointer;
-    transition: background var(--dur-base) var(--ease-out);
-  }
-
-  .f-form button:hover {
-    background: var(--color-red-dark);
-  }
-
-  /* Optically matches the › the mockup sets at this font size. */
-  .f-form__chev {
-    width: 11px;
-    height: 11px;
   }
 
   /* ---------- main ---------- */
@@ -423,9 +364,12 @@ const year = new Date().getFullYear();
       grid-template-columns: 1fr 1fr;
     }
 
-    .f-form {
-      min-width: 100%;
-      margin-left: 0;
+    /* Below this the three contact items no longer fit on one line, and
+       space-between turns a wrapped row into two items shoved to opposite edges
+       — measured at 560px: a 113px gap where the strip's rhythm is 48px. Once
+       wrapping is possible the gap alone should set the spacing. */
+    .f-top__inner {
+      justify-content: flex-start;
     }
   }
 

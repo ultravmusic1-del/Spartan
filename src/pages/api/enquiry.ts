@@ -1,29 +1,22 @@
 import type { APIRoute } from 'astro';
 import { enquiryPayloadSchema, toFieldErrors, type EnquiryPayload } from '../../lib/enquiry-schema';
+import { decideOutcome, type ChannelState } from '../../lib/enquiry-outcome';
+import { markNotified, recordEnquiry } from '../../lib/enquiry-store';
+import { configured, env } from '../../lib/env';
 
 /**
- * /api/enquiry — the site's only server-rendered route.
+ * /api/enquiry — the RFQ submission endpoint, and the first route to opt out of
+ * prerendering.
  *
- * Everything else is `output: 'static'`. This one endpoint opts out, so the
- * Vercel adapter emits 96 static pages plus a single serverless function.
- * Nothing else in the repo may set this flag without a reason as good.
+ * The site is `output: 'static'`. Opting out pushes the Vercel adapter into
+ * hybrid mode, so this lands in the serverless function rather than in
+ * `dist/client`. The admin routes have since opted out too, for a reason
+ * recorded in docs/superpowers/specs/2026-08-09-admin-dashboard-design.md —
+ * nothing else may set this flag without one as good.
  */
 export const prerender = false;
 
 /* ------------------------------------------------------------------ config -- */
-
-/**
- * `process.env` first, `import.meta.env` second.
- *
- * Vite inlines `import.meta.env.*` at build time, and on Vercel the build runs
- * on Vercel — so a secret added to the project *after* a build would never
- * reach an inlined reference. `process.env` is read at request time and is what
- * a platform env var actually populates. `import.meta.env` stays as the
- * fallback because `astro dev` loads `.env` into Vite's env and not into
- * `process.env`, so local development needs it.
- */
-const env = (key: string): string =>
-  (process.env[key] ?? (import.meta.env as Record<string, unknown>)[key] ?? '').toString().trim();
 
 /**
  * Resend refuses any `from` that is not on a verified domain, so this cannot be
@@ -124,6 +117,7 @@ function bodyFor(payload: EnquiryPayload): string {
     `Email:    ${payload.email}`,
     `Phone:    ${payload.phone || '—'}`,
     `Country:  ${payload.country || '—'}`,
+    `Division: ${payload.division || '—'}`,
     '',
     'MESSAGE',
     payload.message || '—',
@@ -131,8 +125,37 @@ function bodyFor(payload: EnquiryPayload): string {
     `PRODUCTS (${payload.items.length} ${payload.items.length === 1 ? 'line' : 'lines'}, ${units} ${units === 1 ? 'unit' : 'units'})`,
     manifest,
     '',
-    `Submitted ${new Date().toISOString()}`,
+    `Submitted ${new Date().toISOString()} from ${payload.source}`,
   ].join('\n');
+}
+
+/**
+ * Send the notification. Returns a state rather than throwing: the enquiry has
+ * already been written to the database by the time this runs, so a mail failure
+ * is one channel's result to be weighed against the other's, not an error that
+ * should abort the request.
+ */
+async function sendNotification(payload: EnquiryPayload): Promise<ChannelState> {
+  if (!configured('RESEND_API_KEY', 'ENQUIRY_TO_EMAIL')) return 'unconfigured';
+
+  try {
+    const { Resend } = await import('resend');
+    const resend = new Resend(env('RESEND_API_KEY'));
+
+    const { error } = await resend.emails.send({
+      from: env('ENQUIRY_FROM_EMAIL') || FALLBACK_FROM,
+      to: env('ENQUIRY_TO_EMAIL'),
+      replyTo: payload.email,
+      subject: subjectFor(payload),
+      text: bodyFor(payload),
+    });
+
+    if (error) throw new Error(`${error.name}: ${error.message}`);
+    return 'ok';
+  } catch (cause) {
+    console.error('[enquiry] send failed', cause);
+    return 'failed';
+  }
 }
 
 /* ------------------------------------------------------------------ route -- */
@@ -184,48 +207,32 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   }
 
   const payload = parsed.data;
-  const apiKey = env('RESEND_API_KEY');
-  const to = env('ENQUIRY_TO_EMAIL');
 
-  // No credentials: the client has not supplied a Resend key or a destination
-  // address yet (handoff.md section 8, item 2). Log the enquiry so the whole
-  // flow is exercisable end to end, and say plainly in the response that
-  // nothing was delivered. `delivered: false` is not a detail — a site that
-  // claims to have sent an RFQ it dropped loses the lead silently.
-  if (!apiKey || !to) {
+  // The database write comes first, and everything after it is a notification.
+  // That order is the point of this endpoint: once the row exists the lead is
+  // safe, so a mail outage costs a nudge rather than a buyer.
+  const stored = await recordEnquiry(payload);
+  const emailState = await sendNotification(payload);
+
+  // Best effort, and deliberately not awaited into the outcome: the enquiry is
+  // already captured and already sent, so failing to stamp the row changes
+  // nothing the buyer should hear about.
+  if (stored.state === 'ok' && stored.id && emailState === 'ok') {
+    await markNotified(stored.id);
+  }
+
+  const outcome = decideOutcome(stored.state, emailState);
+
+  // Last resort. Either nothing captured the enquiry, or nothing was configured
+  // to — in both cases the server log is the only remaining copy.
+  if (outcome.logPayload) {
     console.warn(
-      '[enquiry] RESEND_API_KEY or ENQUIRY_TO_EMAIL is unset — nothing was sent. Payload:\n' +
+      `[enquiry] store=${stored.state} email=${emailState} — not captured elsewhere. Payload:\n` +
         bodyFor(payload),
     );
-    return json({ ok: true, delivered: false }, 200);
   }
 
-  try {
-    const { Resend } = await import('resend');
-    const resend = new Resend(apiKey);
-
-    const { error } = await resend.emails.send({
-      from: env('ENQUIRY_FROM_EMAIL') || FALLBACK_FROM,
-      to,
-      replyTo: payload.email,
-      subject: subjectFor(payload),
-      text: bodyFor(payload),
-    });
-
-    if (error) throw new Error(`${error.name}: ${error.message}`);
-  } catch (cause) {
-    console.error('[enquiry] send failed', cause);
-    return json(
-      {
-        ok: false,
-        message:
-          'We could not send your enquiry just now. Please try again in a moment, or email us directly.',
-      },
-      502,
-    );
-  }
-
-  return json({ ok: true, delivered: true }, 200);
+  return json(outcome.body, outcome.status);
 };
 
 /**

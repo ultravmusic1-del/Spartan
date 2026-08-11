@@ -1,0 +1,103 @@
+---
+/**
+ * The sign-in form.
+ *
+ * Reachable without a session — it is how a session is obtained — so
+ * src/middleware.ts lists it in OPEN and this page does its own check to bounce
+ * an admin who is already signed in.
+ */
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { currentAdmin, authConfigured } from '../../lib/admin/auth';
+
+export const prerender = false;
+
+if (await currentAdmin(Astro.request, Astro.cookies)) return Astro.redirect('/admin', 302);
+
+// Comes back from /api/admin/login on failure. Rendered as text content, never
+// as markup — this value is in the URL and therefore anyone's to set.
+const error = Astro.url.searchParams.get('error');
+const configured = authConfigured();
+---
+
+<AdminLayout title="Sign in">
+  <h1>Spartan admin</h1>
+
+  {error && <p class="err" role="alert">{error}</p>}
+
+  {
+    !configured && (
+      <p class="err" role="status">
+        Sign-in is not configured on this deployment. SUPABASE_URL,
+        SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY must all be set.
+      </p>
+    )
+  }
+
+  <form method="post" action="/api/admin/login">
+    <div>
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" autocomplete="username" required />
+    </div>
+
+    <div>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+    </div>
+
+    <button type="submit">Sign in</button>
+  </form>
+
+  <p class="note">
+    Accounts are created by hand in Supabase. There is no signup, and no password
+    reset that could create one.
+  </p>
+</AdminLayout>
+
+<style>
+  form {
+    display: grid;
+    gap: 16px;
+    max-width: 320px;
+  }
+
+  form div {
+    display: grid;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 14px;
+    color: #b4b4bc;
+  }
+
+  input {
+    min-height: 44px;
+    padding: 0 12px;
+    background: #151519;
+    border: 1px solid #232329;
+    font: inherit;
+    color: #fff;
+  }
+
+  input:focus-visible {
+    outline: 2px solid #ef3a38;
+    outline-offset: 1px;
+  }
+
+  .err {
+    max-width: 45ch;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    /* Small text on a dark surface, so the light red — brand red measures
+       4.23:1 on this card background and fails AA at this size. */
+    border-left: 3px solid #ef3a38;
+    background: #151519;
+  }
+
+  .note {
+    max-width: 45ch;
+    margin-top: 28px;
+    font-size: 13px;
+    color: #8a8a92;
+  }
+</style>

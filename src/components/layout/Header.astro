@@ -26,7 +26,7 @@
 import site from '../../data/site.json';
 import logoLight from '../../assets/brand/spartan-logo-light.svg';
 import UtilityBar from './UtilityBar.astro';
-import MobileNav, { type NavItem } from './MobileNav.tsx';
+import MobileNav, { isCurrentNavItem, type NavItem } from './MobileNav.tsx';
 import EnquiryBadge from '../enquiry/EnquiryBadge.tsx';
 import EnquiryDrawer from '../enquiry/EnquiryDrawer.tsx';
 
@@ -36,9 +36,20 @@ interface Props {
 
 const { mode = 'transparent' } = Astro.props;
 
+/*
+ * Catalogue heads the three product-browsing routes rather than sitting next to
+ * About, because that is what it is: the full index, with Electricals and
+ * Safety as the two ways into it.
+ *
+ * It was missing entirely until now. On a catalogue site, the catalogue index
+ * was reachable only from CTAs on the home page and the footer's per-category
+ * links — from a product page or About there was no route to the full range at
+ * all.
+ */
 const items: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
+  { href: '/catalogue', label: 'Catalogue', section: '/catalogue' },
   { href: '/electricals', label: 'Electricals' },
   { href: '/safety', label: 'Safety' },
   { href: '/industries', label: 'Industries' },
@@ -62,17 +73,25 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     <nav class="nav__menu" aria-label="Primary">
       <ul>
         {
-          items.map((item) => (
-            <li>
-              <a
-                href={item.href}
-                class:list={['nav__link', { 'nav__link--on': current === item.href }]}
-                aria-current={current === item.href ? 'page' : undefined}
-              >
-                {item.label}
-              </a>
-            </li>
-          ))
+          items.map((item) => {
+            const on = isCurrentNavItem(item, current);
+            // `aria-current="page"` only for an exact match. On a category page
+            // the Catalogue link is lit, because that is the section you are in,
+            // but it is not the page you are on — and saying otherwise would
+            // tell a screen reader the user is somewhere they are not.
+            const isPage = current === item.href;
+            return (
+              <li>
+                <a
+                  href={item.href}
+                  class:list={['nav__link', { 'nav__link--on': on }]}
+                  aria-current={isPage ? 'page' : undefined}
+                >
+                  {item.label}
+                </a>
+              </li>
+            );
+          })
         }
       </ul>
     </nav>

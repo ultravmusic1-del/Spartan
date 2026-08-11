@@ -1,8 +1,12 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-05
-**Branch:** `feat/catalogue-site` (all work lives here; `main` tracks it)
-**State:** **All 17 tasks complete and verified. The build is finished.** The site builds end to end — 96 pages plus a 404 and one server-rendered endpoint — and the full enquiry path works from product card to submitted RFQ.
+**Last updated:** 2026-08-10
+**Branch:** `agent/improvements` — all work lands here. **`main` no longer tracks it**, despite what this line said through the `feat/catalogue-site` era; it has fallen behind and nothing merges it forward automatically. `git log main..agent/improvements` is the difference.
+**State:** **The catalogue build is complete and verified. The admin subsystem is in progress.** The public site builds end to end and the full enquiry path works from product card to submitted RFQ. Admin Phase 1 has landed its auth foundation — sign-in, sign-out, the session guard and the CSV serialiser — but no dashboard page exists yet. See §7 "The admin subsystem".
+
+Live counts — built pages, server-rendered routes, CSP hashes, unit tests — are generated into `CLAUDE.md` by `npm run counts` and gated by `npm run verify`. That block is the only place a current number belongs. Every number in this document is a dated record of what was true when it was written.
+
+**As of 2026-08-05:**
 
 ```
 vitest        63 passed
@@ -12,9 +16,9 @@ astro build   clean — 96 pages + 404 + 1 SSR endpoint
 lighthouse    >= 95 on all four categories, all three page types
 ```
 
-**Nothing in the build is outstanding. What remains is deployment and the client-supplied items in §8** — see §7 "What a next session picks up".
+**Nothing in the catalogue build is outstanding. What remains is deployment, the rest of admin Phase 1, and the client-supplied items in §8** — see §7 "What a next session picks up".
 
-**Start here, in this order:** `README.md` (setup, scripts, architecture, launch checklist) → this document (the history and the traps) → `docs/CONTENT-EDITING.md` if you are touching catalogue data.
+**Start here, in this order:** `CLAUDE.md` (the rules, and which file answers which question) → `docs/TRAPS.md` (the things that pass `astro check` and are wrong anyway) → `README.md` (setup, scripts, architecture, launch checklist) → this document for the reasoning behind a decision → `docs/CONTENT-EDITING.md` if you are touching catalogue data.
 
 ---
 
@@ -149,8 +153,9 @@ Both self-hosted variable fonts at `public/fonts/`. **`@font-face` must declare 
 | Content | Astro Content Layer + Zod |
 | Islands | Preact (`compat: false`) |
 | State | nanostores + `@nanostores/persistent` (Task 12) |
-| Email | Resend (Task 14) |
-| Rendering | `output: 'static'`; only `/api/enquiry` will set `prerender = false` |
+| Enquiry storage | Supabase Postgres, project `spartan` — the system of record |
+| Email | Resend (Task 14) — the notification, no longer the record |
+| Rendering | `output: 'static'`; `/api/enquiry` and the admin routes set `prerender = false`, and `src/middleware.ts` runs on everything. The live count is in `CLAUDE.md`'s generated block |
 | Hosting | Vercel adapter |
 | Tests | Vitest (unit), Playwright + axe (e2e) |
 
@@ -163,8 +168,8 @@ npm install
 npm run dev            # astro dev  (Astro 7: --background / astro dev stop)
 npm run build          # -> dist/client/ + .vercel/output/
 npm run preview        # tests/preview-server.mjs, NOT astro preview — see README
-npm run test           # vitest run — 63 passing
-npm run test:e2e       # playwright — 83 passing, 1 skipped
+npm run test           # vitest run
+npm run test:e2e       # playwright — stop the dev server first
 npx astro check        # 0 errors, 0 warnings, 7 hints (unused params in tools/*.mjs)
 
 npm run extract:catalog -- "path/to/brochure.pdf"   # regenerate products + PNGs
@@ -172,6 +177,42 @@ npm run extract:logo    -- "path/to/brochure.pdf"
 npm run extract:heroes  -- "path/to/brochure.pdf"
 npm run normalise                                   # raw extraction -> products.json
 ```
+
+### The tooling that arrived after this document was first written
+
+None of it existed when §4's command list was drafted, and all of it is now the
+way work is checked in rather than an extra:
+
+```bash
+npm run verify            # THE GATE. typecheck, unit tests, invariants,
+                          # build, output sweeps. Never weaken one to pass.
+npm run verify -- --full  # ... and the Playwright suite
+npm run csp               # regenerate vercel.json's CSP hashes from dist/client
+npm run counts            # regenerate CLAUDE.md's counts block from the repo
+node tools/brand-sheet.mjs   # the brand & asset contact sheet
+```
+
+`npm run verify` (`tools/verify.mjs`) is what enforces the admin seam, the
+catalogue's shape, that no price or rating reaches structured data, that the
+service-role key never reaches `dist/client`, that `CLAUDE.md` and `AGENTS.md`
+cannot diverge, that the instructional docs name paths that resolve, that both
+enquiry clients read `recorded` and not `delivered` alone, and that the
+generated counts block is not stale. `.github/workflows/verify.yml` runs it on
+every push, so a gate that goes red is not something a local session can skip.
+
+`npm run counts` (`tools/counts.mjs`) is why this document no longer carries
+live numbers. The catalogue counts, the built-page count, the server-rendered
+route count, the CSP hash count and the unit-test count are derived from the
+repository and written into one generated block in `CLAUDE.md`; the gate fails
+if the block and the repository disagree. **Everything in this document is a
+dated snapshot** — if you want a current number, run `npm run counts` and read
+that block, and do not copy it anywhere.
+
+`docs/TRAPS.md` was extracted from this document for the same reason. It carries
+the silent failures — the things that pass `astro check` and are wrong anyway —
+so they can be read in two minutes before touching an unfamiliar area, instead
+of being found in §7 after the fact. The reasoning stays here; the warning lives
+there.
 
 ### Version traps discovered the hard way
 
@@ -417,7 +458,7 @@ Because of that panel, Body Protection's `heroProductSlug` is **`nonwoven-dispos
 | 16 | End-to-end tests | Playwright + axe, desktop and mobile — 83 passing, 1 skipped |
 | 17 | Launch readiness | Lighthouse, seam verification, README, content-editing guide, launch checklist |
 
-**63 unit tests and 83 e2e tests passing (1 skipped). `astro check` 0 errors, 0 warnings, 7 hints. `astro build` clean — 96 pages + 404 + one SSR endpoint.**
+**At Task 17's completion, 2026-08-05: 63 unit tests and 83 e2e tests passing (1 skipped). `astro check` 0 errors, 0 warnings, 7 hints. `astro build` clean — 96 pages + 404 + one SSR endpoint.** Every one of those numbers has since moved; the current ones are in `CLAUDE.md`'s generated block.
 
 Task 7's defects, for the record: focus escaped the modal panel when a click landed on a non-focusable part of it; footer socials measured 38×38 not 44×44 (an `::after` overlay enlarged the hit area but not the reported box); a text-glyph chevron survived; and a hover-specificity collision turned social icons red on a red fill, making them vanish.
 
@@ -437,7 +478,7 @@ Root-absolute pattern gives root-absolute keys, so it works unchanged from any d
 
 ### Build output moved to `dist/client/`
 
-Adding the first server-rendered route (`/api/enquiry`, the only one) switched the Vercel adapter into hybrid mode. Static pages now emit to **`dist/client/`**, not `dist/`. Any script or check that globs `dist/products` or `dist/catalogue` needs the `client/` segment.
+Adding the first server-rendered route (`/api/enquiry`) switched the Vercel adapter into hybrid mode. Static pages now emit to **`dist/client/`**, not `dist/`. Any script or check that globs `dist/products` or `dist/catalogue` needs the `client/` segment.
 
 The SSR bundle is **not** left in `dist/server/` — the adapter moves it to `.vercel/output/functions/_render.func` and removes the staging directory, so `dist/` ends up containing only `client/`. To confirm the endpoint built, check that function exists and that `.vercel/output/config.json` routes `^/api/enquiry/?$` to `_render`.
 
@@ -460,16 +501,25 @@ Things that will look like bugs but are deliberate:
 
 - **The switch is orientation, not width.** `const PORTRAIT = '(max-width: 767px), (max-aspect-ratio: 3/4)'` — narrow *or* taller than 4:3. An iPad held upright is a portrait canvas whatever its width; on a pure width breakpoint it got the landscape cut as a stubby 432px band in a 1024px-tall window.
 - **That condition is written twice and must stay identical.** It governs `<source media>` (which file is fetched) *and* the `@media` block (where the buttons go). Astro's scoped `<style>` cannot interpolate a frontmatter value, so the constant drives the markup and the stylesheet repeats it verbatim. If they ever disagree you get portrait artwork under landscape button positioning.
-- **`.hero__frame` shrink-wraps the picture; the buttons are positioned against *it*, not the viewport.** In landscape they sit at `left: 5.2%; top: 72%` — percentages of the artwork, valid only because the artwork is never cropped. The frame caps itself at `min(100%, 100svh × aspect)`, so on a short or ultra-wide window it narrows instead of overflowing. Capping the image inside a full-width box would letterbox it and slide the artwork out from under the buttons.
-- **`background: #000`, not `--color-black`.** Wherever the frame is capped, the section shows beside the artwork and butts against its bed, which is pure black. Against `--color-black` (#08080a) that join measures an 8/255 step — which on a large flat dark field reads as a rectangle drawn around the picture, not as a gradient. Measured on a 390px phone: bars rgb(8,8,10) against artwork rgb(1,1,1). Matching the bed drops it to 1/255.
-- **The portrait artwork is capped in height on purpose.** At full width it stands 693px on a 390px phone, which with the 128px header put both buttons past the fold — "Browse catalogue" was not on screen at first paint. The `contain` letterbox this creates is invisible for the reason above.
+- **`.hero__frame` shrink-wraps the picture; the buttons are positioned against *it*, not the viewport.** In landscape they sit at `left: 5.2%; top: 82%` — percentages of the artwork, valid only because the artwork is never cropped. The frame caps itself at `min(100%, 100svh × aspect)`, so on a short or ultra-wide window it narrows instead of overflowing. Capping the image inside a full-width box would letterbox it and slide the artwork out from under the buttons.
+- **The section is `--color-black` and the artwork's edges are *faded* into it, not matched to it.** The earlier artwork was bedded on flat `#000`, so painting the section `#000` made every join invisible for free. This one is not: its left edge measures `#020203` and its top `#070708` — near enough — but its right edge is a lit wall running to `#931211` at y 63–75%, and its floor reaches `#41221e` around x 60–70%. No single background colour can meet all four, so `.hero__frame::after` runs a gradient over the three exposed edges instead. **This matters far more often than "ultra-wide" suggests:** the width cap engages whenever the viewport is wider than 1.777:1, which an ordinary maximised 1920×955 browser already is — about 220px of page shows either side on a very common setup.
+- **The portrait artwork is capped in height on purpose.** At full width it stands 693px on a 390px phone, which with the 128px header put both buttons past the fold — "Browse catalogue" was not on screen at first paint.
+- **In portrait the buttons are not overlaid at all.** They go `position: static` beneath the artwork and stretch full width, and the edge fade is switched off (`content: none`) so it cannot wash out the strip of floor the composition ends on.
 - **No pause control, no reduced-motion branch.** Nothing moves.
 
-Where the buttons sit was measured, not guessed. Peak luminance in the landscape artwork's left 42%, in 40 horizontal bands (0–255): y 22–58% is 108–169 (the copy block), y 65% is 47 (the red rule), y 70–95% is 32–74 (empty floor). Hence y 72%. Behind the pill — the only control without an opaque fill — the brightest pixel is rgb(217,3,17), giving its white label 5.29:1. **Re-measure if the artwork is ever re-cut.**
+Where the buttons sit was measured, not guessed — and the number moved when the desktop artwork was re-cut in `42d4b8a`, which is why it is `82%` and not the `72%` an earlier draft of this document recorded. Peak luminance in the button column (x 5.2–33%), scanned in 1% rows: y 70–76% is the SOLUTIONS headline and the category strip at 255, y 77% drops to 14, and y 78–99% runs 20–57 — dark floor all the way down. The strip's last words extend past x 33%, so the row has to clear it entirely rather than tuck beside it; its final bright row is y 79%, and 82% leaves a 24px gap at 1440. At 1280 — the tightest case — the CTAs end at y 89% against a bottom fade starting at 92%. `z-index: 2` lifts them over that fade, which is a sibling `::after` and would otherwise paint on top. **Re-measure if the artwork is ever re-cut.**
 
 > **Resolved:** the first portrait cut printed the floodlight as **IP65** against the landscape cut's **IP66**. The client reissued it and both now read IP66. Neither file is catalogue data — no product record sources anything from them — but on a site whose whole claim is that specifications are not invented, the same product must not advertise two ratings.
 >
 > One thing carried over from that fix: in the reissued portrait the label has a **retouching artifact** — a ~4px vertical tick between the digits where the `5` was painted into a `6`, and a slightly malformed final glyph. At the size the artwork is actually displayed this is roughly one device pixel and resolves visually as a clean "IP66" (checked against the real phone render, not just the master). It is invisible in situ and not worth blocking on. It would show if this artwork is ever reused at a larger scale — print, social, or as a desktop cut — so ask for a clean re-render before doing that.
+
+**The hero is a CSP surface.** Removing the film's `<script is:inline>` scrubber took the policy from **7 inline-script hashes to 6**, and the artwork rewrite carries no inline script of its own. Any change that adds, removes or edits an inline `<script>` or `<style>` anywhere means `npm run csp` must be re-run and `vercel.json` committed with it. A stale hash does not fail the build — it ships a site that never hydrates.
+
+#### The still this replaced, for the record
+
+Between the film and the artwork the hero was a static still cut from the video's own frames (`d6808db`), landscape 1168×784 and portrait 784×1168, with the headline rendered as HTML over a scrim. Its own note called that resolution "a source constraint" that only "a higher-resolution render from the client" could lift — the artwork above **is** that render, at 1672×941. `hero-desktop-poster.jpg` and `hero-mobile-poster.jpg` are deleted along with it; nothing imports them now.
+
+Two things from that version that no longer apply, so you do not go looking for them: the copy was anchored from the top rather than centred (the cluster's bright mass began around y=43%), and a `{' '}` between the two headline spans was load-bearing so `textContent` did not read `Home and IndustrialSolutions.`. Both belonged to an HTML headline that the artwork now carries as pixels.
 
 ### Two test/tooling traps
 
@@ -495,7 +545,7 @@ JSON-LD goes through `set:html` (a plain expression HTML-escapes the quotes and 
 
 `og:image` is a build-time 1200×630 JPEG crop of the division hero, `position: bottom` (a centre crop of `safety.jpg` decapitates the workers). `safety.jpg` site-wide, `electrical.jpg` on Electricals pages. Forced to JPEG because several link-preview scrapers still will not render WebP.
 
-**`public/robots.txt` hard-codes the sitemap URL** and `site` is still a placeholder, so it will be wrong until the domain is set. A `src/pages/robots.txt.ts` static endpoint would emit the real value at build time and make that failure impossible — worth doing when the domain lands.
+**robots.txt is now `src/pages/robots.txt.ts`, not a static file.** It was `public/robots.txt`, which is served verbatim and interpolates nothing, so the sitemap URL was a second hand-typed copy of `site` — and changing either without the other was silent. The endpoint derives it from `Astro.site` at build time, so the domain is written in one place only. `site` is still the `spartan.example` placeholder, so the value is still wrong; the difference is that setting it is now a single edit and can no longer half-happen.
 
 ### Lighthouse — measured, Task 17
 
@@ -528,13 +578,168 @@ Fixed by deriving the name from the visible label: `` `${visible}: ${name}` ``.
 
 **Two harnesses missed it.** axe's rule for this is experimental and off by default, so the e2e axe pass never ran it; Lighthouse weights it 0, so it never showed up in the accessibility score either — the category read 100 with a serious WCAG A failure present on 72 product cards. **A green axe run is not a claim that a page passes WCAG.**
 
+### Enquiries are stored, not just emailed
+
+Added 2026-08-09. Design doc: `docs/superpowers/specs/2026-08-09-enquiry-collection-design.md`.
+
+`/api/enquiry` had no storage of any kind — an enquiry existed only as an email. The branch that ran when Resend threw returned 502, asked the buyer to try again, and **discarded the payload without logging it**: a validated, willing buyer lost silently on both sides.
+
+The enquiry is now written to Postgres first and the email is a notification. Supabase project `spartan` (`wslylysakixrirxkozih`), one `enquiries` table with `items jsonb`, plus an `enquiry_lines` view unnesting it so product demand is a `group by`. A single insert is atomic without an RPC, which is why it is not two normalised tables.
+
+Things that will look like bugs but are deliberate:
+
+- **RLS is enabled with zero policies, and that is the design.** `anon` can neither read nor write; only the service-role key can insert, and it never leaves the serverless function. Supabase's linter reports `rls_enabled_no_policy` at INFO forever — do not "fix" it by adding a policy. Verified as `anon`: zero rows from both the table and the view while a row existed.
+- **`enquiry_lines` carries `security_invoker = true`.** Postgres views default to definer semantics and would otherwise read straight past the RLS on the table beneath them.
+- **`unconfigured` is not `failed`.** A channel with no credentials was never asked to carry the enquiry. Treating the two alike returns 502 for every submission in CI, which holds no secrets for either channel. The 502 rule is *every **configured** channel failed*. `decideOutcome` is a pure function so all nine combinations are asserted directly.
+- **The response gained `recorded`.** Both clients key their honest-failure message off `recorded || delivered`, not `delivered` alone — with the row written, a mail outage is a success, not a caveat. The e2e assertions on the response body are exhaustive `toEqual`s and will fail if the shape changes again; that is intended.
+- **The browser never talks to Supabase.** No anon key in the page, and `connect-src` needs no new origin.
+
+A verify gate fails if the service-role key reaches `dist/client`, or if anything under `src/components`, `src/scripts`, `src/stores` or `src/layouts` names it or imports `enquiry-store.ts`. Vite inlines `import.meta.env.*` at build time, so a client-side reference would substitute the literal secret into a shipped bundle with nothing warning.
+
+One trap worth keeping: **a data-modifying CTE's rows are not visible to the rest of the same statement.** The first round-trip check inserted a row and read the view in one statement, got 0 lines, and looked like a broken view. The view was fine.
+
+### The admin subsystem — Phase 1's auth foundation
+
+Added 2026-08-09 in six commits, `a28603c`..`1f74bdc`. Design doc:
+`docs/superpowers/specs/2026-08-09-admin-dashboard-design.md`. Phase 1's
+executable plan: `docs/superpowers/plans/2026-08-09-admin-phase-1-auth-and-enquiries.md`.
+
+This is what §5's admin seam exists for, and it is the "reason as good" that
+`/api/enquiry`'s comment demanded before anything else set `prerender = false`.
+The design doc §1 records the four decisions: the public site stays
+`output: 'static'` with a deploy hook firing on publish, the admin lives in this
+repo so the Zod schemas stay one contract, Supabase Storage becomes the image
+record with the build pulling images in, and the programme ships in four phases
+each of which is independently shippable.
+
+**What has actually landed is the auth foundation, not all of Phase 1.**
+`public.admins`, cookie parsing, the auth module, the middleware guard, the
+sign-in and sign-out endpoints, the login page and `AdminLayout`. **There is no
+`/admin` index page yet**, so a successful sign-in currently redirects to a route
+that does not exist. The enquiry inbox, the detail view, the status workflow, the
+product-demand report and the CSV export route are all still to come — the CSV
+*serialiser* shipped ahead of the endpoint that will use it, and `toCsv` has
+tests but no caller.
+
+**Identity and authority are separate facts, established separately.**
+`src/lib/admin/auth.ts`:
+
+1. The session cookie proves **who** the request is — Supabase Auth, anon key.
+2. A row in `public.admins` proves they **may** be here — service-role key.
+
+A valid Supabase account is therefore not enough. Public signup is disabled in
+the Supabase dashboard, but a setting nobody re-reads is not a control; the
+allow-list is what makes it hold by design. `public.admins` has RLS enabled with
+zero policies, exactly like `public.enquiries`, so only the service-role key can
+read it — from a function that has already verified a session.
+
+`currentAdmin()` uses `getUser()`, **not** `getSession()`. `getSession` decodes
+the cookie and trusts what it finds, and the cookie is sent by the browser.
+`getUser` verifies the token with the auth server. For the check that decides
+whether to hand over every enquiry the site has ever taken, the round trip is
+worth it.
+
+**The browser never talks to Supabase.** Sign-in is a plain form POST to
+`/api/admin/login`, the session comes back as an HttpOnly cookie, and every read
+runs server-side. That is why `connect-src 'self'` in `vercel.json` still needs
+no Supabase origin, why no anon key reaches any page, and why `public.enquiries`
+can keep RLS with zero policies rather than growing an "authenticated admins can
+select" policy that would widen the surface for nothing.
+
+The cookie options are forced in `authClient()` regardless of what
+`@supabase/ssr` suggests: `httpOnly`, `secure`, `sameSite: 'lax'`, `path: '/'`.
+The token is never read by page script so `httpOnly` costs nothing, and a session
+cookie without `sameSite` is a CSRF foothold on an area whose forms change data.
+
+Things that will look like bugs but are deliberate:
+
+- **The middleware's early return is correctness, not an optimisation.**
+  `src/middleware.ts` runs for **every** route, and for the prerendered public
+  pages it runs at **build** time, where there is no meaningful request. Without
+  the early return the build makes one pointless auth round trip per page — and,
+  far worse, the public site's build starts depending on Supabase being
+  reachable. A static catalogue that cannot be built offline because of an admin
+  guard is the tail wagging the dog.
+- **`/api/admin/*` is guarded as hard as `/admin/*`.** Protecting only the pages
+  leaves every endpoint they call wide open, and the endpoints are the more
+  valuable target — the pages only render what those hand over.
+- **An unauthenticated API call gets 401 JSON; an unauthenticated page gets a
+  302.** Redirecting a `fetch` would hand the caller an HTML login page under a
+  200, which reads as success.
+- **`guarded()` strips trailing slashes before matching.** Otherwise
+  `/admin/login/` misses the `OPEN` set and `/admin/` misses `/admin`. Both
+  failures are silent and in opposite directions.
+- **`parseCookies` splits on the FIRST `=` only.** Supabase session cookies are
+  base64 and routinely end in `=` padding; splitting on every `=` truncates the
+  token. The symptom is an admin being signed out at random, which looks nothing
+  like a parse bug.
+- **Auth never fails open.** Any throw inside `currentAdmin` is logged and
+  returns `null`. "Could not establish authority" has to read the same as "does
+  not have it".
+- **Sign-out is POST-only.** A GET would let a prefetch, an `<img>` or a link in
+  an email end someone's session for them.
+- **Wrong address and wrong password give the same message.** Distinguishing
+  them tells anyone who asks which admin addresses exist.
+- **`noindex` WITHOUT a `robots.txt` `Disallow`, and that pair is the point.**
+  The design doc §3 called for both; the implementation deliberately took only
+  the meta tag. `Disallow` stops a crawler fetching the page, so it never sees
+  the `noindex` and the URL can still surface from an external link — and a
+  `Disallow` line is a public index of your endpoints. `src/pages/robots.txt.ts`
+  makes the same argument about `/api/enquiry`.
+- **`AdminLayout` is not `BaseLayout`.** `BaseLayout` emits title, canonical,
+  Open Graph and JSON-LD through `Seo.astro`, all of which describe a public
+  document, and it would put the admin on the public site's CSS and JS budget for
+  nothing. Because admin routes are SSR they never enter the sitemap either, so
+  the "97 pages, one title and one canonical each" gate does not move.
+
+**The CSP trap this subsystem must not fall into.** `npm run csp` derives
+`script-src`'s hashes from `dist/client`, and SSR admin pages are never in
+`dist/client`. An inline `<script>` on an admin page would ship unhashed, be
+blocked at runtime, and **nothing would fail** — not the build, not `astro
+check`, not the CSP gate. The page would render and silently not work. So: admin
+pages emit no inline scripts and no client-side islands. Server-rendered forms,
+and if behaviour is ever genuinely needed, an Astro `<script>` tag that bundles
+to an external `/_astro/*.js` file which `'self'` already allows — never
+`is:inline`. The login page's `error` query parameter is rendered as text
+content, never as markup, because that value is in the URL and therefore
+anyone's to set.
+
+**CSV export carries a formula-injection guard.** `src/lib/admin/csv.ts` is
+RFC 4180 with one departure: a field beginning `=`, `+`, `-` or `@` is executed
+as a formula by Excel and Google Sheets, and enquiry messages are free text
+written by strangers. Exporting them verbatim hands whoever opens the file a
+script somebody else wrote. Prefixing with a single quote is the standard
+neutralisation and spreadsheets strip it on display, so nothing is lost to a
+human reader; a neutralised field is always quoted, because an unquoted leading
+apostrophe is not reliably honoured. **The cost is that a genuinely negative
+number becomes text** — free here, because the only numerics exported are
+quantities and line counts and both are bounded at 1 by `enquiryPayloadSchema`.
+It would not be free in a financial export, so do not lift this module into one
+without re-taking that decision.
+
+**What Phase 1 still owes.** The design doc's acceptance conditions for the phase
+include e2e coverage of the auth boundary — an unauthenticated request to every
+admin route redirects, and an authenticated non-admin is refused — and zero CSP
+violations on every admin page behind a real login. **Neither test exists yet;
+`tests/e2e/` has no admin spec.** Until they do, the guard is verified by reading
+it rather than by running it, which is exactly the standard the rest of this
+project does not accept.
+
+### The footer email field is gone
+
+It was a newsletter subscribe with no mailing list behind it and — per the client, 2026-08-09 — never intended as one. Removed rather than wired: posting it to `/api/enquiry` would have sent sales an RFQ from someone who believed they were subscribing. The contact strip now carries address, phone and email.
+
+`design/direction-b-forge.html` still shows the field. That is a deliberate departure from the approved design, like the Name field added to the home CTA, and is recorded in the component.
+
 ### What a next session picks up
 
-The build is done. Three things follow it, in rough order:
+The catalogue build is done. Three things follow it, in rough order:
 
-1. **Deployment.** Vercel is assumed and configured but never confirmed with the client (§8 item 3), and nothing has been deployed. The domain has to land first — it changes `astro.config.mjs` *and* `public/robots.txt`, and both must match (§7 SEO). Doing it properly means replacing `public/robots.txt` with a `src/pages/robots.txt.ts` endpoint so the two can never diverge again. `.env` needs the Resend credentials in Vercel's project settings, not just locally.
+1. **Deployment.** Vercel is assumed and configured but never confirmed with the client (§8 item 3), and nothing has been deployed. The domain has to land first — that is now a **single** edit to `site` in `astro.config.mjs`, since `src/pages/robots.txt.ts` derives the sitemap URL from it and `public/robots.txt` is gone. Vercel's project settings need `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (without them every RFQ in production is a log line), and the Resend pair for the notification.
 
-2. **The admin dashboard.** This is what §5 exists for. Replace `file()` in `content.config.ts` with a database loader; `catalog.ts` and all 96 pages are untouched. The Zod schemas become the write-validation contract. Two things to carry across: `serialiseJsonLd()` escaping matters the moment arbitrary text can enter the catalogue (§7), and the "never invent product data" rule needs to survive contact with a UI that has empty fields inviting to be filled — `docs/CONTENT-EDITING.md` is the statement of that rule for whoever maintains data in the meantime.
+2. **The rest of the admin dashboard.** Phase 1's auth foundation has landed — see "The admin subsystem" above — and what remains of Phase 1 is the part that has a user: an `/admin` index (sign-in currently redirects to a route that does not exist), the enquiry inbox and detail view, the `new → contacted → quoted → closed` status workflow, the product-demand report over the `enquiry_lines` view, and the CSV export route that `src/lib/admin/csv.ts` is waiting for. Phase 1 also owes its two acceptance tests: the auth boundary and zero CSP violations on every admin page.
+
+   Then Phase 2, which is what §5 exists for: replace `file()` in `content.config.ts` with a database loader; `catalog.ts` and every catalogue page are untouched, and the acceptance test is a **byte-identical** build — build from JSON, migrate, build from Postgres, diff. It ships alone, behind its own verification, with nothing else in the commit. Three things to carry across: `serialiseJsonLd()` escaping matters the moment arbitrary text can enter the catalogue (§7); the "never invent product data" rule needs to survive contact with a UI full of empty fields inviting to be filled, and `docs/CONTENT-EDITING.md` is the statement of that rule for whoever maintains data in the meantime; and once the catalogue lives in Postgres and images live in Storage, **no build works offline** — that is inherent to the choice, which is why Phase 2 keeps a documented `CATALOGUE_SOURCE=json|postgres` escape hatch rather than pretending otherwise.
 
 3. **Arabic localisation, deferred.** The brochure cover carries an Arabic wordmark (سبارتان) that is unused in this build. A second locale means RTL, a translated content model, and `hreflang` — it is a project, not a task.
 

@@ -41,6 +41,16 @@ export const enquiryPayloadSchema = z.object({
   email: z.string().trim().max(254).pipe(z.email('Please enter a valid email address')),
   phone: z.string().trim().max(40).default(''),
   country: z.string().trim().max(80).default(''),
+  /**
+   * Which division the buyer is asking about, from the compact forms on the
+   * home page and /contact. Free text rather than an enum keyed on the two
+   * division slugs: the value is routing information for a human reading the
+   * email, not a lookup, and a schema that rejects an unrecognised division
+   * would lose the whole enquiry over a field nobody needs to be right. The
+   * full /enquiry form omits it — the product list already says which
+   * divisions are involved — so it defaults to empty and stays optional.
+   */
+  division: z.string().trim().max(80).default(''),
   message: z.string().trim().max(4000).default(''),
   /**
    * Empty is legitimate: a buyer can arrive at /enquiry with nothing collected
@@ -48,6 +58,17 @@ export const enquiryPayloadSchema = z.object({
    * catalogue as it stands and exists only to bound the request.
    */
   items: z.array(enquiryItemSchema).max(200),
+  /**
+   * Which of the three forms converted. Stored so "does the home CTA actually
+   * work" is a query rather than a guess.
+   *
+   * `.catch()` rather than a bare enum: this field is telemetry, and a payload
+   * carrying an unrecognised value — a stale cached script after a rename, say —
+   * must not cost the enquiry. An unknown source degrades to `'unknown'`; it
+   * never returns a 400. The four values match the CHECK constraint on
+   * `public.enquiries.source`.
+   */
+  source: z.enum(['enquiry', 'home-cta', 'contact', 'unknown']).catch('unknown'),
   /**
    * Honeypot. The field is present in the form but hidden from sight and from
    * assistive technology and removed from the tab order, so no real user can

@@ -33,11 +33,14 @@ export default getViteConfig({
   test: {
     globals: true,
     environment: 'node',
-    // Unit tests live beside the code they cover, under `src/` for the site and
-    // `tools/` for the extraction scripts. Pinning the pattern keeps Vitest away
-    // from `tests/e2e/`, which is Playwright's: those files call `test.describe`,
-    // which Vitest resolves to its own `test` and then fails to collect.
-    // Vitest's default `include` swept them up as soon as Task 16 added them.
+    // Unit tests live beside the code they cover, always under `src/`. Pinning
+    // the pattern keeps Vitest away from `tests/e2e/`, which is Playwright's:
+    // those files call `test.describe`, which Vitest resolves to its own `test`
+    // and then fails to collect. Vitest's default `include` swept them up as
+    // soon as Task 16 added them.
+    // `tools/` is added for the same reason it is safe: it holds build and
+    // verification scripts and no Playwright specs, so widening to it cannot
+    // resurrect the collection failure above.
     include: ['src/**/*.test.ts', 'tools/**/*.test.ts'],
   },
 });

@@ -38,8 +38,11 @@ npm run dev
 | `npm run dev` | Astro dev server. Astro 7 supports `astro dev --background`, then `astro dev stop` / `status` / `logs`. |
 | `npm run build` | Production build. Output is **`dist/client/`**, not `dist/` — see below. |
 | `npm run preview` | **A custom server** (`tests/preview-server.mjs`), *not* `astro preview`. See below. |
-| `npm run test` | Vitest unit tests — **63 tests**. |
-| `npm run test:e2e` | Playwright + axe — **83 tests + 1 skipped**, across desktop and mobile projects. |
+| `npm run test` | Vitest unit tests. |
+| `npm run test:e2e` | Playwright + axe, across desktop and mobile projects. Stop the dev server first. |
+| `npm run verify` | **The gate.** Typecheck, unit tests, invariants, build, output sweeps. `-- --full` adds Playwright. |
+| `npm run csp` | Regenerate `vercel.json`'s CSP hashes from `dist/client` after a build. |
+| `npm run counts` | Regenerate `CLAUDE.md`'s counts block from the repo. `npm run verify` fails when it is stale. |
 | `npx astro check` | Type/template check — 0 errors, 0 warnings, 7 hints (unused params in `tools/*.mjs`). |
 | `npm run extract:catalog -- "path/to/brochure.pdf"` | Regenerate products and product PNGs from the brochure. |
 | `npm run extract:logo -- "path/to/brochure.pdf"` | Re-extract the logo lockups. |
@@ -52,7 +55,7 @@ The four extraction scripts are run **only when the brochure is revised**. Their
 
 `astro preview` does not work in this repo. `@astrojs/vercel` ships no preview entrypoint and exits with *"The @astrojs/vercel adapter does not support the preview command."*
 
-A plain static file server would not work either. Adding the site's one server-rendered route split the build in two: static pages land in `dist/client/`, and the SSR bundle is moved by the adapter to `.vercel/output/functions/_render.func` (`dist/server/` is deleted). A static server would therefore serve 96 of the 97 routes and 404 the one that matters — `/api/enquiry`, the end of the only conversion path.
+A plain static file server would not work either. Adding the first server-rendered route split the build in two: static pages land in `dist/client/`, and the SSR bundle is moved by the adapter to `.vercel/output/functions/_render.func` (`dist/server/` is deleted). A static server would therefore serve the prerendered pages and 404 every route that opts out — including `/api/enquiry`, the end of the only conversion path, and the whole of the admin area.
 
 `tests/preview-server.mjs` serves both halves the way Vercel does: filesystem first out of `dist/client/`, then anything matching a `dest: "_render"` route in `.vercel/output/config.json` goes to the real built SSR handler, then `404.html` with a 404 status. The route table is read from the emitted config rather than hard-coded, so it cannot drift from what actually deploys. Nothing in it is a stub.
 
@@ -62,23 +65,44 @@ A plain static file server would not work either. Adding the site's one server-r
 
 ## Environment variables
 
-Copy `.env.example` to `.env`. `.env` is gitignored — never commit real values. Both variables are read **at request time** by `src/pages/api/enquiry.ts`.
+Copy `.env.example` to `.env`. `.env` is gitignored — never commit real values. All variables are read **at request time**, in the server-rendered routes and in the middleware that guards them — never at build time, and never in the browser.
 
 | Variable | Purpose |
 |---|---|
+| `SUPABASE_URL` | Supabase project URL. Project `spartan`: `https://wslylysakixrirxkozih.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Service role**, not the publishable key. Server-side only — see below. |
+| `SUPABASE_ANON_KEY` | Admin sign-in only (`signInWithPassword`). Never used for data. |
 | `RESEND_API_KEY` | Resend API key. https://resend.com/api-keys |
-| `ENQUIRY_TO_EMAIL` | The client's sales inbox — where enquiries are delivered. |
+| `ENQUIRY_TO_EMAIL` | The client's sales inbox — where the notification is delivered. |
 | `ENQUIRY_FROM_EMAIL` | Optional. Must be on a domain verified in the Resend account. |
+
+### Two channels, and why the distinction matters
+
+An enquiry is **written to Postgres first**, then an email notification is sent. Either channel carrying it is enough for the submission to succeed, so a mail outage costs a notification rather than a lead. The response reports both:
+
+```json
+{ "ok": true, "recorded": true, "delivered": false }
+```
+
+Before this existed an enquiry was only ever an email, and the branch that ran when Resend threw returned 502 and discarded the payload — a validated buyer lost with no trace on either side.
 
 ### What happens when they are unset
 
-While **either** `RESEND_API_KEY` or `ENQUIRY_TO_EMAIL` is empty, the endpoint validates the payload as normal, logs the full enquiry to the server console, and returns:
+A channel with no credentials is **`unconfigured`, which is not the same as `failed`**. It was never asked to carry the enquiry, so it has lost nothing. With *neither* channel configured the endpoint validates as normal, logs the full enquiry, and returns:
 
 ```json
-{ "ok": true, "delivered": false }
+{ "ok": true, "recorded": false, "delivered": false }
 ```
 
-`delivered: false` is deliberate and load-bearing. The whole flow stays exercisable end to end before credentials exist, and **the site never reports an enquiry as sent when it was not** — a site that claims to have sent an RFQ it dropped loses the lead silently.
+Both forms then say plainly that nothing reached the Spartan team. That is what keeps the whole flow exercisable locally and in CI without secrets — collapsing the two states would return 502 for every enquiry in the e2e suite. A 502 is reserved for the one real failure: **every configured channel failed**, where nothing was written and a retry therefore cannot duplicate.
+
+**The site never reports an enquiry as received when nothing durable holds it.**
+
+### The service-role key
+
+`public.enquiries` has row-level security enabled with **zero policies**, so the publishable key can neither read nor write it. Only `service_role`, which bypasses RLS, can insert — and it must never leave the server. The browser never talks to Supabase at all, which is also why `connect-src` in `vercel.json` needs no Supabase origin.
+
+`npm run verify` fails if the key reaches `dist/client`, or if anything under `src/components`, `src/scripts`, `src/stores` or `src/layouts` names it or imports `enquiry-store.ts`.
 
 With `ENQUIRY_FROM_EMAIL` left empty the endpoint sends from Resend's own always-verified `onboarding@resend.dev`, which works with any key. Replies reach the enquirer either way, via `Reply-To`.
 
@@ -203,13 +227,26 @@ Related trap: **do not "fix" the black panel in `p19-safety-vests.png` and `p19-
 ## Testing
 
 ```bash
-npm run test        # vitest — 63 unit tests
-npm run test:e2e    # playwright + axe — 83 tests + 1 skipped
+npm run verify            # THE GATE — typecheck, unit tests, invariants, build, sweeps
+npm run verify -- --full  # ... and the Playwright suite
+
+npm run test        # vitest unit tests
+npm run test:e2e    # playwright + axe
 npx astro check     # 0 errors, 0 warnings, 7 hints
-npm run build       # 96 pages + 404 + 1 SSR endpoint
+npm run build       # static pages to dist/client/ + the SSR routes
 ```
 
-**The e2e tests run against the built output, not the dev server.** Almost everything they assert — 96 prerendered pages, the no-JavaScript catalogue listing, hydration boundaries, the `dist/client/` split — is a property of the build rather than of the source. `playwright.config.ts` therefore runs `npm run build && npm run preview` itself, with `reuseExistingServer: true` so an already-running preview is used as-is during iterative work.
+`npm run verify` is what CI runs (`.github/workflows/verify.yml`, on every push).
+**Never weaken a gate to make it pass.** The live counts — products, categories,
+built pages, server-rendered routes, CSP hashes, unit tests — are generated into
+`CLAUDE.md` by `npm run counts` and gated by `verify`. That block is the only
+place a live **status count** belongs — do not copy one here, or anywhere else,
+because a second copy has nothing keeping it current. A measurement quoted inside
+an explanation is a different thing and stays: `docs/TRAPS.md` saying 26
+referenced images produced 52 variants, or that `build.inlineStylesheets:
+'always'` would inline ~41 KB per page, is the reasoning, not a status line.
+
+**The e2e tests run against the built output, not the dev server.** Almost everything they assert — the prerendered pages, the no-JavaScript catalogue listing, hydration boundaries, the `dist/client/` split — is a property of the build rather than of the source. `playwright.config.ts` therefore runs `npm run build && npm run preview` itself, with `reuseExistingServer: true` so an already-running preview is used as-is during iterative work.
 
 Two things that will waste your time otherwise:
 
@@ -253,14 +290,16 @@ Seven items need the client before this site can go live. Nothing here blocks de
 - [ ] **1. Real contact details** → `src/data/site.json`
       Address, phone and email are placeholders (`+971 00 000 0000`, `sales@spartan.example`, `Address line, City, Country`). They appear in the header utility bar, footer, contact page, trust band and the enquiry form's fallback address. The placeholder address is deliberately kept out of `organizationJsonLd` — publishing a fake address as structured data is worse than publishing none.
 
-- [ ] **2. Resend API key and destination address** → `.env`
-      Set `RESEND_API_KEY` and `ENQUIRY_TO_EMAIL`. Until both are set, `/api/enquiry` returns `delivered: false` and logs instead of sending. Set `ENQUIRY_FROM_EMAIL` too once a domain is verified in Resend.
+- [ ] **2a. Supabase credentials** → Vercel project settings
+      Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. The table, the policies and the code are in place; without these production returns `recorded: false` and enquiries survive only as function logs. This is the one that must not be missed — it is the difference between capturing leads and losing them.
 
-- [ ] **3. The domain — TWO files, and they must match**
-      - `astro.config.mjs` → `site:` (currently `https://spartan.example`). This drives every canonical tag, Open Graph URL, JSON-LD URL and the sitemap's contents.
-      - `public/robots.txt` → the `Sitemap:` line. **This file is served verbatim from `public/` and interpolates nothing**, so it hard-codes the domain. Changing only `astro.config.mjs` leaves robots.txt pointing crawlers at a host that cannot exist — `.example` is reserved by RFC 2606.
+- [ ] **2b. Resend API key and destination address** → `.env` / Vercel
+      Set `RESEND_API_KEY` and `ENQUIRY_TO_EMAIL`. With Supabase configured this is no longer a data-loss risk — the enquiry is already safe and the email is the nudge — but until it is set nobody is told an RFQ arrived, so somebody has to watch the Supabase table. Set `ENQUIRY_FROM_EMAIL` too once a domain is verified in Resend.
 
-      Doing this properly at the same time: replacing `public/robots.txt` with a `src/pages/robots.txt.ts` static endpoint would emit the real value at build time and make this failure mode impossible.
+- [ ] **3. The domain — ONE file**
+      `astro.config.mjs` → `site:` (currently `https://spartan.example`, which is reserved by RFC 2606 and can never resolve). This drives every canonical tag, Open Graph URL, JSON-LD URL, the sitemap's contents **and** the `Sitemap:` line in robots.txt.
+
+      It used to be two files that had to match: `public/robots.txt` was served verbatim and hard-coded the domain, so changing one without the other silently pointed crawlers at the wrong host. That file is gone — `src/pages/robots.txt.ts` now emits the value from `site` at build time, so the two cannot diverge. Setting the domain is a single edit.
 
 - [ ] **4. Confirm the eight "Industries We Serve"** → `src/data/site.json`
       Construction, Oil & Gas, Manufacturing, Warehousing, Facilities, Marine & Ports, Utilities, Hospitality. These are **inferred from the product mix**, not stated in the brochure. Flagged by `industriesPendingClientConfirmation: true` in the same file and by an HTML comment where they are used. Remove the flag once confirmed.

@@ -1,0 +1,7 @@
+{
+  "projectId": "63cd21be-7d40-463b-8443-c5803a84575b",
+  "shape": "package",
+  "scope": "tokens-only",
+  "readmeHeader": ".design-sync/conventions.md",
+  "note": "This repo is an Astro APPLICATION, not a component library. See .design-sync/NOTES.md before changing scope."
+}
