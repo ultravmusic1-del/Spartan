@@ -48,6 +48,20 @@ const divisions = await getDivisions();
         <SolidButton href="/enquiry">Request a quote</SolidButton>
         <PillButton href="/contact">Become a distributor</PillButton>
       </div>
+
+      {/*
+        Three claims, all client-confirmed and approved to ship. The mockup
+        carried two more that are not here on purpose: "send a list, a
+        drawing or a photo of the old part" (this form has no file upload,
+        so it would promise a capability that does not exist) and a promise
+        that quotes return unit price, stock position and lead time on every
+        line (never confirmed). Do not add either back without new sign-off.
+      */}
+      <ul class="cta__claims">
+        <li>Bulk and contract pricing on quantity</li>
+        <li>Mixed pallets across both divisions</li>
+        <li>Samples on safety lines before you commit</li>
+      </ul>
     </div>
 
     <form
@@ -213,6 +227,22 @@ const divisions = await getDivisions();
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 26px;
+  }
+
+  /* Three claims only, all client-confirmed — see the comment on the markup
+     above for the two the mockup had that are cut and must stay cut. */
+  .cta__claims {
+    list-style: none;
+    margin: 30px 0 0;
+    padding: 0;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .cta__claims li {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-line);
+    font-size: 14px;
+    color: var(--color-grey-lt);
   }
 
   .cta__box {
