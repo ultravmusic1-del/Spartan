@@ -43,6 +43,11 @@ Build these in from the start. They are not polish.
 
 1. **`prefers-reduced-motion`.** The mockup runs four infinite animations — `bob` 7s, `pulse` 6s, `sweep` 14s, `tick` 42s — plus cursor parallax. The hero it replaces documents *"No pause control, no reduced-motion branch. Nothing moves."* Every animation in this plan carries a reduced-motion branch that sets `animation: none` and disables the parallax listener.
 
+   > **Correction, found during Task 3.** `src/styles/global.css:54-61` already collapses every animation site-wide to `animation-duration: 0.01ms !important` and `animation-iteration-count: 1 !important`. **No scoped rule can outrank that**, so under reduced motion an animation has already run to completion before the first frame. Two consequences this plan originally got wrong:
+   >
+   > - **A reduced-motion "opt back in" is impossible.** `animation-play-state: running` cannot restart a finished animation. Task 3's opt-in block was removed and the ticker's control is hidden instead — with nothing moving, WCAG 2.2.2 is not engaged.
+   > - **A component's own `animation: none` still works**, because the global rule only forces `animation-duration` and `animation-iteration-count`; the `animation` shorthand sets `animation-name: none`, which nothing overrides. Task 2's hero branch is therefore correct as written, and Task 10 can still assert `animation-name: none` on the hero.
+
 2. **WCAG 2.2.2 Pause, Stop, Hide.** The ticker auto-starts, moves, and runs longer than five seconds. That is a Level A failure without a mechanism to pause it. axe will not flag this — the same blind spot that let a serious Label in Name failure sit on every product card at a green score. The control is built in Task 3.
 
 3. **The two empty categories must not show a product.** The mockup renders `waterproof-fittings` for Electrical Accessories and `nonwoven-disposable-coverall` for Spill Control. Both categories have `productCount: 0` and `heroProductSlug: null`. Showing a product image in a category that has none is a claim about stock that is not true. Task 4 renders a real empty state instead.
@@ -617,6 +622,15 @@ git commit -m "feat(hero): rebuild around the floating helmet"
 - Create: `src/components/sections/Ticker.astro`
 
 The control is a checkbox styled as a button, read by `:has()`. No JavaScript, so it works on a page with scripting disabled — which matters, because WCAG 2.2.2 is not waived by the user having JS off.
+
+> **The code below is the first draft and six defects were found against it in review. `src/components/sections/Ticker.astro` on `feat/landing-redesign` is the correct version — read that, not this.** What changed, and why, so the reasoning is not lost:
+>
+> 1. `background: rgba(0,0,0,.28)` on the button measured **1.98:1** for its white label, because the full-width track scrolls behind a translucent control. Now `--color-red-dark` (6.52:1).
+> 2. The reduced-motion opt-in could never work — see the correction under "Three requirements" above. The block now hides the control.
+> 3. The Pause/Play word swap made the accessible name contradict the checkbox state — checked, it announced *"Play, checkbox, checked"* while the band was paused. Now `role="switch"` with a static `aria-label`, state carried by `aria-checked`, and the sighted cue moved to styling.
+> 4. `outline-offset: 2px` was clipped away by the band's `overflow: hidden`; the ring rendered as two disconnected vertical bars. Now `-2px`, matching `CategoryGrid.astro`.
+> 5. One copy of the joined names measures ~3218px, so the loop seam opened on ultrawide displays. Each span now carries two copies at 84s, preserving speed.
+> 6. The `:has()` dependency is now documented — without support the band scrolls, the checkbox toggles, and there is no pause mechanism at all.
 
 - [ ] **Step 1: Write the component**
 
@@ -1647,25 +1661,43 @@ test.describe('the ticker pause control', () => {
 
     await expect(track).toHaveCSS('animation-play-state', 'running');
 
+    // The switch role carries the state; the accessible name is static, so it
+    // must NOT change when toggled. A name that flips to "Play" against a
+    // visible "Pause" is the Label in Name failure this project already shipped
+    // once on every product card.
+    await expect(toggle).toHaveAttribute('role', 'switch');
+    const name = await toggle.getAttribute('aria-label');
+
     // Keyboard, not a click on the label — WCAG 2.2.2 needs a *mechanism*, and
     // a control only operable by mouse is not one.
     await toggle.focus();
     await page.keyboard.press('Space');
 
     await expect(track).toHaveCSS('animation-play-state', 'paused');
-    await expect(page.locator('.ticker__btn-play')).toBeVisible();
+    await expect(toggle).toBeChecked();
+    await expect(toggle).toHaveAttribute('aria-label', name!);
   });
 });
 
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
-  test('stops the hero animations and starts the ticker paused', async ({ page }) => {
+  /*
+   * The ticker is NOT asserted paused here, and that is deliberate.
+   *
+   * `src/styles/global.css:54` forces animation-duration to 0.01ms and
+   * iteration-count to 1 with `!important` on every element, so under reduced
+   * motion the band's animation has already finished — its play-state still
+   * computes as `running` even though nothing moves. Asserting `paused` would
+   * fail against correct behaviour. What is checked instead is that the control
+   * is gone, because a pause button for static content is noise.
+   */
+  test('stops the hero animations and removes the pause control', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.hero__helmet img')).toHaveCSS('animation-name', 'none');
     await expect(page.locator('.hero__glow')).toHaveCSS('animation-name', 'none');
     await expect(page.locator('.hero__sweep')).toHaveCSS('animation-name', 'none');
-    await expect(page.locator('.ticker__track')).toHaveCSS('animation-play-state', 'paused');
+    await expect(page.locator('.ticker__btn')).toBeHidden();
   });
 
   test('the copy is still visible — a cancelled entrance must not leave it at opacity 0', async ({
