@@ -484,7 +484,21 @@ The SSR bundle is **not** left in `dist/server/` — the adapter moves it to `.v
 
 Current output: 96 `index.html` + `404.html` — 72 product pages, 15 category pages, the catalogue index, and 8 top-level pages, plus `sitemap-index.xml`.
 
-### The hero is two client artworks, art-directed
+### The hero is a floating helmet — and the helmet is AI-generated
+
+**Superseded 2026-08-11 by the landing redesign. The section below describes the client-artwork hero, which is no longer on the landing page.** Read §11 first; this stays as the record of what the artwork hero was and why, because both files are retained and could be brought back.
+
+`src/components/sections/Hero.astro` now renders `src/assets/hero/helmet-hero.png` — 1254×1254 RGBA, floating on a black field inside a pulsing glow and a rotating red sweep, with the copy beside it on desktop and above it below 1080px.
+
+**The helmet's C2PA manifest asserts `trainedAlgorithmicMedia` with GPT/openai markers. It is AI-generated.** That was a deliberate decision taken with the client on 2026-08-11, not an oversight, and **it still needs a person at the client to sign it off** — `BACKLOG.md` carries the item. It depicts safety equipment on a site whose first rule is that nothing about safety equipment is invented, so it is flagged rather than quietly shipped. A real product photograph drops in with no markup change.
+
+The `<h1>` is **visible text again**. It was `sr-only` only because the client artwork carried the headline as pixels; this hero renders a real headline and the image is decorative with `alt=""`.
+
+`hero-range-desktop.png` and `hero-range-mobile.png` are **retained but unused**. They are client-supplied brand assets and deleting supplied material to tidy up would be the wrong trade.
+
+---
+
+#### What the client-artwork hero was, for the record
 
 `src/components/sections/Hero.astro`. Static images. The scroll-scrubbed video that used to live here is gone — along with `public/video/` and the two poster JPEGs — replaced by supplied brand artwork that already carries the logo, the Arabic wordmark and the headline.
 
@@ -783,3 +797,58 @@ Worth keeping if you continue with agents:
 - 7 `astro check` hints, all unused-parameter warnings in `tools/*.mjs`. Harmless.
 - **The footer's social icons have no destinations.** They render and hover but link nowhere, and `sameAs` is correspondingly absent from `organizationJsonLd`. Either the client supplies the URLs or the icons come out — a link that goes nowhere is worse than no icon. Not in §8 because it is a build decision as much as a client one.
 - `playwright-report/` and `test-results/` are local run artefacts.
+
+---
+
+## 11. The landing redesign — 2026-08-11
+
+**Status: implementation complete and green. Documentation is the only outstanding work.** Branch `feat/landing-redesign`, merged to `main`.
+
+The home page was rebuilt from a Claude Design mockup, `Spartan Landing.dc.html`, in project `a3824cff-5eab-4def-9d1f-acd205eaad27`. The mockup's design tokens were byte-identical to `src/styles/tokens.css` — it was generated *from* this system — so nothing about colour, type or spacing had to be reconciled.
+
+### What shipped
+
+| Component | What it is |
+|---|---|
+| `Hero.astro` | Rebuilt around the floating helmet. Real visible `<h1>`, "Est. 2015" badge, cursor parallax, four animations. |
+| `Ticker.astro` | **New.** Red marquee naming every category, with a CSS-only pause control. |
+| `CategoryGrid.astro` | Restyled to a 5-column card shelf. Counts derived, empty categories honest. |
+| `FeaturedLines.astro` | **New.** Eight curated products, division tabs, server-rendered with a no-JS fallback. |
+| `EnquiryCta.astro` | Restyled; three client-confirmed claims added. Form untouched. |
+| `Header` / `Footer` | Mockup type treatment. All seven routes kept; contact strip kept. |
+| `About`, `ServiceCards`, `TrustBand`, `Spotlight`, `Faq` | Restyled to match; no content changed. |
+| `src/lib/featured.ts` | **New.** The curated strip, named by slug. |
+| `tests/e2e/home.spec.ts`, `motion.spec.ts` | **New.** 20 tests across both projects. |
+
+`139 unit · 157 e2e (3 skipped) · verify 14/14 · 110 pages · 8 CSP hashes.`
+
+### Decisions taken with the client, do not relitigate
+
+- **The helmet is AI-generated** and ships anyway — see §7. Still needs client sign-off; `BACKLOG.md` P0.
+- **All seven nav routes kept.** The mockup showed four including a `/divisions` route that does not exist. Only its visual treatment was adopted.
+- **Two mockup claims were cut** as unverifiable: *"Send a list, a drawing or a photo of the old part"* (the form has no upload) and *"Quotes come back with unit price, stock position and lead time on every line"*. A build assertion in the e2e suite keeps them out. **"Est. 2015"** and the three enquiry list items were confirmed and kept.
+- **The client hero artwork is retained but unused** — see §7.
+
+### What is NOT done
+
+1. **`docs/TRAPS.md` has not been updated.** Four traps were found during this work and are recorded only here. They belong in that file:
+   - **Whether an Astro `<script>` costs a CSP hash depends on how many pages use the component, not on how the tag is written.** Astro extracts a script to an external `/_astro/` chunk only when it is shared across pages; a single-page script is inlined and needs a hash. `EnquiryCta`'s is external because it renders on `/` and `/contact`; the hero's and Featured Lines' are inline because both render on `/` alone. **Rendering an existing component on one more page can move its script between those states and invalidate a hash with nobody editing any JavaScript.**
+   - **No component on this site can offer a motion opt-in.** `src/styles/global.css:54` forces `animation-duration: 0.01ms !important` and `animation-iteration-count: 1 !important` on `*` under `prefers-reduced-motion`. No scoped rule outranks it, and `animation-play-state: running` cannot restart an animation that has already run to completion. A component's own `animation: none` still works, because the global rule only forces duration and iteration-count while the shorthand sets `animation-name`.
+   - **`test.use({ reducedMotion: 'reduce' })` silently does nothing** on the pinned Playwright (1.62.1). It is not a top-level `TestOptions` field, so it compiles and is discarded. Use `test.use({ contextOptions: { reducedMotion: 'reduce' } })`. `tests/e2e/motion.spec.ts` has the comment.
+   - **The two empty categories must never show a product image.** Electrical Accessories and Spill Control have `productCount: 0` and `heroProductSlug: null`. The mockup filled both with borrowed photos; a product image in a category that stocks nothing is an untrue claim about stock. `CategoryGrid` renders a marked empty tile and `home.spec.ts` asserts exactly two.
+
+2. **`README.md` still describes the pre-redesign home page.** Its Lighthouse `/` row was already marked stale before this work and is now stale for a third hero.
+
+3. **Lighthouse has not been re-run.** The LCP element changed again — it is now the helmet. `README.md`'s `/` row should not be quoted until re-measured.
+
+### Where to pick up
+
+`BACKLOG.md` is accurate. The two P0 items this work created:
+
+- Get client sign-off on the AI-generated helmet.
+- Nothing else — the redesign introduced no other blockers.
+
+Two things found during the work that are **not** the redesign's and remain open:
+
+- **The `/electricals` and `/safety` headers pass contrast only because of their scrim.** Composited, the worst nav link measures 6.04:1; against the raw pre-scrim photograph it is **1.11:1**. Swapping a division hero photograph is therefore a contrast regression waiting to happen, with no gate that would catch it. `Header.astro` carries a comment; there is no test.
+- **A `role="tablist"` conversion for the Featured Lines filter was considered and rejected.** The grid is not a panel whose contents swap — it is one list with items hidden — and the full Tabs pattern needs roving `tabindex` plus arrow keys, which this design system has no precedent for. `role="group"` with a label was used instead. The reasoning is in the component; revisit only with the keyboard contract.
