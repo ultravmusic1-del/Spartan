@@ -131,9 +131,14 @@ const copy = text.repeat(2);
   /* The focus ring is driven off the input, because the label is what is
      visible and the input is what receives focus. Inset, not outset: the band
      is only 46.8px tall and clips with `overflow: hidden`, so an outward
-     offset put both horizontal strokes of the ring outside the clip region. */
+     offset put both horizontal strokes of the ring outside the clip region.
+     currentColor, not a literal #fff: the button's `color` flips between #fff
+     and --color-red-deep with the checked state, and a literal white ring
+     went invisible (1.00:1) against the checked state's white fill. Tying the
+     ring to `color` covers both states with one declaration and cannot drift
+     if the checked palette changes later. */
   .ticker__toggle:focus-visible + .ticker__btn {
-    outline: 2px solid #fff;
+    outline: 2px solid currentColor;
     outline-offset: -2px;
   }
 
@@ -141,8 +146,16 @@ const copy = text.repeat(2);
      accessible name is now the static aria-label on the input, and swapping
      the button's visible word out of sync with that name is exactly the
      Label in Name failure this file's header warns about. The checked state
-     is now a sighted-only cue. --color-red-deep on white is 8.40:1
-     (handoff.md §3). */
+     is now a sighted-only cue. --color-red-deep on #fff (what this button
+     actually sits on) is 9.07:1 — handoff.md §3's 8.40:1 is the same pair
+     measured against --color-paper, a slightly darker surface, not this one.
+
+     The pause mechanism below is `:has()` and nothing else. Without support
+     the band still scrolls, the checkbox still toggles, and there is no way
+     to stop it — a WCAG 2.2.2 failure plus a control that lies. Accepted
+     because `:has()` has been Baseline since Firefox 121 (Dec 2023) and the
+     repo declares no browser floor below that. Anything that drops these
+     rules has to replace the mechanism, not just the styling. */
   .ticker:has(.ticker__toggle:checked) .ticker__track {
     animation-play-state: paused;
   }
@@ -150,13 +163,6 @@ const copy = text.repeat(2);
     background: #fff;
     color: var(--color-red-deep);
   }
-
-  /* The pause mechanism is `:has()` and nothing else. Without support the band
-     still scrolls, the checkbox still toggles, and there is no way to stop it —
-     a WCAG 2.2.2 failure plus a control that lies. Accepted because `:has()`
-     has been Baseline since Firefox 121 (Dec 2023) and the repo declares no
-     browser floor below that. Anything that drops the `:has()` rules has to
-     replace the mechanism, not just the styling. */
 
   /* The band does not move at all here, so there is nothing to pause and the
      control is removed rather than left as a lie.
