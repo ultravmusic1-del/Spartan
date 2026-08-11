@@ -65,11 +65,9 @@ see `handoff.md`). Priorities are P0 highest.
       person at the client to agree. A real product photograph drops in with no
       markup change. `src/assets/hero/helmet-hero.png`.
 
-- [ ] **Finish the landing redesign's documentation.** The implementation is
-      complete and green; the docs are not. Four traps found during the work are
-      recorded in `handoff.md` §11 but not in `docs/TRAPS.md`, `README.md` still
-      describes the pre-redesign home page, and Lighthouse has not been re-run
-      against the new hero. See §11 "What is NOT done" for the full list.
+- [x] **Finish the landing redesign's documentation.** Done — see Done below.
+      Lighthouse was re-run and corrected this item's own premise: all three
+      mobile rows had moved, not only the home one.
 
 - [ ] **Confirm the Name field added to the home CTA.** Wiring the CTA required
       one: `enquiryPayloadSchema` requires a name and the form collected only
@@ -128,6 +126,28 @@ see `handoff.md`). Priorities are P0 highest.
       see Done below.
 
 - [x] **Add CI.** Done — see Done below.
+
+- [ ] **`README.md` is not covered by the doc-paths gate.** `INSTRUCTIONAL` in
+      `tools/doc-paths.mjs` lists `CLAUDE.md`, `AGENTS.md`, `docs/TRAPS.md` and
+      `.claude/commands/improve.md`. `README.md` is instructional by any
+      reasonable reading — it is the file `CLAUDE.md` sends you to for "how do I
+      run it?" — and it names dozens of repo paths, yet nothing checks them.
+      That is not theoretical: its hero section went on describing
+      `hero-range-desktop.png` as the live hero through two rewrites, and the
+      gate that exists to catch exactly this was not pointed at it. Adding it is
+      a one-line change to that array; **run the gate before assuming it is
+      clean**, because it has never been applied to this file and may surface
+      pre-existing references. Do it as its own item, not folded into another.
+
+- [ ] **The division headers pass contrast only because of their scrim.** On
+      `/electricals` and `/safety` the composited worst-case nav link measures
+      6.04:1, but against the raw pre-scrim photograph it is **1.11:1**.
+      Swapping a division hero photograph is therefore a contrast regression
+      waiting to happen with nothing that would catch it — `Header.astro`
+      carries a comment and there is no test. Recorded in `handoff.md` §11 as
+      open and never queued here, which is why it is being added now rather
+      than found again later. Either gate it or make the scrim's floor
+      independent of the image beneath it.
 
 - [ ] **Analytics and error monitoring.** Zero references anywhere in `src/`.
       A lead-generation site with no measurement of the funnel it exists to
@@ -191,6 +211,65 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-11** — Finished the landing redesign's documentation. The
+  implementation had been green since the merge; the guidance had not caught up
+  with it.
+
+  The four traps found during the redesign are now entries in `docs/TRAPS.md`
+  rather than living only in `handoff.md` §11: that an Astro `<script>` costs a
+  CSP hash based on how many pages render the component and not on how the tag
+  is written; that `global.css`'s blanket reduced-motion rule means no component
+  here can offer a motion *opt-in*, only cancel its own animations; that
+  `test.use({ reducedMotion: 'reduce' })` typechecks and is silently discarded
+  on Playwright 1.62.1; and that the two empty categories must never render a
+  product image.
+
+  A fifth was found while doing it. `docs/TRAPS.md` still carried a "hero copy's
+  top anchoring" entry describing the bright mass of a static still — a hero two
+  rewrites dead — in the section headed "looks like a defect, is not". Guidance
+  that is confidently wrong about a deleted file is worse than no guidance, so
+  it was replaced with the two things that *are* load-bearing about the current
+  hero: the 1080px breakpoint, and the 136px of top padding that clears the
+  absolutely positioned header.
+
+  `README.md`'s hero section described `Hero.astro` rendering the client artwork
+  under an `sr-only` h1 and a `PORTRAIT` media constant, none of which survives.
+  It is now two sections — the helmet hero as built, carrying the AI-generation
+  flag and the sign-off it still needs, and the two client artworks as
+  retained-but-unused.
+
+  *Worth knowing:* **the Lighthouse re-run corrected the item that asked for
+  it.** Both this backlog and `handoff.md` said the home row was stale and the
+  two catalogue rows were unaffected. That was true of a *hero* change and wrong
+  about this one — the redesign restyled `Header` and `Footer`, which render on
+  every page. Measured on the current build, Lighthouse 12.8.2, five mobile runs
+  on `/` and three on each other page: home 95–97 → **95**, catalogue 99 →
+  **96**, product 98 → **97**. Desktop 100 across all three; CLS 0.000 and TBT
+  0 ms everywhere. Every run of a given page scored identically, so the table is
+  now flat numbers rather than ranges. **If you change site chrome, re-run all
+  three pages, not the one you touched.**
+
+  *Worth knowing:* the home page's LCP is the helmet, and the helmet is not what
+  costs it. Of a 2.79 s mobile LCP, **0.12 s is spent loading the image** — an
+  18 KB AVIF — against 1.89 s of render delay behind two render-blocking
+  stylesheets (29.5 KB + 21.9 KB, 450 ms). Shrinking the hero art would buy
+  almost nothing. `build.inlineStylesheets: 'always'` is still the lever and is
+  still not taken.
+
+  *Worth knowing:* `image-delivery-insight` reports the 560px helmet variant as
+  oversized for a "266×266 displayed" box. It compares CSS pixels and ignores
+  the mobile preset's 1.75 DPR — 266 × 1.75 = 466, and the next variant down is
+  420. 560 is the correct pick, the insight is unscored, and narrowing `sizes`
+  to satisfy it would ship a soft hero on every phone.
+
+  *Worth knowing:* the first attempt wrote `path:line` references into
+  `docs/TRAPS.md` and the doc-paths gate failed all four. That is the gate
+  working: `tools/doc-paths.mjs` resolves a whole token as a path, and the file's
+  existing convention is bare paths. A line number in a document gated only on
+  path *existence* would rot with nothing noticing — which is the exact failure
+  that gate was built for. The references name the describe block or the
+  assertion instead. verify 15/15, 139 unit, 157 e2e.
 
 - **2026-08-09** — Replaced the scroll-scrubbed hero film with a static still,
   at the client's request. The 240svh scroll track, the sticky stage, the

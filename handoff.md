@@ -1,6 +1,6 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-10
+**Last updated:** 2026-08-11
 **Branch:** `agent/improvements` — all work lands here. **`main` no longer tracks it**, despite what this line said through the `feat/catalogue-site` era; it has fallen behind and nothing merges it forward automatically. `git log main..agent/improvements` is the difference.
 **State:** **The catalogue build is complete and verified. The admin subsystem is in progress.** The public site builds end to end and the full enquiry path works from product card to submitted RFQ. Admin Phase 1 has landed its auth foundation — sign-in, sign-out, the session guard and the CSV serialiser — but no dashboard page exists yet. See §7 "The admin subsystem".
 
@@ -563,6 +563,11 @@ JSON-LD goes through `set:html` (a plain expression HTML-escapes the quotes and 
 
 ### Lighthouse — measured, Task 17
 
+> **Superseded 2026-08-11.** Every row in this table has been re-measured
+> against the current build; the live table is in `README.md` and the reasoning
+> for what moved is in §11 item 3. This section stays as the Task 17 record and
+> for the lesson at the end of it, which is the reason it is worth keeping.
+
 Lighthouse 12.8.2 against `npm run preview`, headless Chrome, Lighthouse's own mobile and desktop presets. Target was ≥95 on all four categories.
 
 | Page | Preset | Perf | A11y | BP | SEO |
@@ -802,7 +807,7 @@ Worth keeping if you continue with agents:
 
 ## 11. The landing redesign — 2026-08-11
 
-**Status: implementation complete and green. Documentation is the only outstanding work.** Branch `feat/landing-redesign`, merged to `main`.
+**Status: implementation complete and green. Documentation closed out 2026-08-11 — see "What is NOT done", now "What was left, and how it was closed".** Branch `feat/landing-redesign`, merged to `main`.
 
 The home page was rebuilt from a Claude Design mockup, `Spartan Landing.dc.html`, in project `a3824cff-5eab-4def-9d1f-acd205eaad27`. The mockup's design tokens were byte-identical to `src/styles/tokens.css` — it was generated *from* this system — so nothing about colour, type or spacing had to be reconciled.
 
@@ -829,26 +834,70 @@ The home page was rebuilt from a Claude Design mockup, `Spartan Landing.dc.html`
 - **Two mockup claims were cut** as unverifiable: *"Send a list, a drawing or a photo of the old part"* (the form has no upload) and *"Quotes come back with unit price, stock position and lead time on every line"*. A build assertion in the e2e suite keeps them out. **"Est. 2015"** and the three enquiry list items were confirmed and kept.
 - **The client hero artwork is retained but unused** — see §7.
 
-### What is NOT done
+### What was left, and how it was closed
 
-1. **`docs/TRAPS.md` has not been updated.** Four traps were found during this work and are recorded only here. They belong in that file:
+All three items below were outstanding when this section was written and were
+closed on 2026-08-11. They are kept rather than deleted because the four traps
+under item 1 are the reasoning behind the entries that now live in
+`docs/TRAPS.md`, and because item 3's answer corrected a claim item 3 itself
+made.
+
+1. **`docs/TRAPS.md` has not been updated.** **Done.** All four are now entries
+   in that file, and a fifth was found in passing: the file still carried a
+   "hero copy's top anchoring" trap describing the static still, a hero two
+   rewrites dead. It was replaced with the two facts that are load-bearing
+   about the current one — the 1080px breakpoint measured on glyph pixels, and
+   the 136px of top padding that clears the absolutely positioned header. The
+   four found during this work were:
    - **Whether an Astro `<script>` costs a CSP hash depends on how many pages use the component, not on how the tag is written.** Astro extracts a script to an external `/_astro/` chunk only when it is shared across pages; a single-page script is inlined and needs a hash. `EnquiryCta`'s is external because it renders on `/` and `/contact`; the hero's and Featured Lines' are inline because both render on `/` alone. **Rendering an existing component on one more page can move its script between those states and invalidate a hash with nobody editing any JavaScript.**
    - **No component on this site can offer a motion opt-in.** `src/styles/global.css:54` forces `animation-duration: 0.01ms !important` and `animation-iteration-count: 1 !important` on `*` under `prefers-reduced-motion`. No scoped rule outranks it, and `animation-play-state: running` cannot restart an animation that has already run to completion. A component's own `animation: none` still works, because the global rule only forces duration and iteration-count while the shorthand sets `animation-name`.
    - **`test.use({ reducedMotion: 'reduce' })` silently does nothing** on the pinned Playwright (1.62.1). It is not a top-level `TestOptions` field, so it compiles and is discarded. Use `test.use({ contextOptions: { reducedMotion: 'reduce' } })`. `tests/e2e/motion.spec.ts` has the comment.
    - **The two empty categories must never show a product image.** Electrical Accessories and Spill Control have `productCount: 0` and `heroProductSlug: null`. The mockup filled both with borrowed photos; a product image in a category that stocks nothing is an untrue claim about stock. `CategoryGrid` renders a marked empty tile and `home.spec.ts` asserts exactly two.
 
-2. **`README.md` still describes the pre-redesign home page.** Its Lighthouse `/` row was already marked stale before this work and is now stale for a third hero.
+2. **`README.md` still describes the pre-redesign home page.** **Done.** Its
+   "hero artworks — client assets, not extractions" section described
+   `Hero.astro` rendering the supplied artwork under an `sr-only` h1 and a
+   `PORTRAIT` media constant, none of which survives. It is now two sections:
+   the helmet hero as built, with the AI-generation flag and the sign-off it
+   still needs, and the two client artworks as retained-but-unused.
 
-3. **Lighthouse has not been re-run.** The LCP element changed again — it is now the helmet. `README.md`'s `/` row should not be quoted until re-measured.
+3. **Lighthouse has not been re-run.** **Done, and it corrected this item's own
+   assumption.** Re-run 2026-08-11 on the current build, Lighthouse 12.8.2,
+   five mobile runs on `/` and three on each of the other two pages, plus
+   desktop. Every run of a given page scored identically, so the table in
+   `README.md` is now flat numbers rather than ranges.
+
+   **All three mobile rows moved, not only the home one.** This section — and
+   the `README.md` note it inherited — said the two catalogue rows were
+   unaffected. That was true of a *hero* change and wrong about this one: the
+   redesign restyled `Header` and `Footer`, which render on every page. Home
+   went 95–97 → **95**, catalogue 99 → **96**, product 98 → **97**. Desktop is
+   100 across all three, and CLS 0.000 / TBT 0 ms held everywhere.
+
+   What the re-run established about the home page, which is where the
+   assumption had been that the helmet was the cost: LCP *is* the helmet at
+   both presets, but the file is an 18 KB AVIF and only 0.12 s of the 2.79 s
+   mobile LCP is spent loading it. 1.89 s is render delay behind two
+   render-blocking stylesheets (29.5 KB + 21.9 KB, 450 ms). Shrinking the
+   helmet would buy almost nothing; `build.inlineStylesheets: 'always'` is the
+   lever, and it is still not taken.
+
+   One finding that looks like a defect and is not:
+   `image-delivery-insight` calls the 560px helmet variant oversized for a
+   "266×266 displayed" box. It compares CSS pixels and ignores the preset's
+   1.75 DPR — 266 × 1.75 = 466, and the next variant down is 420. 560 is the
+   correct pick and narrowing `sizes` to satisfy the insight would ship a soft
+   hero on every phone. It is unscored and cost nothing.
 
 ### Where to pick up
 
-`BACKLOG.md` is accurate. The two P0 items this work created:
+`BACKLOG.md` is accurate. Of the two P0 items this work created, one is closed:
 
-- Get client sign-off on the AI-generated helmet.
-- Nothing else — the redesign introduced no other blockers.
+- Get client sign-off on the AI-generated helmet. **Still open — the only thing
+  this redesign blocks on.**
+- Finish this documentation. **Closed 2026-08-11**, above.
 
 Two things found during the work that are **not** the redesign's and remain open:
 
-- **The `/electricals` and `/safety` headers pass contrast only because of their scrim.** Composited, the worst nav link measures 6.04:1; against the raw pre-scrim photograph it is **1.11:1**. Swapping a division hero photograph is therefore a contrast regression waiting to happen, with no gate that would catch it. `Header.astro` carries a comment; there is no test.
+- **The `/electricals` and `/safety` headers pass contrast only because of their scrim.** Composited, the worst nav link measures 6.04:1; against the raw pre-scrim photograph it is **1.11:1**. Swapping a division hero photograph is therefore a contrast regression waiting to happen, with no gate that would catch it. `Header.astro` carries a comment; there is no test. **Now queued in `BACKLOG.md` P1** — it was recorded only here until 2026-08-11, which is how a known defect stays unqueued.
 - **A `role="tablist"` conversion for the Featured Lines filter was considered and rejected.** The grid is not a panel whose contents swap — it is one list with items hidden — and the full Tabs pattern needs roving `tabindex` plus arrow keys, which this design system has no precedent for. `role="group"` with a label was used instead. The reasoning is in the component; revisit only with the keyboard contract.

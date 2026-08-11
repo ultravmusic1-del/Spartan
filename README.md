@@ -193,22 +193,28 @@ Note that `design/direction-b-forge.html` — the approved design and the source
 
 `@font-face` **must** declare `font-weight: 100 900`. One file covers the whole range; declaring discrete weights against the same file collapses every weight to one. Verified by measuring rendered text widths across the axis (772/781/810/887px at weights 100/400/700/900) — a visual check alone would not have caught it.
 
-### The hero artworks — client assets, not extractions
+### The hero — an AI-generated helmet, pending client sign-off
 
-Two supplied files in `src/assets/hero/`, each carrying the logo, the Arabic wordmark and the headline as pixels:
+The home page was rebuilt from a Claude Design mockup on 2026-08-11. `Hero.astro` now renders `src/assets/hero/helmet-hero.png` (1254×1254) on a black field inside a pulsing glow and a rotating red sweep, with the copy beside it on desktop and stacked above it below 1080px.
+
+**That helmet is AI-generated.** Its C2PA manifest asserts `trainedAlgorithmicMedia` with GPT/openai markers. Shipping it was a deliberate decision taken with the client, not an oversight — but it depicts safety equipment on a site whose first rule is that nothing about safety equipment is invented, so it is flagged rather than quietly shipped and **still needs a person at the client to sign it off** (`BACKLOG.md`, P0). A real product photograph drops in with no markup change. It carries `alt=""` because the headline carries the meaning and the image asserts nothing about a real product.
+
+The `<h1>` is **visible text again.** It was `sr-only` under the previous hero only because the client artwork carried the headline as pixels — that is no longer why, and it is no longer `sr-only`.
+
+Astro clamps `widths` down to the source, so nothing in the component can upscale by accident. Do not add entries above 1254.
+
+Four things move — the helmet bobs, a glow pulses, a red arc sweeps, and the stage parallaxes toward the cursor. All four stop under `prefers-reduced-motion`, and the parallax listener is never attached in that case rather than attached and ignored. Read the `prefers-reduced-motion` entry in `docs/TRAPS.md` before changing any of it: a component here can cancel an animation but cannot offer an opt-in.
+
+### The client hero artworks — retained, and unused
 
 | Asset | Size | Composition |
 |---|---|---|
-| `hero-range-desktop.png` | 1672×941 | copy in the left third, cluster beside it |
-| `hero-range-mobile.png` | 941×1672 | copy stacked above the cluster |
+| `src/assets/hero/hero-range-desktop.png` | 1672×941 | copy in the left third, cluster beside it |
+| `src/assets/hero/hero-range-mobile.png` | 941×1672 | copy stacked above the cluster |
 
-They are **two compositions, not two crops** — neither can be derived from the other. Do not run them through `tools/`; nothing in them is brochure-extracted, and no product record sources data from them.
+These were the hero until the redesign replaced them. They are kept rather than deleted because they are **supplied brand assets** and removing supplied material to tidy up is the wrong trade — nothing imports them today. They are also **two compositions, not two crops**: neither can be derived from the other, so bringing one back means bringing both. Do not run them through `tools/`; nothing in them is brochure-extracted, and no product record sources data from them.
 
-Because the artwork carries the headline, `Hero.astro` renders none. The `<h1>` is still there, `sr-only` — **do not delete it.** It is the page's only h1 and the text alternative for a headline that exists only as an image.
-
-The file and the layout are chosen by the *same* media condition, `(max-width: 767px), (max-aspect-ratio: 3/4)` — orientation, not width, because an iPad held upright is a portrait canvas whatever its width. That string appears twice (the `PORTRAIT` constant and the `@media` rule) because Astro's scoped styles cannot interpolate frontmatter. **Change one, change the other**, or the page renders portrait artwork under landscape button positioning.
-
-Full detail, including where the buttons sit and why, is in `handoff.md` §7.
+Full detail on both heroes — including where the old artwork's buttons sat and why those offsets were percentages of the picture rather than of the viewport — is in `handoff.md` §7 and §11.
 
 ---
 
@@ -263,23 +269,30 @@ All three are one chain: `@astrojs/vercel → @vercel/routing-utils → path-to-
 
 ## Lighthouse
 
-Measured against the built output via `npm run preview`, Lighthouse 12.8.2, headless Chrome. Lighthouse's own mobile preset (4× CPU throttle, simulated slow 4G) and desktop preset:
+**Re-measured 2026-08-11, after the landing redesign**, against the built output via `npm run preview`, Lighthouse 12.8.2, headless Chrome. Lighthouse's own mobile preset (Moto G, 412×823 at DPR 1.75, 4× CPU throttle, simulated slow 4G) and desktop preset. Mobile figures are five runs on `/` and three on the other two; every run scored identically, so these are flat numbers rather than ranges.
 
 | Page | Preset | Performance | Accessibility | Best Practices | SEO |
 |---|---|---|---|---|---|
-| `/` | mobile | 95–97 | 100 | 100 | 100 |
-| `/catalogue/hand-protection` | mobile | 99 | 100 | 100 | 100 |
-| `/products/grip-guard-gp5` | mobile | 98 | 100 | 96 | 100 |
+| `/` | mobile | 95 | 100 | 100 | 100 |
+| `/catalogue/hand-protection` | mobile | 96 | 100 | 100 | 100 |
+| `/products/grip-guard-gp5` | mobile | 97 | 100 | 96 | 100 |
 | `/` | desktop | 100 | 100 | 100 | 100 |
 | `/catalogue/hand-protection` | desktop | 100 | 100 | 100 | 100 |
 | `/products/grip-guard-gp5` | desktop | 100 | 100 | 100 | 100 |
 
-CLS is 0.000 and TBT 0 ms on every page. Two scores are worth understanding rather than chasing:
+CLS is 0.000 and TBT 0 ms on every page at both presets — unchanged through three heroes.
 
-- **Best Practices 96 on the product page (mobile only)** is `image-size-responsive`. The spotlight image is displayed at 257×308 and its source is *natively* 257×308; Lighthouse wants 386×462 for a DPR-2 screen. **This cannot be fixed here.** Product photography extracted from the brochure is 100–440px wide and must never be upscaled. It resolves when the client supplies higher-resolution photography — the components already take `srcset`, so it drops in without markup changes. Desktop scores 100 because DPR is 1.
-- **The `/` row is stale and has not been re-run.** It was measured against a hero that has since been replaced twice, and the sentence explaining it named `.hero__lede` — an element deleted back in `87e7471`. Treat the home figure as history until someone re-runs it; the two catalogue rows are unaffected. Locally re-measured on the current build (element identification and CLS only — no network throttling, so not a score): LCP is the hero image, 44 KB AVIF at 1440 and 46 KB at 390, CLS 0.000 on both.
+**All three mobile rows moved, not just the home one.** The previous table read 95–97 / 99 / 98 and carried a note saying the two catalogue rows were unaffected by the hero rewrite. That was true of the hero and wrong about the redesign: it restyled `Header` and `Footer`, which render on every page, so the catalogue row fell 99 → 96 and the product row 98 → 97. If you change site chrome, re-run all three.
 
-  Two production factors are *not* reflected in any of these numbers: the preview server sends no `Content-Encoding` and no `Cache-Control`, so Lighthouse's `uses-text-compression` (~82 KB) and `cache-insight` (~234 KB) findings both disappear on Vercel, which compresses and sets immutable caching automatically. If the home page ever needs more headroom, `build.inlineStylesheets: 'always'` is the lever — at the cost of inlining ~41 KB into all 96 pages and losing cross-page CSS caching. It was not taken.
+Three things here are worth understanding rather than chasing:
+
+- **Best Practices 96 on the product page (mobile only)** is `image-size-responsive`, and it is the same finding as before. The spotlight image is displayed at 257×308 and its source is *natively* 257×308; Lighthouse wants 386×462 for a high-DPR screen. **This cannot be fixed here.** Product photography extracted from the brochure is 100–440px wide and must never be upscaled. It resolves when the client supplies higher-resolution photography — the components already take `srcset`, so it drops in without markup changes. Desktop scores 100 because DPR is 1.
+
+- **The home page's LCP is the helmet, and the helmet is not what costs it.** LCP is `section.hero > div.hero__stage > picture.hero__helmet > img` at both presets — 2.79 s mobile, 0.58 s desktop — and the file it fetches is an **18 KB AVIF** either way. Broken into phases on mobile, that 2.79 s is 0.46 s TTFB, 0.33 s load delay, **0.12 s actually loading the image**, and 1.89 s of *render delay*. The image is already cheap; what holds the paint is the two render-blocking stylesheets, `Eyebrow.*.css` (29.5 KB) and `index.*.css` (21.9 KB), which Lighthouse costs at 450 ms combined. Shrinking the helmet further would buy almost nothing.
+
+- **`image-delivery-insight` flags the helmet as oversized, and it is wrong.** It reports the 560px variant as too large for a "266×266 displayed" box — but it compares against CSS pixels and ignores the preset's 1.75 DPR. 266 × 1.75 = 466 device pixels, and the next variant down is 420, which is under that. 560 is the correct pick. The insight is unscored and cost nothing; **do not "fix" it by narrowing `sizes`**, which would ship a visibly soft hero on every phone.
+
+Two production factors are *not* reflected in any of these numbers: the preview server sends no `Content-Encoding` and no `Cache-Control`, so Lighthouse's `uses-text-compression` (101 / 72 / 64 KiB across the three pages) and `cache-insight` (218 / 203 / 150 KiB) findings all disappear on Vercel, which compresses and sets immutable caching automatically. If the home page ever needs more headroom, `build.inlineStylesheets: 'always'` is the lever that would take the render-blocking pair out of the critical path — at the cost of inlining ~51 KB into every page and losing cross-page CSS caching. It was considered and not taken.
 
 ---
 
