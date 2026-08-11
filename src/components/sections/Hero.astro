@@ -41,8 +41,8 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     <div class="hero__sweep"></div>
     <div class="hero__ring"></div>
     <picture class="hero__helmet">
-      <source type="image/avif" srcset={helmetAvif.srcSet.attribute} sizes="(max-width: 900px) 76vw, 560px" />
-      <source type="image/webp" srcset={helmetWebp.srcSet.attribute} sizes="(max-width: 900px) 76vw, 560px" />
+      <source type="image/avif" srcset={helmetAvif.srcSet.attribute} sizes="(max-width: 1420px) min(65vw, 357px), 560px" />
+      <source type="image/webp" srcset={helmetWebp.srcSet.attribute} sizes="(max-width: 1420px) min(65vw, 357px), 560px" />
       <img
         src={helmetWebp.src}
         alt=""
@@ -55,21 +55,26 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     </picture>
   </div>
 
-  <div class="hero__copy">
-    <div class="hero__badge">
-      <span class="hero__badge-hazard"></span>
-      <span class="hero__badge-body">
-        <img src={wordmark.src} alt="Spartan" width="72" height="15" />
-        <span class="hero__badge-rule"></span>
-        <span class="hero__badge-est">Est. 2015</span>
-      </span>
-    </div>
+  <div class="wrap hero__wrap">
+    <div class="hero__copy">
+      <div class="hero__badge">
+        <span class="hero__badge-hazard"></span>
+        <span class="hero__badge-body">
+          {/* alt="" — the header logo already announces "Spartan"; a second
+              accessible name here would repeat it immediately. The badge's
+              informational content is the est. date beside it. */}
+          <img src={wordmark.src} alt="" width="72" height="15" />
+          <span class="hero__badge-rule"></span>
+          <span class="hero__badge-est">Est. 2015</span>
+        </span>
+      </div>
 
-    <h1 class="hero__title">Home and<br />industrial<br /><span>solutions.</span></h1>
+      <h1 class="hero__title">Home and <br />industrial <br /><span>solutions.</span></h1>
 
-    <div class="hero__actions">
-      <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-      <PillButton href="/enquiry">Request a quote</PillButton>
+      <div class="hero__actions">
+        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+        <PillButton href="/enquiry">Request a quote</PillButton>
+      </div>
     </div>
   </div>
 </section>
@@ -165,10 +170,28 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     filter: drop-shadow(0 46px 60px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 40px rgba(235, 41, 39, 0.18));
   }
 
-  .hero__copy {
+  /* `.wrap` centres and pads this like every other section — without it the
+     copy started at the raw viewport edge and drifted up to 660px left of the
+     rest of the page's content column at ultra-wide widths.
+
+     `width: 100%` is load-bearing, not a default. `.hero` is `display: grid`,
+     and a grid item with `.wrap`'s own `margin-inline: auto` disables the
+     grid's default stretch-to-fill for that axis — auto margins tell Grid
+     "size to content, then centre with the leftover space," which for a block
+     with no intrinsic width collapses to shrink-to-fit instead of the 1240px
+     `max-width` box. Measured: without this line `.hero__wrap` computed to
+     531px wide instead of the expected 1240px cap, and the h1 sat 354px right
+     of `.cg__title`'s left edge at 1440px. An explicit width gives Grid a
+     definite size to stretch to before `max-width` and the auto margins get a
+     turn, which is exactly how a plain block-flow `.wrap` (CategoryGrid's, not
+     inside a grid container) behaves by default — this reproduces that. */
+  .hero__wrap {
     position: relative;
     z-index: 2;
-    padding: 0 var(--wrap-pad);
+    width: 100%;
+  }
+
+  .hero__copy {
     max-width: 660px;
   }
 
@@ -286,34 +309,67 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     }
   }
 
-  /* Below 900px the stage stops being a side-by-side and sits behind the copy
-     at reduced opacity, because there is no width for both. */
-  @media (max-width: 900px) {
+  /* Below this width the stage and the copy cannot coexist side by side: the
+     stage is 660px, the copy measure is 660px, and the box-arithmetic estimate
+     of ~1384px needed undersold it — the glow's blur and the helmet's
+     drop-shadow both extend past the box, and glyph-level measurement of the
+     built page found real overlap surviving to 1410px (worst 2.87:1, still
+     failing) and clean only from 1415px. 1420px is that measured floor plus a
+     10px margin, not the original estimate. Below it the two were overlapped,
+     which put brand red on the lit helmet at 1.04:1 and put the pill CTA as
+     low as 1.97:1 in a band that reached from just past the old 900px
+     breakpoint up past 1400px — an order of magnitude wider than the box math
+     suggested. Re-measure glyph pixels, not element boxes, if this ever moves
+     again.
+
+     Stacking is the fix rather than a lower opacity: the opacity that clears
+     3:1 is 0.15, which deletes the artwork to buy compliance. Nothing is layered
+     over anything here, so the stage runs at full opacity and the copy sits on
+     flat black.
+
+     The stage also goes back into flow. Absolutely positioned it could not push
+     the hero taller, so `overflow: hidden` cut up to 56% off the helmet between
+     480px and 900px — at 768px it rendered as an unidentifiable dome. */
+  @media (max-width: 1420px) {
     .hero {
-      min-height: 560px;
-      padding: 96px 0 56px;
+      display: block;
+      min-height: 0;
+      padding: 96px 0 64px;
     }
+
     .hero__stage {
-      right: 50%;
-      transform: translate(50%, 0);
-      top: 46%;
-      width: 76vw;
-      height: 76vw;
-      margin-top: 0;
-      opacity: 0.5;
-    }
-    .hero__helmet {
-      width: 76vw;
-      margin: 0;
-      left: 0;
-      top: 0;
+      position: relative;
+      right: auto;
+      top: auto;
+      width: min(76vw, 420px);
+      height: min(76vw, 420px);
+      margin: 48px auto 0;
+      opacity: 1;
       transform: none;
+      transition: none;
     }
-    .hero__glow,
-    .hero__sweep,
-    .hero__ring {
+
+    /* Percentages of the stage, holding the desktop proportions: the glow is
+       540/660, the sweep 500/660, the ring 596/660 and the helmet 560/660. */
+    .hero__glow {
       width: 82%;
       height: 82%;
+    }
+    .hero__sweep {
+      width: 76%;
+      height: 76%;
+    }
+    .hero__ring {
+      width: 90%;
+      height: 90%;
+    }
+
+    .hero__helmet {
+      width: 85%;
+      left: 50%;
+      top: 50%;
+      margin: 0;
+      transform: translate(-50%, -50%);
     }
   }
 
@@ -363,8 +419,14 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
   const hero = document.querySelector<HTMLElement>('[data-hero]');
   const stage = document.querySelector<HTMLElement>('[data-hero-stage]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // Below this the stage is stacked in flow and the 1420px CSS breakpoint (see
+  // that rule's comment for where the number comes from) replaces the whole
+  // `transform` declaration, so --px/--py are never read. Gated here too, or
+  // the listener still fires on every mouse move on a narrow desktop window
+  // and writes two custom properties for no effect.
+  const wide = window.matchMedia('(min-width: 1421px)');
 
-  if (hero && stage && !reduce.matches) {
+  if (hero && stage && !reduce.matches && wide.matches) {
     hero.addEventListener('pointermove', (event) => {
       // Pointer, not mouse: a touch drag would otherwise leave the stage stuck
       // wherever the finger lifted.
