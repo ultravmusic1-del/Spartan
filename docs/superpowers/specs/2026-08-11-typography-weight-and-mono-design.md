@@ -130,10 +130,20 @@ RFQ*:
 - `.en td` — EN 388 rating cells. Five positional values that should align and
   read as a code.
 - `.spec td` — spec **values** in labelled rows. Labels stay Archivo uppercase,
-  so the two columns finally look like two different kinds of thing.
-- `.pd__variant` / `.card__variant` — model codes and variant labels.
+  so the two columns finally look like two different kinds of thing. Model codes
+  live here too, in the `Models` row, so they are covered without a special case.
 
-**Where it is not used**, and both exclusions are deliberate:
+**Corrected during implementation — `.pd__variant` and `.card__variant` are NOT
+mono.** This spec originally listed them on the assumption that `variantLabel`
+holds model codes. It does not. Of the 25 products carrying one, six are codes
+(`AY-YD2536`, `SPTSF-16`, `AF-40W`…) and the other nineteen are language:
+`Without steel toe`, `Velcro closure`, `Indirect vent`, `Lightweight`, plus size
+lists like `6" · 8" · 10"`. Setting those in a monospace is the same decorative
+misuse the feature-row exclusion below exists to prevent, and no rule can split
+the field because the distinction is semantic, not structural. The mono
+therefore lands in exactly two places: `.en td` and `.spec td`.
+
+**Where it is not used**, and all three exclusions are deliberate:
 
 - `.spec__feature` — the unlabelled full-width rows, roughly a third of all spec
   lines. They are sentences (`100% Copper motor`), not values. Setting prose in
@@ -141,20 +151,59 @@ RFQ*:
   again, which is the thing this choice was made to avoid.
 - Counts like "17 items". That is language with a number in it, not data.
 
-### 4. Loading — the home page pays nothing
+### 4. Loading — corrected by measurement
 
-The `@font-face` is declared in `fonts.css`, but a font is only fetched when a
-rendered element matches it. Nothing on `/` uses `--font-mono`, so **the home
-page downloads zero extra bytes** — which matters because it holds the lowest
-Performance score on the site (mobile 95, re-measured 2026-08-11).
+**This section originally claimed the home page would download zero extra bytes,
+on the reasoning that a font is only fetched when a rendered element matches it
+and nothing on `/` uses `--font-mono`. The second half was false.** `Spotlight`
+imports `SpecTable` and `En388Table` and renders both in full for Grip Guard GP5
+— it is a real data view, deliberately built on the one product with a verified
+EN 388 rating. So the mono lands on the home page, which holds the lowest
+Performance score on the site.
 
-There is deliberately **no `<link rel="preload">`** for the mono. The two
-existing preloads in `BaseLayout.astro` are global, so a third would cost every
-page including `/`. Spec tables sit below the fold on product pages, where
-`font-display: swap` is the correct trade.
+Measured, three runs each, Lighthouse 12.8.2 mobile:
+
+| Build | Home Performance | LCP |
+|---|---|---|
+| before this change | 95 | 2.78 s |
+| full latin subset, 39.5 KB | **91** | 3.23 s |
+| weight scale only, no mono | 95 | 2.78 s |
+| subset to 118 chars, axis 400–600, 23.1 KB | **94** | 2.86 s |
+| subset pinned to one weight, 16.7 KB | 94 | 2.85 s |
+
+Three findings, all of which contradicted a plausible assumption:
+
+- **The font is the cost, and it is bandwidth, not rendering.** Removing it
+  restored 95 exactly. `font-display: optional` was tried first on the theory
+  that render behaviour was the problem: it changed nothing at all, because
+  `font-display` governs how a font *paints* and the cost here is the *fetch*.
+- **Clipping the weight axis saves more than subsetting the characters.**
+  Characters alone: 39.5 → 31.4 KB. Adding the axis clip: → 23.1 KB.
+- **The last 6.4 KB buys nothing.** Pinning to a single weight also scores 94,
+  so the two-weight design is free and is kept: `.spec td` at 400 because a
+  dense table should not shout, `.en td` at 600 because five rating cells are
+  the most consulted figures on a glove page.
+
+**The honest outcome is 94, not 95, and that misses this spec's own acceptance
+criterion.** It is recorded rather than rounded away. The trade is one
+Lighthouse point and ~75 ms of LCP on the home page, against the catalogue
+having a typographic register for data. It is a judgement call and it belongs to
+a person, so it is flagged in the report rather than settled here.
+
+There is deliberately **no `<link rel="preload">`** for the mono: the two
+existing preloads in `BaseLayout.astro` are global, and preloading would raise
+its priority against the LCP image, which is the opposite of what the
+measurement asks for.
 
 `vercel.json`'s existing `/fonts/(.*)` rule already gives it a year of immutable
 caching; no change needed there.
+
+**The subset creates a tofu risk, and it is gated.** `COVERAGE` in
+`tools/subset-mono.mjs` is the source of truth for what the font carries;
+`tools/subset-mono.test.ts` asserts the catalogue never uses a character outside
+it and fails naming the character, its codepoint and the product that introduced
+it. Proved against a planted gap: removing `Ω` reported
+`"Ω" (U+03A9) from premium-network-cable → "Impedance"`.
 
 ## What this does not change
 
@@ -179,14 +228,24 @@ transcription error, and the diff is reviewed before commit. Note that a
 PowerShell `Set-Content` round-trip corrupts this repository's UTF-8 em dashes —
 the codemod uses Node's `fs` with explicit `utf8`.
 
-**The mono is 39.5 KB on product pages.** Accepted: it is below the fold, cached
-for a year, and the product page has headroom (mobile 97).
+**The mono is 23.1 KB and it lands on the home page, not only on product pages.**
+This risk was written on a false premise — see §4, which records the measurement
+that corrected it and the 95 → 94 outcome that follows.
 
 ## Acceptance
 
-1. `npm run verify -- --full` green, all 15 gates.
+1. `npm run verify -- --full` green, all gates. **Met.**
 2. The new contrast gate fails against a planted violation and passes without.
-3. Lighthouse re-run on `/` and `/products/grip-guard-gp5`: **home Performance
-   must not regress below 95** and no Accessibility score may fall.
+   **Met** — planting `--color-red` back on `.card__title` produced
+   `19px / weight 600 => NORMAL text, bar 4.5:1 · rgb(235,41,39) on
+   rgb(255,255,255) = 4.30:1`.
+3. Lighthouse re-run on `/` and `/products/grip-guard-gp5`: home Performance
+   must not regress below 95, and no Accessibility score may fall.
+   **Accessibility held at 100. Performance is 94 — this criterion is NOT met**,
+   and §4 records why, what was tried, and what the remaining point costs.
 4. No rule anywhere still sets a literal `font-weight` of 700 or 800 on a
-   display-font element — the scale is the only source.
+   display-font element — the scale is the only source. **Met**, 78 rules
+   converted; 7 left alone because they already sat lighter than their band and
+   the token would have made them heavier.
+5. The mono subset covers every character the catalogue sets in it, gated by a
+   test that fails naming the offender. **Met**, proved against a planted gap.

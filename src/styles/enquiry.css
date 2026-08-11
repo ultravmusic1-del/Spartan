@@ -71,7 +71,7 @@ html[data-js] .eq-add-wrap--pending {
   min-height: 44px;
   cursor: pointer;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: var(--fw-label);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   transition:
@@ -207,7 +207,7 @@ html[data-enquiry] .eq-slot > astro-island {
   color: #fff;
   font-family: var(--font-display);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: var(--fw-label);
   line-height: 1;
 }
 
@@ -266,7 +266,7 @@ html[data-enquiry] .eq-slot > astro-island {
 .eq-drawer__title {
   font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: var(--fw-subhead);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #fff;
@@ -323,7 +323,7 @@ html[data-enquiry] .eq-slot > astro-island {
 .eq-item__name {
   font-family: var(--font-display);
   font-size: 14.5px;
-  font-weight: 700;
+  font-weight: var(--fw-label);
   line-height: 1.3;
   color: #fff;
 }
@@ -396,7 +396,7 @@ html[data-enquiry] .eq-slot > astro-island {
   border-inline: 1px solid var(--color-line);
   font-family: var(--font-display);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--fw-label);
   text-align: center;
   color: #fff;
   /* The native spinners are a 12px target sitting beside two 44px ones. The
@@ -446,7 +446,7 @@ html[data-enquiry] .eq-slot > astro-island {
 .eq-empty__title {
   font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: var(--fw-subhead);
   color: #fff;
 }
 
@@ -467,7 +467,7 @@ html[data-enquiry] .eq-slot > astro-island {
   border-bottom: 1px solid var(--color-red);
   font-family: var(--font-display);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--fw-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #fff;
@@ -492,7 +492,7 @@ html[data-enquiry] .eq-slot > astro-island {
 .eq-drawer__count {
   font-family: var(--font-display);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: var(--fw-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-grey-lt);
@@ -510,7 +510,7 @@ html[data-enquiry] .eq-slot > astro-island {
   color: #fff;
   font-family: var(--font-display);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: var(--fw-label);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: background var(--dur-base) var(--ease-out);

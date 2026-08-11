@@ -70,7 +70,7 @@ const { specs, caption, class: cls = '' } = Astro.props;
     color: #fff;
     font-family: var(--font-display);
     font-size: 10.5px;
-    font-weight: 700;
+    font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     text-align: left;
@@ -79,18 +79,37 @@ const { specs, caption, class: cls = '' } = Astro.props;
     vertical-align: top;
   }
 
+  /* Value cells are mono: these are the figures a buyer transcribes into an
+     RFQ — `220V/50Hz`, `2800 m3/min`, `FAS40-4` — and the condensation rule
+     means many are pipe-separated unions whose parts must line up against the
+     Models row above them. Tabular figures make that alignment real instead of
+     approximate. The label column stays Archivo uppercase, so the two halves
+     of the pair finally read as two different kinds of thing. */
   .spec td {
     padding: 12px;
     border: 1px solid var(--color-line);
     color: var(--color-grey-lt);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    /* Declared, not inherited. The mono ships with its weight axis clipped to
+       400-600 (tools/subset-mono.mjs), so the two weights it is set at have to
+       be deliberate and visible rather than whatever `body` happens to say. */
+    font-weight: 400;
   }
 
   /* Unlabelled feature lines span both columns. Slightly brighter than a value
      cell because they read as statements rather than as the right half of a
-     pair. */
+     pair.
+
+     AND THEY GO BACK TO THE BODY FACE. Roughly a third of all spec rows are
+     these, and they are sentences — `100% Copper motor`, not a value. Setting
+     prose in mono because it happens to sit in a table is the font doing
+     decoration, which is the one thing --font-mono exists to avoid. */
   .spec__feature {
     color: #fff;
     font-weight: 500;
+    font-family: var(--font-body);
+    font-variant-numeric: normal;
   }
 
   .vh {

@@ -77,7 +77,7 @@ const columns = en388 ? en388Columns(en388) : [];
     color: #fff;
     font-family: var(--font-display);
     font-size: 10.5px;
-    font-weight: 700;
+    font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     text-align: center;
@@ -94,12 +94,20 @@ const columns = en388 ? en388Columns(en388) : [];
      axe did not report this one — only the 11px labels — so it was found by
      measuring the rendered colour against the resolved background rather than
      by reading the scan. These levels never appear on a light surface. */
+  /* Mono, because these are not numbers — they are five positional codes, and
+     position is the whole meaning: slot 2 is cut resistance whatever digit sits
+     in it, and slot 4 can legitimately read `X` (untested) beside a `0` (tested
+     and scored zero). A proportional face sets `4 5 4 3 X` at five different
+     widths and the columns stop lining up between products. `font-variant-
+     numeric: tabular-nums` is belt-and-braces on a monospace, but it also
+     guarantees the digits keep their advance if the family ever falls back. */
   .en td {
     padding: 12px;
     border: 1px solid var(--color-line);
     text-align: center;
-    font-family: var(--font-display);
-    font-weight: 800;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--fw-subhead);
     font-size: 16px;
     color: var(--color-red-light);
   }

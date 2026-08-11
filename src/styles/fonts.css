@@ -16,3 +16,30 @@
   font-display: swap;
   src: url('/fonts/inter-variable.woff2') format('woff2');
 }
+/* JetBrains Mono, for data — see --font-mono in tokens.css for what qualifies.
+   OFL-1.1; the licence ships beside the file at
+   /fonts/jetbrains-mono-LICENSE.txt because redistribution requires it.
+
+   IBM Plex Mono was the better fit on pedigree and was rejected on this file's
+   own rule: it publishes no variable build, so it would need one @font-face and
+   one file per weight, which is exactly the trap described above.
+
+   DELIBERATELY NOT PRELOADED. BaseLayout's two preloads are global, so a third
+   would bill every page for a font only product pages use — including `/`,
+   which holds the lowest Performance score on the site. A font is fetched only
+   when a rendered element matches it, so declaring it here costs the home page
+   nothing at all. Spec tables sit below the fold, where `swap` is the right
+   trade. If the mono ever moves above the fold, revisit this, not the token. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  /* `400 600`, NOT the family's native `100 800`. The committed file is subset
+     with its weight axis clipped to exactly that range (tools/subset-mono.mjs),
+     and this declaration has to describe the file rather than the family:
+     advertising a range the file cannot serve makes the browser silently clamp,
+     so a future `font-weight: 700` on a spec cell would render at 600 and look
+     like a CSS specificity bug. Widen both together or neither. */
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-variable.woff2') format('woff2');
+}

@@ -176,7 +176,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     border-bottom: 2px solid transparent;
     font-family: var(--font-display);
     font-size: 11px;
-    font-weight: 700;
+    font-weight: var(--fw-label);
     letter-spacing: 0.16em;
     text-transform: uppercase;
     /* --color-grey-lt directly, not a custom property — the mobile panel's
@@ -211,7 +211,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     min-height: 44px;
     font-family: var(--font-display);
     font-size: 13px;
-    font-weight: 700;
+    font-weight: var(--fw-label);
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
@@ -329,7 +329,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     border-bottom: 1px solid var(--color-line);
     font-family: var(--font-display);
     font-size: 20px;
-    font-weight: 600;
+    font-weight: var(--fw-subhead);
     letter-spacing: 0.13em;
     text-transform: uppercase;
     /* Same token as .nav__link above, on purpose: the mobile panel is

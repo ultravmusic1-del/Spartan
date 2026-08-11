@@ -69,6 +69,19 @@ see `handoff.md`). Priorities are P0 highest.
       Lighthouse was re-run and corrected this item's own premise: all three
       mobile rows had moved, not only the home one.
 
+- [ ] **Sign off the typography change, and decide whether the mono's one
+      Lighthouse point stands.** Two decisions in one item, both for a person.
+      (a) The weight scale took every heading off the 700/800 that
+      `design/direction-b-forge.html` specifies — a visible departure from the
+      approved design, same category as the Name field below. (b) The mono costs
+      exactly one Lighthouse point on `/` (95 → 94) and one on the product page
+      (97 → 96), because `Spotlight` renders a real spec table on the home page.
+      It was subset from 39.5 KB to 23.1 KB to claw back three of the four
+      points originally lost; `font-display: optional` was tried and recovers
+      nothing. Accessibility held at 100. **If the point matters more than the
+      register, removing `--font-mono` from `SpecTable` and `En388Table` returns
+      both pages** — the scale is independent and would stay. `handoff.md` §12.
+
 - [ ] **Confirm the Name field added to the home CTA.** Wiring the CTA required
       one: `enquiryPayloadSchema` requires a name and the form collected only
       company, division and email, so every submission would have failed
@@ -202,6 +215,49 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-11** — A weight scale for the type system, and JetBrains Mono for
+  data. Spec:
+  `docs/superpowers/specs/2026-08-11-typography-weight-and-mono-design.md`;
+  the reasoning and every measurement are in `handoff.md` §12.
+
+  Weights are tokens now and the scale runs weight down as size runs up: 450 /
+  500 / 550 / 600 / 650 from the 404 numeral to the 11px labels. 78 rules
+  converted by codemod. Seven were left alone because they already sat lighter
+  than their band and the token would have made them **heavier** — the codemod
+  only ever lowers, and the scale is a ceiling per band rather than a mandate.
+
+  *Worth knowing:* the global `h1-h4 { font-weight: 700 }` was load-bearing for
+  accessibility and nothing said so. WCAG counts >=18.66px **bold** as large
+  text, so three red headings on white at 4.30:1 were clearing the 3:1 bar on a
+  weight declared in a different file. Lowering it re-tested them against 4.5:1,
+  which they fail. They now use `--color-red-deep`, and `.dv__name` is the one a
+  diff review would have missed — it declares no weight at all, so nothing in
+  its own rule changed. This shipped with `tests/e2e/contrast.spec.ts`, the
+  **first gate for rule 4**; it is a named list, not a sweep, so add to it when
+  you add red text on a light surface.
+
+  *Worth knowing:* three assumptions died to measurement, in order. The home
+  page would pay nothing for the mono — false, `Spotlight` renders a full spec
+  table on `/`, and the full 39.5 KB file cost 4 points (95 → 91).
+  `font-display: optional` would fix it — false, it changed nothing across three
+  runs, because font-display governs painting and the cost is the fetch.
+  Subsetting the characters was the lever — only partly: clipping the weight
+  axis to 400-600 saved more than the 83-character subset did, 31.4 KB → 23.1 KB.
+
+  Shipped at 23.1 KB and **home is 94, not 95** — one point, and one on the
+  product page too. That misses the spec's own acceptance criterion, so it is
+  recorded and raised as a P0 decision above rather than rounded away.
+
+  *Worth knowing:* a subset font renders tofu rather than erroring, so
+  `tools/subset-mono.test.ts` asserts the catalogue never uses a character
+  outside `COVERAGE` and fails naming it — proved by removing one:
+  `"Ω" (U+03A9) from premium-network-cable → "Impedance"`. And the `@font-face`
+  range has to describe the *file*, not the family: the committed file is
+  clipped to `400 600`, and advertising the native `100 800` would make a later
+  `font-weight: 700` clamp to 600 and read as a specificity bug.
+
+  verify 15/15, 144 unit, 167 e2e.
 
 - **2026-08-11** — Pointed the doc-paths gate at `README.md`. It had never
   covered it: `INSTRUCTIONAL` listed `CLAUDE.md`, `AGENTS.md`, `docs/TRAPS.md`

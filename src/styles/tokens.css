@@ -32,6 +32,36 @@
 
   --font-display: 'Archivo', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
+  /* Data, not language: spec values, EN 388 rating cells and model codes — the
+     values a buyer transcribes into an RFQ. Never for prose, and never for a
+     count like "17 items", which is language with a number in it. */
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* The weight scale.
+
+     Optical weight grows with size, so the scale runs weight DOWN as size runs
+     UP — the heaviest type on this site is the smallest, and that inversion is
+     deliberate. Before this existed, 61 rules were 700 and 15 were 800: display
+     headings, card titles and 11px labels all at the same volume, which is what
+     made the largest type read as mass rather than emphasis.
+
+     Both families are variable across `100 900`, so the half-steps cost nothing
+     — the whole range already ships and the site simply never used below 500.
+
+     A rule takes its band from its MAXIMUM size, which for a clamp() is the
+     desktop ceiling. That is where heaviness is felt, and one declaration
+     cannot vary across a clamp range without a media query the design does not
+     otherwise need.
+
+     Micro labels stop at 650 rather than following the headings down. 11px
+     uppercase at 0.18em tracking genuinely needs the weight; taking it to 600
+     turns it to mud. The complaint was about titles and the fix is aimed there. */
+  --fw-monument: 450;   /* >=100px — the 404 numeral, decorative */
+  --fw-display: 500;    /* 40-99px — hero h1, division h1, section headings */
+  --fw-section: 550;    /* 26-39px — stat numerals, sub-heads */
+  --fw-subhead: 600;    /* 15-25px — card titles, list titles, h1-h4 default */
+  --fw-label: 650;      /* <15px   — uppercase micro labels, eyebrows, buttons */
+  --fw-body: 400;
 
   --wrap-max: 1240px;
   --wrap-pad: 32px;

@@ -99,7 +99,7 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
      which is already correct for a light surface. */
   .services :global(.sec h2) {
     font-size: clamp(28px, 4vw, 46px);
-    font-weight: 800;
+    font-weight: var(--fw-display);
     line-height: 1.04;
     letter-spacing: -0.025em;
     text-transform: uppercase;
@@ -162,9 +162,15 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
   .card__title {
     margin: 20px 0 12px;
     font-size: 19px;
-    font-weight: 700;
+    font-weight: var(--fw-subhead);
     letter-spacing: -0.01em;
-    color: var(--color-red);
+    /* red-deep, not brand red. At 19px this cleared AA only while the global
+       h1-h4 weight was 700: WCAG counts >=18.66px BOLD as large text, and brand
+       red is 4.30:1 on this white card — under the 4.5:1 normal-text floor and
+       over the 3:1 large-text one. The weight scale took headings to 600, so
+       this is normal text now and needs the 8.40:1 token. See handoff.md §3.
+       tests/e2e/contrast.spec.ts pins it. */
+    color: var(--color-red-deep);
   }
 
   /* --color-grey is 3.17:1 on light and must never be used here; ink-muted is

@@ -900,4 +900,110 @@ made.
 Two things found during the work that are **not** the redesign's and remain open:
 
 - **The `/electricals` and `/safety` headers pass contrast only because of their scrim.** Composited, the worst nav link measures 6.04:1; against the raw pre-scrim photograph it is **1.11:1**. Swapping a division hero photograph is therefore a contrast regression waiting to happen, with no gate that would catch it. `Header.astro` carries a comment; there is no test. **Now queued in `BACKLOG.md` P1** — it was recorded only here until 2026-08-11, which is how a known defect stays unqueued.
-- **A `role="tablist"` conversion for the Featured Lines filter was considered and rejected.** The grid is not a panel whose contents swap — it is one list with items hidden — and the full Tabs pattern needs roving `tabindex` plus arrow keys, which this design system has no precedent for. `role="group"` with a label was used instead. The reasoning is in the component; revisit only with the keyboard contract.
+- **A `role="tablist"` conversion for the Featured Lines filter was considered and rejected.** (unchanged, see below) The grid is not a panel whose contents swap — it is one list with items hidden — and the full Tabs pattern needs roving `tabindex` plus arrow keys, which this design system has no precedent for. `role="group"` with a label was used instead. The reasoning is in the component; revisit only with the keyboard contract.
+
+---
+
+## 12. Typography — the weight scale and the mono, 2026-08-11
+
+**Status: implemented and green.** Spec:
+`docs/superpowers/specs/2026-08-11-typography-weight-and-mono-design.md`.
+
+The brief was "titles feel heavy, and add one more font". Both were done. Three
+things were learned by measurement that contradicted a confident assumption,
+and those are the reason this section exists.
+
+### The scale
+
+Weights are now tokens in `src/styles/tokens.css` and the scale runs weight
+**down** as size runs **up**, because optical weight grows with size: 450 above
+100px, 500 for 40-99, 550 for 26-39, 600 for 15-25, 650 below 15. Before this,
+61 rules were 700 and 15 were 800 — display headings, card titles and 11px
+labels all at one volume, which is what made the largest type read as mass.
+78 rules were converted by codemod.
+
+**Seven rules were deliberately not converted**, and the guard that caught them
+is worth keeping in mind: several rules already sat *lighter* than their band's
+default (13px buttons at 500 in the 650 label band), so a naive token
+substitution would have made them **heavier** — the opposite of the change.
+The codemod only ever lowers. The scale is a ceiling per band, not a mandate.
+
+### The accessibility coupling nobody had written down
+
+`src/styles/global.css` sets `h1, h2, h3, h4 { font-weight: 700 }`, and WCAG
+counts >=18.66px **bold** as large text. Three red headings on white —
+`.card__title` (19px), `.rs__title` (19px), `.dv__name` (21px) — measure 4.30:1
+and were clearing the 3:1 large-text bar **on a weight declared in a different
+file**. Lowering that default re-tested all three against 4.5:1, which they
+fail. All three now use `--color-red-deep`.
+
+`.dv__name` is the one that would have been missed by reading the diff: it
+declares no weight at all, so nothing in its own rule changed.
+
+**This shipped with the first gate for rule 4.** `tests/e2e/contrast.spec.ts`
+reads computed colour, size and weight, derives the applicable bar and asserts
+the ratio. It is a named list of selectors, not a sweep — it cannot resolve a
+background over an image, which is exactly why the division-header scrim case
+(§11) is still open and still queued. Proved against a planted violation:
+
+```
+19px / weight 600 => NORMAL text, bar 4.5:1
+rgb(235, 41, 39) on rgb(255, 255, 255) = 4.30:1
+```
+
+### The mono, and three assumptions measurement killed
+
+JetBrains Mono Variable, OFL-1.1, for spec values and EN 388 rating cells — data
+a buyer transcribes into an RFQ. IBM Plex Mono was the better industrial
+pedigree and was rejected because it publishes no variable build, which
+`fonts.css` warns against directly.
+
+**Assumption 1: the home page would pay nothing.** False. The reasoning was
+sound — a font is fetched only when a rendered element matches it — but the
+premise was not: **`Spotlight` renders a full `SpecTable` and `En388Table` for
+Grip Guard GP5 on `/`.** The home page is a product data view. Measured cost of
+the full 39.5 KB latin file: home Performance 95 -> **91**, LCP 2.78s -> 3.23s.
+
+**Assumption 2: `font-display: optional` would fix it.** False, and it changed
+*nothing* — three runs, 91 each. `font-display` governs how a font **paints**;
+the cost here is the **fetch**. To recover the point you must ship fewer bytes.
+
+**Assumption 3: subsetting the characters was the lever.** Only partly. The
+catalogue sets 83 distinct characters in mono, but clipping the weight axis
+saved more than the characters did:
+
+```
+full latin, whole axis      39.5 KB   home 91
+characters only             31.4 KB
+characters + axis 400-600   23.1 KB   home 94   <- shipped
+characters + pinned to one  16.7 KB   home 94
+```
+
+The last 6.4 KB buys nothing, so the two-weight design is kept: `.spec td` at
+400 because a dense table should not shout, `.en td` at 600 because five rating
+cells are the most consulted figures on a glove page.
+
+**The honest outcome is that home is 94, not 95, and product is 96, not 97.**
+That misses the spec's own acceptance criterion and is recorded rather than
+rounded away. Accessibility held at 100 everywhere; the catalogue row did not
+move because nothing on it uses the mono. One Lighthouse point and ~75ms of LCP
+is the price of the catalogue having a typographic register for data. **A person
+should decide whether that trade stands** — it is in `BACKLOG.md`.
+
+Two follow-on facts:
+
+- **The `@font-face` range must describe the file, not the family.** The
+  committed file is clipped to `400 600`; advertising the native `100 800` makes
+  the browser clamp silently, so a later `font-weight: 700` on a spec cell would
+  render at 600 and read as a specificity bug.
+- **A subset renders tofu, not an error.** `COVERAGE` in `tools/subset-mono.mjs`
+  is the source of truth and `tools/subset-mono.test.ts` fails naming the
+  character, its codepoint and the product. Proved by removing a character:
+  `"Ω" (U+03A9) from premium-network-cable → "Impedance"`.
+
+### What this changes about the approved design
+
+`design/direction-b-forge.html` sets these headings at 700/800. This is a
+visible departure from the signed-off direction, in the same category as the
+Name field on the home CTA and the removed footer email field. **It needs
+sign-off**, and it is in `BACKLOG.md` as a P0 alongside the AI-generated helmet.

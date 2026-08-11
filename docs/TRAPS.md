@@ -121,6 +121,45 @@ in `handoff.md`; this file states the trap and moves on.
   JavaScript.** Re-run `npm run csp` after changing *where* a component
   renders, not only after changing what it does.
 
+- **The home page is a product data view, so "product-page only" is not a
+  thing.** `Spotlight` imports `SpecTable` and `En388Table` and renders both in
+  full for Grip Guard GP5 on `/`. Anything scoped to "the catalogue's data
+  presentation" therefore lands on the page with the least performance headroom
+  on the site. This was assumed away once already: the mono font was introduced
+  on the reasoning that nothing on `/` would match it, and it cost 4 Lighthouse
+  points before the assumption was checked. Grep `Spotlight.astro`'s imports
+  before believing a component is off the home page.
+
+- **A weight change can move text across the WCAG large-text boundary, and
+  nothing here would tell you.** "Large" is >=24px, **or** >=18.66px *and* bold
+  (>=700) — so a heading between 18.66 and 24px is held above the 3:1 bar by its
+  weight alone, and dropping that weight silently re-tests it against 4.5:1.
+  Three red headings on white sat exactly there at 4.30:1, passing on a weight
+  declared in `src/styles/global.css` rather than in their own rules.
+  `tests/e2e/contrast.spec.ts` covers those; it is a named list, not a sweep, so
+  **add to it when you add red text on a light surface.**
+
+- **`font-display` governs rendering, not fetching.** `optional` was tried to
+  recover a Lighthouse point lost to a 40 KB font and changed nothing at all,
+  three runs identical. The font is still downloaded and still competes for
+  bandwidth under simulated throttling; `font-display` only decides what paints
+  while it arrives. To recover the point you must ship fewer bytes.
+
+- **Clipping a variable font's weight axis saves more than subsetting its
+  characters.** Measured on JetBrains Mono: characters alone took 39.5 KB to
+  31.4 KB, adding an axis clip to 400-600 took it to 23.1 KB.
+  **The `@font-face` `font-weight` range must then match the file** — advertising
+  the family's native `100 800` against a file clipped to `400 600` makes the
+  browser clamp silently, so a later `font-weight: 700` renders at 600 and reads
+  as a CSS specificity bug. `tools/subset-mono.mjs` owns both numbers.
+
+- **A subset font renders tofu, not an error, for a character it lacks.**
+  `COVERAGE` in `tools/subset-mono.mjs` is the source of truth for what the mono
+  carries and `tools/subset-mono.test.ts` fails naming the character, its
+  codepoint and the product that introduced it. When it fails, add the character
+  and re-run the subsetter — **do not widen the test**, whose whole value is
+  being narrower than the font.
+
 - **`SUPABASE_SERVICE_ROLE_KEY` and Vite's build-time `import.meta.env`
   inlining.** This key bypasses row-level security completely, and the
   enquiries table is RLS-enabled with zero policies — it is the only thing
