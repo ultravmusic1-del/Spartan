@@ -69,18 +69,19 @@ see `handoff.md`). Priorities are P0 highest.
       Lighthouse was re-run and corrected this item's own premise: all three
       mobile rows had moved, not only the home one.
 
-- [ ] **Sign off the typography change, and decide whether the mono's one
-      Lighthouse point stands.** Two decisions in one item, both for a person.
-      (a) The weight scale took every heading off the 700/800 that
-      `design/direction-b-forge.html` specifies — a visible departure from the
-      approved design, same category as the Name field below. (b) The mono costs
-      exactly one Lighthouse point on `/` (95 → 94) and one on the product page
-      (97 → 96), because `Spotlight` renders a real spec table on the home page.
-      It was subset from 39.5 KB to 23.1 KB to claw back three of the four
-      points originally lost; `font-display: optional` was tried and recovers
-      nothing. Accessibility held at 100. **If the point matters more than the
-      register, removing `--font-mono` from `SpecTable` and `En388Table` returns
-      both pages** — the scale is independent and would stay. `handoff.md` §12.
+- [x] **Decide whether the mono's Lighthouse point stands.** **Decided
+      2026-08-11: keep the mono.** The register is worth the point. Home stays
+      at 94 and the product page at 96 by choice, not by oversight — so if a
+      future session finds those numbers and reaches for the obvious saving,
+      **this is the decision it would be reversing.** The subset that got it
+      from 39.5 KB to 23.1 KB stands; do not re-widen it. `handoff.md` §12.
+
+- [ ] **Sign off the weight scale against the approved design.** Still open, and
+      it is the half of that item a person still has to rule on: the scale took
+      every heading off the 700/800 that `design/direction-b-forge.html`
+      specifies. Same category as the Name field below and the removed footer
+      email — a visible, deliberate departure from the signed-off direction that
+      needs a person at the client to agree. Nothing is blocked on it.
 
 - [ ] **Confirm the Name field added to the home CTA.** Wiring the CTA required
       one: `enquiryPayloadSchema` requires a name and the form collected only

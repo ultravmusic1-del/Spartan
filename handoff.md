@@ -987,8 +987,16 @@ cells are the most consulted figures on a glove page.
 That misses the spec's own acceptance criterion and is recorded rather than
 rounded away. Accessibility held at 100 everywhere; the catalogue row did not
 move because nothing on it uses the mono. One Lighthouse point and ~75ms of LCP
-is the price of the catalogue having a typographic register for data. **A person
-should decide whether that trade stands** — it is in `BACKLOG.md`.
+is the price of the catalogue having a typographic register for data.
+
+> **Decided 2026-08-11: the mono stays and the point is accepted.** So **94 and
+> 96 are chosen numbers, not drift.** A later session that finds them, spots the
+> 23.1 KB font and removes it will score better and be undoing a decision that
+> was taken with the measurement in hand. If the trade is ever genuinely
+> re-opened, the lever is removing `--font-mono` from `SpecTable` and
+> `En388Table` — the weight scale is independent and would stand on its own.
+> Do not re-widen the subset either; that is where three of the original four
+> points came back from.
 
 Two follow-on facts:
 
