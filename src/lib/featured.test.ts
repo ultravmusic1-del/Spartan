@@ -26,4 +26,15 @@ describe('featured', () => {
     const divisions = new Set(featured.map((p) => p.divisionId));
     expect(divisions).toEqual(new Set(['electricals', 'safety']));
   });
+
+  /*
+   * The order test above compares the output against FEATURED_SLUGS itself, so
+   * a duplicated entry mirrors into the expected value and passes. This is the
+   * assertion that actually catches it — a repeat would render the same card
+   * twice. `src/content.config.test.ts` guards the catalogue's own slugs the
+   * same way.
+   */
+  it('names each product at most once', () => {
+    expect(new Set(FEATURED_SLUGS).size).toBe(FEATURED_SLUGS.length);
+  });
 });

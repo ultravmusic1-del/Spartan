@@ -41,6 +41,9 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
     // place that fails, and a marketing strip should never break a build.
     if (!product) continue;
     const category = byId.get(product.categoryId);
+    // Unreachable on valid data: content.config.test.ts asserts every product's
+    // categoryId resolves. The guard exists so a future integrity slip fails the
+    // same soft way as a missing slug rather than throwing during a build.
     if (!category) continue;
     out.push({ ...product, divisionId: category.divisionId, categoryName: category.name });
   }
