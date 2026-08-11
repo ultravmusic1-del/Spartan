@@ -36,25 +36,12 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 <section class="hero" data-hero>
   <div class="hero__grid" aria-hidden="true"></div>
 
-  <div class="hero__stage" data-hero-stage aria-hidden="true">
-    <div class="hero__glow"></div>
-    <div class="hero__sweep"></div>
-    <div class="hero__ring"></div>
-    <picture class="hero__helmet">
-      <source type="image/avif" srcset={helmetAvif.srcSet.attribute} sizes="(max-width: 1420px) min(65vw, 357px), 560px" />
-      <source type="image/webp" srcset={helmetWebp.srcSet.attribute} sizes="(max-width: 1420px) min(65vw, 357px), 560px" />
-      <img
-        src={helmetWebp.src}
-        alt=""
-        width={helmet.width}
-        height={helmet.height}
-        fetchpriority="high"
-        loading="eager"
-        decoding="async"
-      />
-    </picture>
-  </div>
-
+  {/* Source order matters: below the 1080px breakpoint `.hero` is `display:
+      block`, so the DOM decides paint order. The stage has to come AFTER the
+      copy or the ~250px stacked helmet renders before the headline and pushes
+      both CTAs down — measured 110-125px below the fold on an iPhone SE and a
+      360-wide Android. On desktop the stage is `position: absolute` with
+      z-index 1 under the copy's z-index 2, so this order is a no-op there. */}
   <div class="wrap hero__wrap">
     <div class="hero__copy">
       <div class="hero__badge">
@@ -76,6 +63,25 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
         <PillButton href="/enquiry">Request a quote</PillButton>
       </div>
     </div>
+  </div>
+
+  <div class="hero__stage" data-hero-stage aria-hidden="true">
+    <div class="hero__glow"></div>
+    <div class="hero__sweep"></div>
+    <div class="hero__ring"></div>
+    <picture class="hero__helmet">
+      <source type="image/avif" srcset={helmetAvif.srcSet.attribute} sizes="(max-width: 1080px) min(65vw, 357px), 560px" />
+      <source type="image/webp" srcset={helmetWebp.srcSet.attribute} sizes="(max-width: 1080px) min(65vw, 357px), 560px" />
+      <img
+        src={helmetWebp.src}
+        alt=""
+        width={helmet.width}
+        height={helmet.height}
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
+      />
+    </picture>
   </div>
 </section>
 
@@ -309,18 +315,19 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     }
   }
 
-  /* Below this width the stage and the copy cannot coexist side by side: the
-     stage is 660px, the copy measure is 660px, and the box-arithmetic estimate
-     of ~1384px needed undersold it — the glow's blur and the helmet's
-     drop-shadow both extend past the box, and glyph-level measurement of the
-     built page found real overlap surviving to 1410px (worst 2.87:1, still
-     failing) and clean only from 1415px. 1420px is that measured floor plus a
-     10px margin, not the original estimate. Below it the two were overlapped,
-     which put brand red on the lit helmet at 1.04:1 and put the pill CTA as
-     low as 1.97:1 in a band that reached from just past the old 900px
-     breakpoint up past 1400px — an order of magnitude wider than the box math
-     suggested. Re-measure glyph pixels, not element boxes, if this ever moves
-     again.
+  /* Below this width the stage and the copy cannot coexist side by side. An
+     earlier pass here measured the 660px copy BOX overlapping the stage until
+     ~1415px and set the breakpoint from that — wrong, because nothing lives
+     in most of that box. The actions row is ~425px wide inside a 660px
+     container; the visible hazard (the lit helmet reaching the pill CTA's
+     actual glyphs) is gone by ~1000px, measured on glyph pixels with the
+     stage pushed to its worst-case parallax offset. 1080px is that floor plus
+     ~80px of margin, not the box's own width. Below it the two were
+     overlapped, which put brand red on the lit helmet at 1.04:1 and the pill
+     CTA as low as 1.97:1 in the band just past the old 900px breakpoint.
+     Re-measure glyph pixels, not element boxes, if this ever moves again —
+     the box number and the glyph number disagree by ~400px and only one of
+     them is real.
 
      Stacking is the fix rather than a lower opacity: the opacity that clears
      3:1 is 0.15, which deletes the artwork to buy compliance. Nothing is layered
@@ -330,7 +337,7 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
      The stage also goes back into flow. Absolutely positioned it could not push
      the hero taller, so `overflow: hidden` cut up to 56% off the helmet between
      480px and 900px — at 768px it rendered as an unidentifiable dome. */
-  @media (max-width: 1420px) {
+  @media (max-width: 1080px) {
     .hero {
       display: block;
       min-height: 0;
@@ -419,12 +426,12 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
   const hero = document.querySelector<HTMLElement>('[data-hero]');
   const stage = document.querySelector<HTMLElement>('[data-hero-stage]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  // Below this the stage is stacked in flow and the 1420px CSS breakpoint (see
+  // Below this the stage is stacked in flow and the 1080px CSS breakpoint (see
   // that rule's comment for where the number comes from) replaces the whole
   // `transform` declaration, so --px/--py are never read. Gated here too, or
   // the listener still fires on every mouse move on a narrow desktop window
   // and writes two custom properties for no effect.
-  const wide = window.matchMedia('(min-width: 1421px)');
+  const wide = window.matchMedia('(min-width: 1081px)');
 
   if (hero && stage && !reduce.matches && wide.matches) {
     hero.addEventListener('pointermove', (event) => {
