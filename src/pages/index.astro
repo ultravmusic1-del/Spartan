@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
+import Ticker from '../components/sections/Ticker.astro';
 import About from '../components/sections/About.astro';
 import ServiceCards from '../components/sections/ServiceCards.astro';
 import TrustBand from '../components/sections/TrustBand.astro';
 import CategoryGrid from '../components/sections/CategoryGrid.astro';
+import FeaturedLines from '../components/sections/FeaturedLines.astro';
 import Spotlight from '../components/sections/Spotlight.astro';
 import Faq from '../components/sections/Faq.astro';
 import EnquiryCta from '../components/sections/EnquiryCta.astro';
@@ -45,12 +47,23 @@ const description = `Lighting, ventilation and water management alongside protec
   description={description}
   jsonLd={jsonLd}
 >
+  <!--
+    The catalogue leads: the ticker names all fifteen categories and hands
+    straight into the grid that lists them, then the featured strip surfaces
+    specific products out of that same shelf. The five retained editorial
+    sections — About, ServiceCards, TrustBand, Spotlight, Faq — sit between
+    that product content and the enquiry close, so a visitor meets what is
+    sold before being asked to trust the seller, and reads the trust case
+    right up against the point where they are asked to act on it.
+  -->
   <main id="main">
     <Hero />
+    <Ticker />
+    <CategoryGrid />
+    <FeaturedLines />
     <About />
     <ServiceCards />
     <TrustBand />
-    <CategoryGrid />
     <Spotlight />
     <Faq />
     <EnquiryCta />
