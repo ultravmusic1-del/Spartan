@@ -172,6 +172,24 @@ const divisionNames: Record<string, string> = {
     gap: 14px;
   }
 
+  /* Grid items default to `min-width: auto`, so a `1fr` track can never
+     shrink below the min-content of whatever it holds — the track sizing
+     algorithm treats that min-content as a hard floor, not a preference.
+     At 320px the two-column layout below measured the floor at 163px
+     (content box), set by `.cg__meta` on the "Electrical Accessories"
+     tile: "Electricals" (83px) + "Expanding" (72px) + the 8px gap, with
+     nowrap flex children that can't shrink below their own content either.
+     That is wider than the 133px a track actually has to give (280px grid
+     − 14px gap, halved), so the card — and the page — overflowed by
+     exactly the difference. `.cg__name`'s longest word never came close
+     (96px worst case, "Electrical Accessories"), so it was never the
+     driver. `min-width: 0` here removes the item's own floor; without it
+     also being removed from `.cg__meta`'s flex children below, the
+     overflow just relocates from the grid track to inside the card. */
+  .cg__grid li {
+    min-width: 0;
+  }
+
   .cg__card {
     display: block;
     background: var(--color-card);
@@ -234,10 +252,19 @@ const divisionNames: Record<string, string> = {
   /* --color-grey is annotated "dark surfaces only" because it fails AA on
      --color-paper (3.17:1). This is --color-card, not --color-paper — measured
      at 5.32:1 here, clearing the 4.5:1 floor — so the token is used correctly. */
+  /* flex-wrap + min-width: 0 let the division label and count drop to their
+     own line instead of holding the flex line to their combined min-content
+     (see the comment on `.cg__grid li` above for the measured numbers).
+     Each one alone (83px / 72px worst case) fits well inside even the
+     narrowest track, so wrapping never actually happens above ~360px — it
+     only engages at the low end where the track can't take the pair
+     side by side. */
   .cg__meta {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 8px;
+    min-width: 0;
     margin-top: 7px;
     font-size: 11px;
     letter-spacing: 0.08em;
