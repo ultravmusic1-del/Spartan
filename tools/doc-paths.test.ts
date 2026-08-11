@@ -1,9 +1,38 @@
 import { describe, expect, it } from 'vitest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { extractPaths, resolves } from './doc-paths.mjs';
+import { INSTRUCTIONAL, extractPaths, resolves } from './doc-paths.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/*
+ * The list itself was the defect once, so it is pinned.
+ *
+ * extractPaths and resolves were both correct and tested while README.md sat
+ * outside INSTRUCTIONAL for the whole life of the gate — and README.md went on
+ * describing a hero that had been replaced twice, which is the one thing this
+ * gate exists to catch. A gate is only as good as what it is pointed at, and
+ * nothing here was checking that.
+ *
+ * handoff.md's absence is asserted for the opposite reason: it is the record,
+ * and it has to stay free to say a path is gone. See the comment on
+ * INSTRUCTIONAL.
+ */
+describe('INSTRUCTIONAL', () => {
+  it('covers every instructional document, including README.md', () => {
+    expect(INSTRUCTIONAL).toEqual([
+      'CLAUDE.md',
+      'AGENTS.md',
+      'README.md',
+      'docs/TRAPS.md',
+      '.claude/commands/improve.md',
+    ]);
+  });
+
+  it('excludes handoff.md, which must stay free to name what is gone', () => {
+    expect(INSTRUCTIONAL).not.toContain('handoff.md');
+  });
+});
 
 describe('extractPaths', () => {
   it('takes backticked repo paths', () => {

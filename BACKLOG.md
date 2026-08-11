@@ -127,17 +127,8 @@ see `handoff.md`). Priorities are P0 highest.
 
 - [x] **Add CI.** Done — see Done below.
 
-- [ ] **`README.md` is not covered by the doc-paths gate.** `INSTRUCTIONAL` in
-      `tools/doc-paths.mjs` lists `CLAUDE.md`, `AGENTS.md`, `docs/TRAPS.md` and
-      `.claude/commands/improve.md`. `README.md` is instructional by any
-      reasonable reading — it is the file `CLAUDE.md` sends you to for "how do I
-      run it?" — and it names dozens of repo paths, yet nothing checks them.
-      That is not theoretical: its hero section went on describing
-      `hero-range-desktop.png` as the live hero through two rewrites, and the
-      gate that exists to catch exactly this was not pointed at it. Adding it is
-      a one-line change to that array; **run the gate before assuming it is
-      clean**, because it has never been applied to this file and may surface
-      pre-existing references. Do it as its own item, not folded into another.
+- [x] **`README.md` is not covered by the doc-paths gate.** Done — see Done
+      below. It surfaced exactly one pre-existing reference.
 
 - [ ] **The division headers pass contrast only because of their scrim.** On
       `/electricals` and `/safety` the composited worst-case nav link measures
@@ -211,6 +202,38 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-11** — Pointed the doc-paths gate at `README.md`. It had never
+  covered it: `INSTRUCTIONAL` listed `CLAUDE.md`, `AGENTS.md`, `docs/TRAPS.md`
+  and `.claude/commands/improve.md`, while `README.md` — the file `CLAUDE.md`
+  sends you to for "how do I run it?" — named more repo paths than the rest of
+  that list combined and had none of them checked. The cost was the item
+  immediately below this one: its hero section described
+  `hero-range-desktop.png` as the live hero across two rewrites while the
+  component pointed somewhere else, and the gate built to catch precisely that
+  was not aimed at it. Coverage went from 58 references to 96.
+
+  Proved against a planted violation before and after: a bad path in
+  `README.md` is caught, and the file is clean once restored.
+
+  *Worth knowing:* it surfaced one real reference, and it is the interesting
+  case rather than a nuisance. The launch checklist explains that
+  `public/robots.txt` used to hard-code the domain and **is now gone** — a true
+  sentence about a path that must not resolve, which is exactly what
+  `handoff.md` is exempted for. It was reworded to name the dead file by role
+  (a static `robots.txt` under `public/`) rather than as a code path. That is
+  not the record bending to stay green: an *instructional* document formatting
+  a deleted file as a live repo path is telling a reader to go open it. Where a
+  sentence genuinely must point at something that no longer exists, it belongs
+  in `handoff.md` — which is why the exemption is a file and not a syntax. The
+  reasoning is on `INSTRUCTIONAL` itself.
+
+  *Worth knowing:* the list is now pinned by a test. `extractPaths` and
+  `resolves` were both correct and well covered the whole time — the defect was
+  never in the logic, it was in what the logic was pointed at, and nothing
+  asserted that. `tools/doc-paths.test.ts` now pins the membership both ways:
+  `README.md` in, `handoff.md` out. 2 unit tests added; verify 15/15, 141 unit,
+  157 e2e.
 
 - **2026-08-11** — Finished the landing redesign's documentation. The
   implementation had been green since the merge; the guidance had not caught up

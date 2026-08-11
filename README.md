@@ -312,7 +312,7 @@ Seven items need the client before this site can go live. Nothing here blocks de
 - [ ] **3. The domain — ONE file**
       `astro.config.mjs` → `site:` (currently `https://spartan.example`, which is reserved by RFC 2606 and can never resolve). This drives every canonical tag, Open Graph URL, JSON-LD URL, the sitemap's contents **and** the `Sitemap:` line in robots.txt.
 
-      It used to be two files that had to match: `public/robots.txt` was served verbatim and hard-coded the domain, so changing one without the other silently pointed crawlers at the wrong host. That file is gone — `src/pages/robots.txt.ts` now emits the value from `site` at build time, so the two cannot diverge. Setting the domain is a single edit.
+      It used to be two files that had to match: a static `robots.txt` under `public/` was served verbatim and hard-coded the domain, so changing one without the other silently pointed crawlers at the wrong host. That file is gone — `src/pages/robots.txt.ts` now emits the value from `site` at build time, so the two cannot diverge. Setting the domain is a single edit.
 
 - [ ] **4. Confirm the eight "Industries We Serve"** → `src/data/site.json`
       Construction, Oil & Gas, Manufacturing, Warehousing, Facilities, Marine & Ports, Utilities, Hospitality. These are **inferred from the product mix**, not stated in the brochure. Flagged by `industriesPendingClientConfirmation: true` in the same file and by an HTML comment where they are used. Remove the flag once confirmed.
