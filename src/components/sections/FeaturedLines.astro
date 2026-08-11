@@ -35,7 +35,27 @@ const TABS = [
   <div class="wrap">
     <div class="fl__head">
       <h2 class="fl__title">Featured lines</h2>
-      <div class="fl__tabs" data-featured-tabs hidden>
+      {
+        /* `role="group"` + `aria-pressed`, not `role="tablist"` + `aria-selected`.
+           This was considered and rejected: the grid below is one list with some
+           items hidden, not a panel whose contents are swapped, so `tablist`
+           would promise panel-switching semantics this widget doesn't have. The
+           full Tabs pattern also requires roving `tabindex` and Left/Right arrow
+           handling to be correct, and this design system has no arrow-key
+           precedent to build that on — claiming the role without the keyboard
+           contract would be worse than not claiming it. `aria-pressed` on a set
+           of filter buttons is already a well-supported pattern; what was
+           missing was only the group relationship, which `role="group"` plus
+           `aria-label` supplies. Do not change `aria-pressed` to `aria-selected`:
+           tests/e2e/home.spec.ts asserts on it. */
+      }
+      <div
+        class="fl__tabs"
+        data-featured-tabs
+        hidden
+        role="group"
+        aria-label="Filter featured products by division"
+      >
         {
           TABS.map((tab, i) => (
             <button
@@ -58,7 +78,24 @@ const TABS = [
             <a class="fl__card" href={`/products/${card.slug}`}>
               <span class="fl__media">
                 {card.image && (
-                  <Image src={card.image} alt="" widths={[220, 320]} sizes="220px" loading="lazy" />
+                  /* Tiered like CategoryGrid's, but not by the grid's own breakpoints:
+                     there the column count sets the cap, here `.fl__media`'s
+                     `max-height: 140px` against each photo's aspect ratio does, so the
+                     real cap barely moves between the 1- and 2-column layouts (218px vs
+                     287px) while the 4-column tiers above 1100px converge on 220px. Two
+                     tiers cover the measured range: up to 420px stays near the 1-column
+                     218px cap (230px, rounding up), 421-1100px covers the 2-column
+                     287px cap, and above that the flat 220px the 4-column layout needs.
+                     580 tops `widths` because 290 CSS px at DPR 2 is 580; Astro clamps
+                     every candidate to the source, so the curated PNGs (505-623px
+                     native) are never upscaled by asking. */
+                  <Image
+                    src={card.image}
+                    alt=""
+                    widths={[220, 320, 460, 580]}
+                    sizes="(max-width: 420px) 230px, (max-width: 1100px) 290px, 220px"
+                    loading="lazy"
+                  />
                 )}
               </span>
               <span class="fl__body">
@@ -142,10 +179,6 @@ const TABS = [
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-  }
-
-  .fl__grid li[hidden] {
-    display: none;
   }
 
   .fl__card {
