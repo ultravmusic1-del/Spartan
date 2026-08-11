@@ -118,10 +118,6 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
 <style>
   .site-header {
-    /* Mockup greys with no equivalent in tokens.css. Also read by the mobile
-       panel, which inherits them through the DOM. */
-    --nav-link: #d6d6dc;
-
     left: 0;
     right: 0;
     z-index: 25;
@@ -179,11 +175,23 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     padding-bottom: 3px;
     border-bottom: 2px solid transparent;
     font-family: var(--font-display);
-    font-size: 12.5px;
-    font-weight: 600;
-    letter-spacing: 0.13em;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--nav-link);
+    /* --color-grey-lt directly, not a custom property — the mobile panel's
+       .mnav-link reads this same token, so the two cannot drift apart across
+       the 1080px breakpoint the way they did when the mobile panel had its
+       own hard-coded grey.
+
+       In `--mode="solid"` this sits on --color-black, well clear of AA. In
+       `--mode="transparent"` it sits over a hero photo behind a three-layer
+       scrim; composited with the scrim the worst case measured is 6.04:1
+       (the Contact link, over /safety) rising to 9.78:1 elsewhere — the
+       scrim is what clears AA, not this token: the raw pre-scrim pixels
+       measure as low as 1.11:1. Swapping a division hero photograph
+       requires re-measuring this pairing against the new image. */
+    color: var(--color-grey-lt);
     transition:
       color var(--dur-base) var(--ease-out),
       border-color var(--dur-base) var(--ease-out);
@@ -255,11 +263,6 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
      DOM a framework component renders, so its CSS is global and namespaced. -->
 <style is:global>
   .mnav-trigger,
-  .mnav-panel {
-    --nav-link: #d6d6dc;
-  }
-
-  .mnav-trigger,
   .mnav-close {
     display: grid;
     place-items: center;
@@ -329,7 +332,11 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     font-weight: 600;
     letter-spacing: 0.13em;
     text-transform: uppercase;
-    color: var(--nav-link);
+    /* Same token as .nav__link above, on purpose: the mobile panel is
+       --color-black regardless of header mode, and matching the desktop
+       token keeps the two from reading as two different greys across the
+       1080px breakpoint. */
+    color: var(--color-grey-lt);
     transition:
       color var(--dur-base) var(--ease-out),
       border-color var(--dur-base) var(--ease-out);

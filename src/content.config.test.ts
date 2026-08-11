@@ -38,6 +38,21 @@ describe('content data', () => {
     }
   });
 
+  // CategoryGrid.astro looks its hero up through getProducts(), which filters
+  // to `status === 'published'` — so a hero slug that exists but has flipped
+  // to `draft` falls into the exact same empty branch as a genuinely empty
+  // category, and the card would show "Range expanding" beside a nonzero
+  // count. The slug-existence check above cannot catch that: it builds its
+  // set from the raw JSON regardless of status. This gate checks status too.
+  it('every active category hero product is published, not drafted', () => {
+    const published = new Set(
+      products.filter((p) => (p.status ?? 'published') === 'published').map((p) => p.slug),
+    );
+    for (const c of categories) {
+      if (c.status !== 'expanding') expect(published.has(c.heroProductSlug!)).toBe(true);
+    }
+  });
+
   it('category product counts match the authoritative distribution', () => {
     // 72 brochure products + 13 from the datasheets — 7 industrial fans, 3
     // portable air coolers and 3 consumer fans — which is why `fans` is 17

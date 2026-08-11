@@ -4,7 +4,11 @@
 
 **Goal:** Rebuild the Spartan home page to the "Spartan Landing.dc.html" mockup — a helmet-centred animated hero, a scrolling category ticker, a 15-card category grid and a tabbed Featured Lines strip — using the project's own high-resolution assets and its real catalogue data, while keeping all seven nav routes and restyling the five retained sections to match.
 
-**Architecture:** The mockup is a Claude Design canvas artifact (`<x-dc>` template + `DCLogic` class, rendered by `support.js`). None of that runtime ports. Every `{{ binding }}`, `sc-for` and `style-hover` is re-authored as an Astro component with scoped CSS. All data comes from `src/lib/catalog.ts` — the mockup's hardcoded 15-category array carries 72-era counts and wrong slugs and must not be copied. Interactivity is deliberately split: the Featured Lines tabs and hero parallax use Astro's bundled `<script>` (emitted as external `/_astro/*.js`, so **no new CSP hash**), and the ticker's pause control is CSS-only via `:has()`, so it works with JavaScript disabled.
+**Architecture:** The mockup is a Claude Design canvas artifact (`<x-dc>` template + `DCLogic` class, rendered by `support.js`). None of that runtime ports. Every `{{ binding }}`, `sc-for` and `style-hover` is re-authored as an Astro component with scoped CSS. All data comes from `src/lib/catalog.ts` — the mockup's hardcoded 15-category array carries 72-era counts and wrong slugs and must not be copied. Interactivity is deliberately split: the Featured Lines tabs and hero parallax use Astro `<script>` tags, and the ticker's pause control is CSS-only via `:has()`, so it works with JavaScript disabled.
+
+> **Correction, found during Task 2.** This plan asserted that a plain (non-`is:inline`) Astro `<script>` is always emitted as an external `/_astro/*.js` file and therefore adds no CSP hash. **That is wrong.** Astro extracts a script to an external chunk only when it is *shared across pages*; a script used on exactly one page is inlined into that page's HTML. Verified in the built output: `EnquiryCta`'s script is external because it renders on `/` and `/contact`, while the hero's is inline because the hero renders on `/` alone.
+>
+> This is not a gate violation. `CLAUDE.md` states the real rule — *adding, editing or removing an inline script needs `npm run csp` re-run and `vercel.json` committed* — and the verify gate checks that hashes **match the build**, not that the count is unchanged. Expect the policy to go **6 → 7 hashes at Task 2** (hero parallax) and **7 → 8 at Task 5** (Featured Lines tabs). Both are single-page scripts. Regenerate and commit `vercel.json` with the component that caused it, never in a later task — a stale hash does not fail a build, it ships a page that never hydrates.
 
 **Tech Stack:** Astro 7, TypeScript strict, scoped component CSS over `src/styles/tokens.css`, Preact islands (existing ones untouched), Vitest, Playwright + axe.
 
@@ -42,6 +46,11 @@ Every other task can proceed without it. Task 2 fails at `astro build` if it is 
 Build these in from the start. They are not polish.
 
 1. **`prefers-reduced-motion`.** The mockup runs four infinite animations — `bob` 7s, `pulse` 6s, `sweep` 14s, `tick` 42s — plus cursor parallax. The hero it replaces documents *"No pause control, no reduced-motion branch. Nothing moves."* Every animation in this plan carries a reduced-motion branch that sets `animation: none` and disables the parallax listener.
+
+   > **Correction, found during Task 3.** `src/styles/global.css:54-61` already collapses every animation site-wide to `animation-duration: 0.01ms !important` and `animation-iteration-count: 1 !important`. **No scoped rule can outrank that**, so under reduced motion an animation has already run to completion before the first frame. Two consequences this plan originally got wrong:
+   >
+   > - **A reduced-motion "opt back in" is impossible.** `animation-play-state: running` cannot restart a finished animation. Task 3's opt-in block was removed and the ticker's control is hidden instead — with nothing moving, WCAG 2.2.2 is not engaged.
+   > - **A component's own `animation: none` still works**, because the global rule only forces `animation-duration` and `animation-iteration-count`; the `animation` shorthand sets `animation-name: none`, which nothing overrides. Task 2's hero branch is therefore correct as written, and Task 10 can still assert `animation-name: none` on the hero.
 
 2. **WCAG 2.2.2 Pause, Stop, Hide.** The ticker auto-starts, moves, and runs longer than five seconds. That is a Level A failure without a mechanism to pause it. axe will not flag this — the same blind spot that let a serious Label in Name failure sit on every product card at a green score. The control is built in Task 3.
 
@@ -597,17 +606,26 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 Run: `npx astro check && npx astro build`
 Expected: 0 errors; build clean
 
-- [ ] **Step 4: Confirm no new inline-script hash was introduced**
+- [ ] **Step 4: Regenerate the CSP — this script IS inlined**
 
-Run: `npm run csp && git diff --stat vercel.json`
-Expected: no change to `vercel.json`. If it changed, the script was emitted inline — stop and fix before committing.
+Run: `npm run csp`
+Expected: **7** script hashes, up from 6. See the correction under Architecture — the hero renders on `/` alone, so Astro inlines its script rather than extracting it.
 
-- [ ] **Step 5: Commit**
+Run: `git diff vercel.json`
+Expected: exactly one added hash and nothing else. If anything else moved, stop.
+
+Then run `node tools/verify.mjs` and confirm the **"CSP covers every inline script"** gate reports `ok`. That gate compares the policy against the build; a failure here means they genuinely disagree.
+
+The `<script>` comment must state this honestly rather than claiming the script is external.
+
+- [ ] **Step 5: Commit — `vercel.json` goes in the same commit**
 
 ```bash
-git add src/components/sections/Hero.astro src/assets/hero/helmet-hero.png
+git add src/components/sections/Hero.astro src/assets/hero/helmet-hero.png vercel.json
 git commit -m "feat(hero): rebuild around the floating helmet"
 ```
+
+Never split the policy from the component that changed it. A stale hash does not fail a build — it ships a page that never hydrates.
 
 ---
 
@@ -617,6 +635,15 @@ git commit -m "feat(hero): rebuild around the floating helmet"
 - Create: `src/components/sections/Ticker.astro`
 
 The control is a checkbox styled as a button, read by `:has()`. No JavaScript, so it works on a page with scripting disabled — which matters, because WCAG 2.2.2 is not waived by the user having JS off.
+
+> **The code below is the first draft and six defects were found against it in review. `src/components/sections/Ticker.astro` on `feat/landing-redesign` is the correct version — read that, not this.** What changed, and why, so the reasoning is not lost:
+>
+> 1. `background: rgba(0,0,0,.28)` on the button measured **1.98:1** for its white label, because the full-width track scrolls behind a translucent control. Now `--color-red-dark` (6.52:1).
+> 2. The reduced-motion opt-in could never work — see the correction under "Three requirements" above. The block now hides the control.
+> 3. The Pause/Play word swap made the accessible name contradict the checkbox state — checked, it announced *"Play, checkbox, checked"* while the band was paused. Now `role="switch"` with a static `aria-label`, state carried by `aria-checked`, and the sighted cue moved to styling.
+> 4. `outline-offset: 2px` was clipped away by the band's `overflow: hidden`; the ring rendered as two disconnected vertical bars. Now `-2px`, matching `CategoryGrid.astro`.
+> 5. One copy of the joined names measures ~3218px, so the loop seam opened on ultrawide displays. Each span now carries two copies at 84s, preserving speed.
+> 6. The `:has()` dependency is now documented — without support the band scrolls, the checkbox toggles, and there is no pause mechanism at all.
 
 - [ ] **Step 1: Write the component**
 
@@ -1313,15 +1340,21 @@ const TABS = [
 </script>
 ```
 
-- [ ] **Step 2: Build and commit**
+- [ ] **Step 2: Build, regenerate the CSP, commit both**
 
-Run: `npx astro check && npx astro build`
-Expected: 0 errors; build clean
+Run: `npx astro check` then `npx astro build`
+Expected: 0 errors; build clean.
+
+This component's `<script>` is also single-page and will be inlined — but **not yet**. Nothing imports the component until Task 8, so its script is not in the build and `npm run csp` still reports **7**. That is correct here; do not import the component early to force the hash to appear.
 
 ```bash
 git add src/components/sections/FeaturedLines.astro
 git commit -m "feat(home): add the tabbed featured lines strip"
 ```
+
+Its `<script>` comment must say the script is inlined and costs a hash — not that it is external.
+
+> **This moves the 8th hash to Task 8.** Wiring `FeaturedLines` into `src/pages/index.astro` is what puts its script into the build, so `npm run csp` and the `vercel.json` commit belong there. A component can therefore change the CSP without its own file being edited — which is the trap Task 14 records.
 
 ---
 
@@ -1535,10 +1568,19 @@ The catalogue leads now — the ticker hands straight into the shelf it names. T
 Run: `npx astro build`
 Expected: clean, **110 pages** — this task adds no routes
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Regenerate the CSP — this task is what adds the 8th hash**
+
+Importing `FeaturedLines` here is what puts its inline script into the build. Its own task could not add the hash, because nothing rendered it.
+
+Run: `npm run csp`
+Expected: **8** script hashes, up from 7.
+
+Run: `node tools/verify.mjs` and confirm the **"CSP covers every inline script"** gate reports `ok`.
+
+- [ ] **Step 4: Commit — `vercel.json` goes with it**
 
 ```bash
-git add src/pages/index.astro
+git add src/pages/index.astro vercel.json
 git commit -m "feat(home): assemble the new landing order"
 ```
 
@@ -1647,25 +1689,43 @@ test.describe('the ticker pause control', () => {
 
     await expect(track).toHaveCSS('animation-play-state', 'running');
 
+    // The switch role carries the state; the accessible name is static, so it
+    // must NOT change when toggled. A name that flips to "Play" against a
+    // visible "Pause" is the Label in Name failure this project already shipped
+    // once on every product card.
+    await expect(toggle).toHaveAttribute('role', 'switch');
+    const name = await toggle.getAttribute('aria-label');
+
     // Keyboard, not a click on the label — WCAG 2.2.2 needs a *mechanism*, and
     // a control only operable by mouse is not one.
     await toggle.focus();
     await page.keyboard.press('Space');
 
     await expect(track).toHaveCSS('animation-play-state', 'paused');
-    await expect(page.locator('.ticker__btn-play')).toBeVisible();
+    await expect(toggle).toBeChecked();
+    await expect(toggle).toHaveAttribute('aria-label', name!);
   });
 });
 
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
 
-  test('stops the hero animations and starts the ticker paused', async ({ page }) => {
+  /*
+   * The ticker is NOT asserted paused here, and that is deliberate.
+   *
+   * `src/styles/global.css:54` forces animation-duration to 0.01ms and
+   * iteration-count to 1 with `!important` on every element, so under reduced
+   * motion the band's animation has already finished — its play-state still
+   * computes as `running` even though nothing moves. Asserting `paused` would
+   * fail against correct behaviour. What is checked instead is that the control
+   * is gone, because a pause button for static content is noise.
+   */
+  test('stops the hero animations and removes the pause control', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.hero__helmet img')).toHaveCSS('animation-name', 'none');
     await expect(page.locator('.hero__glow')).toHaveCSS('animation-name', 'none');
     await expect(page.locator('.hero__sweep')).toHaveCSS('animation-name', 'none');
-    await expect(page.locator('.ticker__track')).toHaveCSS('animation-play-state', 'paused');
+    await expect(page.locator('.ticker__btn')).toBeHidden();
   });
 
   test('the copy is still visible — a cancelled entrance must not leave it at opacity 0', async ({
@@ -1781,11 +1841,20 @@ Retire the client-artwork description to history and record the new one. It must
 - [ ] **Step 2: Add three entries to `docs/TRAPS.md`**
 
 ```markdown
-- **The hero and Featured Lines `<script>` tags are bundled, not inline.** Astro
-  emits them under `/_astro/`, which `script-src 'self'` already allows, so they
-  add no inline-script hash. Adding `is:inline` to either silently requires
-  `npm run csp` and a `vercel.json` recommit — and a stale hash does not fail
-  the build, it ships a site that never hydrates.
+- **Whether an Astro `<script>` costs a CSP hash depends on how many pages use
+  the component, not on how you wrote the tag.** Astro extracts a processed
+  `<script>` to an external `/_astro/` chunk only when it is shared across
+  pages; a script used on exactly one page is inlined into that page's HTML and
+  needs a hash. `EnquiryCta`'s script is external because it renders on `/` and
+  `/contact`; the hero's and Featured Lines' are inline because both render on
+  `/` alone. Nothing about the tag distinguishes them.
+
+  The practical consequence: **rendering an existing component on one more page
+  can silently move a script from inline to external and invalidate a hash**,
+  without anyone editing a line of JavaScript. Re-run `npm run csp` after any
+  change to which pages use a component with a `<script>`, not just after
+  editing script bodies. A stale hash does not fail the build — it ships a page
+  that never hydrates.
 
 - **The two empty categories must never show a product image.** Electrical
   Accessories and Spill Control have `productCount: 0` and
@@ -1844,7 +1913,7 @@ git commit -m "docs: record the landing redesign, the AI hero and three new trap
 | Unit | `npx vitest run` | 137 passed (134 + 3) |
 | E2E | `npx playwright test` | 146 passed (137 + 9) |
 | Build | `npx astro build` | clean, 110 pages |
-| CSP | `npm run csp && git diff --stat vercel.json` | no change |
+| CSP | `npm run csp` then `node tools/verify.mjs` | **8** hashes; CSP gate `ok` |
 | Reduced motion | `npx playwright test tests/e2e/motion.spec.ts` | pass |
 
 **Stop the dev server before any Playwright run.** `reuseExistingServer: true` means Playwright attaches to whatever is on 4321 and never builds.

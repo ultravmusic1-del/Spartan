@@ -1,0 +1,145 @@
+import { expect, test } from '@playwright/test';
+
+/**
+ * The redesigned home page.
+ *
+ * `src/pages/index.astro` renders Hero, Ticker, CategoryGrid and FeaturedLines
+ * before the retained editorial sections. This file covers those four: the
+ * headline (now real text, not artwork), the fifteen-category shelf and its
+ * two honest empty tiles, and the featured strip's server-rendered cards plus
+ * its client-side division filter — mouse, keyboard and no-JavaScript.
+ *
+ * motion.spec.ts covers the ticker's pause control and prefers-reduced-motion
+ * separately; this file does not touch either.
+ */
+
+test.describe('the hero headline', () => {
+  test('renders exactly one visible h1 with the real headline text', async ({ page }) => {
+    await page.goto('/');
+
+    // `h1`, not getByRole('heading', level: 1) — the assertion is about the
+    // literal element, and the previous hero's h1 was present but sr-only, so
+    // "exists" is not the bar here; "visible" is.
+    const h1 = page.locator('h1');
+    await expect(h1).toHaveCount(1);
+    await expect(h1).toBeVisible();
+
+    /*
+     * `.textContent`, read directly, not Playwright's `toHaveText` — that
+     * matcher collapses internal whitespace before comparing, which would
+     * paper over exactly the defect this test exists to catch. The markup is
+     * `Home and <br />industrial <br /><span>solutions.</span>`: a space was
+     * added before each `<br />` because without it `textContent` runs the
+     * words together ("Home andindustrial solutions.") — that has shipped
+     * once already.
+     */
+    const text = await h1.evaluate((el) => el.textContent);
+    expect(text).toBe('Home and industrial solutions.');
+  });
+});
+
+test.describe('the hero artwork', () => {
+  test('the helmet image is decorative', async ({ page }) => {
+    await page.goto('/');
+
+    // The headline now carries the meaning (see above); the AI-generated
+    // helmet asserts nothing about a real product, so it must have alt="".
+    await expect(page.locator('.hero__helmet img')).toHaveAttribute('alt', '');
+  });
+});
+
+test.describe('the category shelf', () => {
+  test('lists fifteen categories with exactly two marked empty', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('.cg__grid li')).toHaveCount(15);
+
+    // Electrical Accessories and Spill Control stock nothing. The design
+    // mockup filled their tiles with borrowed product photos from other
+    // categories — a picture in a range that has no stock is a false claim,
+    // so these two must render the marked-empty state instead.
+    await expect(page.locator('.cg__empty')).toHaveCount(2);
+  });
+
+  test('shows the catalogue-derived count on the Fans & Ventilation tile', async ({ page }) => {
+    await page.goto('/');
+
+    // Scoped to the one tile, not asserted as a bare string search on the
+    // page — Body Protection legitimately shows "4 items" and a page-wide
+    // search for that text would pass for the wrong reason.
+    const fansTile = page
+      .locator('.cg__grid li')
+      .filter({ has: page.locator('.cg__name', { hasText: 'Fans & Ventilation' }) });
+    await expect(fansTile).toHaveCount(1);
+
+    // The design mockup hardcoded "4 items" here from the pre-datasheet
+    // catalogue. The real count, from getCategories(), is 17 — this is the
+    // assertion that would catch a copy-paste of the mockup's static array.
+    await expect(fansTile.locator('.cg__count')).toHaveText('17 items');
+  });
+});
+
+test.describe('featured lines', () => {
+  test('server-renders eight cards, four per division', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('.fl__grid li')).toHaveCount(8);
+  });
+
+  test('reveals the tab row and filters by division on click', async ({ page }) => {
+    await page.goto('/');
+
+    const tabs = page.locator('[data-featured-tabs]');
+    const items = page.locator('.fl__grid li:not([hidden])');
+
+    // Server-rendered with `hidden` on the tab row; the script removes it.
+    // Asserting "visible" here is safe precisely because it is false first —
+    // the row starts hidden and only becomes visible once the island runs.
+    await expect(tabs).toBeVisible();
+
+    await tabs.getByRole('button', { name: 'Electricals' }).click();
+    // Four of the eight curated cards are Electricals by construction
+    // (src/lib/featured.ts). Unfiltered is 8, so waiting on 4 here cannot
+    // settle instantly against the pre-filter state.
+    await expect(items).toHaveCount(4);
+
+    await tabs.getByRole('button', { name: 'All' }).click();
+    await expect(items).toHaveCount(8);
+  });
+
+  test('filters on Enter when a tab is activated by keyboard', async ({ page }) => {
+    await page.goto('/');
+
+    const tabs = page.locator('[data-featured-tabs]');
+    await expect(tabs).toBeVisible();
+
+    const items = page.locator('.fl__grid li:not([hidden])');
+    const safetyTab = tabs.getByRole('button', { name: 'Safety' });
+
+    // Keyboard activation of a <button>, not a click. This project's tab and
+    // pill controls have a history of harnesses that never synthesised a
+    // click from Enter on a real <button> element — Playwright does, so this
+    // is the test that would have caught it.
+    await safetyTab.focus();
+    await page.keyboard.press('Enter');
+
+    await expect(items).toHaveCount(4);
+    await expect(safetyTab).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+test.describe('featured lines without JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('shows all eight cards and keeps the tab row hidden', async ({ page }) => {
+    await page.goto('/');
+
+    // The script that unhides the tab row and wires the filter never runs.
+    // Showing a filter that cannot filter would be worse than showing none,
+    // so all eight cards stay, unfiltered, and the tab row stays hidden
+    // rather than sitting inert on the page.
+    await expect(page.locator('.fl__grid li')).toHaveCount(8);
+    await expect(page.locator('.fl__grid li[hidden]')).toHaveCount(0);
+    await expect(page.locator('[data-featured-tabs]')).toBeHidden();
+  });
+});

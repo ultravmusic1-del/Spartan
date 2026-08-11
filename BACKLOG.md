@@ -56,6 +56,21 @@ see `handoff.md`). Priorities are P0 highest.
       2026-08-09: **a newsletter was never intended.** Removed rather than
       wired — see Done below.
 
+- [ ] **Confirm the AI-generated hero helmet with the client.** The landing hero
+      is an AI-generated image — its C2PA manifest asserts
+      `trainedAlgorithmicMedia` with GPT/openai markers. It depicts safety
+      equipment on a site whose first rule is that nothing about safety
+      equipment is invented. Shipping it was a deliberate decision taken on
+      2026-08-11 and recorded in `handoff.md` §7 and §11; it still needs a
+      person at the client to agree. A real product photograph drops in with no
+      markup change. `src/assets/hero/helmet-hero.png`.
+
+- [ ] **Finish the landing redesign's documentation.** The implementation is
+      complete and green; the docs are not. Four traps found during the work are
+      recorded in `handoff.md` §11 but not in `docs/TRAPS.md`, `README.md` still
+      describes the pre-redesign home page, and Lighthouse has not been re-run
+      against the new hero. See §11 "What is NOT done" for the full list.
+
 - [ ] **Confirm the Name field added to the home CTA.** Wiring the CTA required
       one: `enquiryPayloadSchema` requires a name and the form collected only
       company, division and email, so every submission would have failed

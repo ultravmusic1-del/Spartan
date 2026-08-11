@@ -1,0 +1,182 @@
+---
+import { getCategories } from '../../lib/catalog';
+
+/**
+ * The scrolling category band.
+ *
+ * WCAG 2.2.2 (Pause, Stop, Hide) applies: this starts automatically, moves, and
+ * runs well past five seconds. That is a Level A failure without a pause
+ * mechanism, and axe does not test for it — the same class of blind spot that
+ * left a serious Label in Name failure on every product card at a green score.
+ *
+ * The control is a checkbox read by `:has()`, deliberately not an island: a
+ * pause button that needs JavaScript to exist is not a mechanism for a visitor
+ * who has JavaScript off, and the animation runs for them regardless.
+ *
+ * The track is duplicated and translated -50%, which is what makes the loop
+ * seamless. Both copies are aria-hidden — the band is decorative, and every
+ * category it names is a real link in the grid below.
+ */
+const categories = await getCategories();
+const text = categories.map((c) => c.name).join(' · ') + ' · ';
+
+/*
+ * Each span carries two copies, not one.
+ *
+ * The loop is seamless only while one span is at least as wide as the viewport
+ * — the track translates by exactly one span. A single copy of the fifteen
+ * category names measures ~3218px in Archivo at 13px/800/0.3em, so the seam
+ * opened on an ultrawide display, and it would open sooner if categories were
+ * ever removed or renamed shorter. Doubling covers past 6400px, and the
+ * duration doubles with it so the scroll speed is unchanged.
+ */
+const copy = text.repeat(2);
+---
+
+<div class="ticker">
+  <div class="ticker__track" aria-hidden="true">
+    <span>{copy}</span>
+    <span>{copy}</span>
+  </div>
+
+  <!-- The track above is aria-hidden, so a control named bare "Pause" would
+       have no referent anywhere on the page for a screen reader user — the
+       aria-label restates what is being paused. It still has to start with
+       the visible label text ("Pause"), or the mismatch is itself a 2.5.3
+       Label in Name failure. -->
+  <input
+    class="ticker__toggle"
+    type="checkbox"
+    id="ticker-pause"
+    role="switch"
+    aria-label="Pause the scrolling category band"
+  />
+  <label class="ticker__btn" for="ticker-pause">Pause</label>
+</div>
+
+<style>
+  .ticker {
+    position: relative;
+    background: var(--color-red-fill);
+    overflow: hidden;
+    padding: 13px 0;
+  }
+
+  .ticker__track {
+    display: flex;
+    width: max-content;
+    animation: ticker-run 84s linear infinite;
+  }
+
+  .ticker__track span {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  @keyframes ticker-run {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Visually hidden but focusable — `display: none` would take it out of the
+     tab order and there would be no keyboard route to the control. */
+  .ticker__toggle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Opaque and token-based, not a one-off rgba() — the full-width track scrolls
+     continuously behind this button, and a translucent black over white
+     category text measured 1.98:1 for the white label (3.35:1 on hover),
+     both short of the WCAG 1.4.3 4.5:1 floor. --color-red-dark gives the label
+     6.52:1 (handoff.md §3) regardless of what is passing underneath. */
+  .ticker__btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 10px;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--color-red-dark);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .ticker__btn:hover {
+    background: var(--color-red-deep);
+  }
+
+  /* The focus ring is driven off the input, because the label is what is
+     visible and the input is what receives focus. Inset, not outset: the band
+     is only 46.8px tall and clips with `overflow: hidden`, so an outward
+     offset put both horizontal strokes of the ring outside the clip region.
+     currentColor, not a literal #fff: the button's `color` flips between #fff
+     and --color-red-deep with the checked state, and a literal white ring
+     went invisible (1.00:1) against the checked state's white fill. Tying the
+     ring to `color` covers both states with one declaration and cannot drift
+     if the checked palette changes later. */
+  .ticker__toggle:focus-visible + .ticker__btn {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+  }
+
+  /* The word swap (Pause/Play) that used to live here was removed: the
+     accessible name is now the static aria-label on the input, and swapping
+     the button's visible word out of sync with that name is exactly the
+     Label in Name failure this file's header warns about. The checked state
+     is now a sighted-only cue. --color-red-deep on #fff (what this button
+     actually sits on) is 9.07:1 — handoff.md §3's 8.40:1 is the same pair
+     measured against --color-paper, a slightly darker surface, not this one.
+
+     The pause mechanism below is `:has()` and nothing else. Without support
+     the band still scrolls, the checkbox still toggles, and there is no way
+     to stop it — a WCAG 2.2.2 failure plus a control that lies. Accepted
+     because `:has()` has been Baseline since Firefox 121 (Dec 2023) and the
+     repo declares no browser floor below that. Anything that drops these
+     rules has to replace the mechanism, not just the styling. */
+  .ticker:has(.ticker__toggle:checked) .ticker__track {
+    animation-play-state: paused;
+  }
+  .ticker:has(.ticker__toggle:checked) .ticker__btn {
+    background: #fff;
+    color: var(--color-red-deep);
+  }
+
+  /* The band does not move at all here, so there is nothing to pause and the
+     control is removed rather than left as a lie.
+
+     `src/styles/global.css` collapses every animation site-wide to 0.01ms and a
+     single iteration with `!important`, which no scoped rule can outrank. An
+     opt-in was tried and cannot work: `animation-play-state` cannot restart an
+     animation that has already run to completion, so the button flipped its
+     label and the band stayed still. WCAG 2.2.2 is not engaged when nothing
+     moves, and a pause control for static content is noise. */
+  @media (prefers-reduced-motion: reduce) {
+    .ticker__toggle,
+    .ticker__btn {
+      display: none;
+    }
+  }
+</style>

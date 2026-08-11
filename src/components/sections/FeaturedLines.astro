@@ -1,0 +1,297 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import { getFeaturedProducts } from '../../lib/featured';
+
+/**
+ * Featured Lines.
+ *
+ * Every card is server-rendered and the tabs narrow the DOM already on the
+ * page — nothing is fetched. With JavaScript off the tab row stays `hidden`
+ * and all eight remain visible, which is the honest fallback: showing a filter
+ * that cannot filter is worse than showing none.
+ *
+ * The list is curated in src/lib/featured.ts and named by slug, because
+ * product.order is per-category and repeats. See that module's header.
+ */
+const featured = await getFeaturedProducts();
+const productImages = import.meta.glob<{ default: ImageMetadata }>('/src/assets/products/*.png');
+
+const cards = await Promise.all(
+  featured.map(async (product) => {
+    const loader = productImages[`/src/assets/products/${product.images[0]}`];
+    return { ...product, image: loader ? (await loader()).default : undefined };
+  }),
+);
+
+const TABS = [
+  { id: 'all', label: 'All' },
+  { id: 'electricals', label: 'Electricals' },
+  { id: 'safety', label: 'Safety' },
+];
+---
+
+<section class="fl" data-featured>
+  <div class="wrap">
+    <div class="fl__head">
+      <h2 class="fl__title">Featured lines</h2>
+      {
+        /* `role="group"` + `aria-pressed`, not `role="tablist"` + `aria-selected`.
+           This was considered and rejected: the grid below is one list with some
+           items hidden, not a panel whose contents are swapped, so `tablist`
+           would promise panel-switching semantics this widget doesn't have. The
+           full Tabs pattern also requires roving `tabindex` and Left/Right arrow
+           handling to be correct, and this design system has no arrow-key
+           precedent to build that on — claiming the role without the keyboard
+           contract would be worse than not claiming it. `aria-pressed` on a set
+           of filter buttons is already a well-supported pattern; what was
+           missing was only the group relationship, which `role="group"` plus
+           `aria-label` supplies. Do not change `aria-pressed` to `aria-selected`:
+           tests/e2e/home.spec.ts asserts on it. */
+      }
+      <div
+        class="fl__tabs"
+        data-featured-tabs
+        hidden
+        role="group"
+        aria-label="Filter featured products by division"
+      >
+        {
+          TABS.map((tab, i) => (
+            <button
+              type="button"
+              class="fl__tab"
+              data-tab={tab.id}
+              aria-pressed={i === 0 ? 'true' : 'false'}
+            >
+              {tab.label}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    <ul class="fl__grid">
+      {
+        cards.map((card) => (
+          <li data-division={card.divisionId}>
+            <a class="fl__card" href={`/products/${card.slug}`}>
+              <span class="fl__media">
+                {card.image && (
+                  /* Tiered like CategoryGrid's, but not by the grid's own breakpoints:
+                     there the column count sets the cap, here `.fl__media`'s
+                     `max-height: 140px` against each photo's aspect ratio does, so the
+                     real cap barely moves between the 1- and 2-column layouts (218px vs
+                     287px) while the 4-column tiers above 1100px converge on 220px. Two
+                     tiers cover the measured range: up to 420px stays near the 1-column
+                     218px cap (230px, rounding up), 421-1100px covers the 2-column
+                     287px cap, and above that the flat 220px the 4-column layout needs.
+                     580 tops `widths` because 290 CSS px at DPR 2 is 580; Astro clamps
+                     every candidate to the source, so the curated PNGs (505-623px
+                     native) are never upscaled by asking. */
+                  <Image
+                    src={card.image}
+                    alt=""
+                    widths={[220, 320, 460, 580]}
+                    sizes="(max-width: 420px) 230px, (max-width: 1100px) 290px, 220px"
+                    loading="lazy"
+                  />
+                )}
+              </span>
+              <span class="fl__body">
+                <span class="fl__cat">{card.categoryName}</span>
+                <span class="fl__name">{card.name}</span>
+                <span class="fl__cta">View product ›</span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .fl {
+    background: var(--color-panel);
+    border-top: 1px solid var(--color-line);
+    padding: 76px 0;
+  }
+
+  .fl__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+
+  .fl__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3.6vw, 40px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  /* Three buttons at min-height:44px / padding:0 20px / 11px 700 0.14em
+     tracking measure 313.8px as a single row — 334px from the left edge of
+     .wrap, 14px past a 320px viewport. `flex-wrap: wrap` lets the row break
+     onto a second line instead of overflowing; shrinking the buttons instead
+     was rejected because the 44px min-height is an accessibility floor, not
+     a layout convenience. No explicit justify-content: the default
+     flex-start keeps a short second row left-aligned under the first
+     instead of spreading it out — .fl__head's own space-between only spaces
+     .fl__title against this container as a whole, not the buttons inside it. */
+  .fl__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .fl__tab {
+    min-height: 44px;
+    padding: 0 20px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-grey-lt);
+    border: 1px solid var(--color-line);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .fl__tab[aria-pressed='true'] {
+    background: var(--color-red-fill);
+    border-color: var(--color-red-fill);
+    color: #fff;
+  }
+
+  .fl__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .fl__card {
+    display: block;
+    height: 100%;
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    text-decoration: none;
+    transition: border-color var(--dur-base) var(--ease-out);
+  }
+
+  .fl__card:hover,
+  .fl__card:focus-visible {
+    border-color: var(--color-red);
+  }
+
+  .fl__media {
+    height: 178px;
+    background: var(--color-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fl__media :global(img) {
+    max-height: 140px;
+    max-width: 78%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .fl__body {
+    display: block;
+    padding: 16px;
+  }
+
+  .fl__cat {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  .fl__name {
+    display: block;
+    margin-top: 7px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .fl__cta {
+    display: block;
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-red-light);
+  }
+
+  @media (max-width: 1100px) {
+    .fl__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .fl__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  /*
+   * Division tabs.
+   *
+   * THIS SHIPS INLINE AND COSTS A CSP HASH — it took the policy from 7 to 8.
+   * Astro extracts a <script> to an external /_astro/ chunk only when the
+   * component is shared across pages, and this section renders on `/` alone.
+   * Any edit below needs `npm run csp` re-run and `vercel.json` committed with
+   * it; a stale hash does not fail the build, it ships a page that never
+   * hydrates.
+   *
+   * Revealing the tab row from here, rather than shipping it visible and
+   * disabling it, is what makes the no-JS fallback honest: without this script
+   * the visitor gets all eight products and no control, instead of a filter
+   * that does nothing.
+   */
+  const section = document.querySelector<HTMLElement>('[data-featured]');
+  const tabs = section?.querySelector<HTMLElement>('[data-featured-tabs]');
+
+  if (section && tabs) {
+    tabs.hidden = false;
+    const buttons = [...tabs.querySelectorAll<HTMLButtonElement>('.fl__tab')];
+    const items = [...section.querySelectorAll<HTMLLIElement>('.fl__grid li')];
+
+    tabs.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('.fl__tab');
+      if (!button) return;
+      const wanted = button.dataset.tab;
+      for (const other of buttons) {
+        other.setAttribute('aria-pressed', String(other === button));
+      }
+      for (const item of items) {
+        item.hidden = wanted !== 'all' && item.dataset.division !== wanted;
+      }
+    });
+  }
+</script>
