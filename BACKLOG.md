@@ -64,7 +64,7 @@ see `handoff.md`). Priorities are P0 highest.
       visible change to the approved design (`design/direction-b-forge.html`
       shows three fields, the form now has four) and a person should sign it off.
 
-- [ ] **Footer social icons link nowhere.** Three `href="#"` on all 97 pages
+- [ ] **Footer social icons link nowhere.** Three `href="#"` on every page
       (`Footer.astro`). Either the client supplies URLs or the icons come out.
       Absent the URLs, **remove them** — a link that goes nowhere is worse than
       no icon — and leave `sameAs` correspondingly absent from
@@ -74,12 +74,12 @@ see `handoff.md`). Priorities are P0 highest.
       Done below.
 
 - [!] **Set the real domain.** Blocked: client has not confirmed one.
-      `spartan.example` is RFC 2606 reserved and can never resolve, so all 96
-      canonicals, every OG URL and the whole sitemap point at nothing.
+      `spartan.example` is RFC 2606 reserved and can never resolve, so every
+      canonical, every OG URL and the whole sitemap point at nothing.
       **Now a one-line edit** to `site` in `astro.config.mjs` — robots.txt
       follows from it and can no longer be left behind.
 - [!] **Real contact details.** Blocked: client. `+971 00 000 0000` renders as a
-      live `tel:` link in the header of all 97 pages; `sales@spartan.example` is
+      live `tel:` link in the header of every page; `sales@spartan.example` is
       a dead mailbox. `src/data/site.json`.
 - [ ] **Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.** The
       table, the policies and the code are all in place; the deployment simply
@@ -122,9 +122,13 @@ see `handoff.md`). Priorities are P0 highest.
 ## P2 — quality
 
 - [ ] **Product pages are thin.** The product schema has **no description field
-      at all**; all 72 are name + specs (median 3 spec rows). The richest page on
+      at all**; every product is name + specs. The richest page on
       the site has 209 words in `<main>`; most have far less, and generated meta
       descriptions are near-identical in shape across the catalogue.
+      **Partly addressed for Electricals, and only there.** The datasheet
+      integration took that division from ~24 spec rows to 169, so its pages now
+      carry real electrical tables. Safety is untouched and is the thin half —
+      re-audit against it, not against the catalogue average.
       **This is not licence to write product copy.** The legitimate moves are
       structural: category-level application text, better cross-linking, and
       surfacing the related-products strip. Per-product prose needs the client.
@@ -138,13 +142,21 @@ see `handoff.md`). Priorities are P0 highest.
       `textContent` reads `Home and Industrial Solutions.` Verified against
       `dist/client/index.html`.
 
-- [!] **Higher-resolution hero artwork.** Blocked: client. 1168×784 / 784×1168
-      is the largest version of the product-cluster composition that exists —
-      it is not in the brochure (page 1 has no embedded raster) and the video
-      frames were the same size. Above ~1168px the still is scaled up by
-      `object-fit: cover`, and past ~2300px that exceeds the 2× ceiling this
-      project holds elsewhere. `<picture>` and `srcset` are already in place, so
-      a better render drops in with no markup change.
+- [x] **Higher-resolution hero artwork.** Unblocked and done — the client
+      supplied it. This item was written against the 1168×784 / 784×1168 still
+      cut from the video's own frames, and said a better render would "drop in
+      with no markup change". It did not quite: the supplied files are
+      `hero-range-desktop.png` (1672×941) and `hero-range-mobile.png`
+      (941×1672), and they carry the logo, the Arabic wordmark and the headline
+      **inside the image**, so the component stopped rendering an HTML headline
+      and the `<h1>` became `sr-only`. See `handoff.md` §7.
+
+      Two consequences worth knowing before touching the hero. The artwork is
+      never cropped — it sets its own height, which is what makes the CTA
+      offsets percentages of the picture rather than of the viewport. And it is
+      **not** bedded on flat black the way the old still was, so the section
+      cannot simply be painted to match: `.hero__frame::after` fades three
+      exposed edges instead. Both are documented at length in the component.
 
 - [!] **Real product photography.** Blocked: client. Native sizes are 100–440px,
       which is the ceiling on the design and the cause of the one Lighthouse 96.
