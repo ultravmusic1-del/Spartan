@@ -100,8 +100,18 @@ const TABS = [
     color: #fff;
   }
 
+  /* Three buttons at min-height:44px / padding:0 20px / 11px 700 0.14em
+     tracking measure 313.8px as a single row — 334px from the left edge of
+     .wrap, 14px past a 320px viewport. `flex-wrap: wrap` lets the row break
+     onto a second line instead of overflowing; shrinking the buttons instead
+     was rejected because the 44px min-height is an accessibility floor, not
+     a layout convenience. No explicit justify-content: the default
+     flex-start keeps a short second row left-aligned under the first
+     instead of spreading it out — .fl__head's own space-between only spaces
+     .fl__title against this container as a whole, not the buttons inside it. */
   .fl__tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
