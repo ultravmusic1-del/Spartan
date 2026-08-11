@@ -64,7 +64,23 @@ const divisionNames: Record<string, string> = {
               <span class="cg__media">
                 {
                   tile.image ? (
-                    <Image src={tile.image} alt="" widths={[160, 240]} sizes="160px" loading="lazy" />
+                    <>
+                      {/* `sizes` is tiered because the grid is, and a flat value was
+                          wrong at every width: 5 columns cap the image at 184px, 3
+                          columns at 276px, 2 columns at 138px. The old flat `160px`
+                          under-fetched the widest case by more than half at DPR 2 — a
+                          visibly soft tile — while over-fetching on phones. 560 tops
+                          the `widths` ladder because 276 CSS px at DPR 2 is 552; Astro
+                          clamps each candidate to the source, so the 100-440px
+                          brochure photography cannot be upscaled by asking. */}
+                      <Image
+                        src={tile.image}
+                        alt=""
+                        widths={[160, 240, 320, 560]}
+                        sizes="(max-width: 640px) 138px, (max-width: 1100px) 276px, 184px"
+                        loading="lazy"
+                      />
+                    </>
                   ) : (
                     <span class="cg__empty">Range expanding</span>
                   )
@@ -156,6 +172,10 @@ const divisionNames: Record<string, string> = {
     transition: border-color var(--dur-base) var(--ease-out);
   }
 
+  /* Not the focus indicator — `global.css` already sets a site-wide
+     `:focus-visible { outline: 2px solid var(--color-red); outline-offset:
+     3px }` that nothing here resets, so keyboard focus is always visible.
+     This border swap is a secondary cue layered on top of it, matching hover. */
   .cg__card:hover,
   .cg__card:focus-visible {
     border-color: var(--color-red);
@@ -202,6 +222,9 @@ const divisionNames: Record<string, string> = {
     color: #fff;
   }
 
+  /* --color-grey is annotated "dark surfaces only" because it fails AA on
+     --color-paper (3.17:1). This is --color-card, not --color-paper — measured
+     at 5.32:1 here, clearing the 4.5:1 floor — so the token is used correctly. */
   .cg__meta {
     display: flex;
     justify-content: space-between;
