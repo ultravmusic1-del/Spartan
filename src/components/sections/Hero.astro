@@ -336,12 +336,25 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 
      The stage also goes back into flow. Absolutely positioned it could not push
      the hero taller, so `overflow: hidden` cut up to 56% off the helmet between
-     480px and 900px — at 768px it rendered as an unidentifiable dome. */
+     480px and 900px — at 768px it rendered as an unidentifiable dome.
+
+     136px of top padding, not 96. The header is `position: absolute` —
+     Header.astro's own header comment states the contract: the utility bar
+     sits at `top: 0` and the nav at `top: 44px` with `height: 84px`, so it
+     occupies y 0-128 and "the hero's own padding-top clears them" is the
+     only thing that does, because neither can sit in normal flow without
+     dropping to the bottom of a flex/grid hero. 136px clears that 128px box
+     with 8px and the visible logo by 31px. This was latent while the stage
+     rendered first and pushed the copy down past the header for free; moving
+     the stage below the copy is what exposed it — measured, the badge
+     collided with the header logo at 96px on every width from 375 to 1024
+     except 360, which escaped only because its headline happened to wrap
+     differently. */
   @media (max-width: 1080px) {
     .hero {
       display: block;
       min-height: 0;
-      padding: 96px 0 64px;
+      padding: 136px 0 64px;
     }
 
     .hero__stage {
