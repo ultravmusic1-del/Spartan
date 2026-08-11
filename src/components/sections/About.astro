@@ -95,8 +95,9 @@ const image = loader ? (await loader()).default : undefined;
 <style>
   .about {
     position: relative;
-    padding: 104px 0;
+    padding: 76px 0;
     background: var(--color-panel);
+    border-top: 1px solid var(--color-line);
     overflow: hidden;
   }
 
@@ -111,8 +112,13 @@ const image = loader ? (await loader()).default : undefined;
 
   .about__title {
     margin: 20px 0 22px;
-    font-size: clamp(32px, 4vw, 50px);
-    letter-spacing: -0.028em;
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 46px);
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+    color: #fff;
   }
 
   .about__body {
@@ -154,7 +160,7 @@ const image = loader ? (await loader()).default : undefined;
 
   .about__stat-label {
     font-size: 11px;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     /* Dark surface only — 6.13:1 on --color-panel. */
     color: var(--color-grey);
@@ -180,10 +186,6 @@ const image = loader ? (await loader()).default : undefined;
   }
 
   @media (max-width: 820px) {
-    .about {
-      padding: 80px 0;
-    }
-
     .about__inner {
       grid-template-columns: 1fr;
       gap: 48px;
