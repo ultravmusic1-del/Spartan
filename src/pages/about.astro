@@ -261,7 +261,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     order: -1;
     font-family: var(--font-display);
     font-size: 27px;
-    font-weight: 800;
+    font-weight: var(--fw-section);
     letter-spacing: -0.03em;
     line-height: 1.1;
     color: #fff;
@@ -328,7 +328,12 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
      Anything smaller in red on this surface uses --color-red-deep. */
   .dv__name {
     font-size: 21px;
-    color: var(--color-red);
+    /* red-deep. This one is the subtlest of the three: it declares no weight at
+       all, so it inherited global.css's h1-h4 700 and that inherited bold was
+       the only thing making 21px "large". Lowering the global default to 600
+       reclassified it with nothing visible changing in this rule. Brand red is
+       4.30:1 on the white card beneath. See handoff.md §3. */
+    color: var(--color-red-deep);
   }
 
   /* --color-grey is 3.17:1 on light and must never be used here. */
@@ -343,7 +348,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     margin-bottom: 20px;
     font-family: var(--font-display);
     font-size: 11px;
-    font-weight: 700;
+    font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     /* 13px-equivalent red on a light surface, so the deep red: 8.40:1. */

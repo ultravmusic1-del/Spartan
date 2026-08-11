@@ -20,8 +20,34 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** The files this gate applies to. handoff.md is deliberately absent. */
-export const INSTRUCTIONAL = ['CLAUDE.md', 'AGENTS.md', 'docs/TRAPS.md', '.claude/commands/improve.md'];
+/**
+ * The files this gate applies to. handoff.md is deliberately absent.
+ *
+ * README.md was absent too until 2026-08-11, and that omission cost exactly
+ * what this file was written to prevent: its hero section went on describing
+ * `hero-range-desktop.png` as the live hero across two rewrites, with the
+ * component pointed at a different file the whole time. README.md is the door
+ * CLAUDE.md sends you through for "how do I run it?" — it is instructional by
+ * any reading, and it names more repo paths than the rest of this list
+ * combined.
+ *
+ * Admitting it cost one rewording, and the trade is worth stating. README's
+ * launch checklist explains that `public/robots.txt` used to hard-code the
+ * domain and is now gone — a true sentence about a path that must not resolve,
+ * which is precisely the case handoff.md is exempt for. It was reworded to name
+ * the dead file by role rather than as a code path. That is not the record
+ * being bent to stay green: an instructional document formatting a deleted file
+ * as a live repo path is telling a reader to go and open it. Where a sentence
+ * genuinely needs to point at something that no longer exists, it belongs in
+ * handoff.md, which is why the exemption is a file and not a syntax.
+ */
+export const INSTRUCTIONAL = [
+  'CLAUDE.md',
+  'AGENTS.md',
+  'README.md',
+  'docs/TRAPS.md',
+  '.claude/commands/improve.md',
+];
 
 /** A token starting with one of these is a repo path worth checking. */
 const DIRS = new Set(['src', 'tools', 'tests', 'docs', 'public', 'design', '.github', '.claude']);

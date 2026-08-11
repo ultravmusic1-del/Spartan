@@ -1,0 +1,103 @@
+import { expect, test } from '@playwright/test';
+
+/**
+ * The first gate for rule 4.
+ *
+ * `handoff.md` §"Verify" says it plainly: rule 4 has no static gate, nothing in
+ * the repository resolves a rendered font size against its background, and a
+ * green axe run is a floor rather than a certificate — axe missed `.en td` at
+ * 4.48:1 and a serious Label in Name failure on all 72 product cards.
+ *
+ * WHY THIS EXISTS NOW. The weight scale (see `src/styles/tokens.css`) lowered
+ * the global `h1-h4` default from 700 to 600. WCAG counts text as *large* — and
+ * therefore subject to the 3:1 bar rather than 4.5:1 — at >=24px, OR at
+ * >=18.66px when **bold**. Three red headings on white sat in that second band
+ * and cleared 3:1 at 4.30:1 while failing 4.5:1, so they passed only because of
+ * a weight declared in a different file. Lowering it broke all three at once
+ * and nothing would have said so.
+ *
+ * WHAT THIS IS NOT. It is not a general WCAG sweep. It resolves a background by
+ * walking up the ancestor chain for the first non-transparent `background-color`
+ * — which is right for these flat surfaces and wrong over an image or a
+ * gradient. It only checks the selectors it is given. A general sweep is a
+ * larger piece of work and is deliberately not attempted here; the value of
+ * this one is that adding a selector is a single line, and that a weight change
+ * can no longer silently move an element across the large-text boundary.
+ *
+ * The division-page headers are the known case it CANNOT cover: their nav links
+ * pass only because of a scrim over a photograph (6.04:1 composited, 1.11:1
+ * against the raw image). That needs pixel sampling, not computed style, and is
+ * queued separately in `BACKLOG.md`.
+ */
+
+/** Elements whose contrast depends on the weight scale holding. */
+const CASES = [
+  { path: '/', selector: '.card__title', what: 'ServiceCards card title (19px red on white)' },
+  { path: '/why-spartan', selector: '.rs__title', what: 'why-spartan reason title (19px red on white)' },
+  { path: '/about', selector: '.dv__name', what: 'about division name (21px, inherits h3 weight)' },
+  { path: '/', selector: '.hero__title span', what: 'hero accent (large display, 3:1 bar)' },
+  { path: '/', selector: '.eyebrow', what: 'eyebrow micro label on dark' },
+];
+
+/** sRGB relative luminance, WCAG 2.x §relative-luminance. */
+function luminance([r, g, b]: number[]): number {
+  const f = (v: number) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+
+function ratio(fg: number[], bg: number[]): number {
+  const [a, b] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
+  return (a + 0.05) / (b + 0.05);
+}
+
+const parseRgb = (s: string): number[] =>
+  (s.match(/[\d.]+/g) ?? ['0', '0', '0']).slice(0, 3).map(Number);
+
+for (const { path, selector, what } of CASES) {
+  test(`${what} clears its WCAG bar`, async ({ page }) => {
+    await page.goto(path);
+
+    const el = page.locator(selector).first();
+    await expect(el, `${selector} must exist on ${path} — a renamed class would
+      otherwise make this gate pass by testing nothing`).toBeVisible();
+
+    const measured = await el.evaluate((node) => {
+      const s = getComputedStyle(node as Element);
+      // Walk up for the first painted background. `transparent` and
+      // `rgba(…, 0)` both mean "keep looking".
+      let bg = 'rgba(0, 0, 0, 0)';
+      for (let n: Element | null = node as Element; n; n = n.parentElement) {
+        const c = getComputedStyle(n).backgroundColor;
+        if (c && c !== 'transparent' && !/,\s*0\s*\)$/.test(c)) {
+          bg = c;
+          break;
+        }
+      }
+      return {
+        color: s.color,
+        background: bg,
+        fontSize: parseFloat(s.fontSize),
+        fontWeight: parseInt(s.fontWeight, 10),
+      };
+    });
+
+    // WCAG 2.1 §1.4.3: large is >=24px, or >=18.66px AND bold (>=700).
+    // Bold alone does not make text large, and size alone does not either
+    // below 24px — this repo has shipped a defect from each half of that.
+    const isLarge =
+      measured.fontSize >= 24 || (measured.fontSize >= 18.66 && measured.fontWeight >= 700);
+    const bar = isLarge ? 3 : 4.5;
+    const actual = ratio(parseRgb(measured.color), parseRgb(measured.background));
+
+    expect(
+      actual,
+      `${what}\n` +
+        `  ${measured.fontSize}px / weight ${measured.fontWeight} => ` +
+        `${isLarge ? 'LARGE' : 'NORMAL'} text, bar ${bar}:1\n` +
+        `  ${measured.color} on ${measured.background} = ${actual.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(bar);
+  });
+}

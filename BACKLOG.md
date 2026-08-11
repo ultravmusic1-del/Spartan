@@ -65,11 +65,23 @@ see `handoff.md`). Priorities are P0 highest.
       person at the client to agree. A real product photograph drops in with no
       markup change. `src/assets/hero/helmet-hero.png`.
 
-- [ ] **Finish the landing redesign's documentation.** The implementation is
-      complete and green; the docs are not. Four traps found during the work are
-      recorded in `handoff.md` §11 but not in `docs/TRAPS.md`, `README.md` still
-      describes the pre-redesign home page, and Lighthouse has not been re-run
-      against the new hero. See §11 "What is NOT done" for the full list.
+- [x] **Finish the landing redesign's documentation.** Done — see Done below.
+      Lighthouse was re-run and corrected this item's own premise: all three
+      mobile rows had moved, not only the home one.
+
+- [x] **Decide whether the mono's Lighthouse point stands.** **Decided
+      2026-08-11: keep the mono.** The register is worth the point. Home stays
+      at 94 and the product page at 96 by choice, not by oversight — so if a
+      future session finds those numbers and reaches for the obvious saving,
+      **this is the decision it would be reversing.** The subset that got it
+      from 39.5 KB to 23.1 KB stands; do not re-widen it. `handoff.md` §12.
+
+- [ ] **Sign off the weight scale against the approved design.** Still open, and
+      it is the half of that item a person still has to rule on: the scale took
+      every heading off the 700/800 that `design/direction-b-forge.html`
+      specifies. Same category as the Name field below and the removed footer
+      email — a visible, deliberate departure from the signed-off direction that
+      needs a person at the client to agree. Nothing is blocked on it.
 
 - [ ] **Confirm the Name field added to the home CTA.** Wiring the CTA required
       one: `enquiryPayloadSchema` requires a name and the form collected only
@@ -128,6 +140,19 @@ see `handoff.md`). Priorities are P0 highest.
       see Done below.
 
 - [x] **Add CI.** Done — see Done below.
+
+- [x] **`README.md` is not covered by the doc-paths gate.** Done — see Done
+      below. It surfaced exactly one pre-existing reference.
+
+- [ ] **The division headers pass contrast only because of their scrim.** On
+      `/electricals` and `/safety` the composited worst-case nav link measures
+      6.04:1, but against the raw pre-scrim photograph it is **1.11:1**.
+      Swapping a division hero photograph is therefore a contrast regression
+      waiting to happen with nothing that would catch it — `Header.astro`
+      carries a comment and there is no test. Recorded in `handoff.md` §11 as
+      open and never queued here, which is why it is being added now rather
+      than found again later. Either gate it or make the scrim's floor
+      independent of the image beneath it.
 
 - [ ] **Analytics and error monitoring.** Zero references anywhere in `src/`.
       A lead-generation site with no measurement of the funnel it exists to
@@ -191,6 +216,140 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-11** — A weight scale for the type system, and JetBrains Mono for
+  data. Spec:
+  `docs/superpowers/specs/2026-08-11-typography-weight-and-mono-design.md`;
+  the reasoning and every measurement are in `handoff.md` §12.
+
+  Weights are tokens now and the scale runs weight down as size runs up: 450 /
+  500 / 550 / 600 / 650 from the 404 numeral to the 11px labels. 78 rules
+  converted by codemod. Seven were left alone because they already sat lighter
+  than their band and the token would have made them **heavier** — the codemod
+  only ever lowers, and the scale is a ceiling per band rather than a mandate.
+
+  *Worth knowing:* the global `h1-h4 { font-weight: 700 }` was load-bearing for
+  accessibility and nothing said so. WCAG counts >=18.66px **bold** as large
+  text, so three red headings on white at 4.30:1 were clearing the 3:1 bar on a
+  weight declared in a different file. Lowering it re-tested them against 4.5:1,
+  which they fail. They now use `--color-red-deep`, and `.dv__name` is the one a
+  diff review would have missed — it declares no weight at all, so nothing in
+  its own rule changed. This shipped with `tests/e2e/contrast.spec.ts`, the
+  **first gate for rule 4**; it is a named list, not a sweep, so add to it when
+  you add red text on a light surface.
+
+  *Worth knowing:* three assumptions died to measurement, in order. The home
+  page would pay nothing for the mono — false, `Spotlight` renders a full spec
+  table on `/`, and the full 39.5 KB file cost 4 points (95 → 91).
+  `font-display: optional` would fix it — false, it changed nothing across three
+  runs, because font-display governs painting and the cost is the fetch.
+  Subsetting the characters was the lever — only partly: clipping the weight
+  axis to 400-600 saved more than the 83-character subset did, 31.4 KB → 23.1 KB.
+
+  Shipped at 23.1 KB and **home is 94, not 95** — one point, and one on the
+  product page too. That misses the spec's own acceptance criterion, so it is
+  recorded and raised as a P0 decision above rather than rounded away.
+
+  *Worth knowing:* a subset font renders tofu rather than erroring, so
+  `tools/subset-mono.test.ts` asserts the catalogue never uses a character
+  outside `COVERAGE` and fails naming it — proved by removing one:
+  `"Ω" (U+03A9) from premium-network-cable → "Impedance"`. And the `@font-face`
+  range has to describe the *file*, not the family: the committed file is
+  clipped to `400 600`, and advertising the native `100 800` would make a later
+  `font-weight: 700` clamp to 600 and read as a specificity bug.
+
+  verify 15/15, 144 unit, 167 e2e.
+
+- **2026-08-11** — Pointed the doc-paths gate at `README.md`. It had never
+  covered it: `INSTRUCTIONAL` listed `CLAUDE.md`, `AGENTS.md`, `docs/TRAPS.md`
+  and `.claude/commands/improve.md`, while `README.md` — the file `CLAUDE.md`
+  sends you to for "how do I run it?" — named more repo paths than the rest of
+  that list combined and had none of them checked. The cost was the item
+  immediately below this one: its hero section described
+  `hero-range-desktop.png` as the live hero across two rewrites while the
+  component pointed somewhere else, and the gate built to catch precisely that
+  was not aimed at it. Coverage went from 58 references to 96.
+
+  Proved against a planted violation before and after: a bad path in
+  `README.md` is caught, and the file is clean once restored.
+
+  *Worth knowing:* it surfaced one real reference, and it is the interesting
+  case rather than a nuisance. The launch checklist explains that
+  `public/robots.txt` used to hard-code the domain and **is now gone** — a true
+  sentence about a path that must not resolve, which is exactly what
+  `handoff.md` is exempted for. It was reworded to name the dead file by role
+  (a static `robots.txt` under `public/`) rather than as a code path. That is
+  not the record bending to stay green: an *instructional* document formatting
+  a deleted file as a live repo path is telling a reader to go open it. Where a
+  sentence genuinely must point at something that no longer exists, it belongs
+  in `handoff.md` — which is why the exemption is a file and not a syntax. The
+  reasoning is on `INSTRUCTIONAL` itself.
+
+  *Worth knowing:* the list is now pinned by a test. `extractPaths` and
+  `resolves` were both correct and well covered the whole time — the defect was
+  never in the logic, it was in what the logic was pointed at, and nothing
+  asserted that. `tools/doc-paths.test.ts` now pins the membership both ways:
+  `README.md` in, `handoff.md` out. 2 unit tests added; verify 15/15, 141 unit,
+  157 e2e.
+
+- **2026-08-11** — Finished the landing redesign's documentation. The
+  implementation had been green since the merge; the guidance had not caught up
+  with it.
+
+  The four traps found during the redesign are now entries in `docs/TRAPS.md`
+  rather than living only in `handoff.md` §11: that an Astro `<script>` costs a
+  CSP hash based on how many pages render the component and not on how the tag
+  is written; that `global.css`'s blanket reduced-motion rule means no component
+  here can offer a motion *opt-in*, only cancel its own animations; that
+  `test.use({ reducedMotion: 'reduce' })` typechecks and is silently discarded
+  on Playwright 1.62.1; and that the two empty categories must never render a
+  product image.
+
+  A fifth was found while doing it. `docs/TRAPS.md` still carried a "hero copy's
+  top anchoring" entry describing the bright mass of a static still — a hero two
+  rewrites dead — in the section headed "looks like a defect, is not". Guidance
+  that is confidently wrong about a deleted file is worse than no guidance, so
+  it was replaced with the two things that *are* load-bearing about the current
+  hero: the 1080px breakpoint, and the 136px of top padding that clears the
+  absolutely positioned header.
+
+  `README.md`'s hero section described `Hero.astro` rendering the client artwork
+  under an `sr-only` h1 and a `PORTRAIT` media constant, none of which survives.
+  It is now two sections — the helmet hero as built, carrying the AI-generation
+  flag and the sign-off it still needs, and the two client artworks as
+  retained-but-unused.
+
+  *Worth knowing:* **the Lighthouse re-run corrected the item that asked for
+  it.** Both this backlog and `handoff.md` said the home row was stale and the
+  two catalogue rows were unaffected. That was true of a *hero* change and wrong
+  about this one — the redesign restyled `Header` and `Footer`, which render on
+  every page. Measured on the current build, Lighthouse 12.8.2, five mobile runs
+  on `/` and three on each other page: home 95–97 → **95**, catalogue 99 →
+  **96**, product 98 → **97**. Desktop 100 across all three; CLS 0.000 and TBT
+  0 ms everywhere. Every run of a given page scored identically, so the table is
+  now flat numbers rather than ranges. **If you change site chrome, re-run all
+  three pages, not the one you touched.**
+
+  *Worth knowing:* the home page's LCP is the helmet, and the helmet is not what
+  costs it. Of a 2.79 s mobile LCP, **0.12 s is spent loading the image** — an
+  18 KB AVIF — against 1.89 s of render delay behind two render-blocking
+  stylesheets (29.5 KB + 21.9 KB, 450 ms). Shrinking the hero art would buy
+  almost nothing. `build.inlineStylesheets: 'always'` is still the lever and is
+  still not taken.
+
+  *Worth knowing:* `image-delivery-insight` reports the 560px helmet variant as
+  oversized for a "266×266 displayed" box. It compares CSS pixels and ignores
+  the mobile preset's 1.75 DPR — 266 × 1.75 = 466, and the next variant down is
+  420. 560 is the correct pick, the insight is unscored, and narrowing `sizes`
+  to satisfy it would ship a soft hero on every phone.
+
+  *Worth knowing:* the first attempt wrote `path:line` references into
+  `docs/TRAPS.md` and the doc-paths gate failed all four. That is the gate
+  working: `tools/doc-paths.mjs` resolves a whole token as a path, and the file's
+  existing convention is bare paths. A line number in a document gated only on
+  path *existence* would rot with nothing noticing — which is the exact failure
+  that gate was built for. The references name the describe block or the
+  assertion instead. verify 15/15, 139 unit, 157 e2e.
 
 - **2026-08-09** — Replaced the scroll-scrubbed hero film with a static still,
   at the client's request. The 240svh scroll track, the sticky stage, the
