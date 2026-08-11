@@ -1345,14 +1345,16 @@ const TABS = [
 Run: `npx astro check` then `npx astro build`
 Expected: 0 errors; build clean.
 
-This component's `<script>` is also single-page, so it is inlined too. Run `npm run csp` and expect **8** hashes, up from 7 after Task 2. Confirm `node tools/verify.mjs` reports the CSP gate `ok`, then commit the policy alongside the component:
+This component's `<script>` is also single-page and will be inlined — but **not yet**. Nothing imports the component until Task 8, so its script is not in the build and `npm run csp` still reports **7**. That is correct here; do not import the component early to force the hash to appear.
 
 ```bash
-git add src/components/sections/FeaturedLines.astro vercel.json
+git add src/components/sections/FeaturedLines.astro
 git commit -m "feat(home): add the tabbed featured lines strip"
 ```
 
 Its `<script>` comment must say the script is inlined and costs a hash — not that it is external.
+
+> **This moves the 8th hash to Task 8.** Wiring `FeaturedLines` into `src/pages/index.astro` is what puts its script into the build, so `npm run csp` and the `vercel.json` commit belong there. A component can therefore change the CSP without its own file being edited — which is the trap Task 14 records.
 
 ---
 
@@ -1566,10 +1568,19 @@ The catalogue leads now — the ticker hands straight into the shelf it names. T
 Run: `npx astro build`
 Expected: clean, **110 pages** — this task adds no routes
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Regenerate the CSP — this task is what adds the 8th hash**
+
+Importing `FeaturedLines` here is what puts its inline script into the build. Its own task could not add the hash, because nothing rendered it.
+
+Run: `npm run csp`
+Expected: **8** script hashes, up from 7.
+
+Run: `node tools/verify.mjs` and confirm the **"CSP covers every inline script"** gate reports `ok`.
+
+- [ ] **Step 4: Commit — `vercel.json` goes with it**
 
 ```bash
-git add src/pages/index.astro
+git add src/pages/index.astro vercel.json
 git commit -m "feat(home): assemble the new landing order"
 ```
 
