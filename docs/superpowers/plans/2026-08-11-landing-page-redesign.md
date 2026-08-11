@@ -4,7 +4,11 @@
 
 **Goal:** Rebuild the Spartan home page to the "Spartan Landing.dc.html" mockup — a helmet-centred animated hero, a scrolling category ticker, a 15-card category grid and a tabbed Featured Lines strip — using the project's own high-resolution assets and its real catalogue data, while keeping all seven nav routes and restyling the five retained sections to match.
 
-**Architecture:** The mockup is a Claude Design canvas artifact (`<x-dc>` template + `DCLogic` class, rendered by `support.js`). None of that runtime ports. Every `{{ binding }}`, `sc-for` and `style-hover` is re-authored as an Astro component with scoped CSS. All data comes from `src/lib/catalog.ts` — the mockup's hardcoded 15-category array carries 72-era counts and wrong slugs and must not be copied. Interactivity is deliberately split: the Featured Lines tabs and hero parallax use Astro's bundled `<script>` (emitted as external `/_astro/*.js`, so **no new CSP hash**), and the ticker's pause control is CSS-only via `:has()`, so it works with JavaScript disabled.
+**Architecture:** The mockup is a Claude Design canvas artifact (`<x-dc>` template + `DCLogic` class, rendered by `support.js`). None of that runtime ports. Every `{{ binding }}`, `sc-for` and `style-hover` is re-authored as an Astro component with scoped CSS. All data comes from `src/lib/catalog.ts` — the mockup's hardcoded 15-category array carries 72-era counts and wrong slugs and must not be copied. Interactivity is deliberately split: the Featured Lines tabs and hero parallax use Astro `<script>` tags, and the ticker's pause control is CSS-only via `:has()`, so it works with JavaScript disabled.
+
+> **Correction, found during Task 2.** This plan asserted that a plain (non-`is:inline`) Astro `<script>` is always emitted as an external `/_astro/*.js` file and therefore adds no CSP hash. **That is wrong.** Astro extracts a script to an external chunk only when it is *shared across pages*; a script used on exactly one page is inlined into that page's HTML. Verified in the built output: `EnquiryCta`'s script is external because it renders on `/` and `/contact`, while the hero's is inline because the hero renders on `/` alone.
+>
+> This is not a gate violation. `CLAUDE.md` states the real rule — *adding, editing or removing an inline script needs `npm run csp` re-run and `vercel.json` committed* — and the verify gate checks that hashes **match the build**, not that the count is unchanged. Expect the policy to go **6 → 7 hashes at Task 2** (hero parallax) and **7 → 8 at Task 5** (Featured Lines tabs). Both are single-page scripts. Regenerate and commit `vercel.json` with the component that caused it, never in a later task — a stale hash does not fail a build, it ships a page that never hydrates.
 
 **Tech Stack:** Astro 7, TypeScript strict, scoped component CSS over `src/styles/tokens.css`, Preact islands (existing ones untouched), Vitest, Playwright + axe.
 
@@ -602,17 +606,26 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 Run: `npx astro check && npx astro build`
 Expected: 0 errors; build clean
 
-- [ ] **Step 4: Confirm no new inline-script hash was introduced**
+- [ ] **Step 4: Regenerate the CSP — this script IS inlined**
 
-Run: `npm run csp && git diff --stat vercel.json`
-Expected: no change to `vercel.json`. If it changed, the script was emitted inline — stop and fix before committing.
+Run: `npm run csp`
+Expected: **7** script hashes, up from 6. See the correction under Architecture — the hero renders on `/` alone, so Astro inlines its script rather than extracting it.
 
-- [ ] **Step 5: Commit**
+Run: `git diff vercel.json`
+Expected: exactly one added hash and nothing else. If anything else moved, stop.
+
+Then run `node tools/verify.mjs` and confirm the **"CSP covers every inline script"** gate reports `ok`. That gate compares the policy against the build; a failure here means they genuinely disagree.
+
+The `<script>` comment must state this honestly rather than claiming the script is external.
+
+- [ ] **Step 5: Commit — `vercel.json` goes in the same commit**
 
 ```bash
-git add src/components/sections/Hero.astro src/assets/hero/helmet-hero.png
+git add src/components/sections/Hero.astro src/assets/hero/helmet-hero.png vercel.json
 git commit -m "feat(hero): rebuild around the floating helmet"
 ```
+
+Never split the policy from the component that changed it. A stale hash does not fail a build — it ships a page that never hydrates.
 
 ---
 
@@ -1327,15 +1340,19 @@ const TABS = [
 </script>
 ```
 
-- [ ] **Step 2: Build and commit**
+- [ ] **Step 2: Build, regenerate the CSP, commit both**
 
-Run: `npx astro check && npx astro build`
-Expected: 0 errors; build clean
+Run: `npx astro check` then `npx astro build`
+Expected: 0 errors; build clean.
+
+This component's `<script>` is also single-page, so it is inlined too. Run `npm run csp` and expect **8** hashes, up from 7 after Task 2. Confirm `node tools/verify.mjs` reports the CSP gate `ok`, then commit the policy alongside the component:
 
 ```bash
-git add src/components/sections/FeaturedLines.astro
+git add src/components/sections/FeaturedLines.astro vercel.json
 git commit -m "feat(home): add the tabbed featured lines strip"
 ```
+
+Its `<script>` comment must say the script is inlined and costs a hash — not that it is external.
 
 ---
 
@@ -1813,11 +1830,20 @@ Retire the client-artwork description to history and record the new one. It must
 - [ ] **Step 2: Add three entries to `docs/TRAPS.md`**
 
 ```markdown
-- **The hero and Featured Lines `<script>` tags are bundled, not inline.** Astro
-  emits them under `/_astro/`, which `script-src 'self'` already allows, so they
-  add no inline-script hash. Adding `is:inline` to either silently requires
-  `npm run csp` and a `vercel.json` recommit — and a stale hash does not fail
-  the build, it ships a site that never hydrates.
+- **Whether an Astro `<script>` costs a CSP hash depends on how many pages use
+  the component, not on how you wrote the tag.** Astro extracts a processed
+  `<script>` to an external `/_astro/` chunk only when it is shared across
+  pages; a script used on exactly one page is inlined into that page's HTML and
+  needs a hash. `EnquiryCta`'s script is external because it renders on `/` and
+  `/contact`; the hero's and Featured Lines' are inline because both render on
+  `/` alone. Nothing about the tag distinguishes them.
+
+  The practical consequence: **rendering an existing component on one more page
+  can silently move a script from inline to external and invalidate a hash**,
+  without anyone editing a line of JavaScript. Re-run `npm run csp` after any
+  change to which pages use a component with a `<script>`, not just after
+  editing script bodies. A stale hash does not fail the build — it ships a page
+  that never hydrates.
 
 - **The two empty categories must never show a product image.** Electrical
   Accessories and Spill Control have `productCount: 0` and
@@ -1876,7 +1902,7 @@ git commit -m "docs: record the landing redesign, the AI hero and three new trap
 | Unit | `npx vitest run` | 137 passed (134 + 3) |
 | E2E | `npx playwright test` | 146 passed (137 + 9) |
 | Build | `npx astro build` | clean, 110 pages |
-| CSP | `npm run csp && git diff --stat vercel.json` | no change |
+| CSP | `npm run csp` then `node tools/verify.mjs` | **8** hashes; CSP gate `ok` |
 | Reduced motion | `npx playwright test tests/e2e/motion.spec.ts` | pass |
 
 **Stop the dev server before any Playwright run.** `reuseExistingServer: true` means Playwright attaches to whatever is on 4321 and never builds.
