@@ -45,12 +45,19 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 
       THIS ORDER COSTS ABOVE-THE-FOLD CTA VISIBILITY ON SHORT PHONES, and that
       was a deliberate call on 2026-08-12, not an oversight. An earlier version
-      put the stage last precisely to avoid it. Measured with the tightened
-      spacing below: both CTAs are fully visible on a 390x844 and a 414x896, and
-      sit below the fold on a 375x667 iPhone SE and a 360x640 Android — the
-      arithmetic does not close on a 667px screen unless the helmet shrinks to
-      roughly 100px, which is not worth having. Moving `.hero__actions` back
+      put the stage last precisely to avoid it. Moving `.hero__actions` back
       inside the first `.hero__copy` reverts it.
+
+      What that costs, measured rather than estimated. On a 390x844 and a
+      414x896 BOTH CTAs are fully visible. On the two short screens only the
+      PRIMARY one is, and only because the `(max-height: 700px)` block at the
+      foot of this stylesheet shrinks the helmet and tightens two margins to buy
+      it back — "Request a quote" is below the fold on both, and that is the
+      accepted price. An earlier version of this comment claimed both CTAs sat
+      below the fold on those screens while the block below claimed it had fixed
+      them; they contradicted each other and the block was the one that was
+      nearly right. `tests/e2e/hero-mobile.spec.ts` pins the primary CTA's edge
+      on both screens so the next such claim is checked, not asserted.
 
       On desktop the stage is `position: absolute` under the copy's z-index, so
       the split is invisible there — but it does make `.hero` a two-row grid,
@@ -539,11 +546,25 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 
      Keyed on HEIGHT, because this is a vertical-budget problem: a 390x844 phone
      has the room and keeps the full-size helmet. It also catches a phone held
-     in landscape, which has even less height and wants the same treatment. */
+     in landscape, which has even less height and wants the same treatment.
+
+     CORRECTED 2026-08-12, same day: the 58vw stage alone did NOT close it on a
+     360x640. Measured, the primary CTA's bottom edge landed at 648px against a
+     640px fold — 8px short, on the narrower of the two screens this paragraph
+     claimed it had fixed. It held on the 375x667 only. The two stacked 32px
+     margins below are trimmed to 20px and 24px, which brings the same edge to
+     628px and leaves 12px of clearance; a tall phone keeps both 32s because
+     this block never reaches it. `tests/e2e/hero-mobile.spec.ts` now asserts
+     the edge on both screens, so the claim is checked rather than asserted. */
   @media (max-width: 1080px) and (max-height: 700px) {
     .hero__stage {
       width: min(58vw, 420px);
       height: min(52.2vw, 378px);
+      margin-top: 24px;
+    }
+
+    .hero__actions {
+      margin-top: 20px;
     }
   }
 
