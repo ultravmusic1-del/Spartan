@@ -77,7 +77,7 @@ const title = enquiry ? `Enquiry from ${enquiry.company || enquiry.name}` : 'Enq
 
         <h2>Products ({enquiry.items.length} lines, {units} units)</h2>
         {enquiry.items.length === 0 ? (
-          <p>General enquiry — no products selected.</p>
+          <p>General enquiry: no products selected.</p>
         ) : (
           <table>
             <thead>

@@ -41,7 +41,7 @@ const { state, subject } = Astro.props;
       <h2>This deployment has no database credentials</h2>
       <p>
         The {subject} cannot be read, and this is <strong>not</strong> a statement that there are
-        none — nothing has been looked at. Set <code>SUPABASE_URL</code> and the Supabase
+        none. Nothing has been looked at. Set <code>SUPABASE_URL</code> and the Supabase
         service-role key in the deployment's environment, then reload. Both are named in
         <code>README.md</code> under “The admin area”.
       </p>
@@ -54,9 +54,9 @@ const { state, subject } = Astro.props;
     <div class="ds ds--failed" role="alert">
       <h2>Could not load the {subject}</h2>
       <p>
-        The database was asked and did not answer. This is an outage, not an empty result — do not
-        read it as “nothing here”. Reload to try again; if it persists, check the Supabase project
-        and the server logs.
+        The database was asked and did not answer. This is an outage, not an empty result, so do
+        not read it as “nothing here”. Reload to try again; if it persists, check the Supabase
+        project and the server logs.
       </p>
     </div>
   )

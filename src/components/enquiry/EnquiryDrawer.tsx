@@ -233,7 +233,7 @@ export default function EnquiryDrawer() {
                       class="eq-item__field"
                       rows={2}
                       maxLength={500}
-                      placeholder="Add a note — size, colour, certification"
+                      placeholder="Add a note: size, colour, certification"
                       value={item.note}
                       onInput={(e) => setNote(item.slug, e.currentTarget.value)}
                     />

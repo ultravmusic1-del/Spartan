@@ -60,7 +60,7 @@ const last = result.state === 'ok' ? first + result.data.rows.length - 1 : 0;
     ) : result.data.total === 0 ? (
       <p>
         No enquiries{filter ? ` with status “${filter}”` : ''} yet. The database was read
-        successfully — there are none.
+        successfully; there are none.
       </p>
     ) : (
       <>

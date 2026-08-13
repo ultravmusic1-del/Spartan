@@ -4,7 +4,7 @@
     "slug": "lighting",
     "name": "Lighting",
     "divisionId": "electricals",
-    "description": "Interior, industrial and outdoor LED — bulbs, panels, tubes, floodlights, highbays and solar.",
+    "description": "Interior, industrial and outdoor LED: bulbs, panels, tubes, floodlights, highbays and solar.",
     "heroProductSlug": "slim-led-panels",
     "status": "active",
     "order": 1
@@ -94,7 +94,7 @@
     "slug": "hand-protection",
     "name": "Hand Protection",
     "divisionId": "safety",
-    "description": "Cut, chemical and impact rated gloves — PU, nitrile, latex and leather, sizes 7–12.",
+    "description": "Cut, chemical and impact rated gloves: PU, nitrile, latex and leather, sizes 7–12.",
     "heroProductSlug": "grip-guard-gp5",
     "status": "active",
     "order": 10

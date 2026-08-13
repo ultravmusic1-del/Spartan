@@ -40,17 +40,17 @@ const reasons = [
   {
     n: '01',
     title: 'Two divisions, one supplier',
-    body: `Spartan Electricals and Spartan Safety sit in the same catalogue — ${products.length} products across ${categories.length} categories. Lighting, ventilation and water management alongside head, eye, hearing, hand, foot and fall protection, body protection and workwear.`,
+    body: `Spartan Electricals and Spartan Safety sit in the same catalogue: ${products.length} products across ${categories.length} categories. Lighting, ventilation and water management alongside head, eye, hearing, hand, foot and fall protection, body protection and workwear.`,
   },
   {
     n: '02',
     title: 'Specifications stated per product',
-    body: 'Every product page lists the specifications printed for that product — materials, sizes, power ratings, colours. Where the brochure states a figure, the page shows it. Where it does not, the page shows nothing rather than an estimate.',
+    body: 'Every product page lists the specifications printed for that product: materials, sizes, power ratings, colours. Where the brochure states a figure, the page shows it. Where it does not, the page shows nothing rather than an estimate.',
   },
   {
     n: '03',
     title: 'Glove ratings shown as printed',
-    body: `${rated} of the ${gloves.length} hand-protection products carry published EN 388 mechanical resistance levels, shown exactly as printed — including X, which means the glove was not submitted for that test rather than that it failed. The others carry no rating because none is published.`,
+    body: `${rated} of the ${gloves.length} hand-protection products carry published EN 388 mechanical resistance levels, shown exactly as printed, including X, which means the glove was not submitted for that test rather than that it failed. The others carry no rating because none is published.`,
   },
   {
     n: '04',
@@ -60,14 +60,14 @@ const reasons = [
   {
     n: '05',
     title: 'Manufactured to consistent standards',
-    body: 'The range is manufactured across facilities in India and China, combining advanced technology with strict quality standards — ensuring consistent performance, competitive pricing and a wide variety of products.',
+    body: 'The range is manufactured across facilities in India and China, combining advanced technology with strict quality standards to ensure consistent performance, competitive pricing and a wide variety of products.',
   },
   {
     n: '06',
     title: 'Gaps are shown as gaps',
-    body: `${expanding.length === 1 ? 'One category is' : `${expanding.length} categories are`} listed with no products at all — ${expanding
+    body: `${expanding.length === 1 ? 'One category is' : `${expanding.length} categories are`} listed with no products at all (${expanding
       .map((c) => c.name.toLowerCase())
-      .join(' and ')} — because those ranges are still expanding. They are in the catalogue so you can see what is coming, not filled with placeholders.`,
+      .join(' and ')}), because those ranges are still expanding. They are in the catalogue so you can see what is coming, not filled with placeholders.`,
   },
 ];
 ---

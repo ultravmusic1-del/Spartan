@@ -267,7 +267,7 @@ export default function EnquiryForm({ email }: Props) {
           <div class="ef-list__empty">
             <p class="ef-list__empty-title">No products on your list.</p>
             <p class="ef-list__empty-note">
-              You can still send a general enquiry with the form — tell us what you are looking for
+              You can still send a general enquiry with the form. Tell us what you are looking for
               and we will point you at the right part of the range. Or add products as you browse
               and they will appear here.
             </p>
@@ -354,7 +354,7 @@ export default function EnquiryForm({ email }: Props) {
                       class="ef-item__field"
                       rows={2}
                       maxLength={500}
-                      placeholder="Add a note — size, colour, certification"
+                      placeholder="Add a note: size, colour, certification"
                       value={item.note}
                       onInput={(e) => setNote(item.slug, e.currentTarget.value)}
                     />
