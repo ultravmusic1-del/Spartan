@@ -35,6 +35,20 @@ in `handoff.md`; this file states the trap and moves on.
   warns you. Restart the dev server and clear `node_modules/.vite` if
   computed styles disagree with the file you just wrote.
 
+- **Getting the catalogue out of Node and into a database will mangle every
+  non-ASCII character if a text editor is in the path.** The catalogue's
+  specifications carry `±`, `Ω`, `°`, `×`, `—` and inch marks, and on
+  2026-08-13 all of them reached Postgres as `┬▒`, `╬⌐` and `ΓÇö`. The seed was
+  correct and the paste was correct; the corruption happened in between,
+  because a BOM-less UTF-8 file was opened in an editor that guessed ANSI, and
+  what got copied was the mojibake on the screen. Nothing failed — the seed
+  reported success, the site built, and the damage only surfaced when
+  `npm run catalogue:parity` compared 47 product pages against the JSON. Use
+  `--out` so Node writes the file, and put it on the clipboard with
+  `Get-Content seed.sql -Raw -Encoding utf8 | Set-Clipboard` rather than
+  opening it. **This is the argument for the parity build existing at all**: no
+  amount of reading the data would have caught it.
+
 - **An Astro scoped style does not isolate a class NAME from a global rule of
   the same name.** Scoping adds a `data-astro-cid-*` attribute to the
   component's own selectors; it does nothing to stop a global stylesheet

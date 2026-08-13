@@ -134,12 +134,23 @@ export const productCells = (p) => [
  * number of statements — see the CLI block. Divisions and categories are small
  * enough to be one each.
  */
-export function seedSql({ productsPerStatement = 12 } = {}) {
-  const products = read('products.json');
-  const statements = [
-    upsert('divisions', DIVISION_COLUMNS, 'id', read('divisions.json').map(divisionCells)),
-    upsert('categories', CATEGORY_COLUMNS, 'id', read('categories.json').map(categoryCells)),
-  ];
+export function seedSql({ productsPerStatement = 12, only = null } = {}) {
+  const all = read('products.json');
+
+  /*
+   * `only` narrows to named slugs, and skips the divisions and categories
+   * entirely. It exists for repair rather than for seeding: when a subset of
+   * rows is known to be wrong — as after the encoding incident on 2026-08-13 —
+   * re-sending 85 products to fix 27 is a lot of payload for no benefit.
+   */
+  const products = only ? all.filter((p) => only.includes(p.slug)) : all;
+
+  const statements = only
+    ? []
+    : [
+        upsert('divisions', DIVISION_COLUMNS, 'id', read('divisions.json').map(divisionCells)),
+        upsert('categories', CATEGORY_COLUMNS, 'id', read('categories.json').map(categoryCells)),
+      ];
 
   for (let i = 0; i < products.length; i += productsPerStatement) {
     statements.push(
@@ -156,7 +167,13 @@ export function seedSql({ productsPerStatement = 12 } = {}) {
 }
 
 if (process.argv[1] && process.argv[1].endsWith('seed-catalogue.mjs')) {
-  const statements = seedSql();
+  const onlyIndex = process.argv.indexOf('--only');
+  const only =
+    onlyIndex === -1 || !process.argv[onlyIndex + 1]
+      ? null
+      : process.argv[onlyIndex + 1].split(',').map((s) => s.trim());
+
+  const statements = seedSql({ only, productsPerStatement: only ? 6 : 12 });
 
   /*
    * `--chunk N --of M` prints one slice.
@@ -186,10 +203,33 @@ if (process.argv[1] && process.argv[1].endsWith('seed-catalogue.mjs')) {
     slice = statements.slice((chunk - 1) * size, chunk * size);
   }
 
-  process.stdout.write(slice.join('\n') + '\n');
-  process.stderr.write(
-    of && chunk
-      ? `chunk ${chunk}/${of}: ${slice.length} of ${statements.length} statements\n`
-      : `${statements.length} statements\n`,
-  );
+  const sql = slice.join('\n') + '\n';
+
+  /*
+   * `--out <path>` WRITES THE FILE ITSELF, AND IT IS THE SUPPORTED WAY.
+   *
+   * Piping with `>` looks equivalent and is not: Windows PowerShell 5.1's
+   * redirection re-encodes the stream in the console codepage, so every
+   * non-ASCII character in the catalogue is silently mangled on the way to
+   * disk. That happened for real on 2026-08-13 — `±`, `Ω` and `—` reached
+   * Postgres as `┬▒`, `╬⌐` and `ΓÇö`, the seed appeared to succeed, and the
+   * corruption only surfaced when the parity build compared 47 product pages
+   * against the JSON.
+   *
+   * fs.writeFileSync with an explicit encoding takes the shell out of the
+   * question entirely.
+   */
+  const outIndex = process.argv.indexOf('--out');
+  if (outIndex !== -1 && process.argv[outIndex + 1]) {
+    const target = path.resolve(process.argv[outIndex + 1]);
+    fs.writeFileSync(target, sql, 'utf8');
+    process.stderr.write(`wrote ${slice.length} statements to ${target} (utf8)\n`);
+  } else {
+    process.stdout.write(sql);
+    process.stderr.write(
+      of && chunk
+        ? `chunk ${chunk}/${of}: ${slice.length} of ${statements.length} statements\n`
+        : `${statements.length} statements\n`,
+    );
+  }
 }

@@ -84,6 +84,40 @@ describe('productCells', () => {
   });
 });
 
+describe('non-ASCII survives the trip', () => {
+  /*
+   * The catalogue's specifications contain `±`, `Ω`, `°`, `×`, `—` and inch
+   * marks. On 2026-08-13 every one of them reached Postgres mangled, because
+   * the seed had been written to disk with PowerShell's `>` redirection, which
+   * re-encodes in the console codepage. The seed itself was fine; the shell was
+   * not. `--out` exists so the file is written by Node with an explicit
+   * encoding, and these assert the statements carry the real characters.
+   */
+  it('emits the actual characters, not escapes or replacements', () => {
+    const sql = seedSql().join('\n');
+    for (const char of ['±', 'Ω', '—']) {
+      expect(sql).toContain(char);
+    }
+    // The mojibake those three become when UTF-8 is read as CP437.
+    for (const wrong of ['┬▒', '╬⌐', 'ΓÇö']) {
+      expect(sql).not.toContain(wrong);
+    }
+  });
+
+  it('keeps them intact through the jsonb literal too', () => {
+    const cells = productCells({
+      slug: 'x',
+      name: 'X',
+      categoryId: 'cables',
+      images: [],
+      specs: [{ label: 'Impedance', value: '100 ± 15 Ω' }],
+      source: null,
+      order: 1,
+    });
+    expect(cells.join(',')).toContain('100 ± 15 Ω');
+  });
+});
+
 describe('the emitted seed', () => {
   it('orders the tables so foreign keys resolve', () => {
     const statements = seedSql();

@@ -29,6 +29,20 @@ const keep = path.join(root, '.catalogue-parity');
 
 function build(source) {
   process.stdout.write(`\n  building with CATALOGUE_SOURCE=${source} ...\n`);
+
+  /*
+   * THE CONTENT STORE CACHE HAS TO GO BETWEEN BUILDS.
+   *
+   * Astro caches the parsed content collections under `.astro/`, and it keys
+   * that cache on the content, not on which loader produced it. Leaving it in
+   * place meant the second build reused entries the first had written, and the
+   * comparison reported differences that were cache artefacts rather than
+   * mapping defects — 112 of them on the first real run, against 47 genuine
+   * ones. A harness that invents failures is worse than no harness: it trains
+   * you to discount its output.
+   */
+  fs.rmSync(path.join(root, '.astro'), { recursive: true, force: true });
+
   execFileSync('npm', ['run', 'build'], {
     cwd: root,
     stdio: 'inherit',
