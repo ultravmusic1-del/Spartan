@@ -1,17 +1,89 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import DataState from '../../components/admin/DataState.astro';
-import { getDemand } from '../../lib/admin/enquiries';
+import { getDemand, type DemandRow } from '../../lib/admin/enquiries';
+import { getProducts, getCategories, getDivisions } from '../../lib/catalog';
 
 export const prerender = false;
 
 const admin = Astro.locals.admin!;
-const result = await getDemand();
+
+/*
+ * The demand figures come from the enquiries database; the names, categories
+ * and divisions come from the catalogue. Joining them here is what turns "seven
+ * product slugs" into "the Safety division is what people are asking about",
+ * which is the question this page exists to answer.
+ *
+ * Through `catalog.ts`, not `src/data/*` — rule 3 applies to the admin exactly
+ * as it does to the public site, and this is the door.
+ */
+const [result, products, categories, divisions] = await Promise.all([
+  getDemand(),
+  getProducts(),
+  getCategories(),
+  getDivisions(),
+]);
+
+const productBySlug = new Map(products.map((p) => [p.slug, p]));
+const categoryById = new Map(categories.map((c) => [c.id, c]));
+const divisionById = new Map(divisions.map((d) => [d.id, d]));
+
+const rows: DemandRow[] = result.state === 'ok' ? result.data : [];
+
+const totalLines = rows.reduce((n, r) => n + r.enquiries, 0);
+const totalUnits = rows.reduce((n, r) => n + r.units, 0);
+
+interface Group {
+  key: string;
+  label: string;
+  enquiries: number;
+  units: number;
+}
+
+/**
+ * Group the demand rows by whatever the catalogue says each product belongs to.
+ *
+ * `resolve` returns null for a product the catalogue no longer publishes, and
+ * those are kept in their own bucket rather than dropped. An enquiry for a
+ * withdrawn product is a real thing that really happened; silently omitting it
+ * would make the totals here disagree with the table below, and the discrepancy
+ * would be invisible.
+ */
+function groupBy(resolve: (slug: string) => { key: string; label: string } | null): Group[] {
+  const out = new Map<string, Group>();
+
+  for (const row of rows) {
+    const hit = resolve(row.product_slug) ?? {
+      key: '__gone',
+      label: 'No longer in the catalogue',
+    };
+    const g = out.get(hit.key) ?? { ...hit, enquiries: 0, units: 0 };
+    g.enquiries += row.enquiries;
+    g.units += row.units;
+    out.set(hit.key, g);
+  }
+
+  return [...out.values()].sort((a, b) => b.enquiries - a.enquiries);
+}
+
+const byDivision = groupBy((slug) => {
+  const category = categoryById.get(productBySlug.get(slug)?.categoryId ?? '');
+  const division = divisionById.get(category?.divisionId ?? '');
+  return division ? { key: division.id, label: division.name } : null;
+});
+
+const byCategory = groupBy((slug) => {
+  const category = categoryById.get(productBySlug.get(slug)?.categoryId ?? '');
+  return category ? { key: category.id, label: category.name } : null;
+});
+
+/** Percentage of all product lines. Guarded so an empty report cannot divide by zero. */
+const share = (n: number): number => (totalLines === 0 ? 0 : (n / totalLines) * 100);
 
 /* The widest bar is the most-enquired product, so every other row is read
-   against it. Guarded: with an empty list this is never reached, and `max`
-   cannot be 0 when at least one row exists because a line implies an enquiry. */
-const max = result.state === 'ok' ? Math.max(...result.data.map((d) => d.enquiries), 1) : 1;
+   against it rather than against the total — at low volumes a share-of-total
+   bar is a row of slivers and shows nothing. */
+const busiest = Math.max(...rows.map((r) => r.enquiries), 1);
 ---
 
 <AdminLayout title="Product demand" admin={admin}>
@@ -30,75 +102,317 @@ const max = result.state === 'ok' ? Math.max(...result.data.map((d) => d.enquiri
   {
     result.state !== 'ok' ? (
       <DataState state={result.state} subject="demand figures" />
-    ) : result.data.length === 0 ? (
+    ) : rows.length === 0 ? (
       <div class="ad-card">
         <p>No products have been enquired about yet. The database was read successfully.</p>
       </div>
     ) : (
-      <div class="ad-panel">
-        <table class="ad-table">
-          <caption class="ad-sr">Products by number of enquiries naming them</caption>
-          <thead>
-            <tr>
-              <th scope="col">Product</th>
-              <th scope="col" class="ad-num">
-                Enquiries
-              </th>
-              <th scope="col" class="ad-num">
-                Units
-              </th>
-              <th scope="col">Share</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.data.map((d) => (
-              <tr>
-                <th scope="row" data-label="Product">
-                  <a href={`/products/${d.product_slug}`}>{d.product_name}</a>
-                </th>
-                <td data-label="Enquiries" class="ad-num">
-                  {d.enquiries}
-                </td>
-                <td data-label="Units" class="ad-num">
-                  {d.units}
-                </td>
-                <td data-label="Share">
-                  {/*
-                    A bar, not a chart library — one div and a width. The number
-                    beside it is the real value; this is aria-hidden because it
-                    restates the Enquiries column and a screen reader reading
-                    "62 percent" for a decorative rule would be inventing a
-                    figure the report does not publish.
-                  */}
-                  <span class="ad-bar" aria-hidden="true">
-                    <span class="ad-bar__fill" style={`width:${(d.enquiries / max) * 100}%`} />
+      <>
+        <div class="ad-tiles">
+          <div class="ad-tile is-live">
+            <p class="ad-tile__label">Products asked about</p>
+            <p class="ad-tile__value">{rows.length}</p>
+          </div>
+          <div class="ad-tile">
+            <p class="ad-tile__label">Product lines</p>
+            <p class="ad-tile__value is-quiet">{totalLines}</p>
+          </div>
+          <div class="ad-tile">
+            <p class="ad-tile__label">Units requested</p>
+            <p class="ad-tile__value is-quiet">{totalUnits}</p>
+          </div>
+          <div class="ad-tile">
+            <p class="ad-tile__label">Of the catalogue</p>
+            <p class="ad-tile__value is-quiet">
+              {Math.round((rows.length / Math.max(products.length, 1)) * 100)}%
+            </p>
+          </div>
+        </div>
+
+        <div class="dm-split">
+          <section class="ad-card">
+            <h2 class="ad-card__title">Division split</h2>
+
+            {/*
+              One bar, segmented. Every segment also carries its name and its
+              number in the legend below, so nothing here is told by colour
+              alone — the bar is the shape of the answer, the legend is the
+              answer.
+            */}
+            <div class="dm-stack" aria-hidden="true">
+              {byDivision.map((g) => (
+                <span
+                  class:list={['dm-stack__seg', `dm-seg--${g.key}`]}
+                  style={`width:${share(g.enquiries)}%`}
+                />
+              ))}
+            </div>
+
+            <ul class="dm-legend">
+              {byDivision.map((g) => (
+                <li>
+                  <span class:list={['dm-dot', `dm-seg--${g.key}`]} aria-hidden="true" />
+                  <span class="dm-legend__label">{g.label}</span>
+                  <span class="dm-legend__n">
+                    {g.enquiries} · {Math.round(share(g.enquiries))}%
                   </span>
-                </td>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section class="ad-card">
+            <h2 class="ad-card__title">By category</h2>
+            <ul class="dm-rank">
+              {byCategory.map((g) => (
+                <li>
+                  <span class="dm-rank__label">{g.label}</span>
+                  <span class="dm-rank__track" aria-hidden="true">
+                    <span class="dm-rank__fill" style={`width:${share(g.enquiries)}%`} />
+                  </span>
+                  <span class="dm-rank__n">{g.enquiries}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        <div class="ad-panel">
+          <table class="ad-table">
+            <caption class="ad-sr">Products by number of enquiries naming them</caption>
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Category</th>
+                <th scope="col" class="ad-num">
+                  Enquiries
+                </th>
+                <th scope="col" class="ad-num">
+                  Units
+                </th>
+                <th scope="col" class="ad-num">
+                  Share
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {rows.map((d) => {
+                const category = categoryById.get(
+                  productBySlug.get(d.product_slug)?.categoryId ?? '',
+                );
+                return (
+                  <tr>
+                    <th scope="row" data-label="Product">
+                      <a href={`/products/${d.product_slug}`}>{d.product_name}</a>
+                    </th>
+                    <td data-label="Category" class="ad-muted">
+                      {category?.name ?? 'No longer in the catalogue'}
+                    </td>
+                    <td data-label="Enquiries" class="ad-num">
+                      {d.enquiries}
+                    </td>
+                    <td data-label="Units" class="ad-num">
+                      {d.units}
+                    </td>
+                    <td data-label="Share">
+                      {/* The flex row is this inner span, not the cell. A `td`
+                          set to `display: flex` leaves the table layout
+                          algorithm and its column stops aligning with the
+                          header above it. */}
+                      <span class="dm-cell">
+                        <span class="dm-bar" aria-hidden="true">
+                          <span
+                            class="dm-bar__fill"
+                            style={`width:${(d.enquiries / busiest) * 100}%`}
+                          />
+                        </span>
+                        <span class="dm-pct">{Math.round(share(d.enquiries))}%</span>
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </>
     )
   }
 </AdminLayout>
 
 <style>
-  .ad-bar {
-    display: block;
-    width: min(180px, 100%);
-    height: 6px;
-    background: var(--color-card);
+  /*
+   * `dm-`, not `ad-`. The first version of this page called its chart bar
+   * `.ad-bar` — which is the ADMIN TOP BAR in src/styles/admin.css. Astro's
+   * scoped styles do not isolate against a global rule of the same name, so
+   * every chart bar inherited `min-height: 56px`, `display: flex` and 20px of
+   * horizontal padding, and rendered as a row of fat red lozenges overflowing
+   * the column. `min-height` beat the `height: 6px` declared here, which is why
+   * the local rule looked correct and did nothing. Component prefixes are the
+   * fix, not more specificity.
+   */
+  .dm-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  /* --------------------------------------------------------- division bar -- */
+
+  .dm-stack {
+    display: flex;
+    height: 10px;
     border-radius: 99px;
+    overflow: hidden;
+    background: var(--color-card);
+  }
+
+  .dm-stack__seg {
+    display: block;
+    height: 100%;
+  }
+
+  /* Decorative fills, so brand red is correct here — rule 4 reserves the text
+     variant for text. The second division takes a light grey rather than a
+     second hue: this palette has two colours and inventing a third for a chart
+     would put an unmeasured one into the system. */
+  .dm-seg--electricals {
+    background: var(--color-red);
+  }
+
+  .dm-seg--safety {
+    background: var(--color-grey-lt);
+  }
+
+  .dm-seg--__gone {
+    background: var(--color-line);
+  }
+
+  .dm-legend {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 9px;
+  }
+
+  .dm-legend li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .dm-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+  }
+
+  .dm-legend__label {
+    color: var(--color-grey-lt);
+  }
+
+  .dm-legend__n {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-paper);
+    white-space: nowrap;
+  }
+
+  /* ------------------------------------------------------- category ranks -- */
+
+  .dm-rank {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+
+  .dm-rank li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 90px 34px;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .dm-rank__label {
+    color: var(--color-grey-lt);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dm-rank__track {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--color-card);
     overflow: hidden;
   }
 
-  /* Brand red: a decorative fill, not text, so the text variant is not needed
-     here (rule 4 — red is the colour for rules, borders and decorative fills). */
-  .ad-bar__fill {
+  .dm-rank__fill {
+    display: block;
+    height: 100%;
+    background: var(--color-red);
+  }
+
+  .dm-rank__n {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+    color: var(--color-paper);
+  }
+
+  /* ------------------------------------------------------------ table bar -- */
+
+  .dm-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dm-bar {
+    display: block;
+    width: 110px;
+    height: 6px;
+    border-radius: 99px;
+    background: var(--color-card);
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+
+  .dm-bar__fill {
     display: block;
     height: 100%;
     background: var(--color-red);
     border-radius: 99px;
+  }
+
+  .dm-pct {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-grey-lt);
+    min-width: 34px;
+    text-align: right;
+  }
+
+  @media (max-width: 900px) {
+    .dm-split {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    /* Stacked-card mode: the bar would be the only thing wide enough to force
+       the row open, so it gives up its fixed width and the percentage carries
+       the value. */
+    .dm-bar {
+      width: 72px;
+    }
   }
 </style>

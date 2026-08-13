@@ -35,6 +35,18 @@ in `handoff.md`; this file states the trap and moves on.
   warns you. Restart the dev server and clear `node_modules/.vite` if
   computed styles disagree with the file you just wrote.
 
+- **An Astro scoped style does not isolate a class NAME from a global rule of
+  the same name.** Scoping adds a `data-astro-cid-*` attribute to the
+  component's own selectors; it does nothing to stop a global stylesheet
+  matching that class on the same element, and the two then cascade normally.
+  This became live the moment the admin gained `src/styles/admin.css` beside
+  its per-page `<style>` blocks: the demand report styled its chart bars
+  `.ad-bar`, which is the **admin top bar** in that file, so every bar
+  inherited `min-height: 56px`, `display: flex` and 20px of horizontal padding
+  and rendered as fat lozenges overflowing their column. `min-height` beats a
+  local `height: 6px`, so the scoped rule looked right and did nothing. Use a
+  distinct prefix per component — `dm-` on that page — not more specificity.
+
 - **Tailwind utilities lose to unlayered Astro scoped styles.** Utilities
   compile into `@layer utilities`; Astro's scoped component styles are
   unlayered, and unlayered CSS beats every layer regardless of specificity.
