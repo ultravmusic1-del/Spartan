@@ -20,12 +20,24 @@
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
-const keep = path.join(root, '.catalogue-parity');
+
+/*
+ * The first build is kept OUTSIDE the project, and that is not tidiness.
+ *
+ * It was `.catalogue-parity` in the repository root, and the second build then
+ * hashed its CSS chunks differently — `Eyebrow.sK7drO_z.css` against
+ * `Eyebrow.2wLP16Hd.css` — for every page, which is what turned 0 real
+ * differences into 112 reported ones. Vite walks the project directory when it
+ * builds, and a 522-file copy of a previous build sitting inside it is not
+ * inert. The comparison has to observe the build without perturbing it.
+ */
+const keep = path.join(os.tmpdir(), 'spartan-catalogue-parity');
 
 function build(source) {
   process.stdout.write(`\n  building with CATALOGUE_SOURCE=${source} ...\n`);
@@ -79,6 +91,8 @@ const before = fingerprint(keep);
 build('postgres');
 const after = fingerprint(dist);
 
+console.log(`\n  json build: ${before.size} files, postgres build: ${after.size} files`);
+
 /* -------------------------------------------------------------- compare -- */
 
 const problems = [];
@@ -91,19 +105,42 @@ for (const file of after.keys()) {
   if (!before.has(file)) problems.push(`only in the Postgres build: ${file}`);
 }
 
-fs.rmSync(keep, { recursive: true, force: true });
-
 console.log('');
 if (problems.length === 0) {
+  fs.rmSync(keep, { recursive: true, force: true });
   console.log(`  PARITY OK — ${before.size} files identical from both sources.`);
   console.log('  Safe to switch CATALOGUE_SOURCE to postgres.');
   process.exit(0);
 }
 
 console.log(`  PARITY FAILED — ${problems.length} difference(s):\n`);
+
+/*
+ * Show the first actual divergence, not just which files disagree.
+ *
+ * A list of filenames says a difference exists; it does not say whether it is a
+ * dropped field, a reordered list or — as on 2026-08-13 — a mangled character.
+ * The first run of this tool listed 47 files and it took another twenty minutes
+ * to learn that `±` had become `┬▒`. One excerpt would have said it instantly.
+ */
+{
+  const first = problems.find((p) => p.startsWith('differs: '))?.slice('differs: '.length);
+  if (first) {
+    const a = fs.readFileSync(path.join(keep, first), 'utf8');
+    const b = fs.readFileSync(path.join(dist, first), 'utf8');
+    let at = 0;
+    while (at < Math.min(a.length, b.length) && a[at] === b[at]) at += 1;
+    const window = (s) => JSON.stringify(s.slice(Math.max(0, at - 60), at + 60));
+    console.log(`    first divergence, in ${first}, at character ${at}:`);
+    console.log(`      json     ${window(a)}`);
+    console.log(`      postgres ${window(b)}\n`);
+  }
+}
+
 // Capped, because a mapping mistake tends to break every page at once and 110
 // identical-looking lines say no more than twenty do.
 for (const problem of problems.slice(0, 20)) console.log(`    ${problem}`);
 if (problems.length > 20) console.log(`    ... and ${problems.length - 20} more`);
 console.log('\n  Do NOT switch CATALOGUE_SOURCE. Each difference is a mapping defect.');
+console.log(`  The JSON build is kept at ${path.relative(root, keep)} for comparison.`);
 process.exit(1);
