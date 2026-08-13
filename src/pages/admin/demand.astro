@@ -92,8 +92,9 @@ const busiest = Math.max(...rows.map((r) => r.enquiries), 1);
       <p class="ad-eyebrow">Report</p>
       <h1 class="ad-title">Product demand</h1>
       <p class="ad-sub">
-        Ordered by how many separate enquiries name each product. Counts every enquiry regardless of
-        status.
+        Ordered by how many separate enquiries name each product. Counts every status except
+        <strong>test</strong>, which is excluded so the team's own submissions cannot reach these
+        figures.
       </p>
     </div>
     <a class="ad-btn-ghost" href="/admin">Back to inbox</a>

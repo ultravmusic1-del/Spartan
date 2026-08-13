@@ -115,10 +115,34 @@ const last = result.state === 'ok' ? first + result.data.rows.length - 1 : 0;
     )
   }
 
+  {/*
+    Shown only when there is something to say. These figures leave test
+    enquiries out, and a reader comparing them against the All chip would
+    otherwise find a discrepancy with nothing explaining it.
+  */}
+  {
+    counts.state === 'ok' && counts.data.byStatus.test > 0 && (
+      <p class="ad-note">
+        Figures above exclude {counts.data.byStatus.test}{' '}
+        {counts.data.byStatus.test === 1 ? 'enquiry' : 'enquiries'} marked{' '}
+        <a href={href({ status: 'test', page: 1 })}>test</a>. Demand excludes them too.
+      </p>
+    )
+  }
+
   <nav class="ad-chips" aria-label="Filter by status">
+    {/*
+      The All chip counts EVERYTHING, test included, because that is what
+      clicking it lists. The tiles above deliberately do not — they are a
+      statement about the business, and the team's own submissions are not part
+      of it. Two different numbers, each correct for what it labels; showing the
+      tiles' total here would have it disagree with the rows underneath.
+    */}
     <a class="ad-chip" href={href({ status: '', page: 1 })} aria-current={!filter ? 'page' : undefined}>
       All
-      {counts.state === 'ok' && <span class="ad-chip__n">{counts.data.total}</span>}
+      {counts.state === 'ok' && (
+        <span class="ad-chip__n">{counts.data.total + counts.data.byStatus.test}</span>
+      )}
     </a>
     {
       ENQUIRY_STATUSES.map((s) => (

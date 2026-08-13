@@ -1059,6 +1059,48 @@ because only the list is what the page is for.
 every cell. A column added without that attribute arrives on a phone
 unlabelled — the note is on the media query.
 
+### A fifth status: `test`
+
+Added later the same day, at the client's request, because setting the site up
+had left several of the team's own submissions in the inbox and they were
+counting as demand.
+
+**It is a status, not a flag.** A separate `is_test` boolean was the obvious
+alternative and would let an enquiry be both "test" and "contacted"; that
+combination has no meaning, because nobody works a test enquiry through a
+pipeline. One column keeps the CHECK constraint, the filter chip and the status
+control in step with nothing second to forget.
+
+The database migration is `add_test_enquiry_status` and only widens the CHECK,
+so no existing row could violate it and it reverts cleanly for as long as
+nothing is marked `test`.
+
+**`ENQUIRY_STATUSES` and `WORKFLOW_STATUSES` are now different things, and the
+distinction is load-bearing.** The first is every value the column may hold and
+drives the chips, the dropdown and the counts map. The second is the four
+stages a real enquiry moves through, and is what anything reporting on the
+business sums. `WORKFLOW_STATUSES` is derived from `ENQUIRY_STATUSES` by
+filtering, so adding a stage means editing one array and the constraint. A unit
+test asserts `test` is in one and not the other, because a leak in that
+direction would put the team's own clicks into the headline figures with
+nothing to show it had happened.
+
+**Where it is excluded, and where it deliberately is not:**
+
+- **Demand report** — excluded. This is the whole point: it is the screen
+  someone buys stock from. Filtered in the query rather than by editing
+  `enquiry_lines`, which already carries `status`; a plain unnest is easier to
+  reason about than a view with policy baked into it.
+- **Summary tiles and `lines`** — excluded, so they agree with demand.
+- **The All chip** — NOT excluded, because clicking it lists everything. It
+  counts `total + test` for that reason. Two different numbers on one screen,
+  each correct for what it labels, and the inbox carries a line explaining the
+  gap whenever a test enquiry exists.
+- **The CSV export** — NOT excluded. It is the raw record and it already
+  carries a `status` column, so anyone can filter it. Silently dropping rows
+  from an export is the same defect as the truncated one §13 removed: a file
+  that looks complete and is not.
+
 ### What could not be checked here
 
 There are no Supabase credentials on this machine, so **every admin screen

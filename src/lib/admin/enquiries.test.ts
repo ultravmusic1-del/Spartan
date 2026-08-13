@@ -8,6 +8,8 @@ import {
   getCounts,
   normalisePage,
   ENQUIRY_STATUSES,
+  WORKFLOW_STATUSES,
+  TEST_STATUS,
   isEnquiryStatus,
   PAGE_SIZE,
   MAX_PAGE,
@@ -18,6 +20,8 @@ import {
 interface Query {
   table: string;
   filters: Record<string, unknown>;
+  /** What `.neq()` ruled out — how a query says "not test". */
+  excluded: Record<string, unknown>;
   orderedBy: string[];
   range?: [number, number];
   countRequested?: boolean;
@@ -37,7 +41,7 @@ function fakeSupabase(answer: (q: Query) => Answer) {
 
   const client = {
     from(table: string) {
-      const q: Query = { table, filters: {}, orderedBy: [] };
+      const q: Query = { table, filters: {}, excluded: {}, orderedBy: [] };
       calls.push(q);
 
       const builder = {
@@ -51,6 +55,10 @@ function fakeSupabase(answer: (q: Query) => Answer) {
         },
         eq(column: string, value: unknown) {
           q.filters[column] = value;
+          return builder;
+        },
+        neq(column: string, value: unknown) {
+          q.excluded[column] = value;
           return builder;
         },
         update(patch: Record<string, unknown>) {
@@ -101,14 +109,27 @@ afterEach(() => vi.unstubAllEnvs());
 /* -------------------------------------------------------------------- tests -- */
 
 describe('enquiry status', () => {
-  it('is the same four values the CHECK constraint allows', () => {
-    expect(ENQUIRY_STATUSES).toEqual(['new', 'contacted', 'quoted', 'closed']);
+  it('is the same values the CHECK constraint allows', () => {
+    expect(ENQUIRY_STATUSES).toEqual(['new', 'contacted', 'quoted', 'closed', 'test']);
   });
 
   it('rejects anything else', () => {
     expect(isEnquiryStatus('new')).toBe(true);
+    expect(isEnquiryStatus('test')).toBe(true);
     expect(isEnquiryStatus('archived')).toBe(false);
     expect(isEnquiryStatus('')).toBe(false);
+  });
+
+  /*
+   * `test` is a status but not a stage. Everything that reports on the business
+   * counts the workflow and not this, so the two lists must not drift into each
+   * other — a `test` that leaked into WORKFLOW_STATUSES would put the team's own
+   * submissions into the headline figures with nothing to show it had happened.
+   */
+  it('keeps test out of the workflow', () => {
+    expect(WORKFLOW_STATUSES).toEqual(['new', 'contacted', 'quoted', 'closed']);
+    expect(WORKFLOW_STATUSES).not.toContain(TEST_STATUS);
+    expect(ENQUIRY_STATUSES).toContain(TEST_STATUS);
   });
 });
 
@@ -322,8 +343,8 @@ describe('setStatus', () => {
 describe('getCounts', () => {
   beforeEach(configure);
 
-  it('counts by status without reading any rows, and sums the total', async () => {
-    const per: Record<string, number> = { new: 4, contacted: 2, quoted: 1, closed: 7 };
+  it('counts by status without reading any rows, and sums only the workflow', async () => {
+    const per: Record<string, number> = { new: 4, contacted: 2, quoted: 1, closed: 7, test: 99 };
 
     const calls = useSupabase((q) => {
       if (q.table === 'enquiry_lines') return { data: null, error: null, count: 12 };
@@ -334,13 +355,24 @@ describe('getCounts', () => {
 
     if (result.state !== 'ok') throw new Error('expected ok');
     expect(result.data.byStatus).toEqual(per);
+
+    /*
+     * 14, not 113. The chips need the test count so they can be found, but the
+     * headline total is a statement about the business and the team's own
+     * submissions are not part of it. The 99 here is deliberately absurd: a sum
+     * that included it could not be mistaken for correct.
+     */
     expect(result.data.total).toBe(14);
     expect(result.data.lines).toBe(12);
 
     // One per status plus one for the lines view. Every one asks for a count
     // and no rows — a tile must never become an unbounded read.
-    expect(calls).toHaveLength(5);
+    expect(calls).toHaveLength(6);
     expect(calls.every((c) => c.countRequested)).toBe(true);
+
+    // And the line count is of real enquiries only, so it agrees with demand.
+    const lines = calls.find((c) => c.table === 'enquiry_lines');
+    expect(lines?.excluded.status).toBe(TEST_STATUS);
   });
 
   it('reports a failure as failed rather than as a row of zeros', async () => {
@@ -371,6 +403,17 @@ describe('getDemand', () => {
       { product_slug: 'gp5', product_name: 'Grip Guard GP5', enquiries: 2, units: 5 },
       { product_slug: 'visor', product_name: 'Visors', enquiries: 1, units: 9 },
     ]);
+  });
+
+  /*
+   * The whole reason the status exists. A test enquiry the team submitted while
+   * checking the site is not demand, and leaving it in would put their own
+   * clicks into the figures someone buys stock from.
+   */
+  it('excludes test enquiries', async () => {
+    const calls = useSupabase(() => ({ data: [], error: null }));
+    await getDemand();
+    expect(calls[0].excluded.status).toBe(TEST_STATUS);
   });
 
   it('reports a missing view as failed rather than as no demand', async () => {

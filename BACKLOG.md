@@ -301,6 +301,22 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## Done
 
+- **2026-08-13** — **A `test` enquiry status**, so the team's own submissions
+  stop counting as demand. Migration `add_test_enquiry_status` widens the CHECK
+  constraint only, so nothing existing could violate it. `handoff.md` §14.
+
+  *Worth knowing:* `ENQUIRY_STATUSES` and `WORKFLOW_STATUSES` are now different
+  things and the difference is load-bearing — the first is every value the
+  column may hold, the second is the four stages a real enquiry moves through
+  and is what anything reporting on the business sums. A unit test asserts
+  `test` is in one and not the other, because a leak that way would put the
+  team's clicks into the headline figures silently.
+
+  *Worth knowing:* it is excluded from demand, the tiles and the line count, and
+  deliberately **not** from the All chip (which lists everything, so it counts
+  everything) or the CSV export (the raw record, with a status column anyone can
+  filter). Dropping rows from an export would be the truncated-file defect again.
+
 - **2026-08-13** — **The admin gets the design system.** It worked and looked
   like a default HTML document, for a concrete reason: `AdminLayout` used
   `system-ui` and the site's palette was retyped as ~30 raw hex literals across

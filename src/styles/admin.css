@@ -274,6 +274,17 @@
 
 /* --------------------------------------------------------------- chips -- */
 
+.ad-note {
+  margin: -12px 0 18px;
+  font-size: 12px;
+  /* 5.6:1 on --color-black. */
+  color: var(--color-grey);
+}
+
+.ad-note a {
+  color: var(--color-red-light);
+}
+
 .ad-chips {
   display: flex;
   align-items: center;
@@ -444,6 +455,16 @@
    floor. "Done" should recede; it must not disappear. */
 .ad-pill--closed {
   border-color: var(--color-line);
+  color: var(--color-grey);
+}
+
+/* Not a stage in the workflow at all, so it does not sit anywhere on the
+   solid-to-dim scale the other four share. The dashed border is the point: it
+   reads as provisional rather than as "further along" or "further behind", and
+   it is a second channel beside the word for anyone scanning the column. */
+.ad-pill--test {
+  border-style: dashed;
+  border-color: var(--color-grey);
   color: var(--color-grey);
 }
 

@@ -28,9 +28,33 @@ import type { EnquiryItemPayload } from '../enquiry-schema';
 const URL_KEY = 'SUPABASE_URL';
 const SERVICE_KEY = 'SUPABASE_SERVICE_ROLE_KEY';
 
-/** Mirrors the CHECK constraint on public.enquiries.status. */
-export const ENQUIRY_STATUSES = ['new', 'contacted', 'quoted', 'closed'] as const;
+/**
+ * Mirrors the CHECK constraint on public.enquiries.status.
+ *
+ * `test` is a status but NOT a workflow stage. It marks an enquiry the team
+ * submitted themselves — setting the site up, checking a change — and its whole
+ * purpose is to be excluded from anything that describes demand. It is
+ * deliberately the same column rather than a separate `is_test` flag: nobody
+ * works a test enquiry through a pipeline, so the two facts never need to be
+ * held at once, and one column keeps the filter, the chip and the CHECK
+ * constraint in step with no second thing to forget.
+ */
+export const ENQUIRY_STATUSES = ['new', 'contacted', 'quoted', 'closed', 'test'] as const;
 export type EnquiryStatus = (typeof ENQUIRY_STATUSES)[number];
+
+/** The value a test enquiry carries. Excluded from demand and from headline counts. */
+export const TEST_STATUS = 'test' satisfies EnquiryStatus;
+
+/**
+ * The stages a real enquiry moves through.
+ *
+ * Anything reporting on the business counts these and not `test`. Derived from
+ * ENQUIRY_STATUSES rather than written out again, so adding a stage to the
+ * CHECK constraint and to that array is the only edit needed.
+ */
+export const WORKFLOW_STATUSES = ENQUIRY_STATUSES.filter(
+  (s) => s !== TEST_STATUS,
+) as readonly EnquiryStatus[];
 
 export function isEnquiryStatus(value: string): value is EnquiryStatus {
   return (ENQUIRY_STATUSES as readonly string[]).includes(value);
@@ -72,10 +96,11 @@ export interface EnquiryRow {
 }
 
 export interface EnquiryCounts {
+  /** Every status, `test` included — it is what the chips and tiles are keyed on. */
   byStatus: Record<EnquiryStatus, number>;
-  /** Every enquiry, whatever its status. */
+  /** Real enquiries: the workflow statuses summed. EXCLUDES test. */
   total: number;
-  /** Rows in enquiry_lines: product lines across all enquiries. */
+  /** Product lines across real enquiries. EXCLUDES test. */
   lines: number;
 }
 
@@ -298,11 +323,14 @@ export async function setStatus(id: string, status: EnquiryStatus): Promise<Admi
  * this stays cheap however large the table grows — and cannot become the
  * unbounded read that PostgREST would silently truncate.
  *
- * `total` is summed from the four status counts rather than asked for
- * separately. `status` is NOT NULL with a CHECK constraint naming exactly these
- * four values, so the sum is the total by definition, and one fewer round trip
- * is one fewer thing to fail. If a fifth status is ever added to the
- * constraint, add it to ENQUIRY_STATUSES and this follows automatically.
+ * `total` is summed from the WORKFLOW counts rather than asked for separately,
+ * so a test enquiry never inflates the headline figure. `status` is NOT NULL
+ * with a CHECK constraint naming exactly the values in ENQUIRY_STATUSES, so the
+ * sum is the real total by definition, and one fewer round trip is one fewer
+ * thing to fail. Add a stage to that array and this follows automatically.
+ *
+ * `lines` excludes test for the same reason: it sits beside the demand figures
+ * and has to agree with them.
  */
 export async function getCounts(): Promise<AdminResult<EnquiryCounts>> {
   if (!ready()) return UNCONFIGURED;
@@ -322,12 +350,13 @@ export async function getCounts(): Promise<AdminResult<EnquiryCounts>> {
     const countLines = async (): Promise<number> => {
       const { count, error } = await supabase
         .from('enquiry_lines')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .neq('status', TEST_STATUS);
       if (error) throw new Error(error.message);
       return count ?? 0;
     };
 
-    // In parallel: five small counts cost about what one costs.
+    // In parallel: a handful of small counts cost about what one costs.
     const [lines, ...statusCounts] = await Promise.all([
       countLines(),
       ...ENQUIRY_STATUSES.map((s) => countOf(s)),
@@ -339,7 +368,7 @@ export async function getCounts(): Promise<AdminResult<EnquiryCounts>> {
 
     return ok({
       byStatus,
-      total: statusCounts.reduce((n, c) => n + c, 0),
+      total: WORKFLOW_STATUSES.reduce((n, s) => n + byStatus[s], 0),
       lines,
     });
   } catch (cause) {
@@ -360,6 +389,13 @@ interface DemandLine {
  * lead-generation site exists to answer. Reads the enquiry_lines view, which
  * unnests items, so this is a plain aggregate rather than jsonb gymnastics.
  *
+ * TEST ENQUIRIES ARE EXCLUDED. That is the point of the status: an enquiry the
+ * team submitted themselves is not demand, and leaving it in would put the
+ * team's own clicks into the figures someone buys stock from. Filtered in the
+ * query rather than by changing the view — `enquiry_lines` already carries
+ * `status`, and a plain unnest is easier to reason about than one with policy
+ * baked into it.
+ *
  * Batched like the export, and it needs it SOONER than the export does: this
  * view holds one row per product line per enquiry, so at a few lines per RFQ it
  * reaches the row ceiling at a fraction of the enquiry count. Truncated here
@@ -374,6 +410,7 @@ export async function getDemand(): Promise<AdminResult<DemandRow[]>> {
       supabase
         .from('enquiry_lines')
         .select('product_slug, product_name, qty, enquiry_id')
+        .neq('status', TEST_STATUS)
         // A total order across the batches. The view has no single unique
         // column, but an enquiry names a given product at most once, so the
         // pair is unique.
