@@ -366,7 +366,9 @@ Seven items need the client before this site can go live. Nothing here blocks de
       Set `RESEND_API_KEY` and `ENQUIRY_TO_EMAIL`. With Supabase configured this is no longer a data-loss risk — the enquiry is already safe and the email is the nudge — but until it is set nobody is told an RFQ arrived, so somebody has to watch the Supabase table. Set `ENQUIRY_FROM_EMAIL` too once a domain is verified in Resend.
 
 - [ ] **3. The domain — ONE file**
-      `astro.config.mjs` → `site:` (currently `https://spartan.example`, which is reserved by RFC 2606 and can never resolve). This drives every canonical tag, Open Graph URL, JSON-LD URL, the sitemap's contents **and** the `Sitemap:` line in robots.txt.
+      `astro.config.mjs` → `site:`. **Interim value set 2026-08-13:** the Vercel host the deployment answers on, replacing `https://spartan.example`, which is reserved by RFC 2606 and can never resolve. This drives every canonical tag, Open Graph URL, JSON-LD URL, the sitemap's contents **and** the `Sitemap:` line in robots.txt.
+
+      Still outstanding: the real domain, and — once it exists — a redirect from the Vercel host, or the temporary address competes with the real site in search results.
 
       It used to be two files that had to match: a static `robots.txt` under `public/` was served verbatim and hard-coded the domain, so changing one without the other silently pointed crawlers at the wrong host. That file is gone — `src/pages/robots.txt.ts` now emits the value from `site` at build time, so the two cannot diverge. Setting the domain is a single edit.
 

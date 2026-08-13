@@ -5,7 +5,21 @@ import vercel from '@astrojs/vercel';
 import tailwind from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://spartan.example',
+  /*
+   * TEMPORARY, 2026-08-13. This is the Vercel preview domain, set so the site
+   * stops pointing at `spartan.example` — an RFC 2606 reserved name that can
+   * never resolve, so every canonical tag, Open Graph URL and sitemap entry
+   * named a host that does not exist.
+   *
+   * It is still not the final answer. Replace it with the real domain the
+   * moment one is bought: this single value drives every canonical, every OG
+   * URL, the sitemap's contents and the `Sitemap:` line in robots.txt, so the
+   * change is one edit and a redeploy. Anything already indexed under the
+   * vercel.app host will then need a redirect or it becomes a duplicate of the
+   * real site — which is the argument for keeping this host out of search
+   * until the domain lands (see BACKLOG.md).
+   */
+  site: 'https://spartan-ebon.vercel.app',
   output: 'static',
   adapter: vercel(),
   integrations: [

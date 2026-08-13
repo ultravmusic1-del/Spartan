@@ -244,17 +244,36 @@ let unitTests = null;
 /* ----------------------------------------------- 8. placeholder domain gate -- */
 
 /*
- * Advisory, not a failure. `spartan.example` is reserved by RFC 2606 and can
- * never resolve, so while it is in place every canonical, Open Graph URL and
- * all 96 sitemap entries point at nothing. It must not block development — the
- * client has not supplied a domain — but it must never go quiet either.
+ * Advisory, not a failure. The domain drives every canonical, Open Graph URL
+ * and sitemap entry, so a wrong one is wrong everywhere at once. It must not
+ * block development — no real domain has been bought — but it must never go
+ * quiet either.
+ *
+ * READS THE VALUE, NOT THE FILE. This used to search the whole of
+ * astro.config.mjs for `spartan.example`, which meant that explaining the
+ * placeholder in a comment re-triggered the warning after the value had
+ * actually been changed — the gate reported a launch blocker that no longer
+ * existed. A gate that cries wolf gets ignored, which costs more than the one
+ * it was watching for. Matching the parsed value is not a loosening: it is the
+ * only thing that was ever meant to be tested.
  */
 {
   const config = fs.readFileSync(path.join(root, 'astro.config.mjs'), 'utf8');
-  if (config.includes('spartan.example'))
+  const site = config.match(/^\s*site:\s*'([^']+)'/m)?.[1] ?? '';
+
+  if (!site) {
+    console.log('  note   could not read `site` from astro.config.mjs — check the domain by hand');
+  } else if (site.includes('spartan.example')) {
     console.log(
       '  note   domain is still the spartan.example placeholder (launch blocker, not a regression)',
     );
+  } else if (site.includes('.vercel.app')) {
+    // Temporary hosts are the failure mode nobody notices: the site works, so
+    // nothing complains, and the throwaway address quietly accrues canonicals
+    // and index entries that the real domain then has to compete with.
+    console.log(`  note   domain is the temporary Vercel host ${site}`);
+    console.log('         (launch blocker: buy the real domain, then redirect this one)');
+  }
 }
 
 /* --------------------------------------------- 9. the CSP matches the build -- */

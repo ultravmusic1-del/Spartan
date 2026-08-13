@@ -97,11 +97,26 @@ see `handoff.md`). Priorities are P0 highest.
 - [x] **Replace `public/robots.txt` with `src/pages/robots.txt.ts`.** Done — see
       Done below.
 
-- [!] **Set the real domain.** Blocked: client has not confirmed one.
-      `spartan.example` is RFC 2606 reserved and can never resolve, so every
-      canonical, every OG URL and the whole sitemap point at nothing.
-      **Now a one-line edit** to `site` in `astro.config.mjs` — robots.txt
-      follows from it and can no longer be left behind.
+- [!] **Set the real domain.** Blocked: one has not been bought yet. **Interim
+      fix applied 2026-08-13:** `site` in `astro.config.mjs` now points at the
+      Vercel host the deployment already answers on, rather than
+      `spartan.example` — an RFC 2606 reserved name that can never resolve, so
+      every canonical, every OG URL and the whole sitemap named a host that does
+      not exist. Still a one-line edit when the real domain arrives; robots.txt
+      follows from it and cannot be left behind.
+
+      **Two things follow from the interim host, and neither is done:**
+      redirect the vercel.app host to the real one once it exists, or it becomes
+      a duplicate of the live site in search; and decide whether to keep this
+      host out of search in the meantime (next item).
+
+- [ ] **Decide whether the temporary host should be indexable.** The site is
+      currently open to crawlers on a throwaway vercel.app address. Indexed
+      there, it has to be cleaned up after the real domain lands — the usual
+      call before launch is to keep a temporary host out of search entirely.
+      Raised with the client 2026-08-13; **not actioned, because turning it off
+      is a real change to how the public site behaves and was not asked for.**
+      `src/pages/robots.txt.ts` is where it would go.
 - [!] **Real contact details.** Blocked: client. `+971 00 000 0000` renders as a
       live `tel:` link in the header of every page; `sales@spartan.example` is
       a dead mailbox. `src/data/site.json`.
