@@ -999,6 +999,77 @@ is the price of the catalogue having a typographic register for data.
 
 ---
 
+## 14. The admin gets the design system — 2026-08-13
+
+**Status: implemented and green.** `verify 16/16 · 173 unit · 206 e2e.`
+
+The admin worked and looked like a default HTML document, and the reason was
+concrete rather than aesthetic: **it was not using the design system at all.**
+`AdminLayout` set `font-family: system-ui` and around thirty raw hex literals —
+the site's own palette, retyped — were spread across six files with nothing to
+say whether one had drifted. Fixing that is most of what this section is.
+
+`src/styles/admin.css` is new and is the admin's equivalent of a component
+library: shell, page header, tiles, chips, table, pills, pager, cards, form
+controls. `AdminLayout` imports `tokens.css` and `fonts.css` alongside it and
+nothing else — still deliberately not `BaseLayout`, which would drag in the
+public site's SEO emission and component CSS for no gain.
+
+### No JavaScript, and that shaped the design
+
+Every off-the-shelf admin kit — shadcn, Radix, Headless UI, MUI — needs client
+JavaScript, and the admin cannot have any: these routes are server-rendered, so
+`npm run csp` never sees them, so an inline script ships unhashed and is blocked
+at runtime **with nothing failing**. Astro also inlines a script used on exactly
+one page, so even the "processed script" escape hatch turns into the forbidden
+thing on a single-page admin route.
+
+So there is no dropdown, no modal, no toast, and no client-side sort. The
+filters are anchors, the pager is anchors, the status control is a form POST,
+and the mobile table is a media query. Nothing here would break with scripting
+disabled entirely, which is the correct outcome for this area rather than a
+compromise.
+
+### Status colour: weight, not hue
+
+The palette is red, black and greys. It has no green or amber, and inventing one
+for this screen would put a colour into the system that exists nowhere else on
+the site and has never been measured against rule 4. **Decided with the client
+2026-08-13: keep the brand palette.** The pill scale therefore runs solid to
+dim — `new` is a filled red surface because somebody is waiting, `contacted` and
+`quoted` are progressively quieter outlines, `closed` recedes. Every state also
+renders its word, so none of it is colour-only information. Ratios are recorded
+against each variant in `admin.css`.
+
+### Two things worth knowing
+
+**The tiles are counted by the database, not by reading rows.** `getCounts()`
+uses `head: true` with an exact count, so it returns numbers and no rows —
+which keeps it cheap and, more importantly, stops a summary tile from becoming
+the unbounded read that §13 spent its time removing. `total` is summed from the
+four status counts rather than fetched separately, because `status` is NOT NULL
+with a CHECK naming exactly those four values.
+
+**The counts and the list are allowed to disagree.** They are fetched in
+parallel and a failed count does not blank the inbox: the tiles simply do not
+render and the table still does. Only the list failing is an empty screen,
+because only the list is what the page is for.
+
+**Mobile turns the table into cards** below 760px, driven by `data-label` on
+every cell. A column added without that attribute arrives on a phone
+unlabelled — the note is on the media query.
+
+### What could not be checked here
+
+There are no Supabase credentials on this machine, so **every admin screen
+except the login page was unreachable locally**. The login page was verified in
+the browser (tokens resolving, Archivo and Inter applied, palette correct) and
+the rest is verified by `astro check`, the build, and the e2e boundary suite.
+The inbox, detail and demand screens have been seen by nobody in their new form.
+Look at them on the deployment before trusting the layout.
+
+---
+
 ## 13. Admin Phase 1 completed, and the hero WIP closed out — 2026-08-12
 
 **Status: implemented and green.** `verify 16/16 · 150 unit · 199 e2e · 110

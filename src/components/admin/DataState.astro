@@ -67,12 +67,16 @@ const { state, subject } = Astro.props;
     max-width: 70ch;
     padding: 16px 20px;
     border-left: 3px solid;
-    background: #151519;
+    border-radius: 0 4px 4px 0;
+    background: var(--color-card);
+    font-family: var(--font-body);
   }
 
   .ds h2 {
     margin: 0 0 8px;
+    font-family: var(--font-display);
     font-size: 17px;
+    font-weight: var(--fw-subhead);
   }
 
   .ds p {
@@ -83,24 +87,26 @@ const { state, subject } = Astro.props;
     margin-bottom: 0;
   }
 
-  /* 5.6:1 on this panel — recessive, still readable. */
+  /* 5.1:1 on --color-card — recessive, still readable. */
   .ds__aside {
-    color: #8a8a92;
-    font-size: 14px;
+    color: var(--color-grey);
+    font-size: 13px;
   }
 
   .ds code {
-    padding: 1px 4px;
-    background: #08080a;
-    font-size: 13px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: var(--color-black);
+    font-family: var(--font-mono);
+    font-size: 12px;
   }
 
   /* An outage and a missing setting must not look alike at a glance. */
   .ds--unconfigured {
-    border-color: #8a8a92;
+    border-color: var(--color-grey);
   }
 
   .ds--failed {
-    border-color: #ef3a38;
+    border-color: var(--color-red-light);
   }
 </style>

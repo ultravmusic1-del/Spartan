@@ -301,6 +301,38 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## Done
 
+- **2026-08-13** — **The admin gets the design system.** It worked and looked
+  like a default HTML document, for a concrete reason: `AdminLayout` used
+  `system-ui` and the site's palette was retyped as ~30 raw hex literals across
+  six files. `src/styles/admin.css` is now the admin's component layer — shell,
+  page header, summary tiles, filter chips, table, status pills, pager, cards —
+  and everything resolves to `tokens.css`. Full reasoning in `handoff.md` §14.
+
+  *Worth knowing:* **no off-the-shelf UI kit can be used here, ever.** shadcn,
+  Radix, Headless UI and MUI all need client JavaScript, and admin routes are
+  server-rendered so `npm run csp` never sees them — an inline script ships
+  unhashed and is blocked with nothing failing. Astro also inlines a script used
+  on exactly one page, so the "processed script" escape hatch becomes the
+  forbidden thing on a single-page admin route. Filters and pager are anchors,
+  the status control is a form POST, mobile is a media query.
+
+  *Worth knowing:* status is carried by **weight, not hue** — decided with the
+  client. The palette has no green or amber, and adding one would put an
+  unmeasured colour into the system. `new` is a filled red surface, the middle
+  states are quieter outlines, `closed` recedes; every pill also renders its
+  word, so nothing is colour-only.
+
+  *Worth knowing:* the tiles count with `head: true` and an exact count, so a
+  summary figure never becomes the unbounded read the previous session removed
+  everywhere else. Counts and list are fetched in parallel and may disagree: a
+  failed count hides the tiles, it does not blank the inbox.
+
+  **Not seen by anyone yet.** No credentials on the build machine, so only the
+  login page was checkable locally — the inbox, detail and demand screens are
+  verified by typecheck, build and the boundary suite, not by eye.
+
+  verify 16/16, 173 unit, 206 e2e.
+
 - **2026-08-13** — **Deployed to Vercel, and the lead-capture path proved itself
   in production.** The whole point of the site, working end to end for the first
   time: an enquiry submitted on the public site was written to Postgres, showed

@@ -2,6 +2,7 @@
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import DataState from '../../../components/admin/DataState.astro';
 import Notice from '../../../components/admin/Notice.astro';
+import StatusPill from '../../../components/admin/StatusPill.astro';
 import { noticeFor } from '../../../lib/admin/notices';
 import { getEnquiry, ENQUIRY_STATUSES } from '../../../lib/admin/enquiries';
 
@@ -24,10 +25,27 @@ const enquiry = result.state === 'ok' ? result.data : null;
 const notice = noticeFor(Astro.url.searchParams.get('notice'));
 const units = enquiry ? enquiry.items.reduce((n, i) => n + i.qty, 0) : 0;
 const title = enquiry ? `Enquiry from ${enquiry.company || enquiry.name}` : 'Enquiry';
+
+const stamp = (iso: string): string =>
+  new Date(iso).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }) + ' UTC';
 ---
 
 <AdminLayout title={title} admin={admin}>
-  <p><a href="/admin">← All enquiries</a></p>
+  <div class="ad-head">
+    <div>
+      <p class="ad-eyebrow"><a class="ad-back" href="/admin">← All enquiries</a></p>
+      <h1 class="ad-title">{enquiry ? enquiry.company || enquiry.name : 'Enquiry'}</h1>
+      {enquiry && <p class="ad-sub">{enquiry.items.length} lines · {units} units</p>}
+    </div>
+    {enquiry && <StatusPill status={enquiry.status} />}
+  </div>
 
   {/*
     Outside the branch below, deliberately. The notice reports what happened to
@@ -41,118 +59,129 @@ const title = enquiry ? `Enquiry from ${enquiry.company || enquiry.name}` : 'Enq
 
   {
     enquiry === null ? (
-      <>
-        <h1>Enquiry</h1>
-        <DataState state={result.state === 'failed' ? 'failed' : 'unconfigured'} subject="enquiry" />
-      </>
+      <DataState state={result.state === 'failed' ? 'failed' : 'unconfigured'} subject="enquiry" />
     ) : (
-      <>
-        <h1>{enquiry.company || enquiry.name}</h1>
+      <div class="ad-grid">
+        <div>
+          <section class="ad-card">
+            <h2 class="ad-card__title">Message</h2>
+            <p class="ad-message">{enquiry.message || '—'}</p>
+          </section>
 
-        <dl>
-          <dt>Received</dt>
-          <dd><time datetime={enquiry.created_at}>{new Date(enquiry.created_at).toISOString()}</time></dd>
-          <dt>Name</dt><dd>{enquiry.name}</dd>
-          <dt>Email</dt><dd><a href={`mailto:${enquiry.email}`}>{enquiry.email}</a></dd>
-          <dt>Phone</dt><dd>{enquiry.phone || '—'}</dd>
-          <dt>Country</dt><dd>{enquiry.country || '—'}</dd>
-          <dt>Division</dt><dd>{enquiry.division || '—'}</dd>
-          <dt>Source</dt><dd>{enquiry.source}</dd>
-          <dt>Notified</dt>
-          <dd>
-            {enquiry.notified_at ? (
-              <time datetime={enquiry.notified_at}>
-                {new Date(enquiry.notified_at).toISOString()}
-              </time>
+          <section class="ad-card">
+            <h2 class="ad-card__title">
+              Products ({enquiry.items.length} lines, {units} units)
+            </h2>
+            {enquiry.items.length === 0 ? (
+              <p class="ad-muted">General enquiry: no products selected.</p>
             ) : (
-              /* Not a failure. The row is the system of record and the email is
-                 the nudge — see src/lib/enquiry-outcome.ts. */
-              'not emailed'
+              <div class="ad-panel">
+                <table class="ad-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Product</th>
+                      <th scope="col">Slug</th>
+                      <th scope="col" class="ad-num">
+                        Qty
+                      </th>
+                      <th scope="col">Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {enquiry.items.map((i) => (
+                      <tr>
+                        <th scope="row" data-label="Product">
+                          {i.name}
+                        </th>
+                        <td data-label="Slug">
+                          <a href={`/products/${i.slug}`}>{i.slug}</a>
+                        </td>
+                        <td data-label="Qty" class="ad-num">
+                          {i.qty}
+                        </td>
+                        <td data-label="Note">
+                          {i.note || <span class="ad-muted">—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </dd>
-        </dl>
+          </section>
+        </div>
 
-        <h2>Message</h2>
-        <p class="msg">{enquiry.message || '—'}</p>
+        <div>
+          <section class="ad-card">
+            <h2 class="ad-card__title">Contact</h2>
+            <dl class="ad-dl">
+              <dt>Name</dt>
+              <dd>{enquiry.name}</dd>
+              <dt>Email</dt>
+              <dd><a href={`mailto:${enquiry.email}`}>{enquiry.email}</a></dd>
+              <dt>Phone</dt>
+              <dd>{enquiry.phone || <span class="ad-muted">—</span>}</dd>
+              <dt>Country</dt>
+              <dd>{enquiry.country || <span class="ad-muted">—</span>}</dd>
+              <dt>Division</dt>
+              <dd>{enquiry.division || <span class="ad-muted">—</span>}</dd>
+            </dl>
+          </section>
 
-        <h2>Products ({enquiry.items.length} lines, {units} units)</h2>
-        {enquiry.items.length === 0 ? (
-          <p>General enquiry: no products selected.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Product</th>
-                <th scope="col">Slug</th>
-                <th scope="col">Qty</th>
-                <th scope="col">Note</th>
-              </tr>
-            </thead>
-            <tbody>
-              {enquiry.items.map((i) => (
-                <tr>
-                  <td>{i.name}</td>
-                  <td>
-                    <a href={`/products/${i.slug}`}>{i.slug}</a>
-                  </td>
-                  <td>{i.qty}</td>
-                  <td>{i.note || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+          <section class="ad-card">
+            <h2 class="ad-card__title">Provenance</h2>
+            <dl class="ad-dl">
+              <dt>Received</dt>
+              <dd><time datetime={enquiry.created_at}>{stamp(enquiry.created_at)}</time></dd>
+              <dt>Source</dt>
+              <dd>{enquiry.source}</dd>
+              <dt>Notified</dt>
+              <dd>
+                {enquiry.notified_at ? (
+                  <time datetime={enquiry.notified_at}>{stamp(enquiry.notified_at)}</time>
+                ) : (
+                  /* Not a failure. The row is the system of record and the
+                     email is the nudge — see src/lib/enquiry-outcome.ts. It
+                     also cannot distinguish "never attempted" from "attempted
+                     and refused"; that gap is queued in BACKLOG.md. */
+                  <span class="ad-muted">not emailed</span>
+                )}
+              </dd>
+            </dl>
+          </section>
 
-        <h2>Status</h2>
-        <form method="post" action={`/api/admin/enquiries/${enquiry.id}`}>
-          <label for="status">Status</label>
-          <select id="status" name="status">
-            {ENQUIRY_STATUSES.map((s) => (
-              <option value={s} selected={s === enquiry.status}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <button type="submit">Save</button>
-        </form>
-      </>
+          <section class="ad-card">
+            <h2 class="ad-card__title">Status</h2>
+            <form class="ad-form" method="post" action={`/api/admin/enquiries/${enquiry.id}`}>
+              <label class="ad-sr" for="status">
+                Status
+              </label>
+              <select class="ad-select" id="status" name="status">
+                {ENQUIRY_STATUSES.map((s) => (
+                  <option value={s} selected={s === enquiry.status}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <button class="ad-btn" type="submit">Save</button>
+            </form>
+          </section>
+        </div>
+      </div>
     )
   }
 </AdminLayout>
 
 <style>
-  dl {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 4px 16px;
+  /* The back link sits in the eyebrow slot, so it inherits its colour and
+     tracking rather than declaring its own. */
+  .ad-back {
+    color: inherit;
+    text-decoration: none;
   }
-  dt {
-    color: #8a8a92;
-  }
-  .msg {
-    white-space: pre-wrap;
-    max-width: 70ch;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 24px;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #232329;
-  }
-  select {
-    min-height: 44px;
-    background: #151519;
-    color: #fff;
-    border: 1px solid #232329;
-  }
-  form {
-    display: flex;
-    gap: 8px;
-    align-items: end;
+
+  .ad-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 </style>

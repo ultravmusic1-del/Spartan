@@ -1,0 +1,656 @@
+/*
+ * The admin's design system.
+ *
+ * WHY THIS FILE EXISTS. The admin was built as plain HTML with `system-ui` and
+ * around thirty raw hex literals copied by hand across six files — the site's
+ * palette, retyped, with no way to tell whether a value had drifted. It looked
+ * like a default document because it was not using the design system at all.
+ * Everything here resolves to `tokens.css`, so the admin now moves with the
+ * brand rather than beside it.
+ *
+ * STILL NOT BaseLayout, and that has not changed. BaseLayout emits titles,
+ * canonicals, Open Graph and JSON-LD describing a public document, and pulls in
+ * the public site's component CSS. This file takes the tokens and the fonts and
+ * nothing else.
+ *
+ * NO JAVASCRIPT REACHES THESE PAGES. Admin routes are server-rendered, so they
+ * are never in `dist/client`, so `npm run csp` never sees them and an inline
+ * script would ship unhashed and be blocked at runtime with nothing failing.
+ * Every interactive thing below is therefore CSS or a real link: the filter
+ * chips are anchors, the pager is anchors, the status control is a form POST.
+ * If a component here ever seems to need a dropdown, a modal or a toast, the
+ * answer is a page, not a script.
+ *
+ * COLOUR IS MEASURED, NOT CHOSEN (rule 4). Every pair below is stated with its
+ * ratio. Small red text on a dark surface is --color-red-light, never brand
+ * red, which is 4.23:1 on --color-card and fails AA for normal-size text.
+ */
+
+/* ---------------------------------------------------------------- base -- */
+
+.ad-body {
+  margin: 0;
+  background: var(--color-black);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ad-body *:focus-visible {
+  outline: 2px solid var(--color-red-light);
+  outline-offset: 2px;
+}
+
+.ad-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- shell -- */
+
+.ad-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 0 20px;
+  min-height: 56px;
+  background: var(--color-panel);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.ad-brand {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  white-space: nowrap;
+}
+
+/* The one flash of brand red in the wordmark. Decorative, so brand red is
+   correct here rather than the text variant. */
+.ad-brand span {
+  color: var(--color-red);
+}
+
+.ad-bar__group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ad-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.ad-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: var(--fw-subhead);
+  /* 7.4:1 on --color-panel. */
+  color: var(--color-grey-lt);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+.ad-nav-link:hover {
+  color: var(--color-paper);
+}
+
+/* Colour alone would fail 1.4.1 Use of Colour, so the lit item carries a rule
+   as well. --color-red-light on --color-panel is 4.89:1. */
+.ad-nav-link.is-on {
+  color: var(--color-red-light);
+  border-bottom-color: var(--color-red-light);
+}
+
+.ad-who {
+  font-size: 12px;
+  /* 5.6:1 on --color-panel — recessive but readable. */
+  color: var(--color-grey);
+  overflow-wrap: anywhere;
+}
+
+.ad-main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 26px 20px 64px;
+}
+
+/* ---------------------------------------------------------- page header -- */
+
+.ad-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.ad-eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  /* 4.65:1 on --color-black — the one dark surface brand red clears. This is
+     the page background, not a panel, so red-light is not required; it is used
+     anyway so the eyebrow matches the one on a panel elsewhere. */
+  color: var(--color-red-light);
+}
+
+.ad-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: var(--fw-section);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.ad-sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--color-grey);
+}
+
+/* -------------------------------------------------------------- buttons -- */
+
+.ad-btn,
+.ad-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* WCAG 2.5.5. */
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+/* A red SURFACE under white text, so the fill token: 4.91:1. Brand red would
+   be 4.30:1 and fail. */
+.ad-btn {
+  background: var(--color-red-fill);
+  color: #fff;
+}
+
+.ad-btn:hover {
+  background: var(--color-red-dark);
+}
+
+.ad-btn-ghost {
+  background: transparent;
+  border-color: var(--color-line);
+  color: var(--color-grey-lt);
+}
+
+.ad-btn-ghost:hover {
+  border-color: var(--color-grey);
+  color: var(--color-paper);
+}
+
+/* --------------------------------------------------------------- tiles -- */
+
+.ad-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.ad-tile {
+  padding: 13px 15px;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+}
+
+/* The tile that means "someone is waiting". A left rule rather than a fill:
+   the number stays the loudest thing on the tile. */
+.ad-tile.is-live {
+  border-left: 2px solid var(--color-red);
+}
+
+.ad-tile__label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  /* 5.1:1 on --color-card. */
+  color: var(--color-grey);
+}
+
+/* Mono because these are figures to be read and compared, not language. 24px
+   is the WCAG large-text bar, and this sits below it, so a red numeral here
+   uses the text variant. The mono file's weight axis is clipped to 400-600 —
+   never ask it for 700. */
+.ad-tile__value {
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--color-paper);
+}
+
+.ad-tile.is-live .ad-tile__value {
+  /* 4.62:1 on --color-card. */
+  color: var(--color-red-light);
+}
+
+.ad-tile__value.is-quiet {
+  color: var(--color-grey-lt);
+}
+
+/* --------------------------------------------------------------- chips -- */
+
+.ad-chips {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ad-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 99px;
+  border: 1px solid var(--color-line);
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: var(--fw-subhead);
+  color: var(--color-grey-lt);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ad-chip:hover {
+  border-color: var(--color-grey);
+  color: var(--color-paper);
+}
+
+/* White on --color-red-fill: 4.91:1. */
+.ad-chip[aria-current='page'] {
+  background: var(--color-red-fill);
+  border-color: var(--color-red-fill);
+  color: #fff;
+}
+
+.ad-chip__n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------------- table -- */
+
+.ad-panel {
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ad-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ad-table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-line);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-grey);
+  white-space: nowrap;
+}
+
+.ad-table td,
+.ad-table tbody th {
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 400;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+  vertical-align: middle;
+}
+
+.ad-table tbody tr:last-child td,
+.ad-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.ad-table tbody tr:hover {
+  background: var(--color-card);
+}
+
+.ad-table a {
+  color: var(--color-paper);
+  text-decoration: none;
+}
+
+.ad-table a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Figures, aligned on the right so the column can be scanned down. */
+.ad-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ad-when {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.ad-muted {
+  color: var(--color-grey);
+}
+
+/* ---------------------------------------------------------------- pills -- */
+
+/*
+ * Status is carried by WEIGHT, not hue.
+ *
+ * The brand palette is red, black and greys — it has no green or amber, and
+ * inventing one for this screen would put a colour into the system that exists
+ * nowhere else on the site and has never been measured. So the scale runs from
+ * solid to dim: `new` is a filled red surface because somebody is waiting,
+ * `contacted` and `quoted` are outlines of increasing quietness, and `closed`
+ * is recessive. Every state also reads as a word, so none of this is
+ * colour-only information (1.4.1).
+ */
+.ad-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* White on --color-red-fill: 4.91:1. */
+.ad-pill--new {
+  background: var(--color-red-fill);
+  color: #fff;
+}
+
+/* --color-paper on --color-panel: 17.8:1. */
+.ad-pill--contacted {
+  border-color: var(--color-grey);
+  color: var(--color-paper);
+}
+
+/* --color-grey-lt on --color-panel: 10.4:1. */
+.ad-pill--quoted {
+  border-color: var(--color-line);
+  color: var(--color-grey-lt);
+}
+
+/* --color-grey on --color-panel: 5.6:1 — recessive, still above the 4.5:1
+   floor. "Done" should recede; it must not disappear. */
+.ad-pill--closed {
+  border-color: var(--color-line);
+  color: var(--color-grey);
+}
+
+/* --------------------------------------------------------------- pager -- */
+
+.ad-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.ad-pager a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+  color: var(--color-grey-lt);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.ad-pager a:hover {
+  border-color: var(--color-grey);
+  color: var(--color-paper);
+}
+
+.ad-pager__at {
+  font-size: 12px;
+  color: var(--color-grey);
+  font-family: var(--font-mono);
+}
+
+/* -------------------------------------------------------------- detail -- */
+
+.ad-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.ad-card {
+  padding: 18px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+}
+
+.ad-card + .ad-card {
+  margin-top: 14px;
+}
+
+.ad-card__title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-grey);
+}
+
+.ad-dl {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  gap: 9px 18px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.ad-dl dt {
+  color: var(--color-grey);
+}
+
+.ad-dl dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ad-dl a {
+  color: var(--color-red-light);
+}
+
+.ad-message {
+  margin: 0;
+  white-space: pre-wrap;
+  max-width: 70ch;
+  color: var(--color-grey-lt);
+}
+
+.ad-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ad-select {
+  min-height: 44px;
+  padding: 0 12px;
+  background: var(--color-card);
+  color: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+  font: inherit;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------- narrow: table -> cards -- */
+
+/*
+ * Below this the table stops being a table.
+ *
+ * Six columns cannot be read on a phone; the browser either scrolls the page
+ * sideways or crushes every column to one word per line. Each row becomes a
+ * card instead, and each cell grows its own label from `data-label` — which is
+ * why the markup carries that attribute on every `td`. If a column is added
+ * there, add the attribute with it or the cell arrives on mobile unlabelled.
+ *
+ * The header row is hidden rather than removed, so the table's semantics are
+ * untouched for a screen reader.
+ */
+@media (max-width: 760px) {
+  .ad-panel {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .ad-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .ad-table,
+  .ad-table tbody,
+  .ad-table tr,
+  .ad-table td,
+  .ad-table tbody th {
+    display: block;
+    width: auto;
+  }
+
+  .ad-table tr {
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: 4px;
+  }
+
+  .ad-table tbody tr:hover {
+    background: var(--color-panel);
+  }
+
+  .ad-table td,
+  .ad-table tbody th {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 0;
+    border: 0;
+    text-align: left;
+  }
+
+  .ad-table td::before,
+  .ad-table tbody th::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  /* The row's own link, promoted to the card's heading. */
+  .ad-table tbody th {
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .ad-num {
+    text-align: right;
+  }
+
+  .ad-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .ad-head {
+    align-items: stretch;
+  }
+
+  .ad-head .ad-btn {
+    width: 100%;
+  }
+}

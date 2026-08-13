@@ -2,9 +2,11 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import DataState from '../../components/admin/DataState.astro';
 import Notice from '../../components/admin/Notice.astro';
+import StatusPill from '../../components/admin/StatusPill.astro';
 import { noticeFor } from '../../lib/admin/notices';
 import {
   listEnquiries,
+  getCounts,
   isEnquiryStatus,
   normalisePage,
   ENQUIRY_STATUSES,
@@ -20,7 +22,21 @@ const filterParam = params.get('status') ?? '';
 const filter = isEnquiryStatus(filterParam) ? filterParam : undefined;
 const page = normalisePage(params.get('page'));
 
-const result = await listEnquiries({ status: filter, page });
+/*
+ * Both at once. The counts feed the tiles and the chips and the list feeds the
+ * table; neither depends on the other, so waiting for them in sequence would
+ * add a round trip for nothing.
+ *
+ * They are also allowed to disagree. A failed count must not blank the inbox —
+ * the tiles simply do not render, and the list still does. The reverse holds
+ * too. Only the list's failure is an empty screen, because only the list is
+ * what this page is for.
+ */
+const [result, counts] = await Promise.all([
+  listEnquiries({ status: filter, page }),
+  getCounts(),
+]);
+
 const notice = noticeFor(params.get('notice'));
 
 /** Keep the active filter when moving between pages, and drop `notice`. */
@@ -33,97 +49,169 @@ function href(next: { status?: string; page?: number }): string {
   return query ? `/admin?${query}` : '/admin';
 }
 
+/*
+ * UTC, stated in the column heading rather than left to be assumed. The server
+ * runs in UTC and the reader may not; a bare "12:38" beside an enquiry someone
+ * is about to ring back about is worth being unambiguous about. The locale is
+ * pinned for the same reason — `toLocaleString` with no locale follows the
+ * server's, which is not a property anyone has chosen.
+ */
+const when = (iso: string): string =>
+  new Date(iso).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
+
 const first = result.state === 'ok' ? (result.data.page - 1) * PAGE_SIZE + 1 : 0;
 const last = result.state === 'ok' ? first + result.data.rows.length - 1 : 0;
 ---
 
 <AdminLayout title="Enquiries" admin={admin}>
-  <h1>Enquiries</h1>
+  <div class="ad-head">
+    <div>
+      <p class="ad-eyebrow">Inbox</p>
+      <h1 class="ad-title">Enquiries</h1>
+      {
+        result.state === 'ok' && result.data.total > 0 && (
+          <p class="ad-sub">
+            Showing {first}–{last} of {result.data.total}
+            {filter ? ` with status “${filter}”` : ''}.
+          </p>
+        )
+      }
+    </div>
+    <a class="ad-btn" href="/api/admin/export.csv">Export CSV</a>
+  </div>
 
   <Notice notice={notice} />
 
-  <nav class="filters" aria-label="Filter by status">
-    <a href={href({ status: '', page: 1 })} aria-current={!filter ? 'page' : undefined}>All</a>
+  {
+    counts.state === 'ok' && (
+      <div class="ad-tiles">
+        <div class:list={['ad-tile', { 'is-live': counts.data.byStatus.new > 0 }]}>
+          <p class="ad-tile__label">New</p>
+          <p class="ad-tile__value">{counts.data.byStatus.new}</p>
+        </div>
+        <div class="ad-tile">
+          <p class="ad-tile__label">Contacted</p>
+          <p class="ad-tile__value is-quiet">{counts.data.byStatus.contacted}</p>
+        </div>
+        <div class="ad-tile">
+          <p class="ad-tile__label">Quoted</p>
+          <p class="ad-tile__value is-quiet">{counts.data.byStatus.quoted}</p>
+        </div>
+        <div class="ad-tile">
+          <p class="ad-tile__label">Closed</p>
+          <p class="ad-tile__value is-quiet">{counts.data.byStatus.closed}</p>
+        </div>
+        <div class="ad-tile">
+          <p class="ad-tile__label">Product lines</p>
+          <p class="ad-tile__value is-quiet">{counts.data.lines}</p>
+        </div>
+      </div>
+    )
+  }
+
+  <nav class="ad-chips" aria-label="Filter by status">
+    <a class="ad-chip" href={href({ status: '', page: 1 })} aria-current={!filter ? 'page' : undefined}>
+      All
+      {counts.state === 'ok' && <span class="ad-chip__n">{counts.data.total}</span>}
+    </a>
     {
       ENQUIRY_STATUSES.map((s) => (
-        <a href={href({ status: s, page: 1 })} aria-current={filter === s ? 'page' : undefined}>
+        <a
+          class="ad-chip"
+          href={href({ status: s, page: 1 })}
+          aria-current={filter === s ? 'page' : undefined}
+        >
           {s}
+          {counts.state === 'ok' && <span class="ad-chip__n">{counts.data.byStatus[s]}</span>}
         </a>
       ))
     }
-    <a class="export" href="/api/admin/export.csv">Export CSV</a>
   </nav>
 
   {
     result.state !== 'ok' ? (
       <DataState state={result.state} subject="enquiries" />
     ) : result.data.total === 0 ? (
-      <p>
-        No enquiries{filter ? ` with status “${filter}”` : ''} yet. The database was read
-        successfully; there are none.
-      </p>
+      <div class="ad-card">
+        <p>
+          No enquiries{filter ? ` with status “${filter}”` : ''} yet. The database was read
+          successfully; there are none.
+        </p>
+      </div>
     ) : (
       <>
-        <p class="count">
-          Showing {first}–{last} of {result.data.total}
-          {filter ? ` with status “${filter}”` : ''}.
-        </p>
-
-        <table>
-          <caption class="sr-only">
-            Enquiries, newest first{filter ? `, filtered to status ${filter}` : ''}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Received</th>
-              <th scope="col">Company</th>
-              <th scope="col">Name</th>
-              <th scope="col">Lines</th>
-              <th scope="col">Source</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.data.rows.map((e) => (
+        <div class="ad-panel">
+          <table class="ad-table">
+            <caption class="ad-sr">
+              Enquiries, newest first{filter ? `, filtered to status ${filter}` : ''}
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">
-                  <a href={`/admin/enquiries/${e.id}`}>
-                    {/* A machine-readable datetime beside the human one: the
-                        visible text is deliberately short, and an operator
-                        copying a timestamp into an email needs the full value. */}
-                    <time datetime={e.created_at}>
-                      {new Date(e.created_at).toISOString().slice(0, 16).replace('T', ' ')}
-                    </time>
-                  </a>
+                <th scope="col">Received (UTC)</th>
+                <th scope="col">Company</th>
+                <th scope="col">Name</th>
+                <th scope="col" class="ad-num">
+                  Lines
                 </th>
-                <td>{e.company || '—'}</td>
-                <td>{e.name}</td>
-                <td>{e.items.length}</td>
-                <td>{e.source}</td>
-                <td>{e.status}</td>
+                <th scope="col">Source</th>
+                <th scope="col">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {result.data.rows.map((e) => (
+                <tr>
+                  {/* Every cell carries data-label: below 760px the table
+                      becomes cards and each cell grows its own heading from
+                      this attribute. A new column without one arrives on a
+                      phone unlabelled. */}
+                  <th scope="row" data-label="Received">
+                    <a class="ad-when" href={`/admin/enquiries/${e.id}`}>
+                      <time datetime={e.created_at}>{when(e.created_at)}</time>
+                    </a>
+                  </th>
+                  <td data-label="Company">
+                    {e.company || <span class="ad-muted">—</span>}
+                  </td>
+                  <td data-label="Name">{e.name}</td>
+                  <td data-label="Lines" class="ad-num">
+                    {e.items.length}
+                  </td>
+                  <td data-label="Source" class="ad-muted">
+                    {e.source}
+                  </td>
+                  <td data-label="Status">
+                    <StatusPill status={e.status} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {result.data.pages > 1 && (
-          <nav class="pager" aria-label="Pages">
+          <nav class="ad-pager" aria-label="Pages">
             {result.data.page > 1 ? (
               <a rel="prev" href={href({ page: result.data.page - 1 })}>
                 ← Newer
               </a>
             ) : (
-              <span aria-hidden="true" />
+              <span />
             )}
-            <span>
-              Page {result.data.page} of {result.data.pages}
+            <span class="ad-pager__at">
+              {result.data.page} / {result.data.pages}
             </span>
             {result.data.page < result.data.pages ? (
               <a rel="next" href={href({ page: result.data.page + 1 })}>
                 Older →
               </a>
             ) : (
-              <span aria-hidden="true" />
+              <span />
             )}
           </nav>
         )}
@@ -131,73 +219,3 @@ const last = result.state === 'ok' ? first + result.data.rows.length - 1 : 0;
     )
   }
 </AdminLayout>
-
-<style>
-  .filters {
-    display: flex;
-    gap: 16px;
-    margin: 16px 0;
-    flex-wrap: wrap;
-  }
-  .filters a {
-    color: #b4b4bc;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-  }
-  .filters a[aria-current='page'] {
-    color: #ef3a38;
-  }
-  .export {
-    margin-left: auto;
-  }
-  .count {
-    color: #8a8a92;
-    font-size: 14px;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #232329;
-    font-weight: 400;
-  }
-  thead th {
-    font-weight: 600;
-  }
-  td a,
-  th a {
-    color: #fff;
-  }
-  .pager {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-top: 20px;
-  }
-  .pager a {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-  }
-  .pager span {
-    color: #8a8a92;
-    font-size: 14px;
-  }
-
-  /* AdminLayout has no utility stylesheet, so the one visually-hidden helper
-     the admin needs lives with the one page that uses it. */
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-</style>

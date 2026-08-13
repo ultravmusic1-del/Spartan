@@ -33,17 +33,20 @@ const { notice } = Astro.props;
     margin: 0 0 20px;
     padding: 12px 16px;
     border-left: 3px solid;
-    background: #151519;
+    border-radius: 0 4px 4px 0;
+    background: var(--color-card);
+    font-family: var(--font-body);
+    font-size: 13px;
   }
 
   .nt--error {
-    border-color: #ef3a38;
+    border-color: var(--color-red-light);
   }
 
   /* Not green: this palette has no success colour, and inventing one for a
      single banner would put a token on the page that exists nowhere else in the
      system. White reads as neutral-positive against the red used for errors. */
   .nt--success {
-    border-color: #f6f6f7;
+    border-color: var(--color-paper);
   }
 </style>

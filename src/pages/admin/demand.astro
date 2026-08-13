@@ -7,74 +7,98 @@ export const prerender = false;
 
 const admin = Astro.locals.admin!;
 const result = await getDemand();
+
+/* The widest bar is the most-enquired product, so every other row is read
+   against it. Guarded: with an empty list this is never reached, and `max`
+   cannot be 0 when at least one row exists because a line implies an enquiry. */
+const max = result.state === 'ok' ? Math.max(...result.data.map((d) => d.enquiries), 1) : 1;
 ---
 
 <AdminLayout title="Product demand" admin={admin}>
-  <h1>Product demand</h1>
-  <p class="note">
-    Products ordered by how many separate enquiries name them. Counts every enquiry regardless of
-    status.
-  </p>
+  <div class="ad-head">
+    <div>
+      <p class="ad-eyebrow">Report</p>
+      <h1 class="ad-title">Product demand</h1>
+      <p class="ad-sub">
+        Ordered by how many separate enquiries name each product. Counts every enquiry regardless of
+        status.
+      </p>
+    </div>
+    <a class="ad-btn-ghost" href="/admin">Back to inbox</a>
+  </div>
 
   {
     result.state !== 'ok' ? (
       <DataState state={result.state} subject="demand figures" />
     ) : result.data.length === 0 ? (
-      <p>No products have been enquired about yet. The database was read successfully.</p>
+      <div class="ad-card">
+        <p>No products have been enquired about yet. The database was read successfully.</p>
+      </div>
     ) : (
-      <table>
-        <caption class="sr-only">Products by number of enquiries naming them</caption>
-        <thead>
-          <tr>
-            <th scope="col">Product</th>
-            <th scope="col">Enquiries</th>
-            <th scope="col">Units</th>
-          </tr>
-        </thead>
-        <tbody>
-          {result.data.map((d) => (
+      <div class="ad-panel">
+        <table class="ad-table">
+          <caption class="ad-sr">Products by number of enquiries naming them</caption>
+          <thead>
             <tr>
-              <th scope="row">
-                <a href={`/products/${d.product_slug}`}>{d.product_name}</a>
+              <th scope="col">Product</th>
+              <th scope="col" class="ad-num">
+                Enquiries
               </th>
-              <td>{d.enquiries}</td>
-              <td>{d.units}</td>
+              <th scope="col" class="ad-num">
+                Units
+              </th>
+              <th scope="col">Share</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {result.data.map((d) => (
+              <tr>
+                <th scope="row" data-label="Product">
+                  <a href={`/products/${d.product_slug}`}>{d.product_name}</a>
+                </th>
+                <td data-label="Enquiries" class="ad-num">
+                  {d.enquiries}
+                </td>
+                <td data-label="Units" class="ad-num">
+                  {d.units}
+                </td>
+                <td data-label="Share">
+                  {/*
+                    A bar, not a chart library — one div and a width. The number
+                    beside it is the real value; this is aria-hidden because it
+                    restates the Enquiries column and a screen reader reading
+                    "62 percent" for a decorative rule would be inventing a
+                    figure the report does not publish.
+                  */}
+                  <span class="ad-bar" aria-hidden="true">
+                    <span class="ad-bar__fill" style={`width:${(d.enquiries / max) * 100}%`} />
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     )
   }
 </AdminLayout>
 
 <style>
-  .note {
-    color: #8a8a92;
-    max-width: 60ch;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th,
-  td {
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid #232329;
-    font-weight: 400;
-  }
-  thead th {
-    font-weight: 600;
-  }
-  th a {
-    color: #fff;
-  }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
+  .ad-bar {
+    display: block;
+    width: min(180px, 100%);
+    height: 6px;
+    background: var(--color-card);
+    border-radius: 99px;
     overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+  }
+
+  /* Brand red: a decorative fill, not text, so the text variant is not needed
+     here (rule 4 — red is the colour for rules, borders and decorative fills). */
+  .ad-bar__fill {
+    display: block;
+    height: 100%;
+    background: var(--color-red);
+    border-radius: 99px;
   }
 </style>

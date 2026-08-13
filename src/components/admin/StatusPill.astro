@@ -1,0 +1,19 @@
+---
+/**
+ * An enquiry's status, as a pill.
+ *
+ * The word is always rendered, so the state is never carried by appearance
+ * alone (WCAG 1.4.1). The styling is a weight scale rather than a colour scale
+ * — see the pill block in src/styles/admin.css for why this palette has no
+ * green or amber to reach for, and the measured ratio behind each variant.
+ */
+import type { EnquiryStatus } from '../../lib/admin/enquiries';
+
+interface Props {
+  status: EnquiryStatus;
+}
+
+const { status } = Astro.props;
+---
+
+<span class:list={['ad-pill', `ad-pill--${status}`]}>{status}</span>

@@ -4,7 +4,11 @@
  *
  * Deliberately NOT BaseLayout. That emits title, canonical, Open Graph and
  * JSON-LD through Seo.astro, all of which describe a public document, and it
- * would put the admin on the public site's CSS and JS budget for nothing.
+ * would put the admin on the public site's component CSS and JS budget for
+ * nothing. What it DOES now share is the design system: tokens and fonts, and
+ * nothing else. Before that the admin ran on `system-ui` with the palette
+ * retyped as hex literals in six files, which is why it looked like a default
+ * document rather than part of Spartan.
  *
  * NO INLINE SCRIPTS ON ANY ADMIN PAGE.
  *
@@ -16,8 +20,14 @@
  *
  * So: server-rendered forms only. If behaviour is ever genuinely needed, use an
  * Astro <script> tag, which bundles to an external /_astro/*.js file that
- * `script-src 'self'` already allows — never `is:inline`.
+ * `script-src 'self'` already allows — never `is:inline`. Note the trap in
+ * docs/TRAPS.md before doing so: Astro inlines a script used on exactly one
+ * page, so a single-page admin script becomes the very thing this forbids.
  */
+import '../styles/tokens.css';
+import '../styles/fonts.css';
+import '../styles/admin.css';
+
 interface Props {
   title: string;
   admin?: { email: string };
@@ -33,7 +43,11 @@ const { title, admin } = Astro.props;
  * header draws the same distinction for Catalogue and its category pages.
  */
 const NAV = [
-  { href: '/admin', label: 'Enquiries', owns: (p: string) => p === '/admin' || p.startsWith('/admin/enquiries') },
+  {
+    href: '/admin',
+    label: 'Enquiries',
+    owns: (p: string) => p === '/admin' || p.startsWith('/admin/enquiries'),
+  },
   { href: '/admin/demand', label: 'Demand', owns: (p: string) => p === '/admin/demand' },
 ] as const;
 
@@ -56,132 +70,58 @@ const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
     <link rel="icon" href="/favicon.svg" />
   </head>
 
-  <body>
-    <a class="skip" href="#main">Skip to content</a>
+  <body class="ad-body">
+    <a class="ad-skip" href="#main">Skip to content</a>
 
     {
       admin && (
-        <header class="ad-head">
-          <nav aria-label="Admin">
-            {
-              NAV.map((item) => (
-                <a
-                  href={item.href}
-                  aria-current={path === item.href ? 'page' : undefined}
-                  class:list={{ 'is-section': item.owns(path) }}
-                >
-                  {item.label}
-                </a>
-              ))
-            }
+        <header class="ad-bar">
+          <span class="ad-brand">
+            Spartan<span>·</span>Admin
+          </span>
+
+          <nav class="ad-bar__group" aria-label="Admin">
+            {NAV.map((item) => (
+              <a
+                class:list={['ad-nav-link', { 'is-on': item.owns(path) }]}
+                href={item.href}
+                aria-current={path === item.href ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            ))}
           </nav>
-          <form method="post" action="/api/admin/logout">
+
+          <div class="ad-bar__right">
             <span class="ad-who">{admin.email}</span>
-            <button type="submit">Sign out</button>
-          </form>
+            <form method="post" action="/api/admin/logout">
+              <button class="ad-btn-ghost" type="submit">Sign out</button>
+            </form>
+          </div>
         </header>
       )
     }
 
-    <main id="main"><slot /></main>
+    <main class="ad-main" id="main"><slot /></main>
   </body>
 </html>
 
 <style>
-  :root {
-    color-scheme: dark;
-  }
-
-  body {
-    margin: 0;
-    background: #08080a;
-    color: #f6f6f7;
-    font-family: system-ui, -apple-system, sans-serif;
-    line-height: 1.5;
-  }
-
-  .skip {
+  /* Scoped rather than in admin.css because it is chrome, not a component, and
+     nothing else needs it. Visible only on focus, and it must land above the
+     sticky bar — hence the z-index. */
+  .ad-skip {
     position: absolute;
     left: -9999px;
   }
 
-  .skip:focus {
+  .ad-skip:focus {
     left: 8px;
     top: 8px;
-    z-index: 1;
-    padding: 8px 12px;
-    background: #dd1e1c;
+    z-index: 20;
+    padding: 10px 14px;
+    background: var(--color-red-fill);
     color: #fff;
-  }
-
-  .ad-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    padding: 12px 24px;
-    border-bottom: 1px solid #232329;
-  }
-
-  .ad-head nav a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    margin-right: 20px;
-    /* 7.4:1 on this background. */
-    color: #b4b4bc;
-  }
-
-  .ad-head nav a:hover {
-    color: #fff;
-  }
-
-  /* Colour alone would fail 1.4.1 Use of Colour, so the lit item also carries a
-     rule under it. 5.33:1 on this background — small text on a dark surface, so
-     the light red, never brand red (rule 4). */
-  .ad-head nav a.is-section {
-    color: #ef3a38;
-    box-shadow: inset 0 -2px 0 #ef3a38;
-  }
-
-  .ad-head form {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .ad-who {
-    /* 5.6:1 — recessive but still readable. */
-    color: #8a8a92;
-    font-size: 14px;
-  }
-
-  main {
-    padding: 24px;
-  }
-
-  h1 {
-    margin-top: 0;
-  }
-
-  a {
-    color: #ef3a38;
-  }
-
-  button {
-    /* WCAG 2.5.5 minimum. */
-    min-height: 44px;
-    padding: 0 16px;
-    background: #dd1e1c;
-    border: 0;
-    font: inherit;
-    font-weight: 600;
-    color: #fff;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background: #b81c1b;
+    text-decoration: none;
   }
 </style>

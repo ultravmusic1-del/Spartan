@@ -71,6 +71,14 @@ export interface EnquiryRow {
   notified_at: string | null;
 }
 
+export interface EnquiryCounts {
+  byStatus: Record<EnquiryStatus, number>;
+  /** Every enquiry, whatever its status. */
+  total: number;
+  /** Rows in enquiry_lines: product lines across all enquiries. */
+  lines: number;
+}
+
 export interface DemandRow {
   product_slug: string;
   product_name: string;
@@ -278,6 +286,64 @@ export async function setStatus(id: string, status: EnquiryStatus): Promise<Admi
     return ok(null);
   } catch (cause) {
     console.error('[admin] setStatus failed', cause);
+    return FAILED;
+  }
+}
+
+/**
+ * The figures behind the inbox's summary tiles and filter chips.
+ *
+ * Counted by the database rather than by reading rows and calling `.length`:
+ * `head: true` with an exact count returns the number and no rows at all, so
+ * this stays cheap however large the table grows — and cannot become the
+ * unbounded read that PostgREST would silently truncate.
+ *
+ * `total` is summed from the four status counts rather than asked for
+ * separately. `status` is NOT NULL with a CHECK constraint naming exactly these
+ * four values, so the sum is the total by definition, and one fewer round trip
+ * is one fewer thing to fail. If a fifth status is ever added to the
+ * constraint, add it to ENQUIRY_STATUSES and this follows automatically.
+ */
+export async function getCounts(): Promise<AdminResult<EnquiryCounts>> {
+  if (!ready()) return UNCONFIGURED;
+
+  try {
+    const supabase = await client();
+
+    const countOf = async (status: EnquiryStatus): Promise<number> => {
+      const { count, error } = await supabase
+        .from('enquiries')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', status);
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    };
+
+    const countLines = async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('enquiry_lines')
+        .select('*', { count: 'exact', head: true });
+      if (error) throw new Error(error.message);
+      return count ?? 0;
+    };
+
+    // In parallel: five small counts cost about what one costs.
+    const [lines, ...statusCounts] = await Promise.all([
+      countLines(),
+      ...ENQUIRY_STATUSES.map((s) => countOf(s)),
+    ]);
+
+    const byStatus = Object.fromEntries(
+      ENQUIRY_STATUSES.map((s, i) => [s, statusCounts[i]]),
+    ) as Record<EnquiryStatus, number>;
+
+    return ok({
+      byStatus,
+      total: statusCounts.reduce((n, c) => n + c, 0),
+      lines,
+    });
+  } catch (cause) {
+    console.error('[admin] getCounts failed', cause);
     return FAILED;
   }
 }

@@ -5,6 +5,7 @@ import {
   getEnquiry,
   setStatus,
   getDemand,
+  getCounts,
   normalisePage,
   ENQUIRY_STATUSES,
   isEnquiryStatus,
@@ -149,6 +150,9 @@ describe('without credentials', () => {
     expect(await listAllEnquiries()).toEqual({ state: 'unconfigured' });
     expect(await getEnquiry('id')).toEqual({ state: 'unconfigured' });
     expect(await getDemand()).toEqual({ state: 'unconfigured' });
+    // Zeroed tiles would read as "no leads", which is the lie this module exists
+    // to prevent — the same reason an empty list is not an acceptable answer.
+    expect(await getCounts()).toEqual({ state: 'unconfigured' });
   });
 
   it('reports a write as unconfigured, never as a plain failure', async () => {
@@ -312,6 +316,36 @@ describe('setStatus', () => {
 
     useSupabase(() => ({ data: null, error: { message: 'check constraint' } }));
     expect(await setStatus('id', 'contacted')).toEqual({ state: 'failed' });
+  });
+});
+
+describe('getCounts', () => {
+  beforeEach(configure);
+
+  it('counts by status without reading any rows, and sums the total', async () => {
+    const per: Record<string, number> = { new: 4, contacted: 2, quoted: 1, closed: 7 };
+
+    const calls = useSupabase((q) => {
+      if (q.table === 'enquiry_lines') return { data: null, error: null, count: 12 };
+      return { data: null, error: null, count: per[String(q.filters.status)] ?? 0 };
+    });
+
+    const result = await getCounts();
+
+    if (result.state !== 'ok') throw new Error('expected ok');
+    expect(result.data.byStatus).toEqual(per);
+    expect(result.data.total).toBe(14);
+    expect(result.data.lines).toBe(12);
+
+    // One per status plus one for the lines view. Every one asks for a count
+    // and no rows — a tile must never become an unbounded read.
+    expect(calls).toHaveLength(5);
+    expect(calls.every((c) => c.countRequested)).toBe(true);
+  });
+
+  it('reports a failure as failed rather than as a row of zeros', async () => {
+    useSupabase(() => ({ data: null, error: { message: 'boom' }, count: null }));
+    expect(await getCounts()).toEqual({ state: 'failed' });
   });
 });
 
