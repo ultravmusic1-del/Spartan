@@ -81,16 +81,31 @@ export const productSchema = z.object({
  * loader migrates the whole site onto a database without touching
  * src/lib/catalog.ts or any of the 110 pages above it.
  *
- * `CATALOGUE_SOURCE` selects which, and it DEFAULTS TO `json`.
+ * `CATALOGUE_SOURCE` selects which, and it DEFAULTS TO `json` PERMANENTLY.
  *
  * The design doc called for defaulting to postgres with json as the escape
- * hatch. That is the right end state and the wrong default during the
- * migration: until a build from Postgres has been proved byte-identical to a
- * build from the JSON, the safe direction to fail is towards the committed
- * files. Nothing then changes by accident — switching is a deliberate act, and
- * the loader itself refuses to build from an empty table if the switch is
- * thrown early. Flip this default once the comparison has been run; the plan at
- * docs/superpowers/plans/2026-08-13-catalogue-editing.md records the step.
+ * hatch, and the parity build proved on 2026-08-13 that the two produce byte-
+ * identical output — 522 files, no differences. The default still does not
+ * move, and the reason is CI.
+ *
+ * `.github/workflows/verify.yml` runs the full gate on every push and holds no
+ * Supabase secrets, deliberately: it is why the enquiry suite can run without
+ * writing to the live database. With `postgres` as the default that workflow
+ * would take the Postgres branch, find no credentials, and the loader would
+ * throw exactly as it is supposed to — turning every CI run red, permanently,
+ * for a reason unrelated to the change being tested.
+ *
+ * So the switch is made where the credentials actually live: an environment
+ * variable on the deployment. `CATALOGUE_SOURCE=postgres` in Vercel, nothing in
+ * CI, `json` here. Each environment then gets the source it can actually read,
+ * and none of them decides implicitly.
+ *
+ * The rejected alternative was "postgres when credentials are present, json
+ * otherwise". It would make CI green and production correct with no
+ * configuration at all — and it would mean a deployment that lost its
+ * credentials silently served a stale catalogue from committed files instead of
+ * failing. That is precisely the silent success this loader was written to
+ * refuse.
  *
  * Read through `env()` rather than `import.meta.env` directly, for the
  * precedence reason in src/lib/env.ts.

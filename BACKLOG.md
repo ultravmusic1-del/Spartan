@@ -133,6 +133,33 @@ see `handoff.md`). Priorities are P0 highest.
       detail view, a status change that persisted, the demand report and the CSV
       export. The subsystem is no longer verified only by reading. See Done.
 
+- [ ] **Switch production to the Postgres catalogue.** Everything is proved and
+      staged; this is one setting in Vercel and nothing in the repository.
+      Add **`CATALOGUE_SOURCE=postgres`** to the Vercel project's environment
+      variables (Production, and Preview if preview builds should match), then
+      redeploy. Leave CI and the local default alone — see
+      `src/content.config.ts` for why the code default stays `json`.
+
+      Verified 2026-08-13 before staging: `npm run catalogue:parity` reports 522
+      files byte-identical from both sources; the database holds 85 products, 15
+      categories and 2 divisions with no orphans, no broken `heroProductSlug`, 6
+      EN 388 ratings, every product sourced and zero mangled characters; and
+      `npm run verify -- --full` passes 16/16 with the credentials withdrawn.
+
+      **Failure mode if Supabase is unreachable during a deploy:** the build
+      fails and the previous deployment stays live. Nothing half-publishes.
+
+- [ ] **BEFORE any catalogue editing lands, point the catalogue-shape gate at
+      the database.** It currently reads `src/data/products.json` and pins 85 /
+      15 / 6. Once production renders from Postgres, that file stops being what
+      visitors see — so the moment anything can edit the database, the gate is
+      checking a copy and would not notice the real catalogue losing a source,
+      an orphaned category or a duplicated slug. Harmless today because nothing
+      writes to those tables; a hole the day Phase 3b ships. The replacement is
+      described in `docs/superpowers/plans/2026-08-13-catalogue-editing.md` §2.4
+      — invariants checked against the database, counts recorded rather than
+      pinned.
+
 - [ ] **Cover the one auth case production has not exercised.** An
       **authenticated non-admin must be refused** — a valid Supabase account
       that is not in `public.admins`. It is the last Phase 1 acceptance
