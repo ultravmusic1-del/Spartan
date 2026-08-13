@@ -34,8 +34,26 @@ const ICONS: Record<string, string> = {
   pumps:
     '<circle cx="10" cy="14" r="5"/><circle cx="10" cy="14" r="1.4"/>' +
     '<path d="M10 9V4.5M8 4.5h4M5 14H2.5M2.5 12.4v3.2M15 11h3.5a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H15"/>',
-  head: '<path d="M3 17h18v2H3zM5 17a7 7 0 0 1 14 0M9.5 10.4V5.6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v4.8"/>',
-  hand: '<path d="M7 21V10a1.6 1.6 0 0 1 3.2 0V4.6a1.6 1.6 0 0 1 3.2 0V10m0-2.2a1.6 1.6 0 0 1 3.2 0V15a6 6 0 0 1-6 6H7Z"/>',
+  // A hard hat: brim, dome, and two ridge channels.
+  //
+  // The previous glyph read as a PENDANT LAMP, and the reason is worth keeping.
+  // It drew a small tab at y 4.6-10.4 while the dome's crown sat at y=10, so
+  // the tab poked out of the top like a flex and ceiling rose — and its brim
+  // was a closed 18x2 rectangle, which strokes as a hanging bar rather than a
+  // rim. Both faults are the same mistake: parts placed outside the silhouette
+  // instead of on it. The ridges here sit INSIDE the dome for that reason.
+  head:
+    '<path d="M2.5 18h19"/>' +
+    '<path d="M5.5 18v-4.6a6.5 6.5 0 0 1 13 0V18"/>' +
+    '<path d="M9.6 18v-5.4M14.4 18v-5.4"/>',
+  // A glove: rounded palm, thumb on the left, cuff band, two finger grooves.
+  // The previous glyph was a single meandering path of stacked 1.6r arcs that
+  // resolved into no recognisable object at 24px — legible only as a blob.
+  hand:
+    '<path d="M8 21.5v-9a4 4 0 0 1 8 0v9Z"/>' +
+    '<path d="M8 15.6H6.3a1.8 1.8 0 0 1 0-3.6H8"/>' +
+    '<path d="M8 18.4h8"/>' +
+    '<path d="M10.7 9v3.1M13.3 9v3.1"/>',
   foot: '<path d="M4 4h5v9l7 3.2a3 3 0 0 1 1.8 2.8V21H4Zm0 13h13"/>',
 };
 

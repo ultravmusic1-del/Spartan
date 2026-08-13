@@ -3,7 +3,6 @@ import { getImage } from 'astro:assets';
 import helmet from '../../assets/hero/helmet-hero.png';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
-import wordmark from '../../assets/brand/spartan-logo-light.svg';
 
 /**
  * Hero — the helmet as monument.
@@ -66,12 +65,12 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     <div class="hero__copy">
       <div class="hero__badge">
         <span class="hero__badge-hazard"></span>
+        {/* The wordmark and the hairline that separated it from the date were
+            removed on request, 2026-08-13. The badge now carries the founding
+            year alone; the header logo directly above it already says Spartan,
+            so nothing is lost that was not already being said twice. The hazard
+            stripe stays — it is the badge's own device, not the logo. */}
         <span class="hero__badge-body">
-          {/* alt="" — the header logo already announces "Spartan"; a second
-              accessible name here would repeat it immediately. The badge's
-              informational content is the est. date beside it. */}
-          <img src={wordmark.src} alt="" width="72" height="15" />
-          <span class="hero__badge-rule"></span>
           <span class="hero__badge-est">Est. 2015</span>
         </span>
       </div>
@@ -311,32 +310,23 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     background-image: repeating-linear-gradient(115deg, var(--color-red) 0 7px, #08080a 7px 14px);
   }
 
+  /* One child now, so no `gap`, and the padding is even rather than carrying
+     the 14px left inset that used to sit under the wordmark. The badge is
+     `inline-flex`, so removing the logo shrinks it to the date on its own
+     without any width needing to be restated. */
   .hero__badge-body {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 16px 8px 14px;
+    padding: 8px 18px;
     transform: skewX(12deg);
   }
 
-  .hero__badge-body img {
-    height: 15px;
-    width: auto;
-    display: block;
-  }
-
-  .hero__badge-rule {
-    width: 1px;
-    height: 13px;
-    background: var(--color-line);
-    display: block;
-  }
-
-  /* red-light, not red: this is 11px text on --color-card, where brand red is
-     4.23:1 and fails AA. See handoff.md §3. */
+  /* red-light, not red: this is small text on --color-card, where brand red is
+     4.23:1 and fails AA. See handoff.md §3. Still small at 12px — WCAG's large
+     bar is 24px, or 18.66px bold — so the token does not change with the size. */
   .hero__badge-est {
     font-family: var(--font-display);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: var(--fw-label);
     letter-spacing: 0.18em;
     text-transform: uppercase;

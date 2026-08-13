@@ -9,12 +9,17 @@
  * page has no hero, so the bar is a normal-flow block on `--color-black` and
  * scrolls away while the nav below it sticks.
  *
- * `site.json` is site chrome (contact details, founding year), not catalogue
- * content, so importing it here is deliberate — the `catalog.ts` seam rule
- * covers products, categories and divisions only.
+ * The provenance line that used to sit on the right — "Established <year> ·
+ * Manufactured in India & China" — was removed on request, 2026-08-13. It was
+ * the only thing this bar carried below 820px, which is why the whole bar is
+ * now dropped at that width rather than left as an empty 44px strip: in
+ * `transparent` mode it is absolutely positioned over the hero, so an empty one
+ * still paints its bottom hairline straight across the artwork.
+ *
+ * `site.established` was this file's only use of `site.json`, so the import
+ * went with it. The founding year is still on the About page and in the hero
+ * badge.
  */
-import site from '../../data/site.json';
-
 interface Props {
   mode?: 'transparent' | 'solid';
 }
@@ -50,9 +55,6 @@ const { mode = 'transparent' } = Astro.props;
         >
       </span>
     </div>
-    <p class="util__right">
-      Established {site.established} · Manufactured in India &amp; China
-    </p>
   </div>
 </div>
 
@@ -78,10 +80,11 @@ const { mode = 'transparent' } = Astro.props;
     background: var(--color-black);
   }
 
+  /* `space-between` had two children to separate; with one left it would push
+     the social group to the right-hand edge, away from the logo it sits above. */
   .util__inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 16px;
     height: 44px;
   }
@@ -107,14 +110,25 @@ const { mode = 'transparent' } = Astro.props;
     height: 12px;
   }
 
-  .util__right {
-    text-align: right;
-  }
+  /* Nothing is left to show at this width. The left group was already dropped
+     here, and the provenance line that used to remain is gone — so the bar
+     itself goes rather than reserving 44px and painting its bottom hairline
+     across the hero it sits over.
 
-  /* Matches the mockup: the left group is dropped before the right-hand
-     provenance line, which carries the information. */
+     THE NAV DELIBERATELY DOES NOT MOVE UP TO FILL THE SPACE. `Header.astro`
+     pins `.site-header--transparent` at `top: 44px` to clear this bar, and
+     that stays: measured at 390px wide, the header still occupies y 44-128 and
+     the hero badge still starts at y=152, exactly as before. Everything in
+     `Hero.astro` — the 136px of top padding, the short-screen CTA arithmetic —
+     was measured against a header ending at 128, so leaving the offset alone
+     is what keeps those numbers true. The cost is 44px of transparent space
+     above the nav on a phone, which reads as padding over the artwork.
+
+     On a page with no hero the bar is `position: relative` in normal flow and
+     the nav is `sticky; top: 0`, so hiding it simply closes the gap up. No
+     rule is needed for that case. */
   @media (max-width: 820px) {
-    .util__left {
+    .util {
       display: none;
     }
   }
