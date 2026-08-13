@@ -7,6 +7,7 @@
  * an admin who is already signed in.
  */
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import AuthPanel from '../../components/admin/AuthPanel.astro';
 import { currentAdmin, authConfigured } from '../../lib/admin/auth';
 
 export const prerender = false;
@@ -20,108 +21,70 @@ const configured = authConfigured();
 ---
 
 <AdminLayout title="Sign in">
-  <div class="shell">
-    <p class="ad-eyebrow">Staff access</p>
-    {/* The e2e boundary spec finds this page by this exact heading. */}
-    <h1 class="ad-title">Spartan admin</h1>
-
-    {error && <p class="err" role="alert">{error}</p>}
+  {/* The e2e boundary spec finds this page by this exact heading. */}
+  {/* The lede deliberately avoids the word "enquiries": the boundary spec
+      sweeps this page for it as a leak marker, and a chance appearance in
+      chrome would fail a test that is watching for something else entirely. */}
+  <AuthPanel eyebrow="Staff access" heading="Spartan admin" lede="Sign in to work the inbox.">
+    {error && <p class="ad-alert" role="alert">{error}</p>}
 
     {
       !configured && (
-        <p class="err" role="status">
+        <p class="ad-alert" role="status">
           Sign-in is not configured on this deployment. SUPABASE_URL, SUPABASE_ANON_KEY and
           SUPABASE_SERVICE_ROLE_KEY must all be set.
         </p>
       )
     }
 
-    <form class="ad-card" method="post" action="/api/admin/login">
-      <div>
-        <label for="email">Email address</label>
-        <input id="email" name="email" type="email" autocomplete="username" required />
+    <form method="post" action="/api/admin/login">
+      <div class="ad-fields">
+        <div class="ad-field">
+          <label class="ad-label" for="email">Email address</label>
+          <input
+            class="ad-input"
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            required
+          />
+        </div>
+
+        <div class="ad-field">
+          <label class="ad-label" for="password">Password</label>
+          <input
+            class="ad-input"
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
       </div>
 
-      <div>
-        <label for="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
+      <div class="ad-actions">
+        <button class="ad-btn" type="submit">Sign in</button>
+        <a class="ad-link" href="/admin/forgot">Forgot password?</a>
       </div>
-
-      <button class="ad-btn" type="submit">Sign in</button>
     </form>
+  </AuthPanel>
 
-    <p class="note">
-      Accounts are created by hand in Supabase. There is no signup, and no password reset that could
-      create one.
-    </p>
-  </div>
+  <p class="foot">
+    Accounts are created by hand in Supabase. There is no signup — a reset link only ever reaches an
+    address that already has an account.
+  </p>
 </AdminLayout>
 
 <style>
-  /* The one page with no nav, so it centres rather than filling the width. */
-  .shell {
-    max-width: 380px;
-    margin: 6vh auto 0;
-  }
-
-  form {
-    display: grid;
-    gap: 16px;
-    margin-top: 22px;
-  }
-
-  form div {
-    display: grid;
-    gap: 6px;
-  }
-
-  label {
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: var(--fw-label);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    /* 7.9:1 on --color-panel. */
-    color: var(--color-grey-lt);
-  }
-
-  input {
-    min-height: 44px;
-    padding: 0 12px;
-    background: var(--color-card);
-    border: 1px solid var(--color-line);
-    border-radius: 3px;
-    font: inherit;
-    font-size: 14px;
-    color: var(--color-paper);
-  }
-
-  input:focus-visible {
-    outline: 2px solid var(--color-red-light);
-    outline-offset: 1px;
-    border-color: transparent;
-  }
-
-  .err {
-    margin: 18px 0 0;
-    padding: 12px 16px;
-    /* Small text on a dark surface, so the light red — brand red measures
-       4.23:1 on this card background and fails AA at this size. */
-    border-left: 3px solid var(--color-red-light);
-    border-radius: 0 4px 4px 0;
-    background: var(--color-card);
-    font-size: 13px;
-  }
-
-  .note {
-    margin-top: 22px;
+  .foot {
+    max-width: 400px;
+    margin: 16px auto 0;
     font-size: 12px;
+    text-align: center;
     /* 5.6:1 on --color-black. */
     color: var(--color-grey);
   }

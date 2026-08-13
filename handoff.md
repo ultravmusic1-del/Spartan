@@ -1101,6 +1101,53 @@ nothing to show it had happened.
   from an export is the same defect as the truncated one §13 removed: a file
   that looks complete and is not.
 
+### Password reset, and why it is scriptless at all
+
+Built 2026-08-13, closing the gap found while setting up the first account.
+`/admin/forgot` asks for a link, `/admin/reset` completes it.
+
+**Supabase's default recovery flow cannot work here, and the reason is
+structural.** It returns the token in the URL **fragment** — `#access_token=…` —
+and a fragment is never sent to the server. Reading it requires script in the
+browser, which admin pages cannot have: they are server-rendered, so
+`npm run csp` never sees them and an inline script would ship unhashed and be
+blocked with nothing failing.
+
+`@supabase/ssr` uses the **PKCE** flow instead, where the link returns with
+`?code=` in the query string. That reaches the server, so the exchange happens
+there and the whole flow stays scriptless.
+
+**The cost is real.** PKCE pairs the code with a verifier cookie written when
+the reset was *requested*, so the link only works in the browser that asked for
+it. `/admin/forgot` says so on its confirmation screen, because the failure is
+otherwise baffling. It also means `/admin/reset` must be listed under
+Authentication → URL Configuration → Redirect URLs in Supabase, or Supabase
+refuses the redirect and the link dead-ends on its own domain. Both that and the
+Site URL are queued in `BACKLOG.md`; neither can be done from code.
+
+**The code is exchanged on page load, not in the POST.** It is single-use, and
+spending it on the submit would mean a password rejected for being too short
+burned the link and forced the whole request again.
+
+**The confirmation names a condition, not an outcome** — "if that address has an
+admin account". Saying "sent" of an address with no account is a lie; saying "no
+such account" turns the page into an enumeration oracle. It is the same
+reasoning as sign-in giving one message for a wrong address and a wrong password
+alike, and an e2e test sweeps the page for the phrases that would give it away.
+
+**Six routes are now outside the guard**, up from two. That is the widest the
+unauthenticated surface has been, so each is justified on `OPEN` itself. The
+rule it is held to is unchanged: nothing that reads or writes enquiry data
+belongs in that set. Guarding the recovery pages would be circular — they exist
+for the person who cannot sign in.
+
+`src/lib/admin/password.ts` holds the rule: twelve characters, counted in **code
+points** so six emoji cannot pass as twelve, and deliberately no composition
+requirement, which produces `Password1!` rather than a passphrase. Stricter than
+Supabase's own floor of six because this account is the only thing between a
+stranger and every name, email and phone number the site has collected, and
+there is no second factor.
+
 ### What could not be checked here
 
 There are no Supabase credentials on this machine, so **every admin screen

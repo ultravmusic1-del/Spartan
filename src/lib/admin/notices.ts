@@ -23,6 +23,10 @@ export interface Notice {
 
 export const ADMIN_NOTICES = {
   saved: { text: 'Status updated.', tone: 'success' },
+  'password-changed': {
+    text: 'Password changed, and you are signed in. Any other device using the old password will need the new one.',
+    tone: 'success',
+  },
   'not-found': {
     text: 'That enquiry does not exist. Check the link, or pick one from the list below.',
     tone: 'error',

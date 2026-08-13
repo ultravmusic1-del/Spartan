@@ -1,0 +1,154 @@
+---
+/**
+ * Set a new password, having arrived from the emailed link.
+ *
+ * WHY THIS WORKS WITHOUT JAVASCRIPT, WHICH IS THE WHOLE DESIGN.
+ *
+ * Supabase's default (implicit) recovery flow hands the token back in the URL
+ * FRAGMENT — `#access_token=…` — and a fragment is never sent to the server.
+ * Any page reading it must run script in the browser, which admin pages cannot
+ * do: they are server-rendered, so `npm run csp` never sees them and an inline
+ * script would ship unhashed and be blocked with nothing failing.
+ *
+ * `@supabase/ssr`'s client uses the PKCE flow instead, where the link comes
+ * back with `?code=` in the QUERY STRING. That reaches the server, so the code
+ * can be exchanged here and the whole flow stays scriptless.
+ *
+ * THE COST, and it is real: PKCE pairs the code with a verifier cookie written
+ * when the reset was REQUESTED. The link therefore has to be opened in the same
+ * browser that asked for it. /admin/forgot says so in as many words on its
+ * confirmation screen, because the failure is otherwise baffling.
+ *
+ * `/admin/reset` must also be listed under Authentication → URL Configuration →
+ * Redirect URLs in the Supabase dashboard, or Supabase refuses to redirect to
+ * it and the link dead-ends on supabase.co.
+ */
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AuthPanel from '../../components/admin/AuthPanel.astro';
+import { authClient, authConfigured } from '../../lib/admin/auth';
+import { PASSWORD_HELP, MIN_PASSWORD_LENGTH } from '../../lib/admin/password';
+
+export const prerender = false;
+
+const params = Astro.url.searchParams;
+const error = params.get('error');
+const code = params.get('code');
+const configured = authConfigured();
+
+/*
+ * Exchanging the code establishes the session this page's form relies on. It is
+ * done here, on arrival, rather than in the endpoint: the code is single-use,
+ * and spending it on the POST would mean a rejected password (too short, say)
+ * burned the link and forced the whole request again.
+ *
+ * Absent on a reload — the session is already set by then, and the URL has kept
+ * its `?code=`. So a missing exchange is not itself a failure; the form below
+ * asks the auth server whether a session exists rather than inferring it.
+ */
+let exchangeFailed = false;
+
+if (configured && code) {
+  const { error: swapError } = await authClient(
+    Astro.request,
+    Astro.cookies,
+  ).auth.exchangeCodeForSession(code);
+
+  if (swapError) {
+    console.error('[admin] exchangeCodeForSession failed', swapError);
+    exchangeFailed = true;
+  }
+}
+
+/*
+ * `getUser`, not `getSession`: this decides whether to show a form that changes
+ * a credential, and getSession believes a cookie the browser supplied. Same
+ * reasoning as src/lib/admin/auth.ts.
+ */
+let ready = false;
+if (configured) {
+  const { data } = await authClient(Astro.request, Astro.cookies).auth.getUser();
+  ready = Boolean(data.user);
+}
+---
+
+<AdminLayout title="Set a new password">
+  <AuthPanel
+    eyebrow="Account recovery"
+    heading="Set a new password"
+    lede={ready ? 'Choose something long. You will be signed in straight afterwards.' : undefined}
+  >
+    {error && <p class="ad-alert" role="alert">{error}</p>}
+
+    {
+      !configured ? (
+        <>
+          <p class="ad-alert" role="status">
+            Password reset is not configured on this deployment.
+          </p>
+          {/* Still offer the way out. A screen whose only content is bad news
+              and which links nowhere leaves the reader pressing Back — and this
+              branch is the state of every local and CI run, so it is the one a
+              developer meets first. */}
+          <div class="ad-actions">
+            <a class="ad-btn-ghost" href="/admin/login">Back to sign in</a>
+          </div>
+        </>
+      ) : ready ? (
+        <form method="post" action="/api/admin/reset">
+          <div class="ad-fields">
+            <div class="ad-field">
+              <label class="ad-label" for="password">New password</label>
+              <input
+                class="ad-input"
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                minlength={MIN_PASSWORD_LENGTH}
+                required
+                aria-describedby="pw-help"
+              />
+              <p class="ad-hint" id="pw-help">{PASSWORD_HELP}</p>
+            </div>
+
+            <div class="ad-field">
+              <label class="ad-label" for="confirmation">Repeat it</label>
+              <input
+                class="ad-input"
+                id="confirmation"
+                name="confirmation"
+                type="password"
+                autocomplete="new-password"
+                minlength={MIN_PASSWORD_LENGTH}
+                required
+              />
+            </div>
+          </div>
+
+          <div class="ad-actions">
+            <button class="ad-btn" type="submit">Save password</button>
+            <a class="ad-link" href="/admin/login">Cancel</a>
+          </div>
+        </form>
+      ) : (
+        <>
+          {/*
+            No usable session. Either the link expired, or it was already used,
+            or it was opened in a different browser from the one that asked for
+            it. The three are not distinguished, because from here they are not
+            distinguishable — and the fix is the same for all three.
+          */}
+          <p class="ad-alert" role="status">
+            {exchangeFailed
+              ? 'That reset link could not be used. It may have expired, been used already, or been opened in a different browser from the one that requested it.'
+              : 'This page needs a valid reset link. Request one and open it in this browser.'}
+          </p>
+          <div class="ad-actions">
+            <a class="ad-btn" href="/admin/forgot">Request a new link</a>
+            <a class="ad-link" href="/admin/login">Back to sign in</a>
+          </div>
+        </>
+      )
+    }
+  </AuthPanel>
+</AdminLayout>

@@ -16,8 +16,31 @@
 import { defineMiddleware } from 'astro:middleware';
 import { currentAdmin } from './lib/admin/auth';
 
-/** Reachable without a session, because they are how a session is obtained. */
-const OPEN = new Set(['/admin/login', '/api/admin/login']);
+/**
+ * Reachable without a session, because they are how a session is obtained.
+ *
+ * EVERY ENTRY HERE IS A HOLE IN THE GUARD, so each one has to earn it:
+ *
+ * - `/admin/login`, `/api/admin/login` — the sign-in form and its POST.
+ * - `/admin/forgot`, `/api/admin/forgot` — requesting a reset link. Someone
+ *   locked out has no session by definition. The endpoint answers identically
+ *   whether or not the address exists, so being open here does not make it a
+ *   way to ask who has an account.
+ * - `/admin/reset`, `/api/admin/reset` — completing a reset. The page trades a
+ *   single-use code from the emailed link for a session, and the endpoint
+ *   refuses to change anything without one. Guarding these would be circular:
+ *   they exist precisely for the person who cannot sign in.
+ *
+ * Nothing that reads or writes enquiry data belongs in this set.
+ */
+const OPEN = new Set([
+  '/admin/login',
+  '/api/admin/login',
+  '/admin/forgot',
+  '/api/admin/forgot',
+  '/admin/reset',
+  '/api/admin/reset',
+]);
 
 function guarded(pathname: string): boolean {
   // Normalise a trailing slash so `/admin/login/` cannot slip past OPEN as an

@@ -142,14 +142,15 @@ see `handoff.md`). Priorities are P0 highest.
       left off the list; a few minutes by hand, and worth doing before anyone
       else is given an account.
 
-- [ ] **There is no password reset.** The admin has no way back in from a
-      forgotten password: Supabase's own recovery email points at a page this
-      site does not have, so every reset is someone editing the user by hand in
-      the Supabase dashboard. Survivable for one operator, not for staff. Found
-      2026-08-13 while setting up the first account — the recovery link landed
-      on `http://localhost:3000` with an expired-token error, which is two
-      faults at once: Supabase's Site URL was still the default, and the
-      redirect had nowhere to go regardless.
+- [x] **There is no password reset.** Built 2026-08-13 — see Done.
+
+- [!] **Point Supabase at the deployment so reset links work.** Blocked: needs
+      the Supabase dashboard. Authentication → URL Configuration: **Site URL**
+      is still the default `http://localhost:3000`, and **Redirect URLs** must
+      include `https://spartan-ebon.vercel.app/admin/reset`. Until both are set
+      the reset email either points at a machine that is not running or is
+      refused by Supabase as an unlisted redirect. Both need revisiting when the
+      real domain lands.
 
 - [ ] **"Notified" cannot tell a missing setting from a rejected send.** The
       enquiry detail page shows `not emailed` both when the site never attempted
@@ -300,6 +301,45 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-13** — **Password reset, and the signed-out screens rebuilt.**
+  `/admin/forgot` requests a link, `/admin/reset` completes it, and sign-in now
+  offers a way through to them. `handoff.md` §14.
+
+  *Worth knowing:* **it works without JavaScript only because of PKCE.**
+  Supabase's default recovery flow returns the token in the URL **fragment**,
+  which is never sent to the server — unreadable by a page that cannot run
+  script, which admin pages cannot. `@supabase/ssr` uses PKCE, where the link
+  comes back with `?code=` in the query string, and that reaches the server.
+  The cost is real and is stated on the confirmation screen: PKCE pairs the code
+  with a verifier cookie written when the reset was *requested*, so the link
+  must be opened in the same browser that asked for it.
+
+  *Worth knowing:* the code is exchanged when the page LOADS, not in the POST.
+  It is single-use, so spending it on the submit would mean a rejected password
+  burned the link and forced the whole request again.
+
+  *Worth knowing:* the confirmation names a condition — "if that address has an
+  admin account" — rather than asserting delivery. Saying "sent" of an address
+  with no account would be a lie; saying "no such account" would turn the page
+  into a way to ask who has one. An e2e test sweeps it for the phrases that
+  would give it away.
+
+  *Worth knowing:* six routes are now outside the guard rather than two, which
+  is the widest the unauthenticated surface has been. Each is justified on
+  `OPEN` itself, and the rule is unchanged: nothing that reads or writes enquiry
+  data belongs in that set.
+
+  *Worth knowing:* a new test caught a real dead end rather than a bad
+  assertion. The reset page's "not configured" branch — the state of every local
+  and CI run, so the first one a developer meets — showed bad news and linked
+  nowhere.
+
+  Passwords are checked by a pure module: 12 characters minimum, counted in code
+  points so six emoji do not pass as twelve, and no composition rule, which
+  pushes people to `Password1!` instead of a passphrase.
+
+  verify 16/16, 183 unit, 216 e2e.
 
 - **2026-08-13** — **A `test` enquiry status**, so the team's own submissions
   stop counting as demand. Migration `add_test_enquiry_status` widens the CHECK

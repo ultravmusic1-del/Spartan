@@ -218,6 +218,92 @@
   color: var(--color-paper);
 }
 
+/* ------------------------------------------------------------ auth forms -- */
+
+/*
+ * Shared by sign-in, forgot and reset. One set of field styles rather than
+ * three scoped copies: these screens are a sequence a person walks through, and
+ * a field that looks different halfway along reads as a different site.
+ */
+.ad-fields {
+  display: grid;
+  gap: 15px;
+  margin-top: 22px;
+}
+
+.ad-field {
+  display: grid;
+  gap: 6px;
+}
+
+.ad-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--fw-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  /* 7.9:1 on --color-panel. */
+  color: var(--color-grey-lt);
+}
+
+.ad-input {
+  min-height: 46px;
+  padding: 0 13px;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-paper);
+}
+
+.ad-input:hover {
+  border-color: var(--color-grey);
+}
+
+.ad-input:focus-visible {
+  outline: 2px solid var(--color-red-light);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.ad-hint {
+  font-size: 12px;
+  /* 5.6:1 on --color-panel. */
+  color: var(--color-grey);
+}
+
+.ad-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.ad-link {
+  font-size: 13px;
+  color: var(--color-red-light);
+}
+
+/* A message about this screen, rather than about the data on it — so it sits
+   with the form and not where DataState would go. */
+.ad-alert {
+  margin: 20px 0 0;
+  padding: 12px 15px;
+  border-left: 3px solid var(--color-red-light);
+  border-radius: 0 4px 4px 0;
+  background: var(--color-card);
+  font-size: 13px;
+}
+
+.ad-alert--ok {
+  /* Not green: this palette has no success colour, and inventing one for a
+     single banner would put a token on the page that exists nowhere else. */
+  border-left-color: var(--color-paper);
+}
+
 /* --------------------------------------------------------------- tiles -- */
 
 .ad-tiles {

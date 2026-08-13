@@ -1,0 +1,90 @@
+---
+/**
+ * Request a password-reset link.
+ *
+ * Open without a session, because someone locked out has none by definition.
+ *
+ * THE CONFIRMATION DOES NOT SAY WHETHER THE ADDRESS EXISTS, and the wording is
+ * chosen with that in mind: "if that address has an account". Saying "sent" of
+ * an address with no account would be a lie; saying "no such account" would
+ * turn this page into a way to ask who has one. Naming the condition is the
+ * only phrasing that is both honest and closed.
+ */
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AuthPanel from '../../components/admin/AuthPanel.astro';
+import { currentAdmin, authConfigured } from '../../lib/admin/auth';
+
+export const prerender = false;
+
+if (await currentAdmin(Astro.request, Astro.cookies)) return Astro.redirect('/admin', 302);
+
+const error = Astro.url.searchParams.get('error');
+const sent = Astro.url.searchParams.get('sent') === '1';
+const configured = authConfigured();
+---
+
+<AdminLayout title="Reset your password">
+  <AuthPanel
+    eyebrow="Account recovery"
+    heading="Reset your password"
+    lede="We will email a link that lets you set a new one."
+  >
+    {error && <p class="ad-alert" role="alert">{error}</p>}
+
+    {
+      !configured && (
+        <p class="ad-alert" role="status">
+          Password reset is not configured on this deployment.
+        </p>
+      )
+    }
+
+    {
+      sent ? (
+        <>
+          <p class="ad-alert ad-alert--ok" role="status">
+            If that address has an admin account, a reset link is on its way. It expires shortly, and
+            can only be used once.
+          </p>
+          <p class="ad-hint note">
+            <strong>Open the link in this browser.</strong> The link is completed here, on the
+            machine that asked for it — opening it elsewhere will not work.
+          </p>
+          <div class="ad-actions">
+            <a class="ad-btn-ghost" href="/admin/login">Back to sign in</a>
+          </div>
+        </>
+      ) : (
+        <form method="post" action="/api/admin/forgot">
+          <div class="ad-fields">
+            <div class="ad-field">
+              <label class="ad-label" for="email">Email address</label>
+              <input
+                class="ad-input"
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                required
+              />
+              <p class="ad-hint">The address your admin account was created with.</p>
+            </div>
+          </div>
+
+          <div class="ad-actions">
+            <button class="ad-btn" type="submit">Send reset link</button>
+            <a class="ad-link" href="/admin/login">Back to sign in</a>
+          </div>
+        </form>
+      )
+    }
+  </AuthPanel>
+</AdminLayout>
+
+<style>
+  .note {
+    margin-top: 14px;
+  }
+</style>

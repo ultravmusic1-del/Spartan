@@ -22,6 +22,56 @@ test.describe('the admin boundary', () => {
     });
   }
 
+  /*
+   * The recovery pages are deliberately OUTSIDE the guard: someone locked out
+   * has no session by definition, so guarding them would be circular. That
+   * makes them the widest part of the unauthenticated surface, and these tests
+   * exist to keep the widening honest — they must render, and they must give
+   * nothing away.
+   */
+  for (const path of ['/admin/forgot', '/admin/reset']) {
+    test(`${path} is reachable without a session`, async ({ page }) => {
+      const response = await page.goto(path);
+      expect(response?.status()).toBe(200);
+      expect(new URL(page.url()).pathname).toBe(path);
+    });
+  }
+
+  test('the reset page refuses to show a password form without a valid link', async ({ page }) => {
+    await page.goto('/admin/reset');
+
+    // No code, no session: the form must not be there to post to. This is the
+    // assertion that matters, and it holds whether the deployment is configured
+    // or not — CI is never configured, so the page renders its "not configured"
+    // branch here and the point still stands.
+    expect(await page.locator('input[name="password"]').count()).toBe(0);
+
+    // And it is never a dead end: every state offers a route back.
+    await expect(page.locator('a[href="/admin/login"]').first()).toBeVisible();
+  });
+
+  test('sign-in offers a way out for a forgotten password', async ({ page }) => {
+    await page.goto('/admin/login');
+    await expect(page.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute(
+      'href',
+      '/admin/forgot',
+    );
+  });
+
+  /*
+   * Account enumeration. The confirmation names a CONDITION — "if that address
+   * has an account" — rather than asserting delivery, so it cannot be used to
+   * ask who has one. CI holds no credentials, so this exercises the
+   * unconfigured branch; the wording under test is the same either way.
+   */
+  test('the reset request never says whether an address has an account', async ({ page }) => {
+    await page.goto('/admin/forgot');
+    const body = (await page.content()).toLowerCase();
+    for (const leak of ['no such', 'not found', 'unknown address', 'no account with']) {
+      expect(body).not.toContain(leak);
+    }
+  });
+
   for (const path of ENDPOINTS) {
     test(`${path} answers 401 rather than redirecting`, async ({ request }) => {
       const response = await request.get(path, { maxRedirects: 0 });

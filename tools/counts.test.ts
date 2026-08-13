@@ -82,9 +82,11 @@ describe('computeCounts', () => {
   });
 
   it('counts every server-rendered route', () => {
-    // /api/enquiry, /api/admin/login, /api/admin/logout, /admin/login, and the
-    // five the enquiry inbox added: /admin, /admin/demand,
-    // /admin/enquiries/[id], /api/admin/enquiries/[id], /api/admin/export.csv.
+    // /api/enquiry, /api/admin/login, /api/admin/logout, /admin/login, the
+    // five the enquiry inbox added (/admin, /admin/demand,
+    // /admin/enquiries/[id], /api/admin/enquiries/[id], /api/admin/export.csv)
+    // and the four the password reset added: /admin/forgot, /admin/reset,
+    // /api/admin/forgot, /api/admin/reset.
     // handoff.md still called this "the one SSR route" after the admin landed.
     //
     // Pinned rather than derived on purpose. Every route here opts out of
@@ -92,7 +94,7 @@ describe('computeCounts', () => {
     // static file with build-time data baked into it — so this number moving
     // downwards is exactly the failure `npm run verify`'s "admin area stays
     // private" gate exists for, and two independent alarms are worth it.
-    expect(computeCounts({ unitTests: 0 }).ssrRoutes).toBe(9);
+    expect(computeCounts({ unitTests: 0 }).ssrRoutes).toBe(13);
   });
 
   it('takes the unit-test count from the caller', () => {
