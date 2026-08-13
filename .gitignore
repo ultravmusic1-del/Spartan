@@ -2,8 +2,17 @@
 dist/
 .astro/
 .vercel/
+# Every .env variant, not just the two we thought of.
+#
+# `.env` and `.env.production` were listed individually, and on 2026-08-13 a
+# service-role key spent a few minutes in `.env.txt` — an editor's "Save as"
+# had appended the extension. That file matched neither rule, so it sat
+# untracked-but-not-ignored, one `git add -A` away from being pushed to a
+# public repository. A wildcard with an exception for the committed template is
+# the version that does not depend on guessing the next filename.
 .env
-.env.production
+.env.*
+!.env.example
 *.log
 .DS_Store
 test-results/
