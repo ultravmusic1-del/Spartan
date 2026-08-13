@@ -1202,6 +1202,26 @@ was written to remove, surviving in the places the change did not look.
   the case that makes it worth saying — the operator saw an outage panel and no
   word on whether their edit had landed.
 
+### Proved in production, 2026-08-13
+
+The section below was written before the site had credentials. It has since been
+deployed to Vercel and **the whole path was exercised by hand against the real
+deployment**: sign-in, the populated inbox, the detail view, a status change
+that persisted, the demand report, the CSV export, and an enquiry arriving by
+email. Everything it says is unproven is now proven, with **one exception**,
+which stays open and is queued in `BACKLOG.md`: an authenticated non-admin being
+refused. That needs a second Supabase user deliberately left off the allow-list,
+and until it is run, `currentAdmin`'s `if (!row) return null` is still verified
+by reading.
+
+Three things that setup taught, all recorded in `BACKLOG.md`'s Done entry
+because none of them is visible from the code: `ENQUIRY_FROM_EMAIL` exists to be
+left empty and a real address in it will be rejected unless its domain is
+verified with Resend; the fallback sender only delivers to the Resend account's
+own address; and the admin's "Notified" line cannot distinguish a missing
+setting from a rejected send, which is the one place the
+`unconfigured`/`failed` distinction has not reached.
+
 ### What Phase 1 could not prove on this machine
 
 There are no Supabase credentials here, and that shapes what the green run

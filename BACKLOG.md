@@ -120,38 +120,46 @@ see `handoff.md`). Priorities are P0 highest.
 - [!] **Real contact details.** Blocked: client. `+971 00 000 0000` renders as a
       live `tel:` link in the header of every page; `sales@spartan.example` is
       a dead mailbox. `src/data/site.json`.
-- [ ] **Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.** The
-      table, the policies and the code are all in place; the deployment simply
-      has no credentials yet, so production would still return
-      `recorded: false`. The service-role key is a full-access credential and
-      must be set as a Vercel environment variable only — never committed, and
-      never exposed to the browser (a verify gate enforces the second half).
-      Project `spartan`: `https://wslylysakixrirxkozih.supabase.co`.
+- [x] **Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.** Done
+      2026-08-13. Enquiries are being written to Postgres in production.
 
-- [ ] **Resend credentials in Vercel.** No longer a data-loss risk — with the
-      database configured the enquiry is safe and the email is only the nudge —
-      but until it is set nobody is told an RFQ arrived, so somebody has to
-      watch the Supabase table.
+- [x] **Resend credentials in Vercel.** Done 2026-08-13 — see Done below for the
+      two false starts, both worth knowing.
 
-- [ ] **Create the first admin account.** `public.admins` is **empty** — checked
-      against the live project on 2026-08-12 — so even with the environment
-      variables set, nobody can sign in. Accounts are made by hand and by
-      design: create the user in Supabase Auth (public signup is disabled), then
-      insert their `user_id` and `email` into `public.admins`. Identity and
-      authority are separate facts here, so creating the auth user alone is not
-      enough. `README.md` §The admin area.
+- [x] **Create the first admin account.** Done 2026-08-13.
 
-- [ ] **Confirm admin Phase 1 against a configured deployment.** Everything is
-      built and green, but this machine and CI hold no Supabase credentials, so
-      nothing here has read a real enquiry, changed a real status or downloaded
-      a real CSV — the repository degrades to empty results when unconfigured
-      and the pages render their empty states. Two things need a real session:
-      the populated inbox, detail, demand and CSV paths end to end; and **an
-      authenticated non-admin being refused**, which is the one Phase 1
-      acceptance condition still verified by reading rather than running
-      (`currentAdmin`'s `if (!row) return null`). Blocked in practice by the
-      Supabase env-var item above, which is why that item is now the gate on
-      the whole subsystem rather than a deployment detail. `handoff.md` §13.
+- [x] **Confirm admin Phase 1 against a configured deployment.** Done
+      2026-08-13, in production, by hand: sign-in, the populated inbox, the
+      detail view, a status change that persisted, the demand report and the CSV
+      export. The subsystem is no longer verified only by reading. See Done.
+
+- [ ] **Cover the one auth case production has not exercised.** An
+      **authenticated non-admin must be refused** — a valid Supabase account
+      that is not in `public.admins`. It is the last Phase 1 acceptance
+      condition still verified by reading rather than running
+      (`currentAdmin`'s `if (!row) return null`), and it is the check that makes
+      the allow-list worth having. Needs a second Supabase user deliberately
+      left off the list; a few minutes by hand, and worth doing before anyone
+      else is given an account.
+
+- [ ] **There is no password reset.** The admin has no way back in from a
+      forgotten password: Supabase's own recovery email points at a page this
+      site does not have, so every reset is someone editing the user by hand in
+      the Supabase dashboard. Survivable for one operator, not for staff. Found
+      2026-08-13 while setting up the first account — the recovery link landed
+      on `http://localhost:3000` with an expired-token error, which is two
+      faults at once: Supabase's Site URL was still the default, and the
+      redirect had nowhere to go regardless.
+
+- [ ] **"Notified" cannot tell a missing setting from a rejected send.** The
+      enquiry detail page shows `not emailed` both when the site never attempted
+      delivery (no credentials) and when it attempted and the provider refused.
+      During the 2026-08-13 setup the difference only existed in Resend's own
+      log, which is exactly the conflation `AdminResult`'s
+      `unconfigured` / `failed` split removed from every other read. The channel
+      state is already computed in `src/pages/api/enquiry.ts` and thrown away —
+      persisting it alongside `notified_at` would put the answer on the screen
+      where the question is asked.
 
 ## P1 — discoverability and hardening
 
@@ -271,6 +279,36 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-13** — **Deployed to Vercel, and the lead-capture path proved itself
+  in production.** The whole point of the site, working end to end for the first
+  time: an enquiry submitted on the public site was written to Postgres, showed
+  up in the admin inbox, emailed the sales address, had its status changed and
+  the change persisted, appeared in the demand report and came out of the CSV
+  export. Everything before this was verified by reading and by tests.
+
+  *Worth knowing:* **two email failures, and neither was a code fault.** First,
+  `ENQUIRY_FROM_EMAIL` had been set to a gmail.com address — Resend will not
+  send from a domain you cannot prove you own, and nobody can verify gmail.com.
+  The variable exists to be left **empty**, which falls back to Resend's own
+  verified sender; deleting it fixed it. Second, that fallback sender only
+  delivers to the Resend account's own address, so the destination had to match
+  until a real domain is verified. Both are configuration traps with no signal
+  in the code, which is why they are recorded here.
+
+  *Worth knowing:* the admin's "Notified" line reads `not emailed` for **both**
+  "never tried" and "tried and was rejected", so it could not distinguish a
+  missing setting from a rejected send — the answer only existed in Resend's own
+  log. That is the same conflation the `unconfigured` / `failed` split removed
+  everywhere else, still present on this one field. Queued below.
+
+  *Worth knowing:* a status change that appeared not to work was not a bug. The
+  dropdown opens on the current value, so pressing Save without changing it
+  writes the same status back, reports success and looks like nothing happened.
+  Worth remembering before debugging it again. The endpoint itself was proved
+  reachable and correctly guarded from the outside: an unauthenticated POST
+  answers 401, and one without an `Origin` header answers 403 from Astro's
+  built-in CSRF check.
 
 - **2026-08-12** — **Phase 1 hardened**: the admin can no longer confuse "you
   have no leads" with "I cannot see your leads". `handoff.md` §13.
