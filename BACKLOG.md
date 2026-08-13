@@ -302,6 +302,36 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## Done
 
+- **2026-08-13** — **Phase 2: the catalogue can now be read from Postgres.**
+  `src/loaders/supabase-catalogue.ts` is the swap `handoff.md` §5 was built for
+  — `catalog.ts` and all 110 pages are untouched and cannot tell which loader
+  filled the store. Plan:
+  `docs/superpowers/plans/2026-08-13-catalogue-editing.md`.
+
+  *Worth knowing:* **it defaults to `json`, not `postgres`, and that is a
+  departure from the design doc on purpose.** Until a Postgres build has been
+  proved byte-identical, the safe direction to fail is towards the committed
+  files. Flip the default after `npm run catalogue:parity` passes.
+
+  *Worth knowing:* **the loader throws on an empty table.** A read that errors
+  or returns nothing is a broken read, not an empty catalogue — a migration
+  half-run, a wrong project, a key without access. Building from it would
+  publish a site with no products and no error anywhere. A failed build is
+  enormously cheaper than a silent one.
+
+  *Worth knowing:* the two loaders give products **different entry ids** —
+  `file()` keys on an `id` field products do not have, this one keys on `slug`.
+  Safe because `catalog.ts` is the only module allowed to call `getCollection`
+  (rule 3, gated) and it reads `entry.data`, never `entry.id`. The parity test
+  proves that rather than assuming it.
+
+  *Worth knowing:* `en388` and `source` are **omitted, not set to null**, when
+  absent. 79 of 85 products have no EN 388 rating and an empty object would
+  assert the glove had been tested.
+
+  Divisions, categories and all 85 products are seeded and verified in the live
+  project. verify 16/16, 205 unit, 216 e2e.
+
 - **2026-08-13** — **Password reset, and the signed-out screens rebuilt.**
   `/admin/forgot` requests a link, `/admin/reset` completes it, and sign-in now
   offers a way through to them. `handoff.md` §14.

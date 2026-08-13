@@ -14,6 +14,8 @@
     "verify": "node tools/verify.mjs",
     "csp": "node tools/csp.mjs --write",
     "counts": "node tools/counts.mjs --write",
+    "catalogue:parity": "node tools/catalogue-parity.mjs",
+    "catalogue:seed": "node tools/seed-catalogue.mjs",
     "normalise": "node tools/normalise-products.mjs",
     "extract:catalog": "node tools/extract-catalog.mjs",
     "extract:logo": "node tools/extract-logo.mjs",
