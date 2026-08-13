@@ -1,0 +1,158 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataState from '../../../components/admin/DataState.astro';
+import Notice from '../../../components/admin/Notice.astro';
+import { noticeFor } from '../../../lib/admin/notices';
+import { getEnquiry, ENQUIRY_STATUSES } from '../../../lib/admin/enquiries';
+
+export const prerender = false;
+
+const admin = Astro.locals.admin!;
+const result = await getEnquiry(Astro.params.id ?? '');
+
+/*
+ * Only a successful read that found nothing is a redirect. A failed or
+ * unconfigured read must NOT bounce to the inbox saying "that enquiry does not
+ * exist" — the enquiry may exist perfectly well and be unreadable, and telling
+ * an operator it is gone is worse than telling them the truth.
+ */
+if (result.state === 'ok' && result.data === null) {
+  return Astro.redirect('/admin?notice=not-found', 302);
+}
+
+const enquiry = result.state === 'ok' ? result.data : null;
+const notice = noticeFor(Astro.url.searchParams.get('notice'));
+const units = enquiry ? enquiry.items.reduce((n, i) => n + i.qty, 0) : 0;
+const title = enquiry ? `Enquiry from ${enquiry.company || enquiry.name}` : 'Enquiry';
+---
+
+<AdminLayout title={title} admin={admin}>
+  <p><a href="/admin">← All enquiries</a></p>
+
+  {/*
+    Outside the branch below, deliberately. The notice reports what happened to
+    the operator's LAST action, and the most important case is the one where
+    that action failed AND the reload then failed too — a save attempted during
+    an outage. Rendered inside the success branch, "nothing was changed" would
+    be dropped in exactly the situation that makes it worth saying, leaving them
+    looking at an outage panel with no idea whether their edit landed.
+  */}
+  <Notice notice={notice} />
+
+  {
+    enquiry === null ? (
+      <>
+        <h1>Enquiry</h1>
+        <DataState state={result.state === 'failed' ? 'failed' : 'unconfigured'} subject="enquiry" />
+      </>
+    ) : (
+      <>
+        <h1>{enquiry.company || enquiry.name}</h1>
+
+        <dl>
+          <dt>Received</dt>
+          <dd><time datetime={enquiry.created_at}>{new Date(enquiry.created_at).toISOString()}</time></dd>
+          <dt>Name</dt><dd>{enquiry.name}</dd>
+          <dt>Email</dt><dd><a href={`mailto:${enquiry.email}`}>{enquiry.email}</a></dd>
+          <dt>Phone</dt><dd>{enquiry.phone || '—'}</dd>
+          <dt>Country</dt><dd>{enquiry.country || '—'}</dd>
+          <dt>Division</dt><dd>{enquiry.division || '—'}</dd>
+          <dt>Source</dt><dd>{enquiry.source}</dd>
+          <dt>Notified</dt>
+          <dd>
+            {enquiry.notified_at ? (
+              <time datetime={enquiry.notified_at}>
+                {new Date(enquiry.notified_at).toISOString()}
+              </time>
+            ) : (
+              /* Not a failure. The row is the system of record and the email is
+                 the nudge — see src/lib/enquiry-outcome.ts. */
+              'not emailed'
+            )}
+          </dd>
+        </dl>
+
+        <h2>Message</h2>
+        <p class="msg">{enquiry.message || '—'}</p>
+
+        <h2>Products ({enquiry.items.length} lines, {units} units)</h2>
+        {enquiry.items.length === 0 ? (
+          <p>General enquiry — no products selected.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Product</th>
+                <th scope="col">Slug</th>
+                <th scope="col">Qty</th>
+                <th scope="col">Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enquiry.items.map((i) => (
+                <tr>
+                  <td>{i.name}</td>
+                  <td>
+                    <a href={`/products/${i.slug}`}>{i.slug}</a>
+                  </td>
+                  <td>{i.qty}</td>
+                  <td>{i.note || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <h2>Status</h2>
+        <form method="post" action={`/api/admin/enquiries/${enquiry.id}`}>
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            {ENQUIRY_STATUSES.map((s) => (
+              <option value={s} selected={s === enquiry.status}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <button type="submit">Save</button>
+        </form>
+      </>
+    )
+  }
+</AdminLayout>
+
+<style>
+  dl {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 4px 16px;
+  }
+  dt {
+    color: #8a8a92;
+  }
+  .msg {
+    white-space: pre-wrap;
+    max-width: 70ch;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #232329;
+  }
+  select {
+    min-height: 44px;
+    background: #151519;
+    color: #fff;
+    border: 1px solid #232329;
+  }
+  form {
+    display: flex;
+    gap: 8px;
+    align-items: end;
+  }
+</style>

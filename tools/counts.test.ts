@@ -82,9 +82,17 @@ describe('computeCounts', () => {
   });
 
   it('counts every server-rendered route', () => {
-    // /api/enquiry, /api/admin/login, /api/admin/logout, /admin/login.
+    // /api/enquiry, /api/admin/login, /api/admin/logout, /admin/login, and the
+    // five the enquiry inbox added: /admin, /admin/demand,
+    // /admin/enquiries/[id], /api/admin/enquiries/[id], /api/admin/export.csv.
     // handoff.md still called this "the one SSR route" after the admin landed.
-    expect(computeCounts({ unitTests: 0 }).ssrRoutes).toBe(4);
+    //
+    // Pinned rather than derived on purpose. Every route here opts out of
+    // prerendering, and an admin page that LOSES that line becomes a public
+    // static file with build-time data baked into it — so this number moving
+    // downwards is exactly the failure `npm run verify`'s "admin area stays
+    // private" gate exists for, and two independent alarms are worth it.
+    expect(computeCounts({ unitTests: 0 }).ssrRoutes).toBe(9);
   });
 
   it('takes the unit-test count from the caller', () => {

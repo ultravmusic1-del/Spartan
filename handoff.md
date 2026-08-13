@@ -1,8 +1,8 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-11
-**Branch:** `agent/improvements` — all work lands here. **`main` no longer tracks it**, despite what this line said through the `feat/catalogue-site` era; it has fallen behind and nothing merges it forward automatically. `git log main..agent/improvements` is the difference.
-**State:** **The catalogue build is complete and verified. The admin subsystem is in progress.** The public site builds end to end and the full enquiry path works from product card to submitted RFQ. Admin Phase 1 has landed its auth foundation — sign-in, sign-out, the session guard and the CSV serialiser — but no dashboard page exists yet. See §7 "The admin subsystem".
+**Last updated:** 2026-08-12
+**Branch:** `main`. Every feature branch — `feat/catalogue-site`, `feat/landing-redesign`, `agent/improvements` — is merged into it and `git log main..<branch>` is empty for all three, so the warning this line used to carry no longer applies.
+**State:** **The catalogue build is complete and verified, and admin Phase 1 is complete.** The public site builds end to end, the full enquiry path works from product card to submitted RFQ, and an operator can now sign in, work the inbox, change a status, read the demand report and download the CSV. See §13. What is left is deployment and the client-supplied items in §8.
 
 Live counts — built pages, server-rendered routes, CSP hashes, unit tests — are generated into `CLAUDE.md` by `npm run counts` and gated by `npm run verify`. That block is the only place a current number belongs. Every number in this document is a dated record of what was true when it was written.
 
@@ -631,14 +631,13 @@ repo so the Zod schemas stay one contract, Supabase Storage becomes the image
 record with the build pulling images in, and the programme ships in four phases
 each of which is independently shippable.
 
-**What has actually landed is the auth foundation, not all of Phase 1.**
-`public.admins`, cookie parsing, the auth module, the middleware guard, the
-sign-in and sign-out endpoints, the login page and `AdminLayout`. **There is no
-`/admin` index page yet**, so a successful sign-in currently redirects to a route
-that does not exist. The enquiry inbox, the detail view, the status workflow, the
-product-demand report and the CSV export route are all still to come — the CSV
-*serialiser* shipped ahead of the endpoint that will use it, and `toCsv` has
-tests but no caller.
+**Superseded 2026-08-12 — Phase 1 is now complete; see §13.** What this section
+describes is the auth foundation it landed with: `public.admins`, cookie
+parsing, the auth module, the middleware guard, the sign-in and sign-out
+endpoints, the login page and `AdminLayout`. At the time there was no `/admin`
+index, so a successful sign-in redirected to a route that did not exist, and
+`toCsv` had tests but no caller. Both are closed. Everything below about *how*
+auth works is current and is the reasoning §13 builds on.
 
 **Identity and authority are separate facts, established separately.**
 `src/lib/admin/auth.ts`:
@@ -736,13 +735,13 @@ quantities and line counts and both are bounded at 1 by `enquiryPayloadSchema`.
 It would not be free in a financial export, so do not lift this module into one
 without re-taking that decision.
 
-**What Phase 1 still owes.** The design doc's acceptance conditions for the phase
-include e2e coverage of the auth boundary — an unauthenticated request to every
-admin route redirects, and an authenticated non-admin is refused — and zero CSP
-violations on every admin page behind a real login. **Neither test exists yet;
-`tests/e2e/` has no admin spec.** Until they do, the guard is verified by reading
-it rather than by running it, which is exactly the standard the rest of this
-project does not accept.
+**What Phase 1 owed, and what it paid.** The design doc's acceptance conditions
+included e2e coverage of the auth boundary and zero CSP violations on an admin
+page. `tests/e2e/admin.spec.ts` now covers both — see §13. One half is still
+outstanding and cannot be closed on this machine: **an authenticated non-admin
+is refused** needs a real Supabase session, and CI holds no credentials. That
+path is `currentAdmin`'s `if (!row) return null`, and it is verified by reading
+rather than by running.
 
 ### The footer email field is gone
 
@@ -997,6 +996,240 @@ is the price of the catalogue having a typographic register for data.
 > `En388Table` — the weight scale is independent and would stand on its own.
 > Do not re-widen the subset either; that is where three of the original four
 > points came back from.
+
+---
+
+## 13. Admin Phase 1 completed, and the hero WIP closed out — 2026-08-12
+
+**Status: implemented and green.** `verify 16/16 · 150 unit · 199 e2e · 110
+pages · 9 server-rendered routes.` Plan:
+`docs/superpowers/plans/2026-08-09-admin-phase-1-auth-and-enquiries.md`, Tasks
+7–12. Tasks 1–6 had landed on 2026-08-09; this closes the phase.
+
+### What shipped
+
+| File | What it is |
+|---|---|
+| `src/lib/admin/enquiries.ts` | **New.** Every admin read and write — `listEnquiries`, `getEnquiry`, `setStatus`, `getDemand`. The admin's seam, the counterpart to `catalog.ts`. |
+| `src/pages/admin/index.astro` | The inbox. Filterable by status; sign-in no longer lands on a 404. |
+| `src/pages/admin/enquiries/[id].astro` | One enquiry in full, with the status control. |
+| `src/pages/admin/demand.astro` | Product demand over the `enquiry_lines` view. |
+| `src/pages/api/admin/enquiries/[id].ts` | POST a status change. A form POST, not a fetch. |
+| `src/pages/api/admin/export.csv.ts` | The caller `toCsv` had been waiting for since 2026-08-09. |
+| `tests/e2e/admin.spec.ts` | **New.** The auth boundary, `noindex`, and zero CSP violations. |
+
+No schema change was needed: `status` has been on `public.enquiries` since the
+table was created — the enquiry-collection design doc §Schema put it there
+precisely so the Supabase table editor could serve as the v1 inbox.
+
+### The gate found a leak on its first run, and it was not in the new code
+
+`npm run verify` gained a sixteenth gate: **an admin page that loses
+`export const prerender = false` is silently built as a public static file**,
+with whatever the build-time query returned baked into it. The build succeeds,
+`astro check` passes, and every runtime boundary test still passes because the
+runtime is no longer involved. Proved by removing the line from
+`demand.astro`: the gate failed naming the page, and `tools/counts.test.ts`
+fired too, because the pinned server-rendered route count drops when a route
+stops being one. Two independent alarms on the same failure, which is the right
+number for this one.
+
+Its other half failed immediately and correctly: **`/admin/login/` was in
+`sitemap-0.xml`, and had been since the guard landed on 2026-08-09.**
+`@astrojs/sitemap` emits every known page route including the server-rendered
+ones, and nothing had ever looked. A `noindex` meta tag asks a crawler not to
+index a page it has found; a sitemap is a document you submit that *tells* it to
+go and find it. The two were working against each other and the sitemap was
+winning. Fixed with a `filter` in `astro.config.mjs`.
+
+This is worth generalising: the admin's privacy had three controls named in the
+design doc — the middleware, the `noindex`, and the deliberate *absence* of a
+robots.txt `Disallow` — and the one place it was actually being announced was a
+file nobody had thought of as part of the admin at all.
+
+### The hero WIP, closed out
+
+`b24589d` arrived as "WIP: landing page mobile improvements" and was green, but
+it left two things behind.
+
+**A trap entry in `docs/TRAPS.md` that its own change had made false.** The file
+said "the hero source order — stage after copy — is load-bearing below 1080px"
+and explained that the stage must come *after* the copy so the helmet does not
+push the CTAs below the fold. The WIP moved the actions *below* the stage,
+which is the exact arrangement that entry warns against — deliberately, and for
+a reason the entry has no way to express. Guidance that is confidently wrong is
+worse than no guidance, so it is rewritten rather than amended.
+
+**Two comments in the file that contradicted each other**, which is how the
+defect below was found. The markup comment said both CTAs "sit below the fold on
+a 375x667 iPhone SE and a 360x640 Android"; the stylesheet's `(max-height:
+700px)` block said shrinking the stage made "Browse catalogue" "fully visible
+without scrolling on both". They cannot both be true. `tests/e2e/hero-mobile.spec.ts`
+was written to assert the second, and it **failed on the 360x640** — the primary
+CTA's bottom edge measured 648px against a 640px fold. 8px, on the narrower of
+the two screens the comment claimed to have fixed, and on the one control the
+whole site converts on.
+
+The stage shrink was doing most of the work and stopping just short. Trimming
+the two stacked 32px margins inside that same block to 24px and 20px brings the
+edge to 628px with 12px of clearance. Tall phones are untouched — the block
+never reaches them.
+
+**The lesson is the one §11 already recorded in a different form:** a measured
+number and the prose around it rot at different rates, and here two pieces of
+prose in one file had already drifted apart from each other within a single
+commit. The test is now the thing that holds the claim, and it names both
+screens explicitly rather than relying on whichever viewport the project
+happened to run at — the mobile project is a Pixel 5 at 393x851, tall enough to
+miss this branch entirely.
+
+### The footer social icons are gone
+
+Three `href="#"` anchors on all 110 pages — Facebook, Instagram, LinkedIn — that
+hovered, took focus and went nowhere. `BACKLOG.md` had carried the decision
+since 2026-08-08 and named it a build decision rather than a client one: absent
+the URLs, remove them. Same call as the footer's newsletter field on
+2026-08-09, and the same departure from `design/direction-b-forge.html`, which
+still draws them. `sameAs` stays absent from `organizationJsonLd` and
+`twitter:site` from `Seo.astro`; all three are one fact and now agree.
+
+**This changes site chrome, so it moves Lighthouse on every page type.** §11
+established that the hard way — the landing redesign restyled `Header` and
+`Footer` and all three mobile rows moved, not just the one that was touched.
+The table in `README.md` has **not** been re-run and is now stale by one footer.
+
+### Then Phase 1 was hardened, same day
+
+Phase 2 — the catalogue into Postgres — is the next phase in the design doc and
+was **not** started. Its entire acceptance test is a byte-identical build: build
+from JSON, migrate, build from Postgres, diff. There are no credentials on this
+machine, so that test cannot run, and the design doc is explicit that this is
+the dangerous phase and ships alone behind its own verification. Starting it
+unverifiable would be the worst possible way to begin it.
+
+What was done instead is the part of Phase 1 that a real operator would have hit
+on day one.
+
+**The admin could not tell "you have no leads" from "I cannot see your leads",
+and said the first.** Every read returned `[]` on failure, so an unconfigured or
+unreachable deployment rendered *"No enquiries yet."* — a confident, false
+statement about the business, on the one screen whose whole job is to be trusted
+about exactly that. It is the same defect `/api/enquiry` was built to avoid on
+the write side, where `unconfigured` has never been allowed to mean `failed`.
+
+Every read now returns an `AdminResult<T>` — `ok` / `unconfigured` / `failed` —
+and a caller cannot render a list without having said what it does when there
+is no list. The three states are kept apart all the way to the screen:
+`unconfigured` is the expected state of every local and CI run and says which
+variables to set; `failed` says an outage happened and must not be dressed up as
+a configuration note.
+
+**The CSV export was the dangerous one.** Its failure path emitted a header row,
+which is a valid, downloadable file that opens cleanly in Excel and says the
+business has no enquiries. Unlike a broken page, that gets saved, attached and
+quoted from, and nothing downstream of it ever asks again. It now answers 503 or
+502 with a plain-text explanation and **no `content-disposition`**, so nothing
+lands in a downloads folder.
+
+**Two silent truncations.** Both reads selected every row with no bound.
+PostgREST applies the project's row ceiling to an unbounded select and returns
+the truncated set with no error, so the inbox would have begun hiding the oldest
+enquiries at a row count nobody had written down, and the export would have
+produced a short file that looked complete. The inbox is now paged at 50 with
+`count: 'exact'`, so it can always state how much it is not showing; the export
+batches until a short batch and **fails rather than returning a partial set** if
+the batches never end.
+
+**The redirect messages had never been rendered.** `[id].astro` redirected to
+`/admin?error=not-found` and the endpoint to `/admin?error=bad-request`, and
+`/admin` read neither — three dead paths shipped in the same commit that created
+them. They now go through `src/lib/admin/notices.ts`, which resolves a code
+against a closed whitelist. **The text is never taken from the URL**: a query
+parameter is anyone's to write, and arbitrary text rendered inside the real
+admin chrome is a credible phish however carefully it is escaped. An
+unrecognised code is a parameter to ignore, not an error to report. The lookup
+uses `hasOwnProperty` rather than `in`, because every object inherits
+`toString` and `constructor` and the naive check would report those as codes.
+
+Also: a status change now confirms itself rather than redirecting silently; a
+failed read of one enquiry no longer bounces to the inbox claiming the enquiry
+does not exist, which was a lie about a row that may exist and merely be
+unreadable; and the nav lights the section you are in.
+
+#### The gate refused the first attempt at the help text
+
+`DataState.astro` told the operator to set `SUPABASE_URL` and the service-role
+key by name, and the **service-role key never reaches the client** gate failed
+the build: that identifier may not appear anywhere under `src/components`,
+`src/scripts`, `src/stores` or `src/layouts`.
+
+It is right to fail, and the fix is not an allow-list entry. The gate matches
+the *name* because the name is the only reliable proxy for the *access* — Vite
+inlines `import.meta.env.*` at build time, and one client-side reference would
+substitute the real secret into a shipped bundle. A gate that tried to tell
+prose from a property read is exactly the exception that eventually lets a real
+reference through. The message describes the key and points at `README.md`
+instead. In `docs/TRAPS.md` now, because the next person writing operator help
+in a component will hit it too.
+
+#### Four defects a review pass found in the hardening itself
+
+Worth recording because three of the four are the *same* defect the hardening
+was written to remove, surviving in the places the change did not look.
+
+- **`getDemand` was still an unbounded select.** The whole point of the change
+  was that an unbounded read is silently row-capped, and this one was missed —
+  in the worst place, because `enquiry_lines` holds a row per product line per
+  enquiry and so reaches the ceiling at a fraction of the enquiry count. A
+  truncated demand report still renders its counts as fact, and it is the screen
+  someone buys stock from. Now batched through the same helper as the export.
+- **A page past the end rendered `Showing 49901–49900 of 120`** over an empty
+  table, because `page` was clamped below but never against how many pages
+  exist. And `?page=1e20` was worse than nonsense: the offset stringifies as
+  `5e+21`, PostgREST rejects it as an integer, the read throws, and the operator
+  is shown a **database outage** for a mistyped URL — a client error reported as
+  an incident, which is the exact failure mode the `unconfigured`/`failed` split
+  exists to prevent. `normalisePage` is now bounded at both ends and
+  `listEnquiries` falls back to the last page.
+- **Offset paging ordered by `created_at` alone**, which is not unique, so the
+  order across batches was not total — a row could be returned in two batches
+  or in none, putting a duplicated or missing lead into the CSV. `id` is now a
+  tiebreaker on both paged reads. This does *not* make a batched read atomic; a
+  row inserted mid-export still shifts the window, and that is accepted and
+  documented on `readAll` rather than solved.
+- **The status notice was rendered inside the success branch**, so a save
+  attempted during an outage lost its "nothing was changed" message in exactly
+  the case that makes it worth saying — the operator saw an outage panel and no
+  word on whether their edit had landed.
+
+### What Phase 1 could not prove on this machine
+
+There are no Supabase credentials here, and that shapes what the green run
+means:
+
+- The boundary tests assert what an **unauthenticated** visitor gets, which is
+  nothing. That is the property that matters most and it holds whether or not
+  the deployment is configured.
+- **An authenticated non-admin being refused is not covered.** It needs a real
+  session. The path is `currentAdmin`'s `if (!row) return null`.
+- **`public.admins` is empty**, checked against the live project on
+  2026-08-12. So even once the environment variables are set, nobody can sign
+  in until a user is created in Supabase Auth and their `user_id` inserted
+  there. `public.enquiries` is empty too, which is expected — the site has
+  never run with credentials.
+- **The three data states render correctly is asserted at the repository level
+  only.** The pages that branch on them sit behind the guard, and CI has no
+  session, so no e2e test can reach them. The branch in each page is one
+  ternary over a discriminated union, deliberately.
+- Nothing here has read a real enquiry, changed a real status or downloaded a
+  real CSV. The repository degrades to empty results and `false` when
+  unconfigured — asserted directly — so the pages render their empty states
+  rather than throwing, but an empty state is not evidence that the populated
+  one works.
+
+The first end-to-end confirmation therefore has to happen against a configured
+deployment, and until it does, §8's Supabase item is the gate on the whole
+subsystem rather than a deployment detail.
 
 Two follow-on facts:
 

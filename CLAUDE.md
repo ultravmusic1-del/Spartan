@@ -13,7 +13,7 @@ Supabase Postgres · Vercel.
 
 **85 products** across **15 categories**, in **2 divisions**.
 
-**110 built pages** · **4 server-rendered routes** · **8 inline-script CSP hashes** · **144 unit tests**.
+**110 built pages** · **9 server-rendered routes** · **8 inline-script CSP hashes** · **171 unit tests**.
 
 <!-- counts:end -->
 
@@ -67,9 +67,23 @@ bold alone does not make text large. Measured ratios for every pair are in
 `/admin/*` and `/api/admin/*` are guarded by `src/middleware.ts`; sign-in is
 Supabase Auth plus a membership check against the `admins` allow-list table, in
 `src/lib/admin/auth.ts`. The browser never talks to Supabase — the session is an
-HttpOnly cookie and every read runs server-side. The guard landed ahead of the
-pages it guards: there is no `/admin` index yet, so a successful sign-in
-currently redirects to a route that does not exist (`handoff.md` §7).
+HttpOnly cookie and every read runs server-side. Phase 1 is complete: the inbox
+at `/admin`, the detail and status workflow, the demand report and the CSV
+export all read through `src/lib/admin/enquiries.ts`, which is the admin's
+equivalent of the catalogue seam (`handoff.md` §13).
+
+**No inline scripts on any `/admin` page — they cannot be hashed and will be
+blocked.** `npm run csp` derives its hashes from `dist/client`, and admin routes
+are server-rendered so they are never in it. An inline script there ships
+unhashed, is blocked at runtime, and *nothing* fails — not the build, not
+`astro check`, not the CSP gate. Server-rendered forms only.
+
+**Every admin route needs `export const prerender = false`.** Without it Astro
+runs the page at build time — no request, no session, no middleware — and writes
+enquiry data into `dist/client` as a public static file. The build succeeds and
+every runtime boundary test still passes, because the runtime is no longer
+involved. `npm run verify` gates it, and `tools/counts.test.ts` pins the
+server-rendered route count as a second alarm.
 
 The middleware runs for **every** route, and for the prerendered pages that means
 at build time. Its early return is correctness, not speed: without it the public

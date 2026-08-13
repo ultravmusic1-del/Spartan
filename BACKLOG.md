@@ -91,11 +91,8 @@ see `handoff.md`). Priorities are P0 highest.
       visible change to the approved design (`design/direction-b-forge.html`
       shows three fields, the form now has four) and a person should sign it off.
 
-- [ ] **Footer social icons link nowhere.** Three `href="#"` on every page
-      (`Footer.astro`). Either the client supplies URLs or the icons come out.
-      Absent the URLs, **remove them** — a link that goes nowhere is worse than
-      no icon — and leave `sameAs` correspondingly absent from
-      `organizationJsonLd`. This is a build decision, not a client one.
+- [x] **Footer social icons link nowhere.** Done 2026-08-12 — removed, per the
+      standing decision below. See Done.
 
 - [x] **Replace `public/robots.txt` with `src/pages/robots.txt.ts`.** Done — see
       Done below.
@@ -121,7 +118,50 @@ see `handoff.md`). Priorities are P0 highest.
       but until it is set nobody is told an RFQ arrived, so somebody has to
       watch the Supabase table.
 
+- [ ] **Create the first admin account.** `public.admins` is **empty** — checked
+      against the live project on 2026-08-12 — so even with the environment
+      variables set, nobody can sign in. Accounts are made by hand and by
+      design: create the user in Supabase Auth (public signup is disabled), then
+      insert their `user_id` and `email` into `public.admins`. Identity and
+      authority are separate facts here, so creating the auth user alone is not
+      enough. `README.md` §The admin area.
+
+- [ ] **Confirm admin Phase 1 against a configured deployment.** Everything is
+      built and green, but this machine and CI hold no Supabase credentials, so
+      nothing here has read a real enquiry, changed a real status or downloaded
+      a real CSV — the repository degrades to empty results when unconfigured
+      and the pages render their empty states. Two things need a real session:
+      the populated inbox, detail, demand and CSV paths end to end; and **an
+      authenticated non-admin being refused**, which is the one Phase 1
+      acceptance condition still verified by reading rather than running
+      (`currentAdmin`'s `if (!row) return null`). Blocked in practice by the
+      Supabase env-var item above, which is why that item is now the gate on
+      the whole subsystem rather than a deployment detail. `handoff.md` §13.
+
 ## P1 — discoverability and hardening
+
+- [ ] **Re-run Lighthouse on all three page types.** The table in `README.md`
+      was measured on 2026-08-11 and the footer has changed since — the social
+      icons came out, which is site chrome and therefore moves every page.
+      §11's lesson was exactly this: the landing redesign restyled `Header` and
+      `Footer` and all three mobile rows moved, not only the page that was
+      touched. Home 94 and product 96 are **chosen numbers** (the mono
+      decision, `handoff.md` §12) — do not "fix" them.
+
+- [ ] **Phase 2 of the admin: the catalogue on Postgres.** This is what §5's
+      seam exists for. Replace `file()` in `src/content.config.ts` with a
+      database loader; `src/lib/catalog.ts` and every catalogue page are
+      untouched. The acceptance test is a **byte-identical build** — build from
+      JSON, migrate, build from Postgres, diff. It ships alone, behind its own
+      verification, with nothing else in the commit. Three things to carry
+      across: `serialiseJsonLd()`'s escaping matters the moment arbitrary text
+      can enter the catalogue; the "never invent product data" rule has to
+      survive contact with a UI full of empty fields inviting to be filled, and
+      `docs/CONTENT-EDITING.md` is the statement of that rule for whoever
+      maintains data meanwhile; and once the catalogue lives in Postgres **no
+      build works offline**, which is why the phase keeps a documented
+      `CATALOGUE_SOURCE=json|postgres` escape hatch rather than pretending
+      otherwise.
 
 - [x] **Add `/catalogue` to the primary navigation.** Done — see Done below.
 
@@ -216,6 +256,91 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-12** — **Phase 1 hardened**: the admin can no longer confuse "you
+  have no leads" with "I cannot see your leads". `handoff.md` §13.
+
+  Every read returned `[]` on failure, so an unconfigured or unreachable
+  deployment rendered "No enquiries yet" — the read-side twin of the defect
+  `/api/enquiry` exists to avoid, and a false statement about the business on
+  the screen whose job is to be trusted about it. Reads now return an
+  `AdminResult` (`ok` / `unconfigured` / `failed`) and the three states stay
+  apart all the way to the screen.
+
+  *Worth knowing:* **the CSV export was the dangerous one.** Its failure path
+  emitted a header row — a valid file that opens cleanly and says the business
+  has no enquiries. A broken page is recoverable; a spreadsheet that lies gets
+  saved, attached and quoted from. It now answers 503/502 in plain text with no
+  `content-disposition`, so nothing reaches a downloads folder.
+
+  *Worth knowing:* **two silent truncations.** Both reads were unbounded, and
+  PostgREST returns a row-capped result with no error — the inbox would have
+  begun hiding the oldest enquiries at an unwritten row count and the export
+  would have produced a short file that looked complete. Inbox paged at 50 with
+  an exact count; export batches and **fails rather than returning a partial
+  set**.
+
+  *Worth knowing:* three redirect messages had never been rendered — `/admin`
+  read no `error` parameter at all, so `not-found`, `bad-request` and
+  `save-failed` were dead the day they shipped. Now `src/lib/admin/notices.ts`,
+  a closed whitelist: **the text is never taken from the URL**, because
+  arbitrary text inside real admin chrome is a credible phish however well it is
+  escaped. Uses `hasOwnProperty`, not `in` — every object inherits `toString`.
+
+  *Worth knowing:* **the service-role gate refused the help text**, because
+  `DataState.astro` named the key while telling an operator to set it, and that
+  identifier is banned from `src/components`. The fix is not an allow-list
+  entry: the gate matches the name because the name is the only reliable proxy
+  for the access, and an exception for prose is how a real reference eventually
+  gets through. Now in `docs/TRAPS.md`.
+
+  Phase 2 was deliberately **not** started — its acceptance test is a
+  byte-identical build from Postgres and there are no credentials here to run
+  it. Beginning the dangerous phase unverifiable is the wrong way to begin it.
+
+- **2026-08-12** — **Admin Phase 1 completed**, the hero WIP closed out, and the
+  footer's dead social links removed. Full reasoning in `handoff.md` §13.
+
+  Phase 1's plan had Tasks 1–6 landed since 2026-08-09 and 7–12 outstanding. All
+  six are in: the enquiry repository, the inbox, the detail view and status
+  workflow, the demand report, the CSV export route that `toCsv` had been
+  waiting six weeks for, the private-admin verify gate and the boundary e2e
+  spec. No schema change was needed — `status` has been on `public.enquiries`
+  since the table was created.
+
+  *Worth knowing:* **the new gate found a leak on its first run, and it was not
+  in the new code.** `/admin/login/` had been published in `sitemap-0.xml` since
+  the guard landed, because `@astrojs/sitemap` emits every known page route
+  including the server-rendered ones and nobody had looked. A `noindex` asks a
+  crawler not to index a page it found; a sitemap is a document you submit
+  telling it to go and find one. Fixed with a `filter` in `astro.config.mjs`.
+  The admin's privacy had three named controls and the one place it was actually
+  being announced was a file nobody thought of as part of the admin.
+
+  *Worth knowing:* the gate's main purpose — catching an admin page that loses
+  `export const prerender = false` and is therefore built as a **public static
+  file with build-time data in it** — was proved by removing that line and
+  watching it fail. `tools/counts.test.ts` fired at the same time, because the
+  pinned server-rendered route count drops when a route stops being one. Two
+  alarms, deliberately.
+
+  *Worth knowing:* the hero WIP had **two comments contradicting each other**
+  inside one commit — the markup said both CTAs sat below the fold on a 375x667
+  and a 360x640, the stylesheet said the short-screen block had made the primary
+  one visible on both. A test written to assert the second failed on the
+  360x640 by **8px**, on the one control the whole site converts on. Two margins
+  trimmed inside that same block close it with 12px to spare. The WIP had also
+  falsified a `docs/TRAPS.md` entry — the source-order trap described the exact
+  arrangement the commit deliberately replaced — which is now rewritten.
+
+  *Worth knowing:* **what a green run does not say here.** There are no Supabase
+  credentials on this machine or in CI, so the boundary tests assert what an
+  *unauthenticated* visitor gets (nothing, which is the property that matters
+  most and holds regardless of configuration), and nothing has read a real
+  enquiry. An authenticated non-admin being refused is still verified by reading
+  rather than running. Queued above as a P0.
+
+  verify 16/16, 150 unit, 199 e2e.
 
 - **2026-08-11** — A weight scale for the type system, and JetBrains Mono for
   data. Spec:

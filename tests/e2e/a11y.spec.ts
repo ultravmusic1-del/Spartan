@@ -66,6 +66,17 @@ const PATHS = [
   '/safety',
   '/why-spartan',
   '/industries',
+  /*
+   * The only admin surface axe can reach. Every other `/admin` route is behind
+   * the session guard and CI holds no credentials, so this list can never cover
+   * the inbox, the detail view or the demand report — a real gap, recorded in
+   * handoff.md §13 rather than papered over. `/admin/login` is worth scanning
+   * on its own account: it is a form an operator uses daily, it renders an
+   * error state, and AdminLayout is a completely separate stylesheet from the
+   * public site, so nothing verified about the pages above says anything at all
+   * about it.
+   */
+  '/admin/login',
 ];
 
 for (const path of PATHS) {

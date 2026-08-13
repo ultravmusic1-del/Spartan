@@ -1,0 +1,49 @@
+---
+/**
+ * The banner an admin page shows after being redirected to.
+ *
+ * The text is never taken from the URL — `noticeFor` resolves a code against a
+ * closed whitelist and returns null for anything else, so a link somebody else
+ * wrote cannot put words inside the real admin chrome. See src/lib/admin/notices.ts.
+ *
+ * `role` follows the tone rather than being fixed: an error announces
+ * assertively because the operator's last action did not happen, while a
+ * success is polite and must not interrupt whatever they are reading next.
+ */
+import type { Notice } from '../../lib/admin/notices';
+
+interface Props {
+  notice: Notice | null;
+}
+
+const { notice } = Astro.props;
+---
+
+{
+  notice && (
+    <p class:list={['nt', `nt--${notice.tone}`]} role={notice.tone === 'error' ? 'alert' : 'status'}>
+      {notice.text}
+    </p>
+  )
+}
+
+<style>
+  .nt {
+    max-width: 70ch;
+    margin: 0 0 20px;
+    padding: 12px 16px;
+    border-left: 3px solid;
+    background: #151519;
+  }
+
+  .nt--error {
+    border-color: #ef3a38;
+  }
+
+  /* Not green: this palette has no success colour, and inventing one for a
+     single banner would put a token on the page that exists nowhere else in the
+     system. White reads as neutral-positive against the red used for errors. */
+  .nt--success {
+    border-color: #f6f6f7;
+  }
+</style>

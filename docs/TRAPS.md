@@ -173,6 +173,16 @@ in `handoff.md`; this file states the trap and moves on.
   would leave behind. Named, not numbered: the gates are ordered by cost and
   the numbers in that file's comments move whenever one is inserted.
 
+  **That gate matches the identifier, so writing it in a comment or in help
+  text inside one of those four directories fails the build too.** This is not
+  a false positive to be exempted — the name is the only reliable proxy for the
+  access, the gate cannot tell prose from a property read, and an allow-list
+  entry is exactly the kind of exception that eventually lets a real reference
+  through. `src/components/admin/DataState.astro` hit this while telling an
+  operator which variables to set; it now describes the service-role key and
+  points at `README.md` rather than naming it. Put the literal in `src/lib`,
+  `src/pages` or `src/middleware.ts`, all of which are server-only.
+
 - **`src/lib/env.ts` reads `process.env` first, and the order is the whole
   point.** Vite inlines `import.meta.env.*` at build time, and the build runs
   on Vercel — so a secret added to the project *after* a build would never
@@ -224,11 +234,37 @@ did not check. Changing one is a regression *you* would be introducing.
   the only thing clearing it — at 96px the badge collided with the header logo
   at every width from 375 to 1024.
 
-- **The hero source order — stage after copy — is load-bearing below 1080px.**
-  There `.hero` is `display: block`, so the DOM decides paint order and the
-  ~250px stacked helmet would render before the headline and push both CTAs
-  110–125px below the fold. On desktop the stage is absolutely positioned
-  under the copy, so the order is a no-op and looks arbitrary. It is not.
+- **The hero source order IS the mobile layout, and the CTAs deliberately sit
+  after the helmet.** Below 1080px `.hero` is `display: block`, so the DOM
+  decides the stack: badge and headline, then the stage, then the actions. That
+  is why `.hero__actions` lives in its own `.wrap` rather than inside
+  `.hero__copy` — CSS `order` cannot interleave the stage (a child of `.hero`)
+  with the actions (a grandchild of `.hero__wrap`), so the split is what makes
+  the order expressible at all. **This costs above-the-fold CTA visibility on a
+  short phone and that was the call, taken 2026-08-12.** Both CTAs are fully
+  visible on a 390×844 and a 414×896. On a 375×667 iPhone SE and a 360×640
+  Android **only the primary one is**, and only because a
+  `(max-height: 700px)` query shrinks the stage to 58vw and tightens two
+  margins; "Request a quote" is below the fold on both and that is the accepted
+  price. The margins are part of it — the stage shrink alone left the primary
+  CTA 8px past the fold at 360×640, which is the width where this is tightest.
+  An earlier version put the stage last to dodge the problem entirely — moving
+  `.hero__actions` back inside the first `.hero__copy` reverts it. On desktop the stage is absolutely positioned under
+  the copy, so the split is invisible there, but it does make `.hero` a two-row
+  grid — which is why `.hero` sets `align-content: center`.
+
+- **The helmet artwork is not centred in its own canvas.** Its opaque pixels
+  run y=125..1085 of 1254, so the helmet's centre sits 1.675% above the middle
+  of the square PNG it ships in. CSS centres the picture *box*, so the halo,
+  sweep and ring are concentric with the transparent square and not with the
+  helmet — measured 22.6px of float at the desktop render size before the bob
+  adds anything. `--helmet-art-offset` corrects it on `.hero__helmet`. Two
+  consequences: the mobile `.hero__helmet` rule replaces the desktop
+  `transform` wholesale, so it has to re-declare the translate by hand or the
+  correction silently vanishes; and there is deliberately **no horizontal
+  counterpart**, because the opaque box is already centred to within 1px and
+  the ring clears the helmet by only ~26px on each side against ~83px above and
+  below. Re-measure off the alpha channel if the artwork is ever re-cut.
 
 - **`image-size-responsive` (Lighthouse Best Practices 96) on product
   pages.** Source photography is natively 100–440px and must never be

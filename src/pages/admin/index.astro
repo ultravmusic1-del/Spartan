@@ -1,0 +1,203 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import DataState from '../../components/admin/DataState.astro';
+import Notice from '../../components/admin/Notice.astro';
+import { noticeFor } from '../../lib/admin/notices';
+import {
+  listEnquiries,
+  isEnquiryStatus,
+  normalisePage,
+  ENQUIRY_STATUSES,
+  PAGE_SIZE,
+} from '../../lib/admin/enquiries';
+
+export const prerender = false;
+
+const admin = Astro.locals.admin!;
+const params = Astro.url.searchParams;
+
+const filterParam = params.get('status') ?? '';
+const filter = isEnquiryStatus(filterParam) ? filterParam : undefined;
+const page = normalisePage(params.get('page'));
+
+const result = await listEnquiries({ status: filter, page });
+const notice = noticeFor(params.get('notice'));
+
+/** Keep the active filter when moving between pages, and drop `notice`. */
+function href(next: { status?: string; page?: number }): string {
+  const q = new URLSearchParams();
+  const status = next.status ?? filter;
+  if (status) q.set('status', status);
+  if (next.page && next.page > 1) q.set('page', String(next.page));
+  const query = q.toString();
+  return query ? `/admin?${query}` : '/admin';
+}
+
+const first = result.state === 'ok' ? (result.data.page - 1) * PAGE_SIZE + 1 : 0;
+const last = result.state === 'ok' ? first + result.data.rows.length - 1 : 0;
+---
+
+<AdminLayout title="Enquiries" admin={admin}>
+  <h1>Enquiries</h1>
+
+  <Notice notice={notice} />
+
+  <nav class="filters" aria-label="Filter by status">
+    <a href={href({ status: '', page: 1 })} aria-current={!filter ? 'page' : undefined}>All</a>
+    {
+      ENQUIRY_STATUSES.map((s) => (
+        <a href={href({ status: s, page: 1 })} aria-current={filter === s ? 'page' : undefined}>
+          {s}
+        </a>
+      ))
+    }
+    <a class="export" href="/api/admin/export.csv">Export CSV</a>
+  </nav>
+
+  {
+    result.state !== 'ok' ? (
+      <DataState state={result.state} subject="enquiries" />
+    ) : result.data.total === 0 ? (
+      <p>
+        No enquiries{filter ? ` with status “${filter}”` : ''} yet. The database was read
+        successfully — there are none.
+      </p>
+    ) : (
+      <>
+        <p class="count">
+          Showing {first}–{last} of {result.data.total}
+          {filter ? ` with status “${filter}”` : ''}.
+        </p>
+
+        <table>
+          <caption class="sr-only">
+            Enquiries, newest first{filter ? `, filtered to status ${filter}` : ''}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Received</th>
+              <th scope="col">Company</th>
+              <th scope="col">Name</th>
+              <th scope="col">Lines</th>
+              <th scope="col">Source</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.data.rows.map((e) => (
+              <tr>
+                <th scope="row">
+                  <a href={`/admin/enquiries/${e.id}`}>
+                    {/* A machine-readable datetime beside the human one: the
+                        visible text is deliberately short, and an operator
+                        copying a timestamp into an email needs the full value. */}
+                    <time datetime={e.created_at}>
+                      {new Date(e.created_at).toISOString().slice(0, 16).replace('T', ' ')}
+                    </time>
+                  </a>
+                </th>
+                <td>{e.company || '—'}</td>
+                <td>{e.name}</td>
+                <td>{e.items.length}</td>
+                <td>{e.source}</td>
+                <td>{e.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {result.data.pages > 1 && (
+          <nav class="pager" aria-label="Pages">
+            {result.data.page > 1 ? (
+              <a rel="prev" href={href({ page: result.data.page - 1 })}>
+                ← Newer
+              </a>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+            <span>
+              Page {result.data.page} of {result.data.pages}
+            </span>
+            {result.data.page < result.data.pages ? (
+              <a rel="next" href={href({ page: result.data.page + 1 })}>
+                Older →
+              </a>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+          </nav>
+        )}
+      </>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .filters {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .filters a {
+    color: #b4b4bc;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .filters a[aria-current='page'] {
+    color: #ef3a38;
+  }
+  .export {
+    margin-left: auto;
+  }
+  .count {
+    color: #8a8a92;
+    font-size: 14px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #232329;
+    font-weight: 400;
+  }
+  thead th {
+    font-weight: 600;
+  }
+  td a,
+  th a {
+    color: #fff;
+  }
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .pager a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .pager span {
+    color: #8a8a92;
+    font-size: 14px;
+  }
+
+  /* AdminLayout has no utility stylesheet, so the one visually-hidden helper
+     the admin needs lives with the one page that uses it. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

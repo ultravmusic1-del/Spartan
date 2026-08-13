@@ -110,6 +110,37 @@ The endpoint also carries a honeypot field and an in-memory rate limit of 5 subm
 
 ---
 
+## The admin area
+
+`/admin` is an invite-only staff area for working the enquiries the site collects. A buyer never signs in; there are no public accounts.
+
+| Route | What it is |
+|---|---|
+| `/admin/login` | Sign-in form. The only admin route reachable without a session. |
+| `/admin` | The inbox — every enquiry, newest first, filterable by status. |
+| `/admin/enquiries/[id]` | One enquiry in full, with the `new → contacted → quoted → closed` status control. |
+| `/admin/demand` | Which products are actually being asked about, ordered by how many separate enquiries name them. |
+| `/api/admin/export.csv` | Every enquiry as CSV, with a formula-injection guard. |
+
+**Accounts are created by hand.** Public signup is disabled in the Supabase dashboard, and that is deliberately not the only control: a user must *also* have a row in `public.admins`. Identity (the session cookie) and authority (the allow-list) are separate facts established separately, so a valid Supabase account is not by itself an admin. To add someone, create the user in Supabase Auth and insert their `user_id` and `email` into `public.admins`.
+
+Three environment variables are required, all server-side — see Environment variables above:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY` — used *only* for `signInWithPassword` on the login endpoint, never for data
+- `SUPABASE_SERVICE_ROLE_KEY` — every data read and write, and the `admins` lookup
+
+**The browser never talks to Supabase.** Sign-in is a plain form POST, the session comes back as an HttpOnly cookie, and every read runs server-side. That is why `connect-src 'self'` needs no Supabase origin, why no key reaches any page, and why `public.enquiries` keeps RLS with zero policies.
+
+Two rules that fail silently if broken, both gated by `npm run verify`:
+
+- **No inline scripts on an admin page.** `npm run csp` hashes inline scripts found in `dist/client`, and these routes are server-rendered so they are never there. An inline script here would ship unhashed and be blocked at runtime with nothing failing the build. Server-rendered forms only.
+- **Every admin route needs `export const prerender = false`.** Without it the page is built as a public static file with build-time data baked in.
+
+The admin is excluded from the built sitemap by a `filter` in `astro.config.mjs` and carries `noindex` in `src/layouts/AdminLayout.astro`. It deliberately has **no** `robots.txt` `Disallow` — that would advertise the endpoints and stop a crawler ever seeing the `noindex` that actually keeps it out of an index.
+
+---
+
 ## Architecture — the admin seam
 
 This is the single most important structural decision in the repo. The client will add a CMS-backed admin dashboard later, and the architecture exists to make that a one-module change.

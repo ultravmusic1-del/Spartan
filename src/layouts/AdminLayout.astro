@@ -24,6 +24,22 @@ interface Props {
 }
 
 const { title, admin } = Astro.props;
+
+/*
+ * Which nav item is lit. Enquiries covers the inbox and every detail page
+ * beneath it, so a detail view does not un-light the section it belongs to —
+ * but `aria-current="page"` is reserved for the exact URL, because on a detail
+ * page the inbox link is the section, not the page you are on. The public
+ * header draws the same distinction for Catalogue and its category pages.
+ */
+const NAV = [
+  { href: '/admin', label: 'Enquiries', owns: (p: string) => p === '/admin' || p.startsWith('/admin/enquiries') },
+  { href: '/admin/demand', label: 'Demand', owns: (p: string) => p === '/admin/demand' },
+] as const;
+
+// Trailing slashes normalised for the same reason src/middleware.ts does it:
+// `/admin/` and `/admin` are one page and must not light differently.
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 ---
 
 <html lang="en">
@@ -47,8 +63,17 @@ const { title, admin } = Astro.props;
       admin && (
         <header class="ad-head">
           <nav aria-label="Admin">
-            <a href="/admin">Enquiries</a>
-            <a href="/admin/demand">Demand</a>
+            {
+              NAV.map((item) => (
+                <a
+                  href={item.href}
+                  aria-current={path === item.href ? 'page' : undefined}
+                  class:list={{ 'is-section': item.owns(path) }}
+                >
+                  {item.label}
+                </a>
+              ))
+            }
           </nav>
           <form method="post" action="/api/admin/logout">
             <span class="ad-who">{admin.email}</span>
@@ -110,6 +135,14 @@ const { title, admin } = Astro.props;
 
   .ad-head nav a:hover {
     color: #fff;
+  }
+
+  /* Colour alone would fail 1.4.1 Use of Colour, so the lit item also carries a
+     rule under it. 5.33:1 on this background — small text on a dark surface, so
+     the light red, never brand red (rule 4). */
+  .ad-head nav a.is-section {
+    color: #ef3a38;
+    box-shadow: inset 0 -2px 0 #ef3a38;
   }
 
   .ad-head form {

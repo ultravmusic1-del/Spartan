@@ -1,0 +1,106 @@
+---
+/**
+ * What an admin screen shows when it has no data to show and the reason is not
+ * "there is none".
+ *
+ * The two states are kept apart deliberately. `unconfigured` is the expected
+ * state of every local run and every CI run — it is not an incident, and the
+ * useful thing to say is which variables are missing. `failed` means the
+ * database was asked and did not answer, which IS an incident and must not be
+ * dressed up as a configuration note.
+ *
+ * Neither may ever be rendered as an empty list. An inbox that says "No
+ * enquiries yet" when it cannot reach the database tells an operator they have
+ * no leads — a false statement about the business, on the one screen whose job
+ * is to be trusted about exactly that.
+ *
+ * WHY THE SERVICE-ROLE VARIABLE IS DESCRIBED AND NOT NAMED BELOW. `npm run
+ * verify` fails if the literal `SUPABASE_` + `SERVICE_ROLE_KEY` appears
+ * anywhere under src/components, src/scripts, src/stores or src/layouts, and it
+ * is right to: Vite inlines `import.meta.env.*` at build time, so one
+ * client-side reference would substitute the real secret into a shipped bundle.
+ * The gate matches the name because the name is the only reliable proxy for the
+ * access — it cannot tell prose from a property read, and a gate that tried to
+ * would be the kind of exception that eventually lets the real thing through.
+ * Spelling it out here would have meant weakening it for a help message, so the
+ * message points at README.md instead. Do not "fix" this by adding an
+ * allow-list entry.
+ */
+interface Props {
+  state: 'unconfigured' | 'failed';
+  /** Plural noun for what could not be read, e.g. "enquiries". */
+  subject: string;
+}
+
+const { state, subject } = Astro.props;
+---
+
+{
+  state === 'unconfigured' ? (
+    <div class="ds ds--unconfigured" role="status">
+      <h2>This deployment has no database credentials</h2>
+      <p>
+        The {subject} cannot be read, and this is <strong>not</strong> a statement that there are
+        none — nothing has been looked at. Set <code>SUPABASE_URL</code> and the Supabase
+        service-role key in the deployment's environment, then reload. Both are named in
+        <code>README.md</code> under “The admin area”.
+      </p>
+      <p class="ds__aside">
+        Enquiries submitted while this is unset are not stored at all. Until it is configured, the
+        email notification is the only record.
+      </p>
+    </div>
+  ) : (
+    <div class="ds ds--failed" role="alert">
+      <h2>Could not load the {subject}</h2>
+      <p>
+        The database was asked and did not answer. This is an outage, not an empty result — do not
+        read it as “nothing here”. Reload to try again; if it persists, check the Supabase project
+        and the server logs.
+      </p>
+    </div>
+  )
+}
+
+<style>
+  .ds {
+    max-width: 70ch;
+    padding: 16px 20px;
+    border-left: 3px solid;
+    background: #151519;
+  }
+
+  .ds h2 {
+    margin: 0 0 8px;
+    font-size: 17px;
+  }
+
+  .ds p {
+    margin: 0 0 8px;
+  }
+
+  .ds p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 5.6:1 on this panel — recessive, still readable. */
+  .ds__aside {
+    color: #8a8a92;
+    font-size: 14px;
+  }
+
+  .ds code {
+    padding: 1px 4px;
+    background: #08080a;
+    font-size: 13px;
+  }
+
+  /* An outage and a missing setting must not look alike at a glance. */
+  .ds--unconfigured {
+    border-color: #8a8a92;
+  }
+
+  .ds--failed {
+    border-color: #ef3a38;
+  }
+</style>

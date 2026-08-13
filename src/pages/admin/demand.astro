@@ -1,0 +1,80 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import DataState from '../../components/admin/DataState.astro';
+import { getDemand } from '../../lib/admin/enquiries';
+
+export const prerender = false;
+
+const admin = Astro.locals.admin!;
+const result = await getDemand();
+---
+
+<AdminLayout title="Product demand" admin={admin}>
+  <h1>Product demand</h1>
+  <p class="note">
+    Products ordered by how many separate enquiries name them. Counts every enquiry regardless of
+    status.
+  </p>
+
+  {
+    result.state !== 'ok' ? (
+      <DataState state={result.state} subject="demand figures" />
+    ) : result.data.length === 0 ? (
+      <p>No products have been enquired about yet. The database was read successfully.</p>
+    ) : (
+      <table>
+        <caption class="sr-only">Products by number of enquiries naming them</caption>
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Enquiries</th>
+            <th scope="col">Units</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.data.map((d) => (
+            <tr>
+              <th scope="row">
+                <a href={`/products/${d.product_slug}`}>{d.product_name}</a>
+              </th>
+              <td>{d.enquiries}</td>
+              <td>{d.units}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .note {
+    color: #8a8a92;
+    max-width: 60ch;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #232329;
+    font-weight: 400;
+  }
+  thead th {
+    font-weight: 600;
+  }
+  th a {
+    color: #fff;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

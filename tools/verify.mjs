@@ -563,7 +563,43 @@ let unitTests = null;
   }
 }
 
-/* ----------------------------------------------------------- 16. e2e (opt) -- */
+/* ------------------------------------------- 16. the admin area stays private -- */
+
+/*
+ * The failure this catches is one missing line.
+ *
+ * An admin page without `export const prerender = false` is silently
+ * PRERENDERED: Astro runs it at build time, with no request, no session and no
+ * middleware guard, and writes the result into dist/client as a static file.
+ * That file is then served to anyone who asks, with whatever enquiry data the
+ * build-time query returned. The build succeeds. Every test that checks the
+ * boundary at runtime still passes, because the runtime is no longer involved.
+ *
+ * Also asserts no admin URL reached the sitemap.
+ */
+{
+  const problems = [];
+
+  const leaked = htmlFiles(path.join(root, 'dist/client')).filter((f) =>
+    path.relative(root, f).replace(/\\/g, '/').includes('/admin/'),
+  );
+  if (leaked.length)
+    problems.push(`${leaked.length} admin page(s) were prerendered into dist/client`);
+
+  for (const name of ['sitemap-0.xml', 'sitemap-index.xml']) {
+    const file = path.join(root, 'dist/client', name);
+    if (fs.existsSync(file) && fs.readFileSync(file, 'utf8').includes('/admin'))
+      problems.push(`an admin URL reached ${name}`);
+  }
+
+  record(
+    'admin area stays private',
+    problems.length === 0,
+    problems.length ? problems.join('; ') : 'nothing prerendered, nothing in the sitemap',
+  );
+}
+
+/* ----------------------------------------------------------- 17. e2e (opt) -- */
 
 if (full) {
   /*
