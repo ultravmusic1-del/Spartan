@@ -37,9 +37,30 @@ keeps gates for.
 
 ---
 
-## 1. Two decisions I need from you before Phase 3 starts
+## 1. Two decisions — DECIDED 2026-08-13
 
-Phase 2 needs neither, so it can begin either way.
+**1.1 Provenance: `source` becomes optional, and the audit log carries it
+instead.** The client's position is that everyone with admin permissions will be
+trained, so a required "where did this come from" field is friction without
+benefit. Accepted, with one adjustment taken rather than dropping the field
+altogether: brochure- and datasheet-derived records keep `source: { doc, page }`
+untouched, admin-created records may leave it empty, and `catalogue_audit`
+records who created each row and when. The gate below changes from *every
+product cites a page* to *every product either cites a page or has an audit
+entry naming who entered it*.
+
+The reasoning for keeping anything at all, recorded because it is the argument
+that would otherwise be re-had: training governs whether someone invents a
+figure today. It does not survive staff turnover, and it cannot answer the
+question the field exists for — a maintainer in two years asking where a
+specific rating came from. The audit trail answers that for free, so nobody
+types anything extra.
+
+**1.2 Publishing is an explicit button.** Edits accumulate; the admin shows how
+many are unpublished and when the last publish ran; pressing Publish fires one
+Vercel deploy hook for the batch.
+
+### The original options, for the record
 
 ### 1.1 What does provenance mean for a product you type in?
 
