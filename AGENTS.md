@@ -32,6 +32,25 @@ the short list of things that pass `astro check` and are wrong anyway.
 `handoff.md` is the record of what happened; go to it for the reasoning behind a
 decision, not before every change.
 
+## How to report your work
+
+Keep replies to the user short and in plain language. Lead with what changed and
+whether it worked, hold it to a few sentences, and leave out file paths, gate
+names and jargon unless you are asked for them. Offer the detail rather than
+supplying it by default.
+
+**This governs the reporting only — it is not licence to do less work.** The
+engineering standard is unchanged: the same code, the same gates, the same four
+rules below, and the same reasoning written up in `handoff.md` and `BACKLOG.md`.
+The depth belongs in the repository, where it survives the conversation. A short
+reply summarises that work; it never replaces it, and a task is not simpler
+because its summary is.
+
+**It never softens bad news.** A failing test, a gate that went red, a step
+skipped, a number that could not be verified — said plainly and said first, in
+fewer and simpler words. Brevity applies to the explanation, never to the
+honesty.
+
 ## Four rules
 
 **1. Never invent product data.** No specification, certification, rating,
