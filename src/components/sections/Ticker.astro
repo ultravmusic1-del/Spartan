@@ -164,6 +164,55 @@ const copy = text.repeat(2);
     color: var(--color-red-deep);
   }
 
+  /* WHERE HOVERING EXISTS, THE CONTROL IS REVEALED BY IT.
+     Requested 2026-08-13: the button was visually noisy sitting permanently on
+     the band. Hiding it costs nothing here because a pointer can bring it back,
+     and `:focus-within` covers the keyboard route — WCAG 2.2.2 asks for a
+     mechanism, not a permanently visible one.
+
+     `opacity`, not `display: none`: the label must keep its box so the reveal
+     does not reflow the band, and the checkbox beside it must stay focusable.
+     `pointer-events` follows the opacity so an invisible button is never a
+     click target. */
+  @media (hover: hover) and (pointer: fine) {
+    .ticker__btn {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-base) var(--ease-out);
+    }
+
+    .ticker:hover .ticker__btn,
+    .ticker:focus-within .ticker__btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  /* TOUCH: NO CONTROL, AND THE BAND STILL SCROLLS.
+     KNOWN, ACCEPTED WCAG 2.2.2 FAILURE — decided by the client 2026-08-13
+     after the cost was put to them twice. Do not "fix" it silently; it is a
+     decision, and reversing it is theirs to make.
+
+     `hover` does not exist on a touch screen, so unlike the desktop rule above
+     there is nothing that can bring a hidden control back — hidden here means
+     absent. The band therefore moves, indefinitely, with no mechanism to pause
+     it, which is a Level A failure for exactly the readers the mechanism
+     existed for: anyone who cannot track or tune out moving text.
+
+     Two ways back, if it is ever reversed: stop the animation here too
+     (`animation: none` on `.ticker__track`, which removes the obligation along
+     with the motion, as the reduced-motion block below does), or restore the
+     control. Hiding it more cleverly is not a third option.
+
+     `prefers-reduced-motion` still wins below, so a visitor who has asked their
+     device for less motion gets a static band regardless of this. */
+  @media (hover: none) {
+    .ticker__toggle,
+    .ticker__btn {
+      display: none;
+    }
+  }
+
   /* The band does not move at all here, so there is nothing to pause and the
      control is removed rather than left as a lie.
 

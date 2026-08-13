@@ -161,6 +161,27 @@ see `handoff.md`). Priorities are P0 highest.
       persisting it alongside `notified_at` would put the answer on the screen
       where the question is asked.
 
+- [ ] **ACCEPTED FAILURE: the ticker has no pause control on touch screens.**
+      Decided by the client on 2026-08-13, after the cost was put to them twice.
+      The scrolling category band on the home page runs indefinitely and, on a
+      phone or tablet, offers no way to stop it — a **WCAG 2.2.2 (Pause, Stop,
+      Hide) Level A failure**, on a site selling safety equipment. It affects
+      anyone who cannot track or tune out moving text.
+
+      On a pointer device the control still exists and is revealed by hover or
+      keyboard focus, which is conformant. `prefers-reduced-motion` still wins
+      everywhere, so a visitor whose device asks for less motion gets a static
+      band regardless. Neither of those covers a touch user who has made no such
+      request.
+
+      **This is a decision, not an oversight — do not silently "fix" it, and do
+      not remove the test that pins it.** Reversing it is the client's call, and
+      there are exactly two honest ways: stop the animation on touch too, which
+      removes the obligation along with the motion, or restore the control.
+      Hiding it more cleverly is not a third option. `Ticker.astro` carries the
+      reasoning and `tests/e2e/motion.spec.ts` asserts the current behaviour so
+      a reversal breaks a test rather than passing unnoticed.
+
 ## P1 — discoverability and hardening
 
 - [ ] **Re-run Lighthouse on all three page types.** The table in `README.md`

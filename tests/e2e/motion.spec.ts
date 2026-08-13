@@ -11,6 +11,57 @@ import { expect, test } from '@playwright/test';
  */
 
 test.describe('the ticker pause switch', () => {
+  /*
+   * The control is now revealed by hover rather than shown permanently, and on
+   * a touch screen it is not present at all — a client decision taken on
+   * 2026-08-13 with the cost stated. Both tests below branch on the device's
+   * real hover capability rather than on the project name, because that is the
+   * thing the stylesheet actually keys on.
+   */
+  test('is absent on a touch screen, and the band keeps moving anyway', async ({ page }) => {
+    await page.goto('/');
+
+    const touch = await page.evaluate(() => matchMedia('(hover: none)').matches);
+    test.skip(!touch, 'Pointer device — covered by the test below.');
+
+    await expect(page.locator('.ticker__btn')).toBeHidden();
+    await expect(page.locator('#ticker-pause')).toBeHidden();
+
+    /*
+     * Asserted deliberately, and it is not an endorsement. This is a WCAG 2.2.2
+     * Level A failure held in place on purpose: moving content that runs past
+     * five seconds with no mechanism to pause it. The assertion exists so the
+     * failure is a recorded decision with a test naming it, rather than
+     * something a later reader discovers and mistakes for an oversight — and so
+     * that reversing it breaks a test and forces the decision to be retaken.
+     */
+    await expect(page.locator('.ticker__track')).toHaveCSS('animation-play-state', 'running');
+  });
+
+  test('is revealed by hover and by keyboard focus on a pointer device', async ({ page }) => {
+    await page.goto('/');
+
+    const hover = await page.evaluate(() => matchMedia('(hover: hover)').matches);
+    test.skip(!hover, 'Touch screen — covered by the test above.');
+
+    const btn = page.locator('.ticker__btn');
+
+    // Present and laid out, but not shown: `opacity`, not `display`, so the
+    // reveal cannot reflow the band. Playwright counts an opacity-0 element as
+    // visible, so the computed value is what has to be read.
+    await expect(btn).toHaveCSS('opacity', '0');
+
+    await page.locator('.ticker').hover();
+    await expect(btn).toHaveCSS('opacity', '1');
+
+    // The keyboard route matters more than the pointer one: it is what keeps
+    // this a mechanism for someone who never hovers anything.
+    await page.mouse.move(0, 0);
+    await expect(btn).toHaveCSS('opacity', '0');
+    await page.locator('#ticker-pause').focus();
+    await expect(btn).toHaveCSS('opacity', '1');
+  });
+
   test('is exposed as a switch with a static accessible name that pauses the band', async ({
     page,
   }) => {
@@ -18,6 +69,9 @@ test.describe('the ticker pause switch', () => {
 
     const toggle = page.locator('#ticker-pause');
     const track = page.locator('.ticker__track');
+
+    const hover = await page.evaluate(() => matchMedia('(hover: hover)').matches);
+    test.skip(!hover, 'No control on a touch screen — see the first test.');
 
     await expect(toggle).toHaveAttribute('role', 'switch');
     await expect(toggle).not.toBeChecked();
