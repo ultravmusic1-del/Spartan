@@ -1,6 +1,6 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-12
+**Last updated:** 2026-08-16
 **Branch:** `main`. Every feature branch — `feat/catalogue-site`, `feat/landing-redesign`, `agent/improvements` — is merged into it and `git log main..<branch>` is empty for all three, so the warning this line used to carry no longer applies.
 **State:** **The catalogue build is complete and verified, and admin Phase 1 is complete.** The public site builds end to end, the full enquiry path works from product card to submitted RFQ, and an operator can now sign in, work the inbox, change a status, read the demand report and download the CSV. See §13. What is left is deployment and the client-supplied items in §8.
 
@@ -291,6 +291,11 @@ brochure's 4 and Electricals is 32 rather than 19. Safety is untouched.
 Electricals: 32. Safety: 53.
 
 > An earlier draft said **74**. That double-counted two "RESISTANCE SPECIFICATIONS" table headings as products. 72 was the correct brochure figure — if you see 74 anywhere, it is stale. The live total is now **85**; 72 still refers to the brochure subset. `src/content.config.test.ts` asserts both the per-category counts and the total, so this table cannot drift silently.
+
+> **The catalogue is no longer a complete transcription of its sources.** Three
+> `Shrinkage` rows printed on brochure page 23 were removed on 2026-08-16 at the
+> client's instruction — see §15. If you are auditing specs against the brochure
+> and page 23 disagrees, that is the reason, and it is the only such gap.
 
 ### 6a. The datasheet PDFs — a second source family
 
@@ -1428,3 +1433,96 @@ Two follow-on facts:
 visible departure from the signed-off direction, in the same category as the
 Name field on the home CTA and the removed footer email field. **It needs
 sign-off**, and it is in `BACKLOG.md` as a P0 alongside the AI-generated helmet.
+
+---
+
+## 15. Shrinkage removed from the three fire-retardant garments — 2026-08-16
+
+**Status: done and green.** `verify 15/15 · 85 products · 110 pages.`
+
+**This is the first time printed source data has been taken *off* a listing for a
+commercial reason.** Everything before it either added verified data or corrected
+a transcription error. That makes it a different kind of change from anything in
+§6a, and it is recorded at length for that reason rather than because it was
+large — it is three lines of JSON.
+
+Three products carried a `Shrinkage` row, all of them fire-retardant workwear
+from brochure page 23:
+
+| Product | Printed value |
+|---|---|
+| Fire Retardant Pants | Below 2% |
+| Fire Retardant Shirts | Below 2% |
+| Fire Retardant Winter Jacket | 3% |
+
+All three are gone from `src/data/products.json`. No other product in the
+catalogue quotes a shrinkage figure, so the label now appears nowhere on the
+site — swept against `dist/client`, zero hits across 110 pages.
+
+**The decision is the client's, taken on 2026-08-16 on a recommendation from
+their sales team.** It was put to them with the objection below stated first, and
+they confirmed it. Do not silently reverse it; do not silently widen it either.
+
+### The objection that was raised, and why it is still worth knowing
+
+On a flame-resistant garment, dimensional change after laundering is not a
+cosmetic fit detail. A shirt that shrinks pulls its cuffs and hem back, reducing
+both coverage and the fabric-to-skin gap that the thermal protection depends on.
+That puts shrinkage nearer to an EN 388 rating than to a colour option — and
+these three records **cite no certification at all**, because §8 item 6 means
+none is claimed until the client supplies one. The shrinkage figure was
+therefore one of the few tested numbers standing behind a "Fire Retardant"
+claim, and it is now absent.
+
+Two further things were pointed out before the decision:
+
+- **The removed values were favourable.** Below 2% is a good result. If the
+  objection was really the jacket's 3% sitting beside two "Below 2%" siblings,
+  removing that one row alone would have been the narrower change. The client
+  chose all three anyway, with that alternative on the table.
+- **`pre shrunk` survives in the Fabric row** on the pants and shirts —
+  `100% Cotton mercerized pre shrunk` — because it is part of the printed fabric
+  description rather than a separate shrinkage claim. The consequence is that
+  the claim is still made on those two pages and the figure that quantified it
+  is not. That is a vaguer page, not a quieter one.
+
+### What was deliberately NOT done, and why it matters
+
+**`src/data/products.raw.json` still carries all three rows.** That file is the
+extractor's output — the record of what page 23 actually printed — and editing it
+would destroy the trace back to the source document, which is what makes any
+future spec audit possible. Nothing renders from it. **This is what makes the
+change reversible**: the values are not lost, they are unpublished. Restoring
+them is a copy from the raw file, not a re-extraction of a 163 MB PDF that is not
+on this machine.
+
+### The change is not live until the seed is applied
+
+The catalogue has two copies now, and this commit only edits one.
+`tools/seed-catalogue.mjs` reads `products.json` into Postgres, and the two were
+proved byte-identical on 2026-08-13. `seed.sql` has been regenerated here and
+contains zero shrinkage references, but **it has not been applied — there are no
+Supabase credentials on this machine.**
+
+Today nothing shows, because production still renders from JSON. But
+`CATALOGUE_SOURCE=postgres` is one Vercel setting away (`BACKLOG.md`), so:
+
+> **Flipping that switch before the seed is applied silently puts all three
+> shrinkage rows back on the live site, with nobody having edited anything.**
+
+`npm run catalogue:parity` is what catches it — it is currently expected to fail
+against the live database until the seed lands, and that failure is this change,
+not a regression. Move `seed.sql` with
+`Get-Content seed.sql -Raw -Encoding utf8 | Set-Clipboard` rather than opening
+it; `docs/TRAPS.md` explains what a text editor guessing ANSI did to `±`, `Ω`
+and `—` on 2026-08-13.
+
+### What no gate here can tell you
+
+`npm run verify` passed 15/15 on this change and that is worth reading narrowly.
+The catalogue-shape gate counts products, categories and EN 388 ratings and
+checks every record still has a `source`; none of those moved, because removing
+a spec row moves none of them. **There is no gate anywhere in this repository
+that would notice printed source data going missing from a listing** — rule 1 is
+gated in shape only, and it was written against invention rather than omission.
+This section is the record, and it is the only thing playing that role.

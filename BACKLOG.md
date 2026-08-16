@@ -140,6 +140,15 @@ see `handoff.md`). Priorities are P0 highest.
       redeploy. Leave CI and the local default alone — see
       `src/content.config.ts` for why the code default stays `json`.
 
+      **BLOCKED ON A SEED SINCE 2026-08-16 — read before flipping it.** Three
+      `Shrinkage` rows were removed from the fire-retardant garments in
+      `src/data/products.json` (`handoff.md` §15) and the database still holds
+      them. Flipping this switch first would silently restore all three on the
+      live site with nobody having edited anything. Apply the regenerated
+      `seed.sql` and confirm `npm run catalogue:parity` is clean, then flip.
+      Parity is expected to FAIL until that is done; that failure is the removal,
+      not a regression.
+
       Verified 2026-08-13 before staging: `npm run catalogue:parity` reports 522
       files byte-identical from both sources; the database holds 85 products, 15
       categories and 2 divisions with no orphans, no broken `heroProductSlug`, 6
