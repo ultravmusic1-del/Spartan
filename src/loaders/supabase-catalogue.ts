@@ -90,6 +90,18 @@ export function mapProduct(row: CatalogueRow) {
   if (row.en388 != null) mapped.en388 = row.en388;
   if (row.source != null) mapped.source = row.source;
 
+  /*
+   * Same rule, and it matters more here than it looks. Both of these drive a
+   * control that only renders when the field is present, so an empty string
+   * arriving from a database column would be truthy-adjacent enough to be
+   * dangerous: `''` fails the schema's regex and would break the build, which is
+   * the right outcome — but only because it is never written as `''` in the first
+   * place. A NULL column stays absent, and the product simply has no datasheet
+   * and no Kavalani page, which is true of all 94 of them today.
+   */
+  if (row.datasheet_url != null) mapped.datasheetUrl = row.datasheet_url;
+  if (row.kavalani_url != null) mapped.kavalaniUrl = row.kavalani_url;
+
   return mapped;
 }
 

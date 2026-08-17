@@ -101,6 +101,35 @@ describe('mapProduct', () => {
     expect(mapProduct(row).source).toEqual({ doc: 'brochure', page: 16 });
   });
 
+  /*
+   * The datasheet and Kavalani columns, added 2026-08-17. Same absent-not-null
+   * rule as `en388` above, and it carries the same weight: each drives a control
+   * that renders only when its field is present, so a NULL column must arrive as
+   * a missing key and leave the product with no button — which is true of all 94
+   * records today. The JSON loader gets this for free by simply not having the
+   * key; this is the only place the Postgres path could disagree with it, and
+   * the byte-identical parity build is what would catch it if it did.
+   */
+  it('omits the datasheet and Kavalani links when the columns are null', () => {
+    const mapped = mapProduct({ ...row, datasheet_url: null, kavalani_url: null });
+    expect('datasheetUrl' in mapped).toBe(false);
+    expect('kavalaniUrl' in mapped).toBe(false);
+    // And when the columns are not in the row at all, which is the state of the
+    // table until a migration adds them.
+    expect('datasheetUrl' in mapProduct(row)).toBe(false);
+    expect('kavalaniUrl' in mapProduct(row)).toBe(false);
+  });
+
+  it('renames the datasheet and Kavalani columns when they hold a value', () => {
+    const mapped = mapProduct({
+      ...row,
+      datasheet_url: '/datasheets/gp5.pdf',
+      kavalani_url: 'https://example.com/p/gp5',
+    });
+    expect(mapped.datasheetUrl).toBe('/datasheets/gp5.pdf');
+    expect(mapped.kavalaniUrl).toBe('https://example.com/p/gp5');
+  });
+
   it('defaults status to published, matching the schema', () => {
     expect(mapProduct({ ...row, status: undefined }).status).toBe('published');
     expect(mapProduct({ ...row, status: 'draft' }).status).toBe('draft');

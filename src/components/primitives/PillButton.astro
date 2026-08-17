@@ -14,15 +14,38 @@ interface Props {
   type?: 'button' | 'submit';
   class?: string;
   onLight?: boolean;
+  /**
+   * Passed straight through for links that leave the site or hand over a file.
+   * All three are ignored when this renders a `<button>`, which is why they are
+   * optional rather than defaulted: an unused `rel` on a button is markup noise.
+   *
+   * `download` only does anything same-origin — browsers ignore it cross-origin —
+   * so a caller linking an off-site file should use `target` instead and not
+   * pretend the file will be saved.
+   */
+  download?: boolean;
+  target?: string;
+  rel?: string;
 }
 
-const { href, type = 'button', class: cls = '', onLight = false } = Astro.props;
+const {
+  href,
+  type = 'button',
+  class: cls = '',
+  onLight = false,
+  download = false,
+  target,
+  rel,
+} = Astro.props;
 const Tag = href ? 'a' : 'button';
 ---
 
 <Tag
   {href}
   type={href ? undefined : type}
+  download={href && download ? true : undefined}
+  target={href ? target : undefined}
+  rel={href ? rel : undefined}
   class:list={['pill', { 'pill--on-light': onLight }, cls]}
 >
   <slot /><span class="chev" aria-hidden="true">›</span>

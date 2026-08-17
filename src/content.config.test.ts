@@ -30,6 +30,71 @@ describe('content data', () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
+  /*
+   * `datasheetUrl` and `kavalaniUrl` — the two optional fields behind the
+   * "Download datasheet" and "View on Kavalani" controls.
+   *
+   * Both are absent from every record right now, and these tests are the honest
+   * record of that rather than a gap in coverage: there is no PDF anywhere in
+   * this repository and no Kavalani product URL written down, and neither is a
+   * value that may be guessed. What IS worth testing is that a wrong value
+   * cannot get in quietly — a CMS field is going to be filled by someone who is
+   * not a developer, and a datasheet button pointing at a web page or a Kavalani
+   * button pointing off Kavalani are both lies the schema can refuse.
+   */
+  describe('the datasheet and Kavalani fields', () => {
+    const base = products[0]!;
+
+    it('are absent from every product today, so neither control renders', () => {
+      const withDatasheet = products.filter((p) => 'datasheetUrl' in p);
+      const withKavalani = products.filter((p) => 'kavalaniUrl' in p);
+      expect(withDatasheet).toHaveLength(0);
+      expect(withKavalani).toHaveLength(0);
+    });
+
+    it('accept a datasheet as a site-root path or an https PDF URL', () => {
+      for (const url of ['/datasheets/led-floodlights.pdf', 'https://example.com/a/b.PDF']) {
+        expect(() => productSchema.parse({ ...base, datasheetUrl: url })).not.toThrow();
+      }
+    });
+
+    it('reject a datasheet that is not a PDF, so the button cannot lie', () => {
+      // The control says "Download datasheet". A web page is not a datasheet
+      // download, and http:// is not a link this site will emit.
+      for (const url of [
+        'https://example.com/products/floodlights',
+        '/datasheets/floodlights',
+        'http://example.com/a.pdf',
+        'example.com/a.pdf',
+        '',
+      ]) {
+        expect(() => productSchema.parse({ ...base, datasheetUrl: url })).toThrow();
+      }
+    });
+
+    it('accept an absolute https Kavalani URL and reject anything else', () => {
+      expect(() =>
+        productSchema.parse({ ...base, kavalaniUrl: 'https://example.com/p/1' }),
+      ).not.toThrow();
+      for (const url of ['http://example.com/p/1', '/p/1', 'example.com', '']) {
+        expect(() => productSchema.parse({ ...base, kavalaniUrl: url })).toThrow();
+      }
+    });
+
+    /*
+     * The gap this leaves, stated rather than hidden: nothing above can tell a
+     * correct Kavalani URL from a valid one pointing at the wrong product, or at
+     * a different site entirely. Pinning the host would close half of it and the
+     * host is not recorded anywhere here, so it cannot be written down without
+     * inventing it. Queued in BACKLOG.md.
+     */
+    it('cannot yet tell a Kavalani URL from any other https URL', () => {
+      expect(() =>
+        productSchema.parse({ ...base, kavalaniUrl: 'https://not-kavalani.example/p/1' }),
+      ).not.toThrow();
+    });
+  });
+
   it('every category hero product exists, except expanding categories', () => {
     const slugs = new Set(products.map((p) => p.slug));
     for (const c of categories) {

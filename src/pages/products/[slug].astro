@@ -116,6 +116,19 @@ const metaDescription = productDescription(product, 160);
  */
 const shareUrl = absoluteUrl(`/products/${product.slug}`, site);
 
+/**
+ * `download` works same-origin only — browsers ignore it cross-origin — so a
+ * datasheet committed under `public/` is offered as a download and one hosted
+ * elsewhere opens in a tab instead. Claiming a save that will not happen is a
+ * small lie the schema's `.pdf` requirement is there to avoid in the first place.
+ *
+ * BOTH CONTROLS RENDER FOR NOTHING TODAY. No product carries either field: there
+ * is no PDF in this repository and no Kavalani product URL recorded anywhere, and
+ * neither is a value that may be guessed (rule 1). An absent field is an absent
+ * button, which is the honest empty state — see the fields in content.config.ts.
+ */
+const datasheetIsLocal = product.datasheetUrl?.startsWith('/') ?? false;
+
 // "Safety Helmets — Head & Face Protection — Spartan". The brand goes last: it
 // is the part a searcher needs least, so it is the part Google truncates first
 // on the longest names. Every product has a category, but the shape stays safe
@@ -204,6 +217,33 @@ const pageTitle = category
               <EnquiryButton client:visible slug={product.slug} name={fullName} variant="solid" />
               <PillButton href="/enquiry">Request a quote</PillButton>
               <PillButton href="/contact">Ask about this product</PillButton>
+
+              {
+                product.datasheetUrl && (
+                  <PillButton
+                    href={product.datasheetUrl}
+                    download={datasheetIsLocal}
+                    target={datasheetIsLocal ? undefined : '_blank'}
+                    rel={datasheetIsLocal ? undefined : 'noopener'}
+                  >
+                    Download datasheet
+                  </PillButton>
+                )
+              }
+
+              {
+                /* "View on Kavalani", not "Buy on Kavalani". This site has no
+                   prices, no cart and no checkout, and a control promising a
+                   purchase is the same class of claim as structured data
+                   carrying a price that does not exist — which src/lib/seo.ts
+                   refuses to emit. Kavalani is where buying happens; this link
+                   says where to go, not what will happen when you arrive. */
+                product.kavalaniUrl && (
+                  <PillButton href={product.kavalaniUrl} target="_blank" rel="noopener">
+                    View on Kavalani
+                  </PillButton>
+                )
+              }
             </div>
 
             {/* A distributor sends the product to a customer, and the customer

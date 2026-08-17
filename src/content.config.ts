@@ -76,6 +76,45 @@ export const productSchema = z.object({
     .optional(),
   status: z.enum(['published', 'draft']).default('published'),
   /**
+   * A downloadable datasheet for this product. Optional, and **absent on all 94
+   * records today** — there is not a single PDF in this repository or on this
+   * machine, so the control this field drives renders for nothing. That is the
+   * honest state, not an oversight: the field exists so that supplying a
+   * datasheet is a data edit rather than a code change.
+   *
+   * Either a site-root path (`/datasheets/led-floodlights.pdf`) or an absolute
+   * https URL. **It must end in `.pdf`**, and that is deliberate rather than
+   * fussy: the control says "Download datasheet", and pointing it at a web page
+   * would make the button lie about what it does. If a datasheet ever arrives in
+   * another format, this is a one-line change and someone should make it on
+   * purpose.
+   */
+  datasheetUrl: z
+    .string()
+    .regex(
+      /^(?:https:\/\/[^\s]+|\/[^\s]*)\.pdf$/i,
+      'datasheetUrl must be a site-root path or an https URL ending in .pdf',
+    )
+    .optional(),
+  /**
+   * This product's page on the Kavalani site, where it can actually be bought.
+   *
+   * Optional, and **absent on all 94 records today**: no Kavalani product URL
+   * exists anywhere in this repository, and a link to the wrong product page is
+   * exactly the class of error rule 1 exists to prevent — so none is guessed.
+   *
+   * **The host is NOT pinned, and it should be.** A control reading "View on
+   * Kavalani" that navigates somewhere else is a lie, and the strongest guard
+   * against that is requiring the URL to be on Kavalani's own domain. That
+   * domain is not recorded anywhere here, so it cannot be written down without
+   * inventing it. Queued in BACKLOG.md; tighten this regex the day the client
+   * names it.
+   */
+  kavalaniUrl: z
+    .string()
+    .regex(/^https:\/\/[^\s]+$/, 'kavalaniUrl must be an absolute https URL')
+    .optional(),
+  /**
    * Provenance — where every value on this record can be checked against.
    *
    * This was `sourcePage: number` while there was exactly one source document.
