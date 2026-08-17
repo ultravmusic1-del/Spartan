@@ -1,0 +1,178 @@
+---
+/**
+ * ShareRow — WhatsApp, email and copy-link for one product.
+ *
+ * The site is a lead-generation catalogue and this is a lead-generation control:
+ * a distributor looking at a product sends it to a customer, and the customer
+ * lands on the page with the enquiry basket on it. So what gets shared is the
+ * product's own name, its printed specifications and the page URL — nothing
+ * written about it, for the same reason the page itself carries no marketing
+ * sentence.
+ *
+ * Two of the three are plain anchors, built on the server by `src/lib/share.ts`.
+ * They work with JavaScript off and they cost no bytes. Only copy-link needs
+ * script, and it is `html[data-js]`-gated: without JavaScript it collapses
+ * rather than sitting dead, which is the rule the enquiry buttons and the
+ * catalogue filter bar already follow.
+ *
+ * NO `aria-label` ON ANY OF THESE. Each control's accessible name is its own
+ * visible text. The catalogue shipped a serious WCAG 2.5.3 (Label in Name)
+ * failure on every product card by overriding exactly this — a button reading
+ * ENQUIRE whose name was "Add <product> to enquiry list" — and axe's rule for it
+ * is experimental and off by default, so nothing caught it. See docs/TRAPS.md.
+ *
+ * The icons are `aria-hidden`: each one duplicates the word beside it, and an
+ * announced "WhatsApp WhatsApp" is worse than a silent glyph.
+ */
+import { shareTargets, type ShareableProduct } from '../../lib/share';
+
+interface Props {
+  product: ShareableProduct;
+  /** Absolute URL of the product page. Share text is worthless relative. */
+  url: string;
+}
+
+const { product, url } = Astro.props;
+const share = shareTargets(product, url);
+---
+
+<div class="sh" data-share>
+  <h2 class="sh__label" id="share-heading">Share this product</h2>
+
+  <div class="sh__row" role="group" aria-labelledby="share-heading">
+    <a
+      class="sh__btn"
+      href={share.whatsapp}
+      target="_blank"
+      rel="noopener"
+      data-share-whatsapp
+    >
+      <svg class="sh__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path
+          d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.4A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .9.9-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Z"
+        ></path>
+        <path
+          d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.1-.4-2.1-1.3-.8-.7-1.3-1.5-1.5-1.8-.1-.3 0-.4.1-.6.1-.1.3-.4.5-.6.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.6-.9-2.2-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 1.9 3 4.7 4.1 2.3 1 2.8.8 3.3.7.5 0 1.6-.6 1.8-1.3.2-.6.2-1.2.2-1.3-.1-.1-.2-.2-.5-.3Z"
+        ></path>
+      </svg>
+      WhatsApp
+    </a>
+
+    <a class="sh__btn" href={share.email} data-share-email>
+      <svg class="sh__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M3 5h18v14H3V5Zm2.2 2L12 11.9 18.8 7H5.2ZM19 8.6l-6.4 4.6a1 1 0 0 1-1.2 0L5 8.6V17h14V8.6Z"
+        ></path>
+      </svg>
+      Email
+    </a>
+
+    {/* Hidden until `initShare()` below has bound it — see the script. */}
+    <button class="sh__btn sh__btn--js" type="button" data-share-copy={share.url}>
+      <svg class="sh__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M9 4h11v11h-2V6H9V4Z"></path>
+        <path d="M4 8h11v12H4V8Zm2 2v8h7v-8H6Z"></path>
+      </svg>
+      <span data-share-label>Copy link</span>
+    </button>
+  </div>
+
+  {/* Empty on load; `initShare()` writes "Copied" here so the outcome is
+      announced and not only shown. */}
+  <p class="sh__status" role="status" data-share-status></p>
+</div>
+
+<script>
+  import { initShare } from '../../scripts/share';
+  initShare();
+</script>
+
+<style>
+  .sh {
+    margin-top: 28px;
+  }
+
+  /* Same treatment as the page's own .pd__label ("Specification", "EN 388
+     resistance levels"), so this reads as another section of the same column
+     rather than as a widget bolted onto it. --color-grey on --color-black is
+     the pairing those labels already ship with. */
+  .sh__label {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  .sh__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* The .pill treatment without its chevron: the chevron means "this goes
+     somewhere", and two of these three do not navigate. Text is inherited
+     white on --color-black, so no red text sits on a light surface here and
+     rule 4 has nothing to measure. */
+  .sh__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 18px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      background var(--dur-base) var(--ease-out);
+  }
+
+  .sh__btn:hover {
+    border-color: var(--color-red);
+    background: color-mix(in srgb, var(--color-red) 10%, transparent);
+  }
+
+  .sh__icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: var(--color-red-light);
+  }
+
+  /* A control that needs script is not shown until script has bound it. Without
+     JavaScript `data-js` is never set and this collapses entirely; the two
+     anchors beside it still work, and the URL is in the address bar regardless.
+     `display: none` rather than the `hidden` attribute — Tailwind 4's preflight
+     makes `[hidden]` `!important` and it could then never be switched back on
+     (docs/TRAPS.md). */
+  .sh__btn--js {
+    display: none;
+  }
+
+  html[data-js] .sh__btn--js {
+    display: inline-flex;
+  }
+
+  .sh__status {
+    margin-top: 8px;
+    min-height: 1.2em;
+    font-size: 12.5px;
+    color: var(--color-grey);
+  }
+
+  @media (max-width: 420px) {
+    /* Three pills do not fit a 360px row; they wrap to two lines and the gap
+       does the rest. Nothing shrinks below the 44px target to avoid it. */
+    .sh__btn {
+      padding: 10px 14px;
+    }
+  }
+</style>

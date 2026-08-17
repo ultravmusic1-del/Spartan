@@ -147,6 +147,19 @@ in `handoff.md`; this file states the trap and moves on.
   JavaScript.** Re-run `npm run csp` after changing *where* a component
   renders, not only after changing what it does.
 
+  **"Shared across pages" counts page MODULES, not built URLs, and a dynamic
+  route is one module however many pages it emits.** `ShareRow.astro` renders on
+  all 94 product pages and its script is still **inlined into every one of
+  them**, because all 94 come from the single `src/pages/products/[slug].astro`
+  route. The prediction from the paragraph above — 94 pages, therefore external,
+  therefore no hash — is wrong, and it is wrong in the safe direction only
+  because `npm run csp` was re-run and the count went 8 → 9. Had it not been,
+  the sharing controls would have shipped blocked on every product page with
+  nothing failing. Measured cost of the inline copy: 1,040 bytes on a 45.7 KB
+  page, and it saves a request, so this is a fine outcome — it just is not the
+  predicted one. **Check the hash count against the build after adding a script
+  to a dynamic route; do not reason about it from the number of URLs.**
+
 - **The home page is a product data view, so "product-page only" is not a
   thing.** `Spotlight` imports `SpecTable` and `En388Table` and renders both in
   full for Grip Guard GP5 on `/`. Anything scoped to "the catalogue's data

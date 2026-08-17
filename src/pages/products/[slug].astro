@@ -10,8 +10,10 @@ import EnquiryButton from '../../components/enquiry/EnquiryButton.tsx';
 import SpecTable from '../../components/catalog/SpecTable.astro';
 import En388Table from '../../components/catalog/En388Table.astro';
 import ProductGrid from '../../components/catalog/ProductGrid.astro';
+import ShareRow from '../../components/catalog/ShareRow.astro';
 import { getCategories, getProducts, getRelatedProducts } from '../../lib/catalog';
 import {
+  absoluteUrl,
   breadcrumbJsonLd,
   productDescription,
   productJsonLd,
@@ -108,6 +110,12 @@ const jsonLd = [
  */
 const metaDescription = productDescription(product, 160);
 
+/**
+ * Absolute, because a share message carrying a relative path is worthless the
+ * moment it leaves the page. Same builder the Product node's `url` uses.
+ */
+const shareUrl = absoluteUrl(`/products/${product.slug}`, site);
+
 // "Safety Helmets — Head & Face Protection — Spartan". The brand goes last: it
 // is the part a searcher needs least, so it is the part Google truncates first
 // on the longest names. Every product has a category, but the shape stays safe
@@ -197,6 +205,12 @@ const pageTitle = category
               <PillButton href="/enquiry">Request a quote</PillButton>
               <PillButton href="/contact">Ask about this product</PillButton>
             </div>
+
+            {/* A distributor sends the product to a customer, and the customer
+                lands on the page the enquiry basket is on. It sits after the
+                enquiry actions deliberately: those are what this page converts
+                on, and sharing is what a visitor does once they have decided. */}
+            <ShareRow product={product} url={shareUrl} />
           </div>
         </div>
       </div>
