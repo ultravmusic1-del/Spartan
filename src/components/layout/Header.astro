@@ -26,9 +26,11 @@
 import site from '../../data/site.json';
 import logoLight from '../../assets/brand/spartan-logo-light.svg';
 import UtilityBar from './UtilityBar.astro';
-import MobileNav, { isCurrentNavItem, type NavItem } from './MobileNav.tsx';
+import MobileNav from './MobileNav.tsx';
 import EnquiryBadge from '../enquiry/EnquiryBadge.tsx';
 import EnquiryDrawer from '../enquiry/EnquiryDrawer.tsx';
+import { getCategories, getDivisions } from '../../lib/catalog';
+import { buildCategoryGroups, isCurrentNavItem, normalisePath, type NavItem } from '../../lib/nav';
 
 interface Props {
   mode?: 'transparent' | 'solid';
@@ -37,28 +39,47 @@ interface Props {
 const { mode = 'transparent' } = Astro.props;
 
 /*
- * Catalogue heads the three product-browsing routes rather than sitting next to
- * About, because that is what it is: the full index, with Electricals and
- * Safety as the two ways into it.
+ * THE HEADER NOW READS CATALOGUE CONTENT, AND IT GOES THROUGH THE SEAM.
  *
- * It was missing entirely until now. On a catalogue site, the catalogue index
- * was reachable only from CTAs on the home page and the footer's per-category
- * links — from a product page or About there was no route to the full range at
- * all.
+ * Divisions and categories come from `src/lib/catalog.ts`, never from
+ * `src/data/*` — that is rule 3, and it is what makes the future CMS a
+ * one-module change rather than a hunt through site chrome. `site.json` is the
+ * exception the rule names, and it is still read directly below.
+ *
+ * This costs nothing at runtime: `Header` is only used by `BaseLayout`, which no
+ * admin route touches, so every page rendering it is prerendered and this read
+ * happens at build time like every other catalogue read.
+ */
+const [divisions, categories] = await Promise.all([getDivisions(), getCategories()]);
+const groups = buildCategoryGroups(divisions, categories);
+
+/*
+ * ONE "Categories" ITEM REPLACES THREE FLAT ONES — Catalogue, Electricals and
+ * Safety. Requested by the client on 2026-08-17: it keeps the row short while
+ * the two divisions and their fifteen ranges hang off a single dropdown, and
+ * adding a third division becomes a data change rather than a nav redesign.
+ *
+ * Its `href` is `/catalogue`, deliberately. A dropdown that is only a dropdown
+ * has no destination without JavaScript and no destination for a crawler; this
+ * way the item is a real link to the full index — which is what "Categories"
+ * means here — and the panel is an enhancement on top. `/catalogue` reaching the
+ * primary nav at all was its own fix once, and folding it into a menu label must
+ * not quietly undo that.
  */
 const items: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
-  { href: '/catalogue', label: 'Catalogue', section: '/catalogue' },
-  { href: '/electricals', label: 'Electricals' },
-  { href: '/safety', label: 'Safety' },
+  {
+    href: '/catalogue',
+    label: 'Categories',
+    owns: ['/electricals', '/safety'],
+    groups,
+  },
   { href: '/industries', label: 'Industries' },
   { href: '/contact', label: 'Contact' },
 ];
 
-/** Trailing slashes are configuration-dependent; compare without them. */
-const normalise = (path: string) => path.replace(/\/+$/, '') || '/';
-const current = normalise(Astro.url.pathname);
+const current = normalisePath(Astro.url.pathname);
 const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 ---
 
@@ -76,19 +97,83 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
           items.map((item) => {
             const on = isCurrentNavItem(item, current);
             // `aria-current="page"` only for an exact match. On a category page
-            // the Catalogue link is lit, because that is the section you are in,
+            // the Categories link is lit, because that is the section you are in,
             // but it is not the page you are on — and saying otherwise would
             // tell a screen reader the user is somewhere they are not.
             const isPage = current === item.href;
+            const hasMenu = Boolean(item.groups?.length);
             return (
-              <li>
+              <li class:list={['nav__item', { 'nav__item--menu': hasMenu }]}>
                 <a
                   href={item.href}
                   class:list={['nav__link', { 'nav__link--on': on }]}
                   aria-current={isPage ? 'page' : undefined}
                 >
                   {item.label}
+                  {hasMenu && (
+                    <span class="nav__caret" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M5 9l7 7 7-7" />
+                      </svg>
+                    </span>
+                  )}
                 </a>
+
+                {
+                  /* OPENED BY CSS ALONE — `:hover` for a pointer and
+                     `:focus-within` for a keyboard, both on this `<li>`. No
+                     script, so it works on a page that has not hydrated and on
+                     one that never will.
+
+                     The panel is `visibility: hidden` when closed rather than
+                     `display: none`, which is what keeps its links out of the tab
+                     order until it opens: focusing the Categories link above
+                     satisfies `:focus-within`, the panel becomes visible, and Tab
+                     then walks into it. `display: none` would work identically
+                     here but could not be transitioned.
+
+                     There is no `aria-expanded`: nothing here is a button-driven
+                     disclosure, and claiming one without script to manage the
+                     state would be worse than claiming nothing. */
+                  hasMenu && (
+                    <div class="nav__panel">
+                      <div class="nav__cols">
+                        {item.groups!.map((group) => (
+                          <div class="nav__col">
+                            <a
+                              class="nav__division"
+                              href={group.href}
+                              aria-current={current === group.href ? 'page' : undefined}
+                            >
+                              {group.label}
+                            </a>
+                            <ul class="nav__sublist">
+                              {group.links.map((link) => (
+                                <li>
+                                  <a
+                                    class="nav__sub"
+                                    href={link.href}
+                                    aria-current={current === link.href ? 'page' : undefined}
+                                  >
+                                    {link.label}
+                                    {link.expanding && <span class="nav__soon">Soon</span>}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* The full index, kept explicitly reachable from inside
+                          the menu as well as from the item itself. */}
+                      <a class="nav__all" href="/catalogue">
+                        View the full catalogue
+                        <span class="nav__all-chev" aria-hidden="true">›</span>
+                      </a>
+                    </div>
+                  )
+                }
               </li>
             );
           })
@@ -170,6 +255,20 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     list-style: none;
   }
 
+  /* THE FULL 84px IS LOAD-BEARING, not decoration. The panel below opens on
+     `:hover` of this element, and it is anchored to this element's bottom edge —
+     so if the `<li>` were only as tall as its 11px link, the pointer would leave
+     it while travelling the ~30px down to the panel and the menu would shut in
+     the user's face. Matching the row height makes the hover target continuous
+     all the way to the panel. The link's own underline is unaffected: it sits at
+     the bottom of the link box, which has not moved. */
+  .nav__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 84px;
+  }
+
   .nav__link {
     display: block;
     padding-bottom: 3px;
@@ -201,6 +300,168 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .nav__link--on {
     color: #fff;
     border-color: var(--color-red);
+  }
+
+  .nav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav__caret svg {
+    display: block;
+    width: 9px;
+    height: 9px;
+  }
+
+  .nav__item--menu:hover .nav__caret,
+  .nav__item--menu:focus-within .nav__caret {
+    transform: rotate(180deg);
+  }
+
+  .nav__caret {
+    display: inline-flex;
+    color: var(--color-red-light);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  /* THE DROPDOWN.
+     Closed with `visibility: hidden`, which is what keeps its 18 links out of
+     the tab order until the menu opens — `opacity: 0` alone would leave every
+     one of them focusable and invisible. Opened by `:hover` or `:focus-within`
+     on the `<li>`, so a keyboard reaches it by focusing the Categories link and
+     tabbing on. No JavaScript is involved at any point.
+
+     Backed with --color-black rather than --color-panel on purpose: the sublinks
+     use --color-grey-lt, which is the exact pairing .nav__link above has already
+     been measured against on black. A slightly lighter panel would silently
+     re-test all 15 of them against a background nobody had measured. */
+  .nav__panel {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    /* min() so the panel can never be the thing that introduces a horizontal
+       scrollbar; the desktop menu only exists from 1081px up, where 560px
+       centred under a centred row has room to spare. */
+    width: min(560px, calc(100vw - 32px));
+    padding: 22px 26px 18px;
+    background: var(--color-black);
+    border: 1px solid var(--color-line);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.62);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      visibility var(--dur-base) var(--ease-out);
+  }
+
+  .nav__item--menu:hover .nav__panel,
+  .nav__item--menu:focus-within .nav__panel {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .nav__cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+  }
+
+  /* The division's own name, verbatim from the record — already "Spartan
+     Electricals", so nothing here prefixes a brand onto it. */
+  .nav__division {
+    display: block;
+    padding-bottom: 9px;
+    margin-bottom: 9px;
+    border-bottom: 1px solid var(--color-line);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .nav__division:hover {
+    color: var(--color-red-light);
+  }
+
+  .nav__sublist {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    list-style: none;
+  }
+
+  /* Sentence case and the body font, against the uppercase display type above:
+     these are 15 destinations to scan, and a column of tracked-out capitals is
+     slower to read than a list. */
+  .nav__sub {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 0;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 450;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--color-grey-lt);
+    transition: color var(--dur-base) var(--ease-out);
+  }
+
+  .nav__sub:hover,
+  .nav__sub[aria-current='page'] {
+    color: #fff;
+  }
+
+  /* Nothing in this range yet. The page it leads to says so in full; this is here
+     so the nav does not present it as identical to fourteen stocked ranges.
+
+     11px, which is the smallest size anywhere in this type system — the nav
+     links and every eyebrow label sit there. It was 9.5px first, which measured
+     fine for contrast (5.84:1) and was simply too small to read; introducing a
+     new step below the scale for one annotation is not worth it. The word is
+     "Soon" rather than "Range expanding" because at 11px the full phrase does
+     not fit a 241px column beside a category name — and it is the SAME word on
+     mobile, where it would fit, because one state must not have two labels
+     across a breakpoint. */
+  .nav__soon {
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  .nav__all {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-line);
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #fff;
+  }
+
+  .nav__all-chev {
+    color: var(--color-red);
+    font-weight: var(--fw-label);
+  }
+
+  .nav__all:hover {
+    color: var(--color-red-light);
   }
 
   .nav__tel {
@@ -346,5 +607,60 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .mnav-link--on {
     color: #fff;
     border-left-color: var(--color-red);
+  }
+
+  /* The mobile equivalent of the desktop dropdown, and it is deliberately NOT a
+     dropdown: the panel already scrolls, so the two divisions and their fifteen
+     ranges are laid out open. Collapsing them would put a disclosure widget
+     between a buyer on a phone and the thing they came to browse, and it would
+     need state, a keyboard contract and hydration timing to do it. */
+  .mnav-group {
+    padding-left: 14px;
+    border-left: 1px solid var(--color-line);
+    margin: 8px 0 8px 14px;
+  }
+
+  .mnav-division {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .mnav-sub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 450;
+    /* Same token as .mnav-link and .nav__link: one grey for every navigation
+       surface on --color-black, so nothing drifts across the breakpoint. */
+    color: var(--color-grey-lt);
+  }
+
+  .mnav-sub:hover,
+  .mnav-sub[aria-current='page'] {
+    color: #fff;
+  }
+
+  /* Same word and same size as .nav__soon on desktop, deliberately. One state
+     with two labels across a breakpoint is the drift this file's grey-token
+     comments already guard against. */
+  .mnav-soon {
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-grey);
   }
 </style>

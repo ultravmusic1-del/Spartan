@@ -49,6 +49,25 @@ in `handoff.md`; this file states the trap and moves on.
   opening it. **This is the argument for the parity build existing at all**: no
   amount of reading the data would have caught it.
 
+- **A CSS transition reads as "never happened" in a preview that is not
+  painting, and a working feature looks broken.** The Categories dropdown is
+  opened by `:hover`/`:focus-within` and transitions `opacity` and `visibility`.
+  Focusing the link and then reading `getComputedStyle(panel)` reported
+  `visibility: hidden, opacity: 0` indefinitely — across separate tool calls,
+  with seconds between them — which reads exactly like a keyboard-inaccessible
+  hover-only menu, the WCAG 2.1.1 failure you would most expect to find.
+  Nothing was wrong: `panel.matches(':focus-within')` was already `true` and the
+  scoped rule was present and winning. **Transitions only advance while frames
+  are being produced**, and a headless or hidden preview pane composites nothing,
+  so every transitioned property stays pinned at its start value forever.
+
+  Two ways to get a real answer, and prefer the first: **assert it in Playwright**,
+  which composites properly — `toBeVisible()` on the panel is the honest test.
+  To check it by hand, inject
+  `* { transition: none !important }` first, which makes `getComputedStyle`
+  report the value the cascade actually resolves to. Reading a transitioned
+  property in this environment without doing one of those tells you nothing.
+
 - **An Astro scoped style does not isolate a class NAME from a global rule of
   the same name.** Scoping adds a `data-astro-cid-*` attribute to the
   component's own selectors; it does nothing to stop a global stylesheet

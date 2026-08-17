@@ -24,6 +24,17 @@ import { expect, test, type Page } from '@playwright/test';
 const TOTAL_PRODUCTS = 94;
 const TOTAL_CATEGORIES = 15;
 
+/*
+ * Named rather than inline, because the combined-filter test below compares
+ * three of these against each other and the last time they drifted apart the
+ * test kept passing while asserting nothing (see its own note). Both are facts
+ * about `src/data/products.json`; if either changes, that test's arithmetic has
+ * to be re-derived rather than nudged.
+ */
+const HAND_PROTECTION = 12;
+/** Of the 9 products matching "leather", 3 are in Hand Protection. */
+const LEATHER_IN_HAND_PROTECTION = 3;
+
 /** The filter island is `client:idle` and ships inert; this is it becoming live. */
 async function filtersReady(page: Page) {
   await expect(page.locator('.cf')).not.toHaveClass(/cf--pending/);
@@ -119,6 +130,20 @@ test.describe('catalogue index', () => {
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
   });
 
+  /*
+   * FIXED 2026-08-17. This test had been failing since `d7a36a9` added PVC Gloves
+   * and took Hand Protection from 11 products to 12. The count above was updated
+   * to 12 and the two `11`s below were not, which broke it twice over: the
+   * status-line wait became a no-op — it waited for the line not to read
+   * "Showing 11", which was already true at 12, so it settled instantly and the
+   * count was read before the search had applied — and the bound then compared
+   * the unfiltered 12 against `< 11`.
+   *
+   * It is rewritten rather than renumbered, because "glove" could never have
+   * tested what this test claims to. All four of its matches are in Hand
+   * Protection, so a search that ignored the category filter completely would
+   * return the same four and pass.
+   */
   test('search combines with the category filter rather than replacing it', async ({ page }) => {
     await page.goto('/catalogue');
     await filtersReady(page);
@@ -126,17 +151,25 @@ test.describe('catalogue index', () => {
     const visible = page.locator('li[data-product]:not([hidden])');
 
     await page.locator('#cf-category').selectOption('hand-protection');
-    await expect(visible).toHaveCount(12);
+    await expect(visible).toHaveCount(HAND_PROTECTION);
 
-    await page.getByLabel('Search', { exact: true }).fill('glove');
-    // Waits on the status line, which is the only thing here that is false
-    // before the search applies on top of the category filter.
+    /*
+     * "leather" is chosen because it SPANS categories: 9 products match it and
+     * only 3 are in Hand Protection. That is what makes the three outcomes
+     * distinguishable, and therefore what makes this test able to fail.
+     *    3 → the filters combine, which is the promise
+     *    9 → the search replaced the category filter
+     *   12 → the category filter replaced the search
+     */
+    await page.getByLabel('Search', { exact: true }).fill('leather');
+
+    // False before the search applies — the line reads 12 at this point — and
+    // true after. `toHaveCount` then retries, so nothing is read off an
+    // unsettled page.
     await expect(page.locator('.cf__count')).not.toHaveText(
-      `Showing 11 of ${TOTAL_PRODUCTS} products`,
+      `Showing ${HAND_PROTECTION} of ${TOTAL_PRODUCTS} products`,
     );
-    const narrowed = await visible.count();
-    expect(narrowed).toBeGreaterThan(0);
-    expect(narrowed).toBeLessThan(11);
+    await expect(visible).toHaveCount(LEATHER_IN_HAND_PROTECTION);
 
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);

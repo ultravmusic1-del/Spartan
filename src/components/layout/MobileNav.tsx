@@ -1,31 +1,14 @@
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { isCurrentNavItem, type NavItem } from '../../lib/nav';
 
-export interface NavItem {
-  href: string;
-  label: string;
-  /**
-   * Path prefix this item also owns, for links that head a section rather than
-   * naming a single page. Catalogue is the only one: `/catalogue` is the index
-   * and the 15 category pages live beneath it, so an exact-match-only rule
-   * would leave the nav unmarked on 15 of the 16 pages the item covers.
-   *
-   * Product pages are deliberately NOT included — they live at `/products/…`
-   * and reach the catalogue through their breadcrumb, which already says where
-   * they sit.
-   */
-  section?: string;
-}
-
-/**
- * Whether a nav item is the page you are on, or the section you are in.
- * Shared by the desktop menu in Header.astro and the panel below, so the two
- * can never disagree about which link is lit.
+/*
+ * `NavItem` and `isCurrentNavItem` used to live in this file and are now in
+ * `src/lib/nav.ts`, re-exported here only so existing importers keep working.
+ * They moved because the dropdown made them matter to a second renderer and
+ * because pure logic in a `.tsx` cannot be unit-tested without Preact in the
+ * way — `src/lib/nav.test.ts` covers them directly now.
  */
-export function isCurrentNavItem(item: NavItem, current: string | undefined): boolean {
-  if (!current) return false;
-  if (current === item.href) return true;
-  return item.section ? current.startsWith(`${item.section}/`) : false;
-}
+export { isCurrentNavItem, type NavItem } from '../../lib/nav';
 
 interface Props {
   items: NavItem[];
@@ -43,6 +26,12 @@ interface Props {
  * While the panel is open it is a modal dialog: focus moves into it, Tab and
  * Shift+Tab cycle within it, the page behind cannot scroll, and Escape closes
  * it and returns focus to the trigger.
+ *
+ * THE PANEL IS FLAT AND ALWAYS OPEN, unlike the desktop dropdown. There is no
+ * accordion: the panel already scrolls, and collapsing the two divisions would
+ * put a disclosure widget — with its own state, its own keyboard contract and
+ * its own hydration timing — between a buyer on a phone and the fifteen ranges
+ * they came to browse. Every destination is one tap from here.
  */
 export default function MobileNav({ items, current }: Props) {
   const [open, setOpen] = useState(false);
@@ -157,19 +146,48 @@ export default function MobileNav({ items, current }: Props) {
             {items.map((i) => {
               const isCurrent = isCurrentNavItem(i, current);
               // `aria-current="page"` only for an exact match. On a category
-              // page the Catalogue link is lit, because that is the section you
+              // page the Categories link is lit, because that is the section you
               // are in, but it is not the page you are on — and saying otherwise
               // would tell a screen reader the user is somewhere they are not.
               const isPage = current === i.href;
               return (
-                <a
-                  key={i.href}
-                  href={i.href}
-                  class={isCurrent ? 'mnav-link mnav-link--on' : 'mnav-link'}
-                  aria-current={isPage ? 'page' : undefined}
-                >
-                  {i.label}
-                </a>
+                <div key={i.href}>
+                  <a
+                    href={i.href}
+                    class={isCurrent ? 'mnav-link mnav-link--on' : 'mnav-link'}
+                    aria-current={isPage ? 'page' : undefined}
+                  >
+                    {i.label}
+                  </a>
+
+                  {i.groups?.map((group) => (
+                    <div key={group.href} class="mnav-group">
+                      <a
+                        href={group.href}
+                        class="mnav-division"
+                        aria-current={current === group.href ? 'page' : undefined}
+                      >
+                        {group.label}
+                      </a>
+                      {group.links.map((link) => (
+                        <a
+                          key={link.href}
+                          href={link.href}
+                          class="mnav-sub"
+                          aria-current={current === link.href ? 'page' : undefined}
+                        >
+                          {link.label}
+                          {/* The range is real and its page says so in full; an
+                              entry indistinguishable from a stocked one would be
+                              a small untrue claim about stock. Same word as the
+                              desktop panel — see .nav__soon in Header.astro for
+                              why it is "Soon" and not the full phrase. */}
+                          {link.expanding && <span class="mnav-soon">Soon</span>}
+                        </a>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               );
             })}
           </nav>
