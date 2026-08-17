@@ -167,6 +167,48 @@ describe('productDescription — the meta-description budget', () => {
     // the honest floor.
     expect(productDescription(wordy, 20)).toBe('Safety Helmets.');
   });
+
+  /*
+   * THE ROW THAT DOES NOT FIT COSTS ONLY ITSELF.
+   *
+   * This builder used to stop at the first oversized row, which meant one very
+   * long row hid every shorter one behind it. The real case was
+   * `Industrial Exhaust Fan Standard`: twelve spec rows, a 160-character `Size`
+   * row first, and a meta description that was the bare product name while
+   * `Power: 40W to 350W` sat two rows down and would have fitted.
+   */
+  it('skips an oversized row and keeps the shorter ones behind it', () => {
+    const frontLoaded = {
+      ...product,
+      specs: [
+        { label: 'Size', value: 'x'.repeat(200) },
+        { label: 'Power', value: '40W to 350W' },
+        { label: 'Noise', value: '50 to 77 dB(A)' },
+      ],
+    };
+
+    const meta = productDescription(frontLoaded, 160);
+    expect(meta).toBe('Safety Helmets. Power: 40W to 350W. Noise: 50 to 77 dB(A).');
+    // The row itself is still absent — it genuinely does not fit — and no part
+    // of it is included, because a value cut in half is worse than no value.
+    expect(meta).not.toContain('Size');
+    expect(meta).not.toContain('xxx');
+    expect(meta.length).toBeLessThanOrEqual(160);
+  });
+
+  it('never exceeds the budget however many rows it skips', () => {
+    const many = {
+      ...product,
+      specs: Array.from({ length: 40 }, (_, i) => ({
+        label: `Row ${i}`,
+        // Alternating long and short, so the skip path runs repeatedly.
+        value: i % 2 === 0 ? 'y'.repeat(180) : `value ${i}`,
+      })),
+    };
+    for (const budget of [40, 80, 160, 300]) {
+      expect(productDescription(many, budget).length).toBeLessThanOrEqual(budget);
+    }
+  });
 });
 
 describe('serialiseJsonLd', () => {

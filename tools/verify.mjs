@@ -242,6 +242,66 @@ let unitTests = null;
   record('one title + one canonical per page', bad.length === 0, bad.slice(0, 5).join('; ') || `${pages.length} pages`);
 }
 
+/* ------------------------------------------- 7b. meta descriptions in budget -- */
+
+/*
+ * 160 characters is this codebase's one meta-description budget: search engines
+ * cut a description around 155-160, and `productDescription` takes the number as
+ * an argument precisely so the same text can be cut to it.
+ *
+ * Nothing enforced it outside that one builder, and on 2026-08-17 a page had
+ * drifted past it — `/catalogue/fans-ventilation/` at 176 characters, because
+ * the category page appends a product count to a description that was already
+ * 138 long, so the appended half was the part getting cut off. One page in 119,
+ * invisible in every other gate, and it would have been the second one the next
+ * time a category description grew.
+ *
+ * NOTE THE ENTITY DECODE, WHICH IS NOT OPTIONAL. Descriptions reach the built
+ * HTML with `&` as `&#38;` and inch marks as `&quot;`, so measuring the raw
+ * attribute counts five characters where the searcher sees one. Measured raw,
+ * this gate reports three failures that are not real — which is exactly the
+ * false alarm that gets a gate deleted.
+ *
+ * There is deliberately NO lower bound. Six product descriptions are under 70
+ * characters because their brochure entries say very little, and padding one to
+ * hit a number would mean writing product copy.
+ */
+{
+  const pages = htmlFiles(path.join(root, 'dist/client'));
+  const MAX = 160;
+  const decode = (s) =>
+    s
+      .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(Number(d)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      // Ampersand last: decoding it first would let "&amp;lt;" become "<".
+      .replace(/&amp;/g, '&');
+
+  const over = [];
+  let missing = 0;
+  for (const file of pages) {
+    const text = fs.readFileSync(file, 'utf8');
+    const match = text.match(/<meta name="description" content="([^"]*)"/);
+    if (!match) {
+      missing += 1;
+      continue;
+    }
+    const length = decode(match[1]).trim().length;
+    if (length > MAX) over.push(`${path.relative(root, file)}: ${length} chars`);
+  }
+
+  record(
+    `meta descriptions within ${MAX} characters`,
+    over.length === 0 && missing === 0,
+    over.length || missing
+      ? [...over.slice(0, 5), missing ? `${missing} pages have none` : ''].filter(Boolean).join('; ')
+      : `${pages.length} pages, longest within budget`,
+  );
+}
+
 /* ----------------------------------------------- 8. placeholder domain gate -- */
 
 /*
@@ -274,6 +334,51 @@ let unitTests = null;
     // and index entries that the real domain then has to compete with.
     console.log(`  note   domain is the temporary Vercel host ${site}`);
     console.log('         (launch blocker: buy the real domain, then redirect this one)');
+  }
+}
+
+/* --------------------------------------- 8b. placeholder contact details gate -- */
+
+/*
+ * Advisory for the same reason the domain gate above is: the real details have
+ * not been supplied, so this cannot fail a build without failing every build.
+ * But it must not go quiet either, and until now nothing said it at all.
+ *
+ * These are worse than the domain, page for page. `+971 00 000 0000` renders as
+ * a live `tel:` link in the header of all 119 pages and `sales@spartan.example`
+ * is a `mailto:` in every footer — so a buyer who tries either gets a dead
+ * number or an undeliverable address, on a site whose entire purpose is getting
+ * them to make contact. The domain being temporary costs search ranking; these
+ * cost the lead itself.
+ *
+ * `whatsapp` is listed as missing rather than placeholder-valued: it is an empty
+ * string in site.json, which renders nothing at all, which is the honest state
+ * for a channel with no number. Adding a fake one to "look complete" is exactly
+ * what this gate exists to catch.
+ *
+ * READS THE PARSED VALUES, not the file — same lesson as the domain gate, which
+ * used to re-trigger on its own explanatory comment.
+ */
+{
+  const site = JSON.parse(fs.readFileSync(path.join(root, 'src/data/site.json'), 'utf8'));
+
+  // Each entry: the field, its placeholder shape, and what a visitor hits.
+  const checks = [
+    ['phone', (v) => !v || /0{3,}/.test(v), 'a dead tel: link in the header of every page'],
+    ['email', (v) => !v || v.endsWith('.example'), 'an undeliverable mailto: in every footer'],
+    ['address', (v) => !v || /^address line/i.test(v), 'a fabricated location'],
+    ['whatsapp', (v) => !v, 'no WhatsApp affordance anywhere (renders nothing, which is honest)'],
+  ];
+
+  const outstanding = checks
+    .filter(([field, isPlaceholder]) => isPlaceholder(site[field] ?? ''))
+    .map(([field, , cost]) => `${field} — ${cost}`);
+
+  if (outstanding.length) {
+    console.log(
+      `  note   ${outstanding.length} contact detail(s) still unset in src/data/site.json (launch blocker)`,
+    );
+    for (const line of outstanding) console.log(`         ${line}`);
   }
 }
 

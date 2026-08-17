@@ -59,14 +59,26 @@ const trail: Crumb[] = [{ name: 'Catalogue', url: '/catalogue' }, { name: catego
  */
 const jsonLd = [itemListJsonLd(products, site), breadcrumbJsonLd(trail, site)];
 
-// The category's own description, plus its size counted from the catalogue —
-// the count is never typed in, so it cannot go stale when the range grows. The
-// expanding pair keep their description alone: appending "0 products" to a
-// sentence that already says the range is expanding reads as an error.
+/*
+ * The category's own description, plus its size counted from the catalogue — the
+ * count is never typed in, so it cannot go stale when the range grows. The
+ * expanding pair keep their description alone: appending "0 products" to a
+ * sentence that already says the range is expanding reads as an error.
+ *
+ * THE COUNT SENTENCE IS DROPPED RATHER THAN TRUNCATING THE CATEGORY'S OWN WORDS.
+ * Search engines cut a meta description around 155-160, and Fans & Ventilation
+ * has a 138-character description of its own — so the appended sentence took it
+ * to 176 and got itself cut off mid-phrase, which is the worst of both: the
+ * category's words survive and the count is mangled. When the two do not fit
+ * together the derived half gives way, because the client's sentence is the part
+ * a searcher needs and the count is still on the page in the heading. 160 is
+ * this codebase's one meta-description budget — `productDescription` is cut to
+ * the same number.
+ */
+const META_MAX = 160;
+const withCount = `${category.description} ${countLabel} from ${division?.name ?? 'Spartan'}.`;
 const metaDescription =
-  count > 0
-    ? `${category.description} ${countLabel} from ${division?.name ?? 'Spartan'}.`
-    : category.description;
+  count > 0 && withCount.length <= META_MAX ? withCount : category.description;
 ---
 
 <BaseLayout
