@@ -2088,3 +2088,59 @@ isolation. It is unrelated to anything in this batch, and the shape —
 "element is not visible" under 8 local workers — points at hydration timing under
 contention. CI runs 2 workers with one retry, which masks it. Queued rather than
 re-rolled until green.
+
+---
+
+## 20. The spill control range gets real photography — 2026-08-17
+
+**Status: implemented and green.** `verify 17/17 --full · 240 unit · 252 e2e.`
+
+The client supplied seven masked cut-outs covering the whole spill control
+range, which takes the "awaiting photography" list from twelve products to five.
+These were the hardest seven to source: their campaign banner composites the
+products into a warehouse scene, so unlike the brochure and datasheet artwork
+there was no separable image to extract, and `tools/extract-catalog.mjs` was
+never going to produce one.
+
+### The check that mattered, and it was not the filename
+
+The files arrived named `*nobg.png` and the panel they land on is a dark radial
+gradient, so a flattened white background would render as a visible box around
+each product — the exact defect `docs/TRAPS.md` records for the extraction
+pipeline, which "refuses any cutout that came out fully opaque".
+
+Verified on the alpha channel rather than on the name: all seven are 8-bit RGBA,
+**40–55% fully transparent with a 6–10% soft anti-aliased edge**. That edge
+fraction is the useful half of the number — a hard binary mask would show 0% and
+would fringe against the gradient.
+
+**Then verified again on the emitted output**, because Astro converts these to
+WebP and a format conversion is exactly where an alpha channel gets dropped
+silently. All fourteen emitted assets — seven PNG fallbacks and seven WebP —
+carry byte-identical transparency percentages to their sources.
+
+### Naming
+
+`bn-` for banner-sourced, which extends the existing convention rather than
+inventing one: the prefix names the **source document**, so `p04-` is brochure
+page 4 and `ds-` is a datasheet. The three fans the client supplied on the same
+day are `ds-` because their record cites the fans datasheet, not because of who
+sent the file — the prefix tracks provenance, not delivery.
+
+### What this does not fix
+
+**These do not touch the Lighthouse ceiling, and the photography count dropping
+should not be read as progress on it.** The cut-outs are 148–177px natively,
+which is the low end of the catalogue's existing 100–440px range — `handoff.md`
+§6 records that range as the constraint on the whole design and the cause of the
+Best Practices 96 on product pages. Seven placeholders became real products;
+nothing became higher resolution.
+
+### The data edit
+
+`src/data/products.json` was edited **as text, not round-tripped through
+`JSON.parse`/`stringify`**. A re-stringify is not byte-identical to the committed
+file, and the file holds 80 non-ASCII characters — `±`, `Ω`, `°`, `×`, inch marks
+— which is the mangling `docs/TRAPS.md` devotes an entry to. The seven `images`
+arrays were replaced in place and the non-ASCII count asserted unchanged before
+and after. The diff is seven lines.

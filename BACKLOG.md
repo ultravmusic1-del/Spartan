@@ -401,10 +401,15 @@ see `handoff.md`). Priorities are P0 highest.
       the island to a toggle. Both are a refactor of a working, well-tested island
       for about 330 bytes, which is why neither was done.
 
-- [ ] **Photography for 13 products.** Down from 16: the client supplied masked
-      cut-outs of the three fans in `Spartan Fans Product Catalog.pdf` on
-      2026-08-17 (`handoff.md` §17). What remains is the three portable air
-      coolers, the seven spill control SKUs, PVC gloves and solar street lights.
+- [ ] **Photography for 5 products.** Down from 16, then 12: the client supplied
+      masked cut-outs of the three fans on 2026-08-17 (`handoff.md` §17) and the
+      whole seven-SKU spill control range later the same day (§20).
+
+      What remains is **the three portable air coolers, PVC gloves and solar
+      street lights** — and they are two different asks. The air coolers need a
+      separable image from a flattened datasheet page raster; the other two need
+      the same treatment the spill range just got, because their banner
+      composites the product into a styled scene with no clean cut-out in it.
       Same ask as the existing P2 item — plain background, no composited scene.
 
       **Worth raising while asking:** the three supplied fans are 640–950px wide
@@ -412,6 +417,11 @@ see `handoff.md`). Priorities are P0 highest.
       That ceiling is what causes the Lighthouse Best Practices 96 on product
       pages, and `srcset` has been in place since Task 8 — so re-shooting the
       *existing* range at that quality would resolve it with no code change.
+
+      **The spill control cut-outs do not help that ceiling** — they are 148–177px
+      natively, at the low end of the existing range. They fix an empty
+      placeholder, not the resolution problem, and nobody should read the
+      photography count dropping as progress on the Lighthouse number.
 
 ## P1 — discoverability and hardening
 

@@ -157,18 +157,23 @@ describe('content data', () => {
     // in `Spartan Fans Product Catalog.pdf` (SPTSF-16, AF-40W, FW-40H). Those
     // are the first product images on the site above the 100-440px ceiling that
     // handoff.md §6 records as the constraint on the whole design.
+    //
+    // 12 until 2026-08-17, when the client supplied cut-outs for the whole spill
+    // control range — the seven that were hardest to source, because the banner
+    // composites them into a warehouse scene with no separable product. They
+    // arrived as genuine RGBA cut-outs (40-55% fully transparent with a soft
+    // 6-10% edge), which matters: this panel is a dark radial gradient and a
+    // flattened white background would render as a visible box. Verified on the
+    // alpha channel, not on the filename.
+    //
+    // The five left are two different asks. The three air coolers need a
+    // separable image from a flattened datasheet raster; PVC gloves and solar
+    // street lights need the same banner treatment the spill range just got.
     const pending = products
       .filter((p) => p.images.includes('ds-photo-pending.png'))
       .map((p) => p.slug)
       .sort();
     expect(pending).toEqual([
-      'chemical-absorbent-pillow',
-      'chemical-absorbent-socks',
-      'chemical-pads',
-      'oil-absorbent-booms',
-      'oil-absorbent-pillow',
-      'oil-absorbent-socks',
-      'oil-pads',
       'portable-air-cooler-ay-yd2512',
       'portable-air-cooler-ay-yd2518',
       'portable-air-cooler-ay-yd2536',
