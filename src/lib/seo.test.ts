@@ -90,8 +90,12 @@ describe('productJsonLd — derived fields', () => {
     // No image is invented when none is passed in.
     expect(ld).not.toHaveProperty('image');
 
-    // 95 of the 225 spec rows in the catalogue carry no label; those render as
-    // the bare printed value rather than being dropped or given a made-up one.
+    // A large minority of the catalogue's spec rows carry no label — 132 of 598
+    // on 2026-08-17 — and those render as the bare printed value rather than
+    // being dropped or given a made-up one. The ratio is what matters here, not
+    // the totals: this comment read "95 of the 225" long after the datasheet
+    // integration took the catalogue past twice that, because nothing asserts a
+    // figure written in prose. Treat both numbers as a dated snapshot.
     const unlabelled = productJsonLd(
       { ...product, specs: [{ label: null, value: 'Conforms to the printed brochure row' }] },
       SITE,

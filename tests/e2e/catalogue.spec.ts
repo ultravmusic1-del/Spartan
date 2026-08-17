@@ -7,16 +7,21 @@ import { expect, test, type Page } from '@playwright/test';
  * what is asserted is what would deploy. The two things this file exists to
  * protect are both cases where a plausible "improvement" would be a lie:
  *
- *  - the two expanding categories must stay empty and say so, rather than
+ *  - the remaining expanding category must stay empty and say so, rather than
  *    borrow a product from somewhere else;
  *  - Chem Guard's EN 388 tear level is a printed `0`, and `0` and `X` are
  *    different claims about a glove. Collapsing them would misreport a safety
  *    rating.
+ *
+ * Spill Control was one of two empty categories until 2026-08-17, when the
+ * campaign banners supplied a real seven-SKU range for it. Electrical
+ * Accessories is now the only one, and the reason it is still empty is
+ * unchanged: the brochure has nothing to put in it (handoff.md §6).
  */
 
-// 72 from the brochure + 13 from the datasheet PDFs: 7 industrial fans,
-// 3 portable air coolers and 3 consumer fans.
-const TOTAL_PRODUCTS = 85;
+// 72 from the brochure + 13 from the datasheet PDFs (7 industrial fans, 3
+// portable air coolers, 3 consumer fans) + 10 from the campaign banners.
+const TOTAL_PRODUCTS = 94;
 const TOTAL_CATEGORIES = 15;
 
 /** The filter island is `client:idle` and ships inert; this is it becoming live. */
@@ -121,7 +126,7 @@ test.describe('catalogue index', () => {
     const visible = page.locator('li[data-product]:not([hidden])');
 
     await page.locator('#cf-category').selectOption('hand-protection');
-    await expect(visible).toHaveCount(11);
+    await expect(visible).toHaveCount(12);
 
     await page.getByLabel('Search', { exact: true }).fill('glove');
     // Waits on the status line, which is the only thing here that is false
@@ -160,8 +165,8 @@ test.describe('catalogue index', () => {
     await page.goto('/catalogue');
     await filtersReady(page);
 
-    // Spill Control is one of the two categories with no published products.
-    await page.locator('#cf-category').selectOption('spill-control');
+    // Electrical Accessories is the only category with no published products.
+    await page.locator('#cf-category').selectOption('electrical-accessories');
 
     await expect(page.locator('[data-product-none]')).toBeVisible();
     await expect(page.locator('[data-product-none]')).toContainText('No products in this range yet');
@@ -175,20 +180,21 @@ test.describe('catalogue index', () => {
     const visible = page.locator('li[data-product]:not([hidden])');
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
 
-    // Hand Protection holds 11, all from the brochure — the datasheet products
-    // all landed in `fans`, so this figure is unchanged by that integration.
+    // Hand Protection holds 12: 11 from the brochure — the datasheet products
+    // all landed in `fans` — plus the PVC gloves from the campaign banners.
     await page.locator('#cf-category').selectOption('hand-protection');
-    await expect(visible).toHaveCount(11);
-    await expect(page.locator('.cf__count')).toHaveText(`Showing 11 of ${TOTAL_PRODUCTS} products`);
+    await expect(visible).toHaveCount(12);
+    await expect(page.locator('.cf__count')).toHaveText(`Showing 12 of ${TOTAL_PRODUCTS} products`);
 
     // Narrowing by division alone.
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
 
     await page.getByRole('radio', { name: 'Spartan Electricals' }).check();
-    // 19 brochure products + 13 from the datasheets: 7 industrial fans, 3
-    // portable air coolers and 3 consumer fans.
-    await expect(visible).toHaveCount(32);
+    // 19 brochure products + 13 from the datasheets (7 industrial fans, 3
+    // portable air coolers, 3 consumer fans) + 2 from the campaign banners
+    // (solar street lights, the FW-40W orbit fan).
+    await expect(visible).toHaveCount(33);
 
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
@@ -203,7 +209,7 @@ test.describe('catalogue index', () => {
     await page.goto('/catalogue');
     await filtersReady(page);
 
-    await page.locator('#cf-category').selectOption('spill-control');
+    await page.locator('#cf-category').selectOption('electrical-accessories');
     await expect(page.locator('li[data-product]:not([hidden])')).toHaveCount(0);
     await expect(page.locator('[data-product-grid]')).toBeHidden();
     await expect(page.locator('[data-product-none]')).toBeVisible();
@@ -235,8 +241,8 @@ test.describe('catalogue index without JavaScript', () => {
     await expect(page.locator('button.eq-add').first()).toBeHidden();
   });
 
-  test('the two expanding categories still say so without JavaScript', async ({ page }) => {
-    await page.goto('/catalogue/spill-control');
+  test('the expanding category still says so without JavaScript', async ({ page }) => {
+    await page.goto('/catalogue/electrical-accessories');
     await expect(page.getByRole('heading', { name: 'This range is expanding.' })).toBeVisible();
   });
 });
@@ -246,11 +252,11 @@ test.describe('category pages', () => {
     await page.goto('/catalogue/hand-protection');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Hand Protection' })).toBeVisible();
-    await expect(page.locator('ul.grid > li')).toHaveCount(11);
-    await expect(page.locator('.cp__count')).toHaveText('11 products');
+    await expect(page.locator('ul.grid > li')).toHaveCount(12);
+    await expect(page.locator('.cp__count')).toHaveText('12 products');
   });
 
-  for (const slug of ['electrical-accessories', 'spill-control']) {
+  for (const slug of ['electrical-accessories']) {
     test(`${slug} shows the expanding message and no product grid`, async ({ page }) => {
       await page.goto(`/catalogue/${slug}`);
 

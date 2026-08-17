@@ -219,6 +219,104 @@ see `handoff.md`). Priorities are P0 highest.
       reasoning and `tests/e2e/motion.spec.ts` asserts the current behaviour so
       a reversal breaks a test rather than passing unnoticed.
 
+- [ ] **The Grip Guard GP1 banner misstates an EN 388 rating.** Live marketing
+      artwork (`banner images/23052026-001 - Spartan Safety Gloves - Grip Guard
+      GP 1-Bahrain-01.jpg`) prints an EN 388 icon reading `4X43D`. The glove's
+      own label, photographed in that same banner, reads `4131X` — which is what
+      the catalogue says. Against the real label the icon claims cut resistance
+      **D** where the glove says **X, not tested**, and overstates tear and
+      puncture too. It appears to be GP5's rating pasted onto GP1's artwork.
+
+      **The site is correct and needs no change.** This is a request to the
+      design team to reissue the asset, and it is the reason `handoff.md` §16
+      treats banner artwork as a lead rather than a source of record. GP3, GP5
+      and Flex-Fit were checked against the catalogue and agree exactly, so this
+      reads as one artwork error rather than a systemic problem.
+
+- [x] **Is the banner's `FW-40W` the same fan as `AF-40W`?** Yes. Confirmed by
+      the client 2026-08-17 and the listing deleted; catalogue back to 94.
+      `handoff.md` §17.
+
+- [ ] **Three spec rows the widened ranges left incomplete.** The client gave
+      new options on 2026-08-17 and the supporting figures did not come with
+      them. Each row is qualified so no wrong pairing can be read off it, but
+      the gaps are real:
+      - **LED Floodlights** now list ten wattages (10W-1000W) against a
+        datasheet that published five (50/150/300/400/1000W). `LED Quantity` is
+        therefore printed against its own five wattages, and **six of the ten
+        new wattages have no LED count, body size or lumen figure**. The
+        datasheet also lists **150W, which is no longer in the range** — so that
+        252pcs figure now describes a wattage the site does not offer. Ask
+        whether the ten wattages replace the printed five or extend them.
+      - **LED Backlit Panels** gained a 120W. **No luminous flux and no
+        dimensions exist for it** — the other two wattages have both, and the
+        panel sizes differ between them (595x595x30mm vs x20mm), so the 120W
+        cannot be inferred from either.
+      - This also bears on the unresolved flood-light conflict in `handoff.md`
+        §6a: the sheet printed 1000W twice in six slots with six distinct body
+        sizes. If the range has genuinely changed, that question may now be moot
+        — worth asking in the same breath.
+
+- [ ] **Does the AF-40W orbit fan carry a 2-year warranty?** The campaign banner
+      says so; `Spartan Fans Product Catalog.pdf` p3 does not mention warranty at
+      all. It was the one fact unique to the deleted `FW-40W` record and was
+      **not** carried across, because that banner had just been shown to have the
+      model code wrong and `AF-40W` is otherwise fully datasheet-sourced. If the
+      client confirms it, it is a real addition to the record — and worth asking
+      whether it covers the stand fan and wall fan too, since their banners claim
+      it and their datasheet pages are equally silent.
+
+- [ ] **`Spartan Fans Product Catalog.pdf` p3 contradicts itself and should be
+      reissued.** The page is headed "Spartan Wall Fan (AF-40W)", says
+      "wall-mounted airflow", prints `Mount Type: Wall Mounted` and describes
+      "secure wall mounting with a stable bracket system" — while its own
+      photograph and assembly diagram show a **ceiling-mounted orbit fan**. Page
+      4's genuine wall fan has the wall hardware (anchor bolts, installation
+      plate, back hang trough) and page 3 has none of it, so the prose was most
+      likely copied from page 4. The site now follows the photograph. Worth
+      getting the source document corrected so the next person to read it does
+      not undo this. `handoff.md` §17.
+
+- [ ] **Three ratings conflict between the banners and the catalogue.** None was
+      adjudicated on 2026-08-17; all three need the client, and every value is
+      recorded as printed in the meantime. `handoff.md` §16.
+      - Highbay IP rating — banner **IP66**, record **IP65**.
+      - Solar flood light IP rating — the unit is labelled **IP67** in the
+        banner, the record says **IP66**. Third IP conflict on this catalogue
+        after the flood light's own photo/table disagreement in §6a.
+      - Orbit fan model code — **`FW-40W`** against the catalogue's `FW-40H`
+        (wall) and `AF-40W` (wall). The wall fan banner independently confirms
+        `FW-40H`, so the catalogue is right about that one; whether `FW-40W` is
+        a real third SKU or a blend is open.
+
+- [ ] **Get real source documents for the ten banner-sourced products.** All ten
+      added on 2026-08-17 trace to marketing artwork rather than a brochure page
+      or datasheet, which is recorded per-row in `specs[].source` and per-record
+      in `source.doc`. The spill control range is the one that most needs it: the
+      banner gives codes, sizes and pack quantities and nothing else — no
+      absorbency capacity, no material, no chemical compatibility, which are the
+      figures a buyer actually selects a spill kit on. The FR certification
+      block deserves the same treatment: ISO 11612 and NFPA 2112 on a website
+      are regulatory claims, and right now the evidence for them is a JPEG.
+
+- [ ] **Rename or alias the highbay.** `Industrial Canopy Pendant Lamps` is the
+      highbay — same source PDF, same 100/150/200/300W, same 6500K and 120° —
+      and the word "highbay" appears nowhere a buyer can search. Either rename,
+      add a `variantLabel`, or fold the term into the searchable string.
+      `src/lib/search.ts` already joins name, variant and spec values.
+
+- [ ] **Photography for 13 products.** Down from 16: the client supplied masked
+      cut-outs of the three fans in `Spartan Fans Product Catalog.pdf` on
+      2026-08-17 (`handoff.md` §17). What remains is the three portable air
+      coolers, the seven spill control SKUs, PVC gloves and solar street lights.
+      Same ask as the existing P2 item — plain background, no composited scene.
+
+      **Worth raising while asking:** the three supplied fans are 640–950px wide
+      against a catalogue where every other product photo is natively 100–440px.
+      That ceiling is what causes the Lighthouse Best Practices 96 on product
+      pages, and `srcset` has been in place since Task 8 — so re-shooting the
+      *existing* range at that quality would resolve it with no code change.
+
 ## P1 — discoverability and hardening
 
 - [ ] **Re-run Lighthouse on all three page types.** The table in `README.md`

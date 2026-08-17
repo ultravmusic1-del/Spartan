@@ -193,11 +193,13 @@
       },
       {
         "label": "Power",
-        "value": "48W | 80W"
+        "value": "48W | 80W | 120W",
+        "source": "120W added on client instruction, 2026-08-17; 48W and 80W from e-catalog-panel light 80w.pdf p1"
       },
       {
         "label": "Luminous Flux",
-        "value": "3200 lm | 5600 lm"
+        "value": "3200 lm (48W) | 5600 lm (80W)",
+        "source": "e-catalog-panel light 80w.pdf p1 — qualified by wattage; no flux is published for the 120W"
       },
       {
         "label": "Input Voltage",
@@ -478,6 +480,11 @@
       {
         "label": "Warranty",
         "value": "2 years"
+      },
+      {
+        "label": "SKU",
+        "value": "BH-ELELHB",
+        "source": "banner: Spartan Highbay Lights-Bahrain"
       }
     ],
     "status": "published",
@@ -498,7 +505,8 @@
     "specs": [
       {
         "label": "Power",
-        "value": "50W | 150W | 300W | 400W | 1000W"
+        "value": "10W | 20W | 30W | 50W | 100W | 200W | 300W | 400W | 500W | 1000W",
+        "source": "client instruction, 2026-08-17 — supersedes the 50/150/300/400/1000W range on flood light catalog new.pdf p1"
       },
       {
         "label": "Luminous Efficacy",
@@ -510,7 +518,8 @@
       },
       {
         "label": "LED Quantity",
-        "value": "72pcs | 252pcs | 468pcs | 648pcs | 1000pcs"
+        "value": "72pcs (50W) | 252pcs (150W) | 468pcs (300W) | 648pcs (400W) | 1000pcs (1000W)",
+        "source": "flood light catalog new.pdf p1 — each figure qualified by the wattage it was printed against, because the power range above is now wider than this row covers"
       },
       {
         "label": "Input Voltage",
@@ -968,6 +977,11 @@
       {
         "label": "IP Rating",
         "value": "IP67"
+      },
+      {
+        "label": "Cable Length",
+        "value": "2 MTR | 3 MTR | 5 MTR",
+        "source": "client instruction, 2026-08-17"
       }
     ],
     "status": "published",
@@ -2205,6 +2219,16 @@
       {
         "label": null,
         "value": "Anti-slip + Anti-impact"
+      },
+      {
+        "label": "Midsole",
+        "value": "None",
+        "source": "banner: Spartan Safety Gumboots-Bahrain"
+      },
+      {
+        "label": "Packing",
+        "value": "10 pairs per master carton",
+        "source": "banner: Spartan Safety Gumboots-Bahrain"
       }
     ],
     "status": "published",
@@ -2452,6 +2476,36 @@
       {
         "label": "Color",
         "value": "Navy blue + Sizes: 30-48"
+      },
+      {
+        "label": "Standards",
+        "value": "IEC 61482 | ISO 11612 | ISO 11611 | NFPA 2112 | NFPA 70E",
+        "source": "banner: Spartan Safety Fire Retardant Pant-Bahrain-01"
+      },
+      {
+        "label": "Arc Rating",
+        "value": "CAT 2 | ATPV 8 cal/cm²",
+        "source": "banner: Spartan Safety Fire Retardant Pant-Bahrain-01"
+      },
+      {
+        "label": "Test Methods",
+        "value": "ASTM 1959 | ASTM 1506",
+        "source": "banner: Spartan Safety Fire Retardant Pant-Bahrain-01"
+      },
+      {
+        "label": "Finish",
+        "value": "PROBAN treatment",
+        "source": "banner: Spartan Safety Fire Retardant Pant-Bahrain-01"
+      },
+      {
+        "label": "Weave",
+        "value": "2/1 LHT",
+        "source": "banner: Spartan Safety Fire Retardant Pant-Bahrain-01"
+      },
+      {
+        "label": "Pockets",
+        "value": "Side and back",
+        "source": "banner: Spartan Safety Fire Retardant Pant-Bahrain-01"
       }
     ],
     "status": "published",
@@ -2481,6 +2535,36 @@
       {
         "label": "Colors",
         "value": "Khaki | Light blue + Sizes: S-4XL"
+      },
+      {
+        "label": "Colors (campaign)",
+        "value": "Grey | Beige | Sky blue",
+        "source": "banner: Spartan Safety Fire Retardant Shirt-Bahrain-01"
+      },
+      {
+        "label": "Standards",
+        "value": "IEC 61482 | ISO 11612 | ISO 11611 | NFPA 2112 | NFPA 70E",
+        "source": "banner: Spartan Safety Fire Retardant Shirt-Bahrain-01"
+      },
+      {
+        "label": "Arc Rating",
+        "value": "CAT 2 | ATPV 8 cal/cm²",
+        "source": "banner: Spartan Safety Fire Retardant Shirt-Bahrain-01"
+      },
+      {
+        "label": "Test Methods",
+        "value": "ASTM 1959 | ASTM 1506",
+        "source": "banner: Spartan Safety Fire Retardant Shirt-Bahrain-01"
+      },
+      {
+        "label": "Finish",
+        "value": "PROBAN treatment",
+        "source": "banner: Spartan Safety Fire Retardant Shirt-Bahrain-01"
+      },
+      {
+        "label": "Pockets",
+        "value": "Dual chest and at sleeves",
+        "source": "banner: Spartan Safety Fire Retardant Shirt-Bahrain-01"
       }
     ],
     "status": "published",
@@ -2613,6 +2697,11 @@
       {
         "label": null,
         "value": "Wind protection + Water proof"
+      },
+      {
+        "label": "Reflective Tape",
+        "value": "Class 2 approved",
+        "source": "banner: Spartan Winter Jacket"
       }
     ],
     "status": "published",
@@ -2667,6 +2756,41 @@
       {
         "label": "Colors",
         "value": "Orange | Red | Blue | Navy Blue | Khaki"
+      },
+      {
+        "label": "Sizes",
+        "value": "S-5XL",
+        "source": "banner: Spartan Fire Retardant Coveralls-Bahrain-01"
+      },
+      {
+        "label": "Standards",
+        "value": "IEC 61482-2 | ISO 11612 | ISO 11611 | NFPA 2112 | NFPA 70E",
+        "source": "banner: Spartan Fire Retardant Coveralls-Bahrain-01"
+      },
+      {
+        "label": "Arc Rating",
+        "value": "HRC 2 | ATPV 11 cal/cm²",
+        "source": "banner: Spartan Fire Retardant Coveralls-Bahrain-01"
+      },
+      {
+        "label": "Fastenings",
+        "value": "Metal buttons + brass zippers",
+        "source": "banner: Spartan Fire Retardant Coveralls-Bahrain-01"
+      },
+      {
+        "label": "Waistband",
+        "value": "Elasticated",
+        "source": "banner: Spartan Fire Retardant Coveralls-Bahrain-01"
+      },
+      {
+        "label": "Reflective Tape",
+        "value": "50MM at shoulders, arms and knees",
+        "source": "banner: Spartan Fire Retardant Coveralls-Bahrain-01"
+      },
+      {
+        "label": "Pockets",
+        "value": "2 each at chest, back and sides",
+        "source": "banner: Spartan Fire Retardant Coveralls-Bahrain-01"
       }
     ],
     "status": "published",
@@ -3263,7 +3387,7 @@
     "name": "Stand Fan",
     "variantLabel": "SPTSF-16",
     "categoryId": "fans",
-    "images": ["ds-photo-pending.png"],
+    "images": ["ds-stand-fan-sptsf-16.png"],
     "specs": [
       { "label": "Fan Size", "value": "16 inches" },
       { "label": "Power", "value": "45W" },
@@ -3286,23 +3410,22 @@
   },
   {
     "slug": "wall-fan-af-40w",
-    "name": "Wall Fan",
+    "name": "Orbit Fan",
     "variantLabel": "AF-40W",
     "categoryId": "fans",
-    "images": ["ds-photo-pending.png"],
+    "images": ["ds-orbit-fan-af-40w.png"],
     "specs": [
       { "label": "Fan Size", "value": "16 inches" },
       { "label": "Power", "value": "45W" },
       { "label": "Voltage", "value": "220-240V" },
       { "label": "Frequency", "value": "50/60Hz" },
-      { "label": "Mount Type", "value": "Wall Mounted" },
+      { "label": "Mount Type", "value": "Ceiling mounted", "source": "Spartan Fans Product Catalog.pdf p3 — photograph and assembly diagram; the spec line prints \"Wall Mounted\", see handoff.md §17" },
       { "label": "Speed Setting", "value": "Multiple" },
       { "label": "Oscillation", "value": "Yes" },
       { "label": "Tilt Adjustment", "value": "Yes" },
       { "label": "Power Supply", "value": "AC" },
       { "label": null, "value": "Dual Pull-Cord Control: traditional pull cords for easy speed adjustment and oscillation control when mounted high" },
-      { "label": null, "value": "Reinforced Safety Grills: durable front and rear guards for protection" },
-      { "label": null, "value": "Easy Installation: designed for secure wall mounting with a stable bracket system" }
+      { "label": null, "value": "Reinforced Safety Grills: durable front and rear guards for protection" }
     ],
     "status": "published",
     "source": { "doc": "Spartan Fans Product Catalog.pdf", "page": 3 },
@@ -3313,7 +3436,7 @@
     "name": "Wall Fan",
     "variantLabel": "FW-40H",
     "categoryId": "fans",
-    "images": ["ds-photo-pending.png"],
+    "images": ["ds-wall-fan-fw-40h.png"],
     "specs": [
       { "label": "Fan Size", "value": "16 inches" },
       { "label": "Power", "value": "45W" },
@@ -3331,5 +3454,348 @@
     "status": "published",
     "source": { "doc": "Spartan Fans Product Catalog.pdf", "page": 4 },
     "order": 17
+  },
+  {
+    "slug": "pvc-gloves",
+    "name": "PVC Gloves",
+    "variantLabel": null,
+    "categoryId": "hand",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Coating",
+        "value": "Durable PVC",
+        "source": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01"
+      },
+      {
+        "label": "Lining",
+        "value": "Jersey",
+        "source": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01"
+      },
+      {
+        "label": "Cuff",
+        "value": "Extended",
+        "source": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01"
+      },
+      {
+        "label": "Resistance",
+        "value": "Oil | Grease | Chemical",
+        "source": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01"
+      },
+      {
+        "label": "Standards",
+        "value": "EN 388 4101 | EN ISO 374 AJL",
+        "source": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01",
+      "page": 1
+    },
+    "order": 12
+  },
+  {
+    "slug": "oil-pads",
+    "name": "Oil Pads",
+    "variantLabel": null,
+    "categoryId": "spill",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Code",
+        "value": "SAFCLE00010",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Size",
+        "value": "40 x 50 cm",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Packing",
+        "value": "100 pcs/bale",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Oil, fuel and hydrocarbon spills",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01",
+      "page": 1
+    },
+    "order": 1
+  },
+  {
+    "slug": "oil-absorbent-pillow",
+    "name": "Oil Absorbent Pillow",
+    "variantLabel": null,
+    "categoryId": "spill",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Code",
+        "value": "SAFCLE00020",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Size",
+        "value": "23 x 38 cm",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Packing",
+        "value": "25 pcs/bale",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Oil, fuel and hydrocarbon spills",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01",
+      "page": 1
+    },
+    "order": 2
+  },
+  {
+    "slug": "oil-absorbent-socks",
+    "name": "Oil Absorbent Socks",
+    "variantLabel": null,
+    "categoryId": "spill",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Code",
+        "value": "SAFCLE00015",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Size",
+        "value": "8 cm x 1.2 m",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Packing",
+        "value": "20 pcs/bale",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Oil, fuel and hydrocarbon spills",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01",
+      "page": 1
+    },
+    "order": 3
+  },
+  {
+    "slug": "oil-absorbent-booms",
+    "name": "Oil Absorbent Booms",
+    "variantLabel": null,
+    "categoryId": "spill",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Code",
+        "value": "SAFCLE00025",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Size",
+        "value": "13 cm x 3 m",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Packing",
+        "value": "4 pcs/bale",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Oil, fuel and hydrocarbon spills",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01",
+      "page": 1
+    },
+    "order": 4
+  },
+  {
+    "slug": "chemical-pads",
+    "name": "Chemical Pads",
+    "variantLabel": null,
+    "categoryId": "spill",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Code",
+        "value": "SAFCLE00035",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Size",
+        "value": "40 x 50 cm",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Packing",
+        "value": "100 pcs/bale",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Hazardous and chemical spills",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01",
+      "page": 1
+    },
+    "order": 5
+  },
+  {
+    "slug": "chemical-absorbent-pillow",
+    "name": "Chemical Absorbent Pillow",
+    "variantLabel": null,
+    "categoryId": "spill",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Code",
+        "value": "SAFCLE00040",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Size",
+        "value": "23 x 38 cm",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Packing",
+        "value": "25 pcs/bale",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Hazardous and chemical spills",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01",
+      "page": 1
+    },
+    "order": 6
+  },
+  {
+    "slug": "chemical-absorbent-socks",
+    "name": "Chemical Absorbent Socks",
+    "variantLabel": null,
+    "categoryId": "spill",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Code",
+        "value": "SAFCLE00030",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Size",
+        "value": "8 cm x 1.2 m",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Packing",
+        "value": "20 pcs/bale",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Hazardous and chemical spills",
+        "source": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 24032026-001 - Spartan Spill Control solutions-Bahrain-01",
+      "page": 1
+    },
+    "order": 7
+  },
+  {
+    "slug": "solar-street-lights",
+    "name": "Solar Street Lights",
+    "variantLabel": null,
+    "categoryId": "lighting",
+    "images": [
+      "ds-photo-pending.png"
+    ],
+    "specs": [
+      {
+        "label": "Installation",
+        "value": "Pole mount",
+        "source": "banner: 26032026-001 - Solar Lights-Bahrain-01"
+      },
+      {
+        "label": "Application",
+        "value": "Homes | Parking areas | Pathways | Outdoor spaces | Project sites",
+        "source": "banner: 26032026-001 - Solar Lights-Bahrain-01"
+      },
+      {
+        "label": null,
+        "value": "No wiring required",
+        "source": "banner: 26032026-001 - Solar Lights-Bahrain-01"
+      },
+      {
+        "label": null,
+        "value": "Works during power interruptions",
+        "source": "banner: 26032026-001 - Solar Lights-Bahrain-01"
+      },
+      {
+        "label": null,
+        "value": "Energy efficient and eco-friendly",
+        "source": "banner: 26032026-001 - Solar Lights-Bahrain-01"
+      }
+    ],
+    "status": "published",
+    "source": {
+      "doc": "banner: 26032026-001 - Solar Lights-Bahrain-01",
+      "page": 1
+    },
+    "order": 11
   }
 ]

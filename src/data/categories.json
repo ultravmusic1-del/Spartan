@@ -144,9 +144,9 @@
     "slug": "spill-control",
     "name": "Spill Control",
     "divisionId": "safety",
-    "description": "Our spill control range is expanding. Contact us for current availability and lead times.",
-    "heroProductSlug": null,
-    "status": "expanding",
+    "description": "Absorbent pads, pillows, socks and booms for oil, fuel and chemical spills.",
+    "heroProductSlug": "oil-pads",
+    "status": "active",
     "order": 15
   }
 ]

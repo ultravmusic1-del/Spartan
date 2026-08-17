@@ -1,6 +1,6 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-08-17
 **Branch:** `main`. Every feature branch — `feat/catalogue-site`, `feat/landing-redesign`, `agent/improvements` — is merged into it and `git log main..<branch>` is empty for all three, so the warning this line used to carry no longer applies.
 **State:** **The catalogue build is complete and verified, and admin Phase 1 is complete.** The public site builds end to end, the full enquiry path works from product card to submitted RFQ, and an operator can now sign in, work the inbox, change a status, read the demand report and download the CSV. See §13. What is left is deployment and the client-supplied items in §8.
 
@@ -1526,3 +1526,257 @@ a spec row moves none of them. **There is no gate anywhere in this repository
 that would notice printed source data going missing from a listing** — rule 1 is
 gated in shape only, and it was written against invention rather than omission.
 This section is the record, and it is the only thing playing that role.
+
+---
+
+## 16. Ten products and a certification set, from campaign banners — 2026-08-17
+
+**Status: implemented and green.** `verify 16/16 · 207 unit · 214 e2e · 95
+products · 120 pages.`
+
+A folder of 19 Kavalani campaign banners was audited against the catalogue. All
+19 were opened and read; eight of them named something the site did not have.
+
+**This is the first time catalogue data has come from marketing artwork**, and
+that is the single most important fact about this section. Every value added
+here is traceable — but to a JPEG produced by a design team, not to a brochure
+page or a supplier datasheet. Those are not the same class of evidence, and §16
+exists so nobody has to guess which is which later.
+
+### The evidence problem, stated plainly
+
+One banner in the set is **wrong about a protection rating**. The Grip Guard
+GP1 artwork prints an EN 388 icon reading `4X43D`, while the glove's own label
+— photographed in that same banner — reads `4131X`, which is what the catalogue
+already said. The icon appears to carry GP5's rating. Against the real label it
+overstates cut resistance as **D** where the glove says **X, not tested**, and
+raises tear and puncture besides.
+
+So the working assumption is: **banner artwork is a lead, not a source of
+record.** It is good evidence that a product exists and roughly what it is. It
+is not evidence that a printed number is correct. Four other banner values were
+checked against the catalogue and agreed exactly — GP3, GP5 and Flex-Fit's EN
+388 strings, and the insect killer's three model codes — which is why GP1 reads
+as one artwork error rather than a systemic problem.
+
+### Per-row provenance, and why the schema changed
+
+`productSchema.specs` rows now take an **optional `source` string**. A record can
+carry rows from two documents — the FR trousers' fabric line came off brochure
+page 23, its certification block off a banner — and the product-level
+`source: { doc, page }` cannot express that. The field renders nowhere; it exists
+so a future audit can tell a datasheet value from an artwork value at a glance.
+69 rows carry one today. A row without it is covered by the product's own
+source, which is how all the pre-existing rows work.
+
+This is a **shape** change, which rule 1 permits, and it costs nothing at the
+seam: `specs` is a jsonb column, so the Postgres loader passes the extra key
+through untouched, and every consumer (`SpecTable`, `ProductCard`, `seo.ts`,
+`search.ts`) reads `label` and `value` only.
+
+### What was added
+
+**Certifications on the three FR garments**, which the site had never claimed —
+IEC 61482, ISO 11612, ISO 11611, NFPA 2112, NFPA 70E, PROBAN treatment, plus
+CAT 2 / ATPV 8 cal/cm² on the trousers and shirts and HRC 2 / ATPV 11 cal/cm² on
+the coveralls. Also sizes, fastenings, waistband, reflective tape and pocket
+configuration on the coveralls, and pocket configuration and weave on the other
+two.
+
+**Ten new products**, taking the catalogue from 85 to 95:
+
+| Products | Category | Note |
+|---|---|---|
+| PVC Gloves | `hand` | |
+| Oil and chemical pads, pillows, socks, booms — **7 SKUs** | `spill` | The category was empty |
+| Solar Street Lights | `lighting` | |
+| Orbit Fan `FW-40W` | `fans` | |
+
+**Spill Control is no longer an expanding category.** It has seven products, an
+`active` status, a real description and `heroProductSlug: "oil-pads"`. Electrical
+Accessories is now the only empty one, for the unchanged reason that the brochure
+has nothing to put in it.
+
+### Four decisions inside the data
+
+- **The PVC gloves' EN 388 is a spec row, not an `en388` object.** The banner
+  prints four levels and no TDM cut character; the schema's object requires all
+  five, and supplying `X` would be inferring a test result. It renders as the
+  printed marking instead and stays out of `En388Table`, which is the component
+  that presents protection levels as verified. The EN 388 total is still **6**.
+- **The FR shirt's banner colours are a separate row.** The brochure says
+  `Khaki | Light blue`; the banner says `Grey | Beige | Sky blue`. Beige and
+  khaki may be one colour under two names, and sky blue and light blue likewise,
+  but *may be* is not a merge — folding them together would alter a brochure
+  fact on a guess. Both rows stand, labelled by origin. **Grey is genuinely new.**
+- **The highbay's 15,000 lm figure was NOT taken.** The banner prints it with no
+  wattage attached against a 100–300W range, and an unqualified lumen figure
+  across four wattages is precisely the widened claim §6a's condensation rule
+  forbids. Only the SKU (`BH-ELELHB`) was added.
+- **`PROBAN®` ships as `PROBAN`.** The `®` is not in the mono subset, and
+  `tools/subset-mono.test.ts` caught it — working exactly as designed. The
+  documented fix is to widen `COVERAGE` and re-run the subsetter, and **that
+  could not be done here**: the subsetter takes the full JetBrains Mono as an
+  argument and only the 23.6 KB subset is committed. Adding the character to
+  `COVERAGE` without rebuilding the font would be *worse than the failure* — the
+  test would pass while the glyph shipped as tofu. So the character came out of
+  the data instead. If the `®` is wanted, the full font has to be fetched first.
+
+### Ten products with no photography
+
+All ten ship `ds-photo-pending.png`, taking that list from 6 to 16, and
+`src/content.config.test.ts` pins the new membership. The reason differs from the
+original six: those have only a flattened datasheet raster, while these are
+composited into styled scenes — a stand fan in a living room, absorbent pads on a
+warehouse floor. Neither yields a clean cut-out. **The banners did not close the
+photography gap for the two products that most looked like they would**: the
+SPTSF-16 stand fan and the FW-40H wall fan appear in the set, but both are shot
+against furnished rooms and a wire fan guard cannot be masked out of one to
+catalogue quality. They stay on the pending list.
+
+### What is NOT resolved, and must not be assumed
+
+Four conflicts were found and **none was adjudicated** — each needs the client:
+
+- **GP1's EN 388**, above. The catalogue is believed correct; the artwork is not.
+- **The highbay's IP rating** — banner IP66, record IP65.
+- **The solar flood light's IP rating** — the unit in the banner is labelled
+  IP67, the record says IP66. This is the third IP conflict on this catalogue,
+  after the flood light's own photo/table disagreement in §6a.
+- **The orbit fan's model code** — `FW-40W`, against the catalogue's `FW-40H`
+  (wall) and `AF-40W` (wall). The wall fan banner independently confirms
+  `FW-40H`, so the catalogue is right about that one; whether `FW-40W` is a real
+  third SKU or a blend of the two is open. The record carries it as printed.
+
+Also open and not acted on: `Industrial Canopy Pendant Lamps` is the highbay, and
+the word "highbay" appears nowhere a buyer can search.
+
+---
+
+## 17. The AF-40W is an orbit fan, and its own datasheet says otherwise — 2026-08-17
+
+The client supplied `Spartan Fans Product Catalog.pdf` (4 pages) — the source
+document three fan records already cite — with the correction that **AF-40W is an
+Orbit Fan, not a Wall Fan**. The correction is right, and the document both
+proves it and contradicts it, which is the reason this section exists.
+
+### What the page actually contains
+
+Page 3 is headed **"Spartan Wall Fan (AF-40W)"**. Its prose says *"ideal for homes
+or offices requiring wall-mounted airflow"*, its spec line says
+**`Mount Type: Wall Mounted`**, and a key feature says *"designed for secure wall
+mounting with a stable bracket system"*. Four separate textual assertions of a
+wall fan.
+
+**Its photograph shows a ceiling-mounted orbit fan** — a caged oscillating head
+suspended from a beam. **Its assembly diagram agrees**: all three figures show
+the hatched mounting surface *above* the unit with the fan hanging below it.
+
+Page 4, `FW-40H`, is the control that makes this unambiguous. That one is a
+genuine wall fan and every part of the page says so together: the photograph
+shows a fan flat against a wall with pull cords hanging, and its exploded diagram
+labels **WALL**, **ANCHOR BOLTS**, **INSTALLATION PLATE** and **BACK HANG
+TROUGH**. Page 3 has none of that hardware.
+
+The likeliest explanation is that page 3's prose was copied from page 4 and never
+corrected — the two pages share their structure closely.
+
+### What was changed, and what was not
+
+- **`name` is now `Orbit Fan`.** `variantLabel` stays `AF-40W`, the printed code.
+- **The slug stays `wall-fan-af-40w`.** Slugs are permanent addresses
+  (`docs/CONTENT-EDITING.md` §2); renaming a product does not entitle you to move
+  its URL. The slug no longer describes the product and that is the correct
+  trade.
+- **`Mount Type` now reads `Ceiling mounted`**, carrying a per-row `source` that
+  names the photograph and the assembly diagram as its evidence and records that
+  the spec line prints `Wall Mounted`. This follows the MP-203 precedent in §6a:
+  where one document disagrees with itself, record the value the rest of the
+  document corroborates and say so.
+- **The "Easy Installation: secure wall mounting with a stable bracket system"
+  bullet was removed** rather than rewritten. It describes hardware this product
+  does not have — page 4's, in fact. Rewriting it would have meant inventing an
+  installation method; deleting it leaves the record silent on something the
+  source cannot be trusted about.
+- **Nothing else moved.** Voltage, frequency, power, fan size, speed, oscillation,
+  tilt and power supply match the PDF exactly on all three fans, as do SPTSF-16's
+  ten spec rows and FW-40H's nine. **The catalogue was already accurate about
+  everything except the mount.**
+
+### Resolved: `FW-40W` was the same fan, and the listing is gone
+
+The campaign banner added on 2026-08-17 (§16) carries an orbit fan labelled
+**`FW-40W`**, and this catalogue contains no such code — only `AF-40W` (page 3)
+and `FW-40H` (page 4). With AF-40W now confirmed as the orbit fan, `FW-40W` reads
+even more like a banner typo blending the two real codes.
+
+**Confirmed wrong by the client on 2026-08-17 and deleted.** The record was
+carried for a few hours rather than merged or removed on inference, and that was
+the right order — the evidence for deleting it came from the client, not from
+reasoning about blade colour.
+
+**Nothing was merged out of it first, deliberately.** Its eight rows came from
+the same banner that had just been shown to have the model code wrong, and
+`AF-40W` already carries nine rows from its own datasheet. Folding artwork
+values into a datasheet-sourced record to preserve them would trade the better
+evidence for the worse. One detail is genuinely lost: a **2-year warranty**,
+which the banner asserts and the datasheet never mentions. Worth confirming with
+the client, because it would be a real addition rather than a restatement.
+
+The catalogue is back to **94 products** and `fans` to **17**. Nine products now
+trace to campaign banners, not ten.
+
+### Product photography: attempted, and not possible
+
+Each of the four pages is a **single flattened raster at 2481×3509** (300 DPI A4)
+— there are no separately embedded product images to lift out, which is the same
+condition that put the original six on the pending list.
+
+Cropping works: the three product photos come out clean at roughly 950×900 to
+900×2000. **Cutting them out does not.** The catalogue's convention is a
+transparent PNG over a dark card, and every one of these fans is a *white* unit
+photographed against a photographic background — a wooden ceiling, a furnished
+room — seen *through a fine wire guard*. A luminance key was tried on the
+best-contrast case, AF-40W on dark wood: it kept 39.4% of pixels and left the
+ceiling fully visible, because the lit wood is brighter than the threshold and
+the background shows through the mesh regardless. No threshold separates that,
+and §6's warning applies — a product photo with an opaque background looks
+exactly like the clip-forwarding bug and is ruinous on this dark layout.
+
+So the three fans stay on `ds-photo-pending.png`. The crops exist and are good;
+what is missing is masking, which is manual work in an image editor, not
+something this pipeline can do.
+
+### The three fan cut-outs, supplied 2026-08-17
+
+The section above says extraction was attempted and failed. **The client then
+supplied masked cut-outs of all three fans**, which closes that item and
+supersedes the "stays on `ds-photo-pending.png`" conclusion:
+
+| Product | File | Size |
+|---|---|---|
+| Stand Fan `SPTSF-16` | `src/assets/products/ds-stand-fan-sptsf-16.png` | 900×2000 |
+| Orbit Fan `AF-40W` | `src/assets/products/ds-orbit-fan-af-40w.png` | 950×900 |
+| Wall Fan `FW-40H` | `src/assets/products/ds-wall-fan-fw-40h.png` | 640×1100 |
+
+Genuine alpha — 48–65% fully transparent with 12–21% partial, which is the wire
+guard anti-aliasing rather than a hard key. Verified against the dark card
+before committing.
+
+**These are the first product images on the site that break the resolution
+ceiling.** §6 records the constraint — every other product photo is natively
+100–440px wide, must never be upscaled beyond ~2×, and is the cause of the
+Lighthouse Best Practices 96 on product pages. The orbit fan now renders 950×900
+into a 422×400 box, a downscale that covers DPR 2 properly; the related-product
+thumbnails beside it are still 249×177 into 212×150. If the client can supply
+the rest of the catalogue at this quality, that Lighthouse item resolves with no
+markup change, because `srcset` has been in place since Task 8.
+
+The pending-photography list drops from 16 to **13** and
+`src/content.config.test.ts` pins the new membership.
+
+One caveat worth recording: a faint beige tint survives *through* the guard mesh
+on the orbit fan, where the wooden ceiling behind it could not be separated from
+the wire. It is invisible at the sizes the design actually uses (~180px tiles,
+~400px spotlight) and was checked at both. It would show if the asset were ever
+used at full size — print, or a hero.

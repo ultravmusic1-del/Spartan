@@ -156,9 +156,10 @@ let unitTests = null;
   const en388 = products.filter((p) => p.en388).length;
   const problems = [];
 
-  // 72 from the brochure + 13 from the per-family datasheet PDFs. This was 72
-  // while the brochure was the only source document; see handoff.md §6a.
-  if (products.length !== 85) problems.push(`${products.length} products, expected 85`);
+  // 72 from the brochure + 13 from the per-family datasheet PDFs + 9 from the
+  // Kavalani campaign banners. This was 72 while the brochure was the only
+  // source document; see handoff.md §6a, §16 and §17.
+  if (products.length !== 94) problems.push(`${products.length} products, expected 94`);
   if (categories.length !== 15) problems.push(`${categories.length} categories, expected 15`);
   if (en388 !== 6) problems.push(`${en388} EN 388 ratings, expected 6`);
 
@@ -181,7 +182,7 @@ let unitTests = null;
   record(
     'catalogue shape',
     problems.length === 0,
-    problems.length ? problems.join('; ') : '85 products / 15 categories / 6 EN 388, all sourced',
+    problems.length ? problems.join('; ') : '94 products / 15 categories / 6 EN 388, all sourced',
   );
 }
 

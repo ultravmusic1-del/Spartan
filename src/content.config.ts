@@ -39,7 +39,27 @@ export const productSchema = z.object({
   variantLabel: z.string().nullable(),
   categoryId: z.string(),
   images: z.array(z.string()).min(1),
-  specs: z.array(z.object({ label: z.string().nullable(), value: z.string() })),
+  /*
+   * `source` is per-row provenance and is OPTIONAL: a row without one is
+   * covered by the product's own `source` below, which is how all 529 original
+   * rows work and why this is not a required field.
+   *
+   * It exists because a record can now carry rows from two different documents.
+   * The FR workwear specs came off the brochure; their certification rows came
+   * off a marketing banner, and those are not the same class of evidence — the
+   * Grip Guard GP1 banner prints an EN 388 rating that contradicts the glove's
+   * own label, so artwork is demonstrably fallible about exactly the values
+   * that matter most. A product-level `source` cannot say which row came from
+   * which, and "audit a spec back to the page it was read off" is the whole
+   * point of that field. Nothing renders this; it is for the next maintainer.
+   */
+  specs: z.array(
+    z.object({
+      label: z.string().nullable(),
+      value: z.string(),
+      source: z.string().optional(),
+    }),
+  ),
   // EN 388 mechanical protection levels, present only where the brochure
   // actually prints a "RESISTANCE SPECIFICATIONS" row for the product. Values
   // are the printed levels ("4", "X", "B", ...), kept as strings because the

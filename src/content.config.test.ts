@@ -59,33 +59,56 @@ describe('content data', () => {
     // rather than the brochure's 4. Update deliberately: this assertion exists
     // to make an accidental duplicate or a lost record fail loudly, so a number
     // that changes without a matching data change is a bug.
+    // 2026-08-17: +9 from the Kavalani campaign banners — PVC Gloves, the
+    // seven-SKU spill control range and solar street lights. `spill` is no
+    // longer an empty category. Those nine are sourced from marketing artwork
+    // rather than a brochure or datasheet, which is recorded on each record.
+    // A tenth, an orbit fan the banner labelled FW-40W, was added and then
+    // deleted the same day: it was the AF-40W under a mangled code, which is
+    // why `fans` is back at 17. See handoff.md §17.
     const expected: Record<string, number> = {
-      lighting: 10, fans: 17, pumps: 3, insect: 1, cables: 1, accessories: 0,
-      head: 7, eye: 6, hearing: 6, hand: 11, foot: 8, harness: 2, body: 4,
-      workwear: 9, spill: 0,
+      lighting: 11, fans: 17, pumps: 3, insect: 1, cables: 1, accessories: 0,
+      head: 7, eye: 6, hearing: 6, hand: 12, foot: 8, harness: 2, body: 4,
+      workwear: 9, spill: 7,
     };
     const actual: Record<string, number> = {};
     for (const p of products) actual[p.categoryId] = (actual[p.categoryId] ?? 0) + 1;
     for (const [id, n] of Object.entries(expected)) expect(actual[id] ?? 0).toBe(n);
-    expect(products).toHaveLength(85);
+    expect(products).toHaveLength(94);
   });
 
   it('records exactly which products are awaiting real photography', () => {
-    // These ship with a placeholder because their only source is a flattened
-    // page raster with no separable product image — see tools/README.md. The
-    // list is asserted so it cannot grow silently, and so the launch checklist
-    // has something to check against.
+    // These ship with a placeholder because no separable product image exists
+    // for them — see tools/README.md. The list is asserted so it cannot grow
+    // silently, and so the launch checklist has something to check against.
+    //
+    // Two distinct reasons sit in this list. The three air coolers have only a
+    // flattened datasheet page raster. The nine added on 2026-08-17 come from
+    // campaign banners, where the product is composited into a styled scene —
+    // absorbent pads on a warehouse floor, gloves over a workshop — so there is
+    // no clean cut-out either. Both need real photography from the client.
+    //
+    // This was 16 until the client supplied masked cut-outs for the three fans
+    // in `Spartan Fans Product Catalog.pdf` (SPTSF-16, AF-40W, FW-40H). Those
+    // are the first product images on the site above the 100-440px ceiling that
+    // handoff.md §6 records as the constraint on the whole design.
     const pending = products
       .filter((p) => p.images.includes('ds-photo-pending.png'))
       .map((p) => p.slug)
       .sort();
     expect(pending).toEqual([
+      'chemical-absorbent-pillow',
+      'chemical-absorbent-socks',
+      'chemical-pads',
+      'oil-absorbent-booms',
+      'oil-absorbent-pillow',
+      'oil-absorbent-socks',
+      'oil-pads',
       'portable-air-cooler-ay-yd2512',
       'portable-air-cooler-ay-yd2518',
       'portable-air-cooler-ay-yd2536',
-      'stand-fan-sptsf-16',
-      'wall-fan-af-40w',
-      'wall-fan-fw-40h',
+      'pvc-gloves',
+      'solar-street-lights',
     ]);
   });
 

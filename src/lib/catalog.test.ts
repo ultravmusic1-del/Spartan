@@ -30,32 +30,39 @@ describe('catalog repository', () => {
     expect(c.every((x) => x.divisionId === 'electricals')).toBe(true);
   });
 
-  it('returns all 85 products', async () => {
-    expect(await getProducts()).toHaveLength(85);
+  it('returns all 94 products', async () => {
+    expect(await getProducts()).toHaveLength(94);
   });
 
   it('filters products by category', async () => {
-    expect(await getProducts({ categoryId: 'hand' })).toHaveLength(11);
+    expect(await getProducts({ categoryId: 'hand' })).toHaveLength(12);
   });
 
   it('filters products by division across its categories', async () => {
-    // Electricals is 19 brochure products + 13 from the datasheets: 7
-    // industrial fans, 3 portable air coolers and 3 consumer fans. Safety is
-    // untouched by that work.
-    expect(await getProducts({ divisionId: 'electricals' })).toHaveLength(32);
-    expect(await getProducts({ divisionId: 'safety' })).toHaveLength(53);
+    // Electricals is 19 brochure products + 13 from the datasheets (7 industrial
+    // fans, 3 portable air coolers, 3 consumer fans) + 2 from the campaign
+    // banners (solar street lights, the FW-40W orbit fan). Safety is 53 brochure
+    // products + 8 from the banners: PVC gloves and the seven-SKU spill range.
+    expect(await getProducts({ divisionId: 'electricals' })).toHaveLength(33);
+    expect(await getProducts({ divisionId: 'safety' })).toHaveLength(61);
   });
 
   it('computes productCount on categories', async () => {
-    expect((await getCategory('hand-protection'))?.productCount).toBe(11);
+    expect((await getCategory('hand-protection'))?.productCount).toBe(12);
   });
 
-  it('reports zero products for expanding categories', async () => {
-    for (const slug of ['spill-control', 'electrical-accessories']) {
-      const c = await getCategory(slug);
-      expect(c?.productCount).toBe(0);
-      expect(c?.status).toBe('expanding');
-    }
+  it('reports zero products for the one remaining expanding category', async () => {
+    // Spill Control left this set on 2026-08-17 when the campaign banners
+    // supplied a real seven-SKU range for it. Electrical Accessories is now the
+    // only category that stocks nothing, and the brochure still has nothing to
+    // put in it — see handoff.md §6.
+    const c = await getCategory('electrical-accessories');
+    expect(c?.productCount).toBe(0);
+    expect(c?.status).toBe('expanding');
+
+    const spill = await getCategory('spill-control');
+    expect(spill?.productCount).toBe(7);
+    expect(spill?.status).toBe('active');
   });
 
   it('finds a product by slug', async () => {

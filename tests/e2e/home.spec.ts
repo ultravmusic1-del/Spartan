@@ -49,16 +49,21 @@ test.describe('the hero artwork', () => {
 });
 
 test.describe('the category shelf', () => {
-  test('lists fifteen categories with exactly two marked empty', async ({ page }) => {
+  test('lists fifteen categories with exactly one marked empty', async ({ page }) => {
     await page.goto('/');
 
     await expect(page.locator('.cg__grid li')).toHaveCount(15);
 
-    // Electrical Accessories and Spill Control stock nothing. The design
-    // mockup filled their tiles with borrowed product photos from other
-    // categories — a picture in a range that has no stock is a false claim,
-    // so these two must render the marked-empty state instead.
-    await expect(page.locator('.cg__empty')).toHaveCount(2);
+    // Electrical Accessories stocks nothing. The design mockup filled its tile
+    // with a borrowed product photo from another category — a picture in a
+    // range that has no stock is a false claim, so it must render the
+    // marked-empty state instead.
+    //
+    // This was 2 until 2026-08-17: Spill Control stocked nothing either, until
+    // the campaign banners supplied a real seven-SKU range for it. The count is
+    // asserted rather than the mere presence of an empty tile, so a category
+    // quietly acquiring or losing stock fails here.
+    await expect(page.locator('.cg__empty')).toHaveCount(1);
   });
 
   test('shows the catalogue-derived count on the Fans & Ventilation tile', async ({ page }) => {
