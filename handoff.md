@@ -1886,3 +1886,205 @@ The carousel added no script, but **the hash still changed**: the breakpoint
 moved from 1080 to 1180 and that number appears in the parallax script's own
 `matchMedia`. One edited character in a media query invalidated the hash with no
 JavaScript logic changing at all. `npm run csp` re-run, `vercel.json` committed.
+
+---
+
+## 19. The launch-feedback batch: sharing, a Categories menu, two link fields, and an SEO audit — 2026-08-17
+
+**Status: implemented and green.** `verify 17/17 --full · 240 unit · 252 e2e · 94
+products · 119 pages · 9 CSP hashes.`
+
+The client reviewed the site and sent eight points, with the standing instruction
+not to delay launch perfecting things. Four shipped, two are blocked on values
+only they hold, and two are a project rather than a task. This section is the
+record of which is which and why, because "we did most of the list" is the kind
+of summary that hides the half that matters.
+
+### What shipped
+
+**Sharing on every product page (point 8).** WhatsApp, email and copy-link, in
+`src/components/catalog/ShareRow.astro` over `src/lib/share.ts`. What travels is
+the product's own name, its printed spec rows and the absolute URL. The
+description is the existing `productDescription()` at the same 160-character
+budget the meta description already used — a third description builder would be
+a third thing to drift, and this one is already tested.
+
+Two of the three are plain anchors, so they work with JavaScript off and cost no
+bytes. Only copy-link needs script.
+
+*The encoding is the whole risk and it is silent.* Catalogue spec values carry
+`+`, `&` and `#`, and all three mean something inside a query string: `+` reaches
+a mail client as a **space**, `&` starts the next parameter, `#` opens a fragment
+and drops the link off the end of the message. Nothing throws. Nine unit tests
+pin each against the real product it comes from, and the e2e suite re-checks
+after the string has been through an HTML attribute, which is a different
+failure from the builder being wrong.
+
+**A Categories dropdown replacing three flat items (point 1).** Catalogue,
+Electricals and Safety were three top-level entries; they are now one
+"Categories" item whose panel carries both divisions and all fifteen ranges. Five
+items in the row instead of seven, and a third division becomes a data change.
+
+The division labels needed no data change at all — `divisions.json` has said
+"Spartan Electricals" and "Spartan Safety" since it was written, and the old flat
+nav was the thing shortening them. Worth knowing before someone "fixes" a
+duplicate-looking name.
+
+`src/lib/nav.ts` holds the model because the desktop menu is Astro and the mobile
+panel is Preact, and the failure being guarded is a range present in one and
+missing from the other — whichever renderer you happen to be looking at then
+looks perfectly correct. Both build from one `buildCategoryGroups`; e2e pins the
+category count on both breakpoints.
+
+`section?: string` became `owns?: string[]`. One item now covers three subtrees —
+`/catalogue`, `/electricals`, `/safety` — and a single section string could only
+describe one, so the fold would have left the nav unlit on both division pages.
+
+**No JavaScript opens the menu**: `:hover` and `:focus-within` on the `<li>`.
+Closed it is `visibility: hidden`, which is what keeps its eighteen links out of
+the tab order — `opacity: 0` alone leaves every one focusable and invisible. The
+`<li>` is the full 84px of the nav row, and that is load-bearing: at the height of
+its 11px link the pointer leaves it while travelling down to the panel and the
+menu shuts in the user's face.
+
+Electrical Accessories is marked "Soon", keyed off `productCount === 0` **and**
+the status flag rather than the flag alone — Spill Control was flagged expanding
+until seven SKUs landed and would otherwise still be advertising itself empty.
+
+Measured cost per page, gzipped: **286 bytes of panel markup plus about 330 bytes
+of island props, so roughly 615 bytes**, for the whole product IA and no script.
+The props are the untidy half: the same category data is serialised into
+`MobileNav`'s island props on every page *and* rendered into the desktop panel
+markup, and on desktop the props are never read because the island hydrates at
+`client:media="(max-width: 1080px)"`. Accepted rather than fixed — the two honest
+fixes are reading the groups back out of the DOM, or server-rendering the mobile
+list and reducing the island to a toggle, and both are a refactor of a working,
+well-tested island for about 330 bytes.
+
+**Optional datasheet and Kavalani fields (points 3 and 4) — shape only, and
+inert.** `datasheetUrl` and `kavalaniUrl` on the product schema, each driving a
+control that renders only when the field is present. **Neither renders for any
+product today**, and that is the deliverable rather than a shortfall: there is
+not one PDF in this repository or on this machine, and no Kavalani product URL is
+written down anywhere in it. A datasheet link is a specification claim and a
+wrong Kavalani link sends a buyer to the wrong product, so neither may be
+guessed (rule 1). Supplying either is now a data edit.
+
+The schemas refuse a wrong value, because the person filling these in will be
+using a CMS field and not reading the schema: `datasheetUrl` must end in `.pdf`
+(the control says "Download datasheet"; a web page would make it lie) and
+`kavalaniUrl` must be absolute https.
+
+The label is **"View on Kavalani", never "Buy on Kavalani"** — this site has no
+prices, no cart and no checkout, and a control promising a purchase is the same
+class of claim as structured data carrying a price that does not exist, which
+`src/lib/seo.ts` refuses to emit.
+
+**The Kavalani host is not pinned and it should be.** The strongest guard against
+"View on Kavalani" navigating somewhere that is not Kavalani is requiring the
+host, and that domain is recorded nowhere here — so it cannot be written down
+without inventing it. A unit test asserts the current looseness explicitly rather
+than leaving it an unnoticed gap.
+
+**The SEO audit, and the two things it actually found (point 7).** All 119 built
+pages were swept. Canonicals, meta descriptions, `og:image`, one `h1` per page,
+no skipped heading levels, unique titles and unique descriptions were all already
+clean and mostly already gated. Two defects were not.
+
+*A long first spec row was eating the whole description.* `productDescription`
+stopped at the first row that would not fit, so one oversized row hid every
+shorter row behind it. `Industrial Exhaust Fan Standard` — twelve spec rows, a
+160-character `Size` row first — had a 32-character meta description that was
+just its name, while `Power: 40W to 350W` sat two rows down and fitted easily. It
+now skips rather than stops: **20 of 94 descriptions improved, average +32
+characters, worst case 32 to 155.** Nothing is invented; only which of the
+product's own rows fit has changed. Rows keep document order but may now have
+gaps, so the description is a summary and never a claim to be the whole
+specification.
+
+*One category page was over budget with nothing watching.*
+`/catalogue/fans-ventilation/` was 176 characters, because the page appends a
+product count to a description already 138 long — so the appended, derived half
+was the part being cut off, which is the worst way round. The count now gives way
+when the two do not fit; it is still in the page heading.
+
+Both are now covered by a gate, `meta descriptions within 160 characters`.
+**It decodes HTML entities first and that is not optional**: an ampersand ships
+as a numeric entity and inch marks as `&quot;`, so measuring the raw attribute
+counts five characters where a searcher sees one, and reports three failures that
+are not real. That false alarm is how a gate gets ignored and then deleted. There
+is deliberately no lower bound — six descriptions are short because their
+brochure entries say very little, and padding one to a number would mean writing
+product copy.
+
+Titles over 60 were checked and deliberately left: 8 exist, and the format puts
+the brand last precisely so that is what Google truncates. The product name and
+its variant survive the cut on all 8.
+
+### What is blocked, and on what
+
+**Real contact details (point 6).** Still the client's to supply, and now said
+out loud on every verify run rather than only in `BACKLOG.md`. Page for page
+these are worse than the temporary domain: the placeholder phone number is a live
+`tel:` link in the header of all 119 pages and the placeholder address is a
+`mailto:` in every footer, so a buyer who tries either gets nothing. A temporary
+domain costs ranking; these cost the lead itself. `whatsapp` was added to
+`site.json` as an empty string and is reported as unset — rendering nothing is the
+honest state for a channel with no number, and putting a plausible-looking number
+in to make the site feel finished is precisely what that gate exists to catch.
+
+**The admin panel for catalogue content and banners (points 2 and 5).** Not
+attempted, and it is the largest thing on the list by a wide margin — product,
+category, image, PDF, link and banner editing is Phase 3b, already designed in
+`docs/superpowers/plans/2026-08-13-catalogue-editing.md`. It is also **blocked
+behind a chain that has to be walked in order**: production still renders the
+catalogue from committed JSON, the Postgres switch is staged but held on a stale
+seed (three `Shrinkage` rows the database still holds), and the catalogue-shape
+gate still reads `products.json` — so the day anything can write to those tables
+the gate is checking a copy. Building write access before that chain is cleared
+would mean an editor whose changes do not appear and a gate that cannot see the
+data it guards.
+
+### Two traps found, both now in `docs/TRAPS.md`
+
+**"Shared across pages" counts page modules, not built URLs.** `ShareRow` renders
+on all 94 product pages and its script is still **inlined into every one**,
+because all 94 come from one dynamic route. The existing trap entry predicted the
+opposite and would have had someone skip `npm run csp` — the hash count went 8 to
+9, and a stale hash ships a page that renders and never hydrates. 1,040 bytes
+inline per page, which also saves a request, so the outcome is fine; the
+prediction was not.
+
+**A CSS transition reads as "never happened" in a preview that is not painting.**
+Verifying the dropdown's keyboard path by focusing the link and reading
+`getComputedStyle` reported `visibility: hidden` indefinitely, across separate
+calls seconds apart — indistinguishable from a hover-only menu, the WCAG 2.1.1
+failure you would most expect to find. Nothing was wrong: the element already
+matched `:focus-within` and the rule was winning. Transitions only advance while
+frames are produced, and a hidden preview pane composites none. Assert it in
+Playwright, or inject a rule disabling transitions before measuring.
+
+### One pre-existing failure repaired, and one recorded
+
+`tests/e2e/catalogue.spec.ts`'s combined-filter test had been **failing since
+`d7a36a9`**, which is one of the three commits pulled in at the start of this
+session. PVC Gloves took Hand Protection from 11 products to 12; one assertion
+was updated and two were not. That broke it twice: the status-line wait became a
+no-op — it waited for the line not to read "Showing 11", already true at 12, so
+it settled instantly and the count was read before the search applied — and the
+bound then compared the unfiltered 12 against a `< 11` check.
+
+It was rewritten rather than renumbered, because its "glove" query could never
+have tested what it claims: all four matches are inside Hand Protection, so a
+search ignoring the category filter entirely returns the same four and passes. It
+now uses "leather", which spans categories 9 to 3, so the three outcomes are
+distinguishable — 3 combines, 9 means search replaced the filter, 12 means the
+filter replaced the search. Proved against a planted violation.
+
+**A genuine intermittent flake is left in place and named**:
+`[mobile] /enquiry › lists the basket and persists quantity edits to the store`
+timed out on a stepper button twice in six full-suite runs and passes 4/4 in
+isolation. It is unrelated to anything in this batch, and the shape —
+"element is not visible" under 8 local workers — points at hydration timing under
+contention. CI runs 2 workers with one retry, which masks it. Queued rather than
+re-rolled until green.

@@ -140,6 +140,23 @@ see `handoff.md`). Priorities are P0 highest.
 - [!] **Real contact details.** Blocked: client. `+971 00 000 0000` renders as a
       live `tel:` link in the header of every page; `sales@spartan.example` is
       a dead mailbox. `src/data/site.json`.
+
+      **Re-raised by the client 2026-08-17**, who asked for real phone numbers,
+      WhatsApp links and email addresses before launch and suggested using the
+      Kavalani details in the meantime. Those details are not in this repository
+      either, so this is still blocked on values — but `npm run verify` now names
+      every outstanding one on every run rather than leaving it to this file.
+      Four are outstanding: **phone, email, address and `whatsapp`**.
+
+      `whatsapp` was added to `site.json` as an empty string. It renders nothing,
+      which is the honest state for a channel with no number, and the gate reports
+      it as unset. **Do not put a plausible-looking number in to make the site
+      feel finished** — that is the specific thing the gate exists to catch.
+
+      Page for page these are worse than the temporary domain: a buyer who taps
+      the header phone number or the footer email gets nothing at all, on a site
+      whose only purpose is getting them to make contact. The domain costs
+      ranking; this costs the lead.
 - [x] **Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.** Done
       2026-08-13. Enquiries are being written to Postgres in production.
 
@@ -325,6 +342,65 @@ see `handoff.md`). Priorities are P0 highest.
       add a `variantLabel`, or fold the term into the searchable string.
       `src/lib/search.ts` already joins name, variant and spec values.
 
+- [!] **Datasheet PDFs, for the "Download datasheet" control.** Blocked: client.
+      Requested by them on 2026-08-17 and the field is built and validated —
+      `datasheetUrl` on the product schema, rendering a control only when set —
+      but **no PDF exists in this repository or on this machine**, so it renders
+      for nothing on all 94 products. Not a bug and not a gap to fill: a datasheet
+      link is a specification claim.
+
+      Two things to know when they arrive. The schema requires the value to end
+      in `.pdf`, because the control says "Download datasheet" and pointing it at
+      a web page makes the button lie. And `download` is applied only to
+      same-origin paths — browsers ignore it cross-origin — so a PDF committed
+      under `public/` is offered as a save and an off-site one opens in a tab.
+      The existing P2 item about compressing the 163 MB brochure is the same
+      blocker wearing a different hat.
+
+- [!] **Kavalani product URLs, and the domain to pin them to.** Blocked: client.
+      Requested 2026-08-17. `kavalaniUrl` is built and validated and **no product
+      carries one**, because no Kavalani product URL is written down anywhere in
+      this repository and a link to the wrong product page is exactly what rule 1
+      exists to prevent.
+
+      **Ask for the domain in the same breath as the URLs.** The schema currently
+      accepts any absolute https URL, so nothing stops a "View on Kavalani"
+      control navigating somewhere that is not Kavalani. Requiring the host would
+      close half that gap and the host cannot be written down without inventing
+      it. `src/content.config.test.ts` asserts the current looseness explicitly so
+      it stays visible; tighten the regex in `src/content.config.ts` the day the
+      domain is known.
+
+      The label is **"View on Kavalani", not "Buy on Kavalani"** — a control
+      promising a purchase on a site with no prices, no cart and no checkout is
+      the same class of claim as a price in structured data. Changing it is the
+      client's call, not a wording preference.
+
+- [ ] **A flaky e2e test, left in place and named rather than re-rolled.**
+      `[mobile] /enquiry › lists the basket and persists quantity edits to the
+      store` timed out clicking a quantity stepper — "element is not visible" —
+      **twice in six full-suite runs on 2026-08-17**, and passes 4/4 when run in
+      isolation. Nothing in that batch touched the enquiry basket.
+
+      The shape points at hydration timing under contention: local runs use 8
+      workers, CI uses 2 with one retry, which is why CI has never shown it. That
+      also means CI is not proof it is gone. Worth reproducing with
+      `--repeat-each` under `--workers=8` before changing anything, because a
+      timing fix aimed at the wrong frame is how a flake becomes permanent.
+
+- [ ] **The mobile nav island is handed the whole category tree on every page.**
+      `MobileNav`'s serialised island props went from a few hundred bytes to
+      **2,689 (about 330 gzipped)** when the Categories dropdown landed, and the
+      same data is *also* rendered into the desktop panel markup — so every page
+      carries it twice, and on desktop the props are never read at all because the
+      island hydrates at `client:media="(max-width: 1080px)"`.
+
+      Accepted deliberately at the time; recorded because it is the kind of number
+      that only ever grows. The two honest fixes are reading the groups back out
+      of the server-rendered DOM, or server-rendering the mobile list and reducing
+      the island to a toggle. Both are a refactor of a working, well-tested island
+      for about 330 bytes, which is why neither was done.
+
 - [ ] **Photography for 13 products.** Down from 16: the client supplied masked
       cut-outs of the three fans in `Spartan Fans Product Catalog.pdf` on
       2026-08-17 (`handoff.md` §17). What remains is the three portable air
@@ -348,7 +424,26 @@ see `handoff.md`). Priorities are P0 highest.
       decision, `handoff.md` §12) — do not "fix" them.
 
 - [ ] **Phase 2 of the admin: the catalogue on Postgres.** This is what §5's
-      seam exists for. Replace `file()` in `src/content.config.ts` with a
+      seam exists for.
+
+      **The client asked for the editing UI directly on 2026-08-17** — products,
+      categories, images, content, PDFs, product links and homepage banners, with
+      the stated objective of not needing development support for a content
+      change. That is Phase 3b, and this item plus the two below it are the
+      chain it is blocked behind, in order:
+
+      1. production still renders the catalogue from committed JSON;
+      2. the Postgres switch is staged but held on a stale seed (three
+         `Shrinkage` rows the database still holds);
+      3. the catalogue-shape gate still reads `src/data/products.json`, so the
+         day anything can write to those tables the gate is checking a copy.
+
+      Shipping write access before that is walked gives an editor whose changes
+      do not appear on the site and a gate that cannot see the data it guards.
+      Banner management (their point 5) is the same project: `BANNERS` is a
+      hard-coded array in `src/components/sections/Hero.astro`, and moving it
+      into the database is a small piece of the same phase, not a shortcut past
+      it. **Worth telling them the order, since they asked for the end of it.** Replace `file()` in `src/content.config.ts` with a
       database loader; `src/lib/catalog.ts` and every catalogue page are
       untouched. The acceptance test is a **byte-identical build** — build from
       JSON, migrate, build from Postgres, diff. It ships alone, behind its own
@@ -455,6 +550,60 @@ see `handoff.md`). Priorities are P0 highest.
 ---
 
 ## Done
+
+- **2026-08-17** — **The client's launch-feedback batch: four of eight points.**
+  Full reasoning in `handoff.md` §19. Sharing on every product page, one
+  Categories dropdown replacing three flat nav items, optional datasheet and
+  Kavalani link fields, and an SEO audit that found two real defects. Two points
+  are blocked on values only the client holds (queued above), and two are Phase
+  3b (queued above, with the chain they sit behind).
+
+  *Worth knowing:* **the two inert features are the deliverable, not a
+  shortfall.** `datasheetUrl` and `kavalaniUrl` render controls for zero of 94
+  products, because no PDF and no Kavalani URL exists anywhere here and neither
+  may be guessed. What shipped is the shape, which rule 1 explicitly allows, plus
+  schemas that refuse a wrong value — the person filling these in will be using a
+  CMS field, not reading the schema.
+
+  *Worth knowing:* **the share encoding is the silent risk and it is now pinned.**
+  Spec values carry `+`, `&` and `#`, and in a query string those mean space,
+  next-parameter and fragment. A `+` in "White aluminium frame + iron back cover"
+  reaches a mail client as a space; a `#` drops the product link off the end of
+  the message. Nothing throws. Nine unit tests pin each against the real product
+  it comes from, and e2e re-checks after the string has been through an HTML
+  attribute.
+
+  *Worth knowing:* **`docs/TRAPS.md` was wrong about CSP hashes and is corrected.**
+  "Shared across pages" counts page *modules*, not built URLs — `ShareRow` renders
+  on 94 product pages and is still inlined into every one, because all 94 come
+  from one dynamic route. The hash count went 8 to 9. Following the old entry
+  would have meant skipping `npm run csp`, and a stale hash ships a page that
+  renders and never hydrates.
+
+  *Worth knowing:* **the Categories menu opens with no JavaScript at all** —
+  `:hover` and `:focus-within` on the `<li>` — and is `visibility: hidden` when
+  closed so its eighteen links stay out of the tab order. The `<li>` is the full
+  84px nav row on purpose: at the height of its 11px link the pointer leaves it
+  on the way down to the panel and the menu shuts in the user's face.
+
+  *Worth knowing:* the SEO audit's real find was that `productDescription` stopped
+  at the first spec row too long to fit, so one oversized row hid every shorter
+  row behind it. **20 of 94 descriptions improved**, average +32 characters, worst
+  case 32 to 155. `Industrial Exhaust Fan Standard` had twelve spec rows and a
+  meta description that was just its name.
+
+  *Worth knowing:* two new gates, both proved against planted violations —
+  `meta descriptions within 160 characters` (which **must** decode HTML entities
+  first, or it reports three failures that are not real) and a launch-blocker note
+  naming every unset contact detail.
+
+  *Worth knowing:* it also repaired `tests/e2e/catalogue.spec.ts`, **failing since
+  `d7a36a9`** and unrelated to any of this. Its "glove" query could never have
+  tested what it claimed — all four matches sit inside the category being filtered
+  — so it was rewritten around "leather", which spans categories, rather than
+  renumbered.
+
+  verify 17/17 --full, 240 unit, 252 e2e.
 
 - **2026-08-13** — **Phase 2: the catalogue can now be read from Postgres.**
   `src/loaders/supabase-catalogue.ts` is the swap `handoff.md` §5 was built for
