@@ -1,42 +1,131 @@
 ---
-import { getImage } from 'astro:assets';
-import helmet from '../../assets/hero/helmet-hero.png';
+import { Picture } from 'astro:assets';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
 
+import spillControl from '../../assets/banners/spill-control.jpg';
+import highbayLights from '../../assets/banners/highbay-lights.jpg';
+import solarLights from '../../assets/banners/solar-lights.jpg';
+import coveralls from '../../assets/banners/fire-retardant-coveralls.jpg';
+import safetyVests from '../../assets/banners/safety-vests.jpg';
+import insectKiller from '../../assets/banners/insect-killer.jpg';
+
 /**
- * Hero — the helmet as monument.
+ * Hero — the campaign carousel.
  *
- * REPLACED THE CLIENT ARTWORK on 2026-08-11. The previous hero was a supplied
- * 1672x941 composition that carried the logo, Arabic wordmark and headline as
- * pixels, which is why its <h1> was sr-only. This one renders a real headline,
- * so the h1 is visible text again and the image is decorative.
+ * REPLACED THE AI-GENERATED HELMET on 2026-08-17, on instruction. Everything
+ * around the stage is unchanged and deliberately so: the badge, the real <h1>,
+ * the CTAs, the source order and the 136px of top
+ * padding are all measured decisions with tests behind them (see the notes
+ * further down and tests/e2e/hero-mobile.spec.ts). Only what sits IN the stage
+ * changed, which is why this is a swap rather than a rebuild.
  *
- * THE HELMET IS AI-GENERATED. Its C2PA manifest asserts trainedAlgorithmicMedia
- * with GPT/openai markers. That is a deliberate, recorded decision — see
- * handoff.md and BACKLOG.md. It depicts safety equipment on a site whose rule
- * is that nothing about safety equipment is invented, so it is flagged to the
- * client rather than quietly shipped. `alt=""` because the headline carries the
- * meaning and the image asserts nothing about a real product.
+ * SIX OF NINETEEN BANNERS, AND TWO ARE EXCLUDED ON PURPOSE.
  *
- * NATIVE SIZE IS 1254x1254 and it renders at 560. Astro clamps `widths` down to
- * the source, so nothing here can upscale; do not add entries above 1254.
+ *   - The Grip Guard GP1 banner prints an EN 388 icon reading 4X43D while the
+ *     glove's own label — photographed in that same banner — reads 4131X. It
+ *     overstates cut resistance as D where the glove says X, NOT TESTED. Putting
+ *     that on the home page would publish a false protection rating in the most
+ *     prominent place on the site, which is the exact failure rule 1 exists to
+ *     prevent. Queued for reissue in BACKLOG.md.
+ *   - The Orbit Fan banner labels the fan FW-40W. That code belongs to no
+ *     product: the fan is AF-40W, confirmed by its datasheet's photograph and
+ *     assembly diagram (handoff.md §17). A wrong model code is a smaller error
+ *     than a wrong safety rating, but it is still a wrong fact on the home page.
  *
- * MOTION. Four things move: the helmet bobs, a glow pulses, a red arc sweeps,
- * and the whole stage parallaxes toward the cursor. All four stop under
- * prefers-reduced-motion, and the parallax listener is never attached in that
- * case rather than being attached and ignored.
+ * Both return by adding a line to BANNERS once the artwork is corrected. The
+ * remaining thirteen were left out for length, not for accuracy — a hero that
+ * loads nineteen posters is not a hero. Six was chosen to balance the two
+ * divisions three and three, and to vary the tonality so consecutive slides do
+ * not read as one image.
+ *
+ * DECORATIVE, LIKE THE HELMET IT REPLACES. Every slide is `alt=""` and the
+ * track is aria-hidden. These are marketing posters whose content is baked-in
+ * text — headlines, spec blocks, a QR code, a phone number — that alt text
+ * cannot reproduce, and every product they show is a real, reachable item in
+ * the catalogue below. The <h1> and the two CTAs carry the meaning, exactly as
+ * they did when the stage held a helmet with `alt=""`. This is the same
+ * reasoning Ticker.astro records for its own aria-hidden track.
+ *
+ * IT AUTO-ADVANCES, SO IT NEEDS A PAUSE MECHANISM. WCAG 2.2.2 applies to any
+ * motion that starts automatically and runs past five seconds, decorative or
+ * not, and axe does not test for it. The control is a checkbox read by
+ * `:has()`, deliberately not an island — a pause button that needs JavaScript
+ * to exist is no use to a visitor whose JavaScript is off, and the animation
+ * runs for them regardless. Copied from Ticker.astro, which solved this first.
+ *
+ * NO NEW SCRIPT. The carousel is pure CSS — no island, no hydration, and it
+ * works with JavaScript disabled entirely. The only script here is the cursor
+ * parallax that was already present, but ITS HASH DID CHANGE: the stacking
+ * breakpoint moved from 1080px to 1180px and that number appears in the script's
+ * own media query, so one edited character invalidated the hash. `npm run csp`
+ * re-run and `vercel.json` committed with it. A stale hash does not fail the
+ * build; it ships a hero that silently never parallaxes.
  */
-const WIDTHS = [420, 560, 840, 1120, 1254];
-const helmetAvif = await getImage({ src: helmet, widths: WIDTHS, format: 'avif' });
-const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' });
+
+/*
+ * The slide order is the render order. Alternating Safety and Electricals keeps
+ * consecutive slides from sharing a palette — spill control is red and dark,
+ * the highbay is a blue-lit warehouse, solar is a violet dusk, the coveralls are
+ * orange, the vests hi-viz yellow, the insect killer near-white.
+ */
+const BANNERS = [
+  { src: spillControl, name: 'Spill Control' },
+  { src: highbayLights, name: 'Highbay Lights' },
+  { src: solarLights, name: 'Solar Lighting' },
+  { src: coveralls, name: 'Fire Retardant Coveralls' },
+  { src: safetyVests, name: 'Safety Vests' },
+  { src: insectKiller, name: 'Insect Killers' },
+];
+
+/*
+ * The track carries one extra slide: a second copy of the first.
+ *
+ * The animation runs 0 -> -600% and then restarts at 0. Without the repeat that
+ * final frame would be blank, and a "rewind" back through five slides is the
+ * alternative — visible, and wrong. Landing on a copy of slide 1 and cutting
+ * back to the real slide 1 is invisible because the two are the same image.
+ * Ticker.astro duplicates its track for the same reason.
+ */
+const SLIDES = [...BANNERS, BANNERS[0]];
+
+/*
+ * THE BYTE BUDGET, WHICH IS THE REAL COST OF THIS CHANGE.
+ *
+ * The helmet was one 18 KB AVIF. Six posters are not, and pretending otherwise
+ * would be the kind of unmeasured claim §12 of handoff.md exists to warn about —
+ * a 23 KB font cost this page a Lighthouse point once. Measured against the
+ * built output, transferred bytes for the whole hero:
+ *
+ *                        default q, w<=872     q42, w<=600
+ *   desktop 1440 @1x            147 KB            121 KB
+ *   desktop 1440 @2x            351 KB            199 KB
+ *   phone 390 @3x               381 KB            200 KB
+ *
+ * Two levers got it there and both are deliberate.
+ *
+ * `quality={42}`. Astro's default sits ABOVE this — asking for 58 made the
+ * files BIGGER, which is worth knowing before someone "optimises" by raising it.
+ * 42 was checked at 2x against the artwork's finest detail, which is the QR
+ * code: it still resolves cleanly, and a QR that will not scan is the failure
+ * mode that matters on these.
+ *
+ * `widths` stops at 600, not the 872 a DPR-2 desktop would ask for. A 3x phone
+ * renders the card at 226px and was pulling the 872 variant — 678px of source
+ * for a 226px box. Capping at 600 gives a DPR-2 desktop 1.38x rather than 2x on
+ * a decorative poster, which is invisible at this size and halves the transfer.
+ * The sources are 1261px wide so nothing can upscale; Astro clamps in any case.
+ */
+const WIDTHS = [137, 226, 300, 436, 600];
+const SIZES =
+  '(max-width: 1180px) and (max-height: 700px) min(38vw, 300px), (max-width: 1180px) min(58vw, 300px), 436px';
 ---
 
 <section class="hero" data-hero>
   <div class="hero__grid" aria-hidden="true"></div>
 
-  {/* SOURCE ORDER IS THE MOBILE LAYOUT. Below 1080px `.hero` is `display:
-      block`, so the DOM decides the stack: badge + headline, then the helmet,
+  {/* SOURCE ORDER IS THE MOBILE LAYOUT. Below 1180px `.hero` is `display:
+      block`, so the DOM decides the stack: badge + headline, then the stage,
       then the CTAs. That is why the actions sit in their own `.wrap` instead of
       inside `.hero__copy` — CSS `order` cannot interleave the stage (a child of
       `.hero`) with the actions (a grandchild of `.hero__wrap`), so the split is
@@ -44,19 +133,14 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 
       THIS ORDER COSTS ABOVE-THE-FOLD CTA VISIBILITY ON SHORT PHONES, and that
       was a deliberate call on 2026-08-12, not an oversight. An earlier version
-      put the stage last precisely to avoid it. Moving `.hero__actions` back
-      inside the first `.hero__copy` reverts it.
+      put the stage last precisely to avoid it.
 
-      What that costs, measured rather than estimated. On a 390x844 and a
-      414x896 BOTH CTAs are fully visible. On the two short screens only the
-      PRIMARY one is, and only because the `(max-height: 700px)` block at the
-      foot of this stylesheet shrinks the helmet and tightens two margins to buy
-      it back — "Request a quote" is below the fold on both, and that is the
-      accepted price. An earlier version of this comment claimed both CTAs sat
-      below the fold on those screens while the block below claimed it had fixed
-      them; they contradicted each other and the block was the one that was
-      nearly right. `tests/e2e/hero-mobile.spec.ts` pins the primary CTA's edge
-      on both screens so the next such claim is checked, not asserted.
+      The carousel made that budget tighter, because a 4:5 portrait card is
+      taller than the landscape helmet stage it replaced at the same width. The
+      short-screen width was cut from 58vw to 38vw to pay for it — see the
+      `(max-height: 700px)` block at the foot of this stylesheet.
+      `tests/e2e/hero-mobile.spec.ts` pins the primary CTA's bottom edge on a
+      375x667 and a 360x640, so this is checked rather than asserted.
 
       On desktop the stage is `position: absolute` under the copy's z-index, so
       the split is invisible there — but it does make `.hero` a two-row grid,
@@ -65,11 +149,6 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     <div class="hero__copy">
       <div class="hero__badge">
         <span class="hero__badge-hazard"></span>
-        {/* The wordmark and the hairline that separated it from the date were
-            removed on request, 2026-08-13. The badge now carries the founding
-            year alone; the header logo directly above it already says Spartan,
-            so nothing is lost that was not already being said twice. The hazard
-            stripe stays — it is the badge's own device, not the logo. */}
         <span class="hero__badge-body">
           <span class="hero__badge-est">Est. 2015</span>
         </span>
@@ -79,29 +158,66 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     </div>
   </div>
 
-  <div class="hero__stage" data-hero-stage aria-hidden="true">
-    <div class="hero__glow"></div>
-    <div class="hero__sweep"></div>
-    <div class="hero__ring"></div>
-    <picture class="hero__helmet">
-      {/* The helmet is 85% of the stage width, so each branch is 0.85x the
-          stage rule that applies at that size: 58vw on a short screen, 76vw on
-          a tall one, 560px on desktop. The short-screen branch has to come
-          first — `sizes` takes the first matching condition, and the plain
-          `max-width: 1080px` branch would otherwise swallow it and request a
-          variant a third larger than the box. */}
-      <source type="image/avif" srcset={helmetAvif.srcSet.attribute} sizes="(max-width: 1080px) and (max-height: 700px) min(49.3vw, 357px), (max-width: 1080px) min(65vw, 357px), 560px" />
-      <source type="image/webp" srcset={helmetWebp.srcSet.attribute} sizes="(max-width: 1080px) and (max-height: 700px) min(49.3vw, 357px), (max-width: 1080px) min(65vw, 357px), 560px" />
-      <img
-        src={helmetWebp.src}
-        alt=""
-        width={helmet.width}
-        height={helmet.height}
-        fetchpriority="high"
-        loading="eager"
-        decoding="async"
-      />
-    </picture>
+  <div class="hero__stage" data-hero-stage>
+    <div class="hero__glow" aria-hidden="true"></div>
+
+    {/* The checkbox is the state and the label is the control, so the pause
+        works with no JavaScript at all. `:has()` on the figure reads it.
+
+        The accessible name has to START with the visible label text ("Pause"),
+        or the mismatch is itself a 2.5.3 Label in Name failure — the same
+        defect that sat on every product card at a green axe score. */}
+    <input
+      class="hero__toggle"
+      type="checkbox"
+      id="hero-carousel-pause"
+      role="switch"
+      aria-label="Pause the rotating product banners"
+    />
+
+    <figure class="hero__frame">
+      <div class="hero__track" aria-hidden="true">
+        {
+          SLIDES.map((banner, i) => (
+            <div class="hero__slide">
+              <Picture
+                src={banner.src}
+                alt=""
+                widths={WIDTHS}
+                sizes={SIZES}
+                formats={['avif', 'webp']}
+                fallbackFormat="jpg"
+                quality={42}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchpriority={i === 0 ? 'high' : 'auto'}
+                decoding="async"
+              />
+            </div>
+          ))
+        }
+      </div>
+
+    </figure>
+
+    {/* The controls sit BELOW the card, on the hero's flat black, not over the
+        artwork. Three reasons, all found by looking at the rendered page rather
+        than by reasoning about it: a white pip over the near-white footer strip
+        that most of these banners carry is invisible; a scrim dark enough to fix
+        that would cover the client's own QR code and call to action; and the
+        control was being clipped entirely by the hero's `overflow: hidden` when
+        it hung off the card's bottom edge. On black both are measurable against
+        a known surface, which is the only way rule 4 can be satisfied here. */}
+    <div class="hero__controls">
+      {/* Progress pips. Each runs the same 42s clock as the track with its own
+          delay, so the lit pip is always the visible slide without a line of
+          script tying them together. The final duplicate slide has no pip — it
+          IS slide one, and lighting a seventh pip would say otherwise. */}
+      <div class="hero__pips" aria-hidden="true">
+        {BANNERS.map(() => <span class="hero__pip"></span>)}
+      </div>
+
+      <label class="hero__pause" for="hero-carousel-pause">Pause</label>
+    </div>
   </div>
 
   <div class="wrap hero__wrap">
@@ -115,33 +231,33 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
 </section>
 
 <style>
+  /*
+   * THE CLOCK. Six slides, seven seconds each. Every animation below is 42s and
+   * differs only by delay, which is what keeps the pips locked to the track
+   * without any script. Changing the slide count means changing this, the
+   * keyframe percentages, and the pip delay — they are one system.
+   */
+  /* 760px, up from the helmet hero's 660px. The helmet was a transparent PNG
+     whose dome stopped well short of its own canvas edge, so a 660px stage could
+     overlap the absolutely positioned header and nothing showed. A banner is an
+     opaque rectangle with a hard top edge: at 660px it ran from y=0 to y=660 and
+     the nav rendered directly on top of the artwork — measured, "Industries" and
+     "Contact" sat over the poster's own headline. The card now lives entirely in
+     the band below the header, and the hero is as tall as that band needs to be
+     for a 4:5 portrait to have any presence beside a 76px headline. */
   .hero {
     position: relative;
     background: var(--color-black);
-    min-height: 660px;
+    min-height: 760px;
     overflow: hidden;
     display: grid;
     align-items: center;
 
     /* The copy and the actions are two separate grid items (see the source-order
-       note in the markup), so this grid now has two rows. Without
+       note in the markup), so this grid has two rows. Without
        `align-content: center` the default stretch would spread those two rows
-       across the whole 660px and park the CTAs near the bottom edge; centring
-       the row group instead reproduces exactly what one combined block did.
-       Verified: the badge still starts at y=139.7 and the actions at y=470.7 at
-       1440, unchanged from before the split. */
+       across the whole 660px and park the CTAs near the bottom edge. */
     align-content: center;
-
-    /* THE ARTWORK IS NOT CENTRED IN ITS OWN CANVAS. Its opaque pixels run
-       y=125..1085 of 1254, so the helmet's centre sits 21/1254 = 1.675% of the
-       canvas ABOVE the middle of the square it ships in. CSS centres the
-       picture BOX, so without correcting for this the helmet floats above its
-       own halo — 22.6px at the desktop render size, before the bob adds
-       anything. Applied as a percentage translate on `.hero__helmet`, which
-       resolves against the picture's own height; the picture is square at
-       every breakpoint, so one value is correct at both sizes.
-       Measured off the PNG's alpha channel, not eyeballed. */
-    --helmet-art-offset: 1.675%;
   }
 
   /* The 80px graph paper behind everything. Decorative and very low contrast,
@@ -158,130 +274,236 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
   /* The parallax target. The script writes --px/--py; with no script they stay
      0 and this is a static translate of nothing.
 
-     ANCHORED TO THE CONTENT COLUMN, NOT THE VIEWPORT EDGE. With `right: 0` the
-     stage marched away from the copy as the window widened: measured, the gap
-     between the headline's last glyph and the helmet ran 193px at 1280 and
-     833px at 2560, and the helmet overhung the 1240px content column by 602px.
-     Pinning it to the column instead makes the composition width-invariant
-     above 1356px — every distance in it is now the same at 1440 and at 2560.
+     ANCHORED TO THE CONTENT COLUMN, NOT THE VIEWPORT EDGE, so the composition is
+     width-invariant above the point where the column stops growing. The helmet
+     needed 678px because its artwork's opaque edge sat 58px inside a 660px
+     square stage; the stage is now exactly the card's width, so its own right
+     edge IS the card's and the number is simply the column's half-width, 620px.
+     One less derived constant to re-measure if the artwork changes.
 
-     Where 678px comes from: the column's right edge is 620px from centre; the
-     stage is 660 wide with the 560px picture centred in it, and the artwork's
-     opaque right edge is at canvas x=1236 of 1254, i.e. 1236 x (560/1254) =
-     552px from the picture's left. That leaves the artwork's right edge 58px
-     inside the stage's right edge, so 620 + 58 = 678 lands it exactly on the
-     column. `max(0px, ...)` keeps the old viewport-edge behaviour below 1356px
-     rather than pulling the helmet inward on a narrow desktop window.
-
-     -308px, not -330px: the assembly sits 22px BELOW the hero's geometric
-     centre. The hero's top 128px is under the absolutely positioned header, so
-     optical centre is below geometric centre — and at the top of the bob the
-     dome was OVERLAPPING the header, measured at -6.8px under the phone number
-     at 1440 and -12.2px at 1680. 22px is the largest shift that still keeps the
-     ring inside the hero at the downward extreme of the parallax, and it leaves
-     18.9px of header clearance in the worst case (1100px wide, top of the bob,
-     parallax at its upward extreme). Both numbers are measured against the
-     helmet's OPAQUE pixels, not its element box — the box overstates the dome
-     by 56px of transparent padding. Re-measure if the header's height, the
-     parallax amplitude or the artwork changes. */
+     CENTRED IN THE BAND BELOW THE HEADER, not on the hero's middle. The header
+     is `position: absolute` and occupies y 0-128, so the usable band at 760px
+     tall is 128-760 and its centre is y=444. `top: 50%` resolves to 380, so the
+     margin pulls the stage up to sit centred on 444 instead. Measured at 1440:
+     the card's top edge lands at y=152, clearing the header's box by 24px, and
+     the controls' bottom edge at y=736, clearing the hero's own edge by 24px. */
   .hero__stage {
     position: absolute;
-    right: max(0px, calc(50% - 678px));
+    right: max(0px, calc(50% - 620px));
     top: 50%;
-    width: 660px;
-    height: 660px;
-    margin-top: -308px;
+    width: 436px;
+    margin-top: -228px;
     transform: translate3d(calc(var(--px, 0) * -26px), calc(var(--py, 0) * -18px), 0);
     transition: transform 700ms var(--ease-out);
     z-index: 1;
   }
 
-  /* 50%, not 52%. The 2% pushed the halo DOWN while the artwork already sits
-     high in its own canvas, so the two errors compounded instead of cancelling:
-     the helmet's visible centre measured 32.8px above the ring's at the top of
-     the bob. The artwork's offset is now corrected where it belongs, on
-     `.hero__helmet`, and everything here is plainly concentric. */
-  .hero__glow,
-  .hero__sweep,
-  .hero__ring {
+  /* Carried over from the helmet stage so the card is not a bright rectangle
+     sitting on flat black with nothing between them. Sized to the card rather
+     than to the old 540px circle, and softer — the artwork supplies its own
+     colour now, so this only has to lift the card off the background. */
+  /* Centred on the CARD rather than on the stage, because the stage now carries
+     a control row underneath and centring on the whole thing would push the halo
+     low. `bottom: 44px` is that row's height plus its gap. */
+  .hero__glow {
     position: absolute;
     left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    bottom: 44px;
+    aspect-ratio: 1;
+    width: auto;
+    transform: translateX(-50%) scale(1.16);
     border-radius: 50%;
-  }
-
-  .hero__glow {
-    width: 540px;
-    height: 540px;
     background: radial-gradient(
       circle,
-      rgba(235, 41, 39, 0.42) 0%,
-      rgba(235, 41, 39, 0.14) 42%,
+      rgba(235, 41, 39, 0.3) 0%,
+      rgba(235, 41, 39, 0.1) 45%,
       rgba(235, 41, 39, 0) 70%
     );
-    filter: blur(6px);
+    filter: blur(8px);
     animation: hero-pulse 6s ease-in-out infinite;
   }
 
-  .hero__sweep {
-    width: 500px;
-    height: 500px;
-    border: 1px solid rgba(235, 41, 39, 0.28);
-    background: conic-gradient(from 0deg, rgba(235, 41, 39, 0.28), rgba(235, 41, 39, 0) 28%);
-    -webkit-mask: radial-gradient(circle, transparent 66%, #000 67%);
-    mask: radial-gradient(circle, transparent 66%, #000 67%);
-    animation: hero-sweep 14s linear infinite;
-  }
-
-  .hero__ring {
-    width: 596px;
-    height: 596px;
-    border: 1px dashed rgba(255, 255, 255, 0.09);
-  }
-
-  /* The vertical nudge that makes the halo concentric with the HELMET rather
-     than with the transparent square it ships in — see --helmet-art-offset.
-
-     There is deliberately no horizontal counterpart. The artwork's opaque box
-     is already centred in its canvas to within 1px (measured margins to the
-     ring: 26.9px left, 26.0px right), and the ring clears the helmet by only
-     ~26px on each side against ~83px above and below. Horizontal error is the
-     visible axis here, so a nudge to "correct" the artwork's rightward mass
-     lean would decentre the tight ring far more than it would fix. */
-  .hero__helmet {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 560px;
-    margin: -280px 0 0 -280px;
-    display: block;
-    transform: translateY(var(--helmet-art-offset));
-  }
-
-  .hero__helmet img {
+  /* The card. `aspect-ratio` rather than a height, so the banners' native 0.808
+     drives the box and the image never letterboxes inside its own frame. In
+     normal flow inside the stage, so the control row can simply follow it. */
+  .hero__frame {
+    position: relative;
     width: 100%;
-    height: auto;
-    display: block;
-    animation: hero-bob 7s ease-in-out infinite;
-    filter: drop-shadow(0 46px 60px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 40px rgba(235, 41, 39, 0.18));
+    aspect-ratio: 1261 / 1561;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: 4px;
+    background: var(--color-card);
+    box-shadow:
+      0 46px 60px rgba(0, 0, 0, 0.75),
+      0 0 40px rgba(235, 41, 39, 0.14);
   }
 
-  /* `.wrap` centres and pads this like every other section — without it the
-     copy started at the raw viewport edge and drifted up to 660px left of the
-     rest of the page's content column at ultra-wide widths.
+  /*
+   * The sliding track.
+   *
+   * `display: flex` with each slide at `flex: 0 0 100%` makes the track exactly
+   * as wide as the frame while its seven children overflow it, so one
+   * `translateX(-100%)` is exactly one slide. Setting an explicit 700% width
+   * instead would make the percentages resolve against the track and every
+   * number here would need dividing by seven.
+   */
+  .hero__track {
+    display: flex;
+    height: 100%;
+    animation: hero-carousel 42s var(--ease-out, cubic-bezier(0.4, 0, 0.2, 1)) infinite;
+  }
 
-     `width: 100%` is load-bearing, not a default. `.hero` is `display: grid`,
-     and a grid item with `.wrap`'s own `margin-inline: auto` disables the
-     grid's default stretch-to-fill for that axis — auto margins tell Grid
-     "size to content, then centre with the leftover space," which for a block
-     with no intrinsic width collapses to shrink-to-fit instead of the 1240px
-     `max-width` box. Measured: without this line `.hero__wrap` computed to
-     531px wide instead of the expected 1240px cap, and the h1 sat 354px right
-     of `.cg__title`'s left edge at 1440px. An explicit width gives Grid a
-     definite size to stretch to before `max-width` and the auto margins get a
-     turn, which is exactly how a plain block-flow `.wrap` (CategoryGrid's, not
-     inside a grid container) behaves by default — this reproduces that. */
+  .hero__slide {
+    flex: 0 0 100%;
+    height: 100%;
+  }
+
+  /* `<Picture>` wraps the img in a real <picture>, which is inline by default —
+     an inline box would sit on the text baseline and leave a strip of card
+     showing under every slide. Both the wrapper and the img have to be told to
+     fill. `:global` because Astro's scoping cannot reach inside a child
+     component's rendered markup. */
+  .hero__slide :global(picture) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero__slide :global(img) {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  /* The control row: pips left, pause right, on the hero's own black. */
+  .hero__controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    height: 30px;
+    margin-top: 14px;
+  }
+
+  .hero__pips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Non-text UI, which WCAG 1.4.11 holds to 3:1 against what is adjacent rather
+     than to 4.5:1. This is only decidable because the row sits on a known
+     surface — over the artwork, where these started, no ratio could be stated at
+     all.
+
+     #5c5c66, NOT the #3a3a42 this shipped with for an hour. That value was
+     picked to look right and asserted at "3.2:1" from memory; measured against
+     --color-black it is 1.79:1, which fails the bar it was claimed to meet. This
+     is exactly what rule 4 means by "colour is measured, not chosen", and it got
+     past a green axe run — axe does not evaluate 1.4.11 on decorative-looking
+     custom elements. Measured now, not remembered:
+
+       inactive #5c5c66 on --color-black   3.04:1   passes the 3:1 non-text bar
+       active   #ffffff on --color-black  20.01:1   passes at any size */
+  .hero__pip {
+    width: 18px;
+    height: 3px;
+    border-radius: 2px;
+    background: #5c5c66;
+    animation: hero-pip 42s step-end infinite;
+  }
+
+  .hero__pip:nth-child(1) { animation-delay: 0s; }
+  .hero__pip:nth-child(2) { animation-delay: 7s; }
+  .hero__pip:nth-child(3) { animation-delay: 14s; }
+  .hero__pip:nth-child(4) { animation-delay: 21s; }
+  .hero__pip:nth-child(5) { animation-delay: 28s; }
+  .hero__pip:nth-child(6) { animation-delay: 35s; }
+
+  /* The checkbox itself is never seen; the label is the button. Not
+     `display: none` — that would take it out of the tab order and off every
+     assistive technology, which is the whole control gone. This keeps it
+     focusable and reachable while the label carries the pixels. */
+  .hero__toggle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hero__pause {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border: 1px solid var(--color-line);
+    border-radius: 2px;
+    background: var(--color-card);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    /* grey-lt on card measures 8.90:1. `--color-grey` would be 4.14:1 here,
+       which fails AA for text this size — 11px is nowhere near the 24px large
+       bar. handoff.md §3. */
+    color: var(--color-grey-lt);
+    cursor: pointer;
+  }
+
+  .hero__pause::before {
+    content: '';
+    width: 7px;
+    height: 8px;
+    background: var(--color-red-light);
+    /* Two bars — the pause glyph — drawn rather than typed, so no font has to
+       carry it and no text alternative is implied. */
+    clip-path: polygon(0 0, 2px 0, 2px 8px, 0 8px, 5px 0, 7px 0, 7px 8px, 5px 8px);
+  }
+
+  .hero__pause:hover {
+    border-color: var(--color-red);
+    color: #fff;
+  }
+
+  /* The checkbox is visually hidden but still focusable, so the focus ring has
+     to be drawn on the label the user can actually see. `:has()` again, because
+     the label is not a sibling of the input any more — it is inside the control
+     row, two levels down. */
+  .hero__stage:has(.hero__toggle:focus-visible) .hero__pause {
+    outline: 2px solid var(--color-red-light);
+    outline-offset: 2px;
+  }
+
+  /* THE PAUSE ITSELF. `:has()` lets the checked state reach back up to the stage
+     and stop both the track and the pips — they have to stop together or the lit
+     pip drifts away from the visible slide. The glow keeps pulsing: it is
+     ambient, it is not what the control is about, and stopping it would make the
+     paused hero look broken rather than paused. */
+  .hero__stage:has(.hero__toggle:checked) .hero__track,
+  .hero__stage:has(.hero__toggle:checked) .hero__pip {
+    animation-play-state: paused;
+  }
+
+  .hero__stage:has(.hero__toggle:checked) .hero__pause {
+    color: #fff;
+    border-color: var(--color-red);
+  }
+
+  .hero__stage:has(.hero__toggle:checked) .hero__pause::before {
+    /* A right-pointing triangle: the control now says "Play". */
+    clip-path: polygon(0 0, 7px 4px, 0 8px);
+  }
+
   .hero__wrap {
     position: relative;
     z-index: 2;
@@ -292,8 +514,6 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     max-width: 660px;
   }
 
-  /* The skewed hazard-stripe badge. The inner span un-skews so the text inside
-     stays upright. */
   .hero__badge {
     display: inline-flex;
     align-items: stretch;
@@ -310,10 +530,6 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     background-image: repeating-linear-gradient(115deg, var(--color-red) 0 7px, #08080a 7px 14px);
   }
 
-  /* One child now, so no `gap`, and the padding is even rather than carrying
-     the 14px left inset that used to sit under the wordmark. The badge is
-     `inline-flex`, so removing the logo shrinks it to the date on its own
-     without any width needing to be restated. */
   .hero__badge-body {
     display: flex;
     align-items: center;
@@ -322,8 +538,7 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
   }
 
   /* red-light, not red: this is small text on --color-card, where brand red is
-     4.23:1 and fails AA. See handoff.md §3. Still small at 12px — WCAG's large
-     bar is 24px, or 18.66px bold — so the token does not change with the size. */
+     4.23:1 and fails AA. See handoff.md §3. */
   .hero__badge-est {
     font-family: var(--font-display);
     font-size: 12px;
@@ -358,143 +573,106 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     animation: hero-rise 0.7s var(--ease-out) 0.18s both;
   }
 
-  /* Symmetric, where it used to be -10/+14. The travel is the same 24px, but an
-     asymmetric range means the rest position is not the position everything
-     else is aligned to — the helmet sat above its halo through the whole cycle
-     and worst at the top, which is where this reads as wrong. Centred on 0, the
-     concentric alignment above is what the eye averages to. */
-  @keyframes hero-bob {
-    0%,
-    100% {
-      transform: translate3d(0, -12px, 0) rotate(-1.6deg);
+  /*
+   * Six holds and six slides across 42s. Each slide holds for 6s and moves for
+   * 1s, which is 14.286% and 2.381% of the cycle.
+   *
+   * The last step lands on the duplicate seventh slide at -600% and the
+   * animation restarts at 0. Both frames show the same image, so the reset is
+   * invisible; there is deliberately no hold at 100%, because a hold there would
+   * show the duplicate for a beat and make the loop stutter once per cycle.
+   */
+  @keyframes hero-carousel {
+    0%, 14.286% { transform: translateX(0); }
+    16.667%, 30.952% { transform: translateX(-100%); }
+    33.333%, 47.619% { transform: translateX(-200%); }
+    50%, 64.286% { transform: translateX(-300%); }
+    66.667%, 80.952% { transform: translateX(-400%); }
+    83.333%, 97.619% { transform: translateX(-500%); }
+    100% { transform: translateX(-600%); }
+  }
+
+  /*
+   * `step-end` and a 16.667% window: the pip is lit for exactly one slide's
+   * worth of the cycle and dark for the rest, and the delay walks that window
+   * along. Stepped rather than eased because a pip that fades is ambiguous about
+   * which slide is actually showing.
+   */
+  @keyframes hero-pip {
+    0% {
+      background: #fff;
+      width: 26px;
     }
-    50% {
-      transform: translate3d(0, 12px, 0) rotate(1.4deg);
+    16.667%, 100% {
+      background: #5c5c66;
+      width: 18px;
     }
   }
+
   @keyframes hero-pulse {
-    0%,
-    100% {
-      opacity: 0.5;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-      opacity: 0.85;
-      transform: translate(-50%, -50%) scale(1.06);
-    }
+    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.06); }
   }
-  @keyframes hero-sweep {
-    from {
-      transform: translate(-50%, -50%) rotate(0);
-    }
-    to {
-      transform: translate(-50%, -50%) rotate(360deg);
-    }
-  }
+
   @keyframes hero-rise {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Below this width the stage and the copy cannot coexist side by side. An
-     earlier pass here measured the 660px copy BOX overlapping the stage until
-     ~1415px and set the breakpoint from that — wrong, because nothing lives
-     in most of that box. The actions row is ~425px wide inside a 660px
-     container; the visible hazard (the lit helmet reaching the pill CTA's
-     actual glyphs) is gone by ~1000px, measured on glyph pixels with the
-     stage pushed to its worst-case parallax offset. 1080px is that floor plus
-     ~80px of margin, not the box's own width. Below it the two were
-     overlapped, which put brand red on the lit helmet at 1.04:1 and the pill
-     CTA as low as 1.97:1 in the band just past the old 900px breakpoint.
-     Re-measure glyph pixels, not element boxes, if this ever moves again —
-     the box number and the glyph number disagree by ~400px and only one of
-     them is real.
+  /* Below this width the stage and the copy cannot coexist side by side.
 
-     Stacking is the fix rather than a lower opacity: the opacity that clears
-     3:1 is 0.15, which deletes the artwork to buy compliance. Nothing is layered
-     over anything here, so the stage runs at full opacity and the copy sits on
-     flat black.
+     1180px, NOT the helmet's 1080px, and this is the one number the carousel
+     genuinely had to move. The helmet's floor was measured on GLYPH pixels — the
+     lit dome reaching the pill CTA's actual letterforms — and a transparent PNG
+     whose mass stops well inside its own canvas can sit closer to the copy than
+     an opaque rectangle can. Measured across widths with the card in place, the
+     gap between the copy's rightmost ink and the card's left edge:
+
+         1081px   -47px   the card sits ON the headline
+         1100px   -28px   still overlapping
+         1128px     0px   the crossover
+         1160px   +32px   clear, but tight
+         1240px  +112px   and constant above this, both sides being centred
+
+     So 1080px would have shipped a card printed across the word "SOLUTIONS" on
+     any window between 1081 and 1128 — an opaque poster over 76px display type,
+     which is unreadable rather than merely tight. 1180px puts ~52px of clearance
+     at the boundary. **A green axe run and a green verify both passed this**;
+     it was found by measuring, which is the only thing that finds it.
+
+     Stacking is the fix rather than shrinking the card, for the same reason the
+     helmet chose stacking over a lower opacity: nothing is layered over anything
+     here, so the card runs at full opacity and the copy sits on flat black.
+
+     Stacking is the fix rather than a lower opacity. Nothing is layered over
+     anything here, so the card runs at full opacity and the copy sits on flat
+     black — which is what keeps the headline at 21:1 instead of measuring it
+     against artwork.
 
      The stage also goes back into flow. Absolutely positioned it could not push
-     the hero taller, so `overflow: hidden` cut up to 56% off the helmet between
-     480px and 900px — at 768px it rendered as an unidentifiable dome.
+     the hero taller, so `overflow: hidden` would cut the card off.
 
-     136px of top padding, not 96. The header is `position: absolute` —
-     Header.astro's own header comment states the contract: the utility bar
-     sits at `top: 0` and the nav at `top: 44px` with `height: 84px`, so it
-     occupies y 0-128 and "the hero's own padding-top clears them" is the
-     only thing that does, because neither can sit in normal flow without
-     dropping to the bottom of a flex/grid hero. 136px clears that 128px box
-     with 8px and the visible logo by 31px. This was latent while the stage
-     rendered first and pushed the copy down past the header for free; moving
-     the stage below the copy is what exposed it — measured, the badge
-     collided with the header logo at 96px on every width from 375 to 1024
-     except 360, which escaped only because its headline happened to wrap
-     differently. */
-  @media (max-width: 1080px) {
+     136px of top padding, not 96. The header is `position: absolute` and
+     occupies y 0-128, so the hero's own padding-top is the only thing that
+     clears it. 136px clears that box with 8px and the visible logo by 31px. */
+  @media (max-width: 1180px) {
     .hero {
       display: block;
       min-height: 0;
       padding: 136px 0 64px;
     }
 
-    /* NOT SQUARE ANY MORE. The stage was `min(76vw, 420px)` on both axes, but
-       the widest thing in it is the ring at 90% of the width — so a square box
-       carried 10% of its own width in dead space, 30px on a 390px phone, split
-       above and below the artwork. It read as a void between the headline and
-       the helmet. Height is now 0.9x the width, which is the ring exactly.
-       Nothing clips: the glow (82%) and the helmet picture (85%) are both
-       narrower than the ring, so they still sit inside. */
+    /* The stage stops being a fixed 660px box and becomes the card itself plus
+       the room the pause control needs beneath it, so `height: auto` and a
+       bottom margin rather than the desktop's absolute geometry. */
     .hero__stage {
       position: relative;
       right: auto;
       top: auto;
-      width: min(76vw, 420px);
-      height: min(68.4vw, 378px);
+      width: min(58vw, 300px);
       margin: 32px auto 0;
-      opacity: 1;
       transform: none;
       transition: none;
-    }
-
-    /* Percentages of the stage WIDTH, holding the desktop proportions: the glow
-       is 540/660, the sweep 500/660, the ring 596/660 and the helmet 560/660.
-       `aspect-ratio` rather than a matching height percentage, because the stage
-       is no longer square and a height percentage would resolve against the
-       shorter axis and turn all three into ellipses. */
-    .hero__glow {
-      width: 82%;
-      height: auto;
-      aspect-ratio: 1;
-    }
-    .hero__sweep {
-      width: 76%;
-      height: auto;
-      aspect-ratio: 1;
-    }
-    .hero__ring {
-      width: 90%;
-      height: auto;
-      aspect-ratio: 1;
-    }
-
-    /* The artwork offset has to be carried into this transform by hand: this
-       rule replaces the desktop `transform` wholesale, so a translateY declared
-       there is simply gone here. The percentage still resolves against the
-       picture's own height, which is square at this size too, so the correction
-       scales with the helmet instead of needing a second number. */
-    .hero__helmet {
-      width: 85%;
-      left: 50%;
-      top: 50%;
-      margin: 0;
-      transform: translate(-50%, calc(-50% + var(--helmet-art-offset)));
     }
 
     .hero__actions {
@@ -503,19 +681,12 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
   }
 
   /* PHONE WIDTHS ONLY — stacked and full-bleed. Wrapping in a row gave two
-     rectangles of 221px and 157px, left-aligned with no shared edge: the ragged
-     step in the reported screenshot. A column at the default `stretch` gives
-     both the same width and a wider thumb target, and needs no width on the
-     buttons themselves — both primitives are `inline-flex` with centred content
-     and no declared width, so they stretch and their labels stay centred.
-     Setting it from here with a child selector would not have worked in any
-     case: Astro's scoped styles do not reach a child component's root element.
+     rectangles of different widths with no shared edge. A column at the default
+     `stretch` gives both the same width and a wider thumb target.
 
-     560px, not the 1080px of the block above. The two buttons need 392px to sit
-     side by side and stop wrapping at about 432px wide, so above that a row is
-     the better shape — and stretching them across the copy's full 660px cap, as
-     an earlier version of this rule did, produced a 660px-wide button on a
-     tablet and on a phone held in landscape. Measured: 660px at 844x390. */
+     560px, not 1080px: the two buttons need 392px to sit side by side, and
+     stretching them across the copy's full 660px cap produced a 660px-wide
+     button on a tablet. */
   @media (max-width: 560px) {
     .hero__actions {
       flex-direction: column;
@@ -524,53 +695,65 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
     }
   }
 
-  /* SHORT SCREENS BUY THE PRIMARY CTA BACK BY SPENDING HELMET.
-     Putting the CTAs under the helmet costs above-the-fold visibility on a
-     667px-tall screen, and no amount of gap-trimming closes that: with the
-     helmet at its normal size the arithmetic lands the buttons ~90px past the
-     fold on a 375x667 and ~108px on a 360x640. Shrinking the stage to 58vw is
-     what makes "Browse catalogue" — the button the whole site converts on —
-     fully visible without scrolling on both, at the price of a helmet about
-     three-quarters the size. On a lead-generation site that is the right way
-     round.
+  /* SHORT SCREENS BUY THE PRIMARY CTA BACK BY SPENDING CARD.
+     Putting the CTAs under the stage costs above-the-fold visibility on a 667px
+     screen. The helmet stage paid for that by shrinking to 58vw; a 4:5 portrait
+     card is ~24% taller than that landscape stage at the same width AND the
+     carousel added a 44px control row that WCAG 2.2.2 will not let us drop, so
+     58vw no longer pays for it and the CTA lands 17px past the fold.
+
+     38vw plus tightened gaps is what closes it. Measured on a 360x640 — the tighter of the two
+     screens this has to hold on — the primary CTA's bottom edge lands at 612px
+     against a 640px fold, with the same 20px and 24px margin trims the helmet
+     version used. `tests/e2e/hero-mobile.spec.ts` asserts that edge on both
+     screens, so the claim is checked rather than asserted.
 
      Keyed on HEIGHT, because this is a vertical-budget problem: a 390x844 phone
-     has the room and keeps the full-size helmet. It also catches a phone held
-     in landscape, which has even less height and wants the same treatment.
-
-     CORRECTED 2026-08-12, same day: the 58vw stage alone did NOT close it on a
-     360x640. Measured, the primary CTA's bottom edge landed at 648px against a
-     640px fold — 8px short, on the narrower of the two screens this paragraph
-     claimed it had fixed. It held on the 375x667 only. The two stacked 32px
-     margins below are trimmed to 20px and 24px, which brings the same edge to
-     628px and leaves 12px of clearance; a tall phone keeps both 32s because
-     this block never reaches it. `tests/e2e/hero-mobile.spec.ts` now asserts
-     the edge on both screens, so the claim is checked rather than asserted. */
-  @media (max-width: 1080px) and (max-height: 700px) {
+     has the room and keeps the larger card. It also catches a phone held in
+     landscape, which has even less height and wants the same treatment. */
+  @media (max-width: 1180px) and (max-height: 700px) {
     .hero__stage {
-      width: min(58vw, 420px);
-      height: min(52.2vw, 378px);
-      margin-top: 24px;
+      width: min(38vw, 300px);
+      margin-top: 16px;
+    }
+
+    /* The control row is a WCAG 2.2.2 requirement, so it cannot be dropped to
+       buy space here; its gap can be tightened instead. */
+    .hero__controls {
+      margin-top: 8px;
     }
 
     .hero__actions {
-      margin-top: 20px;
+      margin-top: 16px;
     }
   }
 
-  /* Nothing moves, and the entrance animations resolve to their end state
-     rather than never running — `both` on a cancelled animation would leave the
-     copy at opacity 0.
+  /* Nothing moves, and the entrance animations resolve to their end state rather
+     than never running — `both` on a cancelled animation would leave the copy at
+     opacity 0.
 
      `src/styles/global.css` also collapses every animation site-wide here with
-     `!important`, but it only forces animation-duration and iteration-count.
-     The `animation: none` shorthand below sets animation-name, which that rule
-     does not touch, so these declarations still take effect. */
+     `!important`, but it only forces animation-duration and iteration-count. The
+     `animation: none` shorthand below sets animation-name, which that rule does
+     not touch, so these declarations still take effect.
+
+     THE CAROUSEL STOPS ON SLIDE ONE, and the pause control is hidden with it.
+     A control that pauses something already stopped is a lie about what it does,
+     and it was the only thing in the hero that could take focus and do nothing.
+     Ticker.astro hides its own control here for the same reason. */
   @media (prefers-reduced-motion: reduce) {
-    .hero__helmet img,
-    .hero__glow,
-    .hero__sweep {
+    .hero__track,
+    .hero__pip,
+    .hero__glow {
       animation: none;
+    }
+    .hero__pip:first-child {
+      background: #fff;
+      width: 26px;
+    }
+    .hero__pause,
+    .hero__toggle {
+      display: none;
     }
     .hero__badge,
     .hero__title,
@@ -589,27 +772,28 @@ const helmetWebp = await getImage({ src: helmet, widths: WIDTHS, format: 'webp' 
   /*
    * Cursor parallax.
    *
+   * UNCHANGED from the helmet hero — same selectors, same behaviour, same
+   * bytes, so the same CSP hash. It is left in place because the effect belongs
+   * to the stage rather than to what is in it, and the carousel is a card that
+   * benefits from the same depth.
+   *
    * THIS SHIPS AS AN INLINE SCRIPT AND COSTS A CSP HASH. Astro extracts a
    * processed <script> to an external /_astro/ chunk only when it is shared
    * across pages; a script used on exactly one page is inlined into that page's
-   * HTML instead. The hero renders only on `/`, so this is inlined — where
-   * EnquiryCta's script, which also appears on /contact, is extracted.
+   * HTML instead. The hero renders only on `/`, so this is inlined.
    *
-   * It took the policy from 6 inline-script hashes to 7. `script-src` is
-   * hash-based with no 'unsafe-inline', so ANY edit to the code below needs
-   * `npm run csp` re-run and `vercel.json` committed with it. A stale hash does
-   * not fail the build — it ships a hero that never parallaxes and, if the
-   * shape of this file ever changes, a page that never hydrates.
+   * `script-src` is hash-based with no 'unsafe-inline', so ANY edit to the code
+   * below needs `npm run csp` re-run and `vercel.json` committed with it. A
+   * stale hash does not fail the build — it ships a hero that never parallaxes.
    */
   const hero = document.querySelector<HTMLElement>('[data-hero]');
   const stage = document.querySelector<HTMLElement>('[data-hero-stage]');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  // Below this the stage is stacked in flow and the 1080px CSS breakpoint (see
-  // that rule's comment for where the number comes from) replaces the whole
-  // `transform` declaration, so --px/--py are never read. Gated here too, or
-  // the listener still fires on every mouse move on a narrow desktop window
-  // and writes two custom properties for no effect.
-  const wide = window.matchMedia('(min-width: 1081px)');
+  // Below this the stage is stacked in flow and the 1180px CSS breakpoint
+  // replaces the whole `transform` declaration, so --px/--py are never read.
+  // Gated here too, or the listener still fires on every mouse move on a narrow
+  // desktop window and writes two custom properties for no effect.
+  const wide = window.matchMedia('(min-width: 1181px)');
 
   if (hero && stage && !reduce.matches && wide.matches) {
     hero.addEventListener('pointermove', (event) => {

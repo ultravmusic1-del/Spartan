@@ -247,21 +247,39 @@ did not check. Changing one is a regression *you* would be introducing.
   a clip-forwarding failure. All 72 assets were scanned; only these two, both
   legitimate. Reported as a regression once already.
 
-- **The hero's 1080px breakpoint, and its 136px of top padding.** Below
-  1080px the helmet stage stops sitting beside the copy and stacks under it.
-  That number was measured on **glyph pixels** — the lit helmet reaching the
-  pill CTA's actual letterforms, with the stage pushed to its worst-case
-  parallax offset — not on element boxes; the two disagree by ~400px and only
-  the glyph number is real. Overlapped, brand red on the lit helmet measured
-  1.04:1. Stacking is the fix rather than a lower stage opacity, which would
-  have to reach 0.15 to clear 3:1 and would delete the artwork to buy
-  compliance. The 136px is not a design choice either: `Header.astro` is
+- **The hero's stacking breakpoint is 1180px, and it belongs to whatever is in
+  the stage — not to the hero.** It was **1080px** for the helmet, measured on
+  **glyph pixels** (the lit dome reaching the pill CTA's actual letterforms) and
+  not on element boxes, which disagree by ~400px.
+
+  Replacing the helmet with the banner carousel on 2026-08-17 broke that number
+  and it took a measurement to notice. A transparent PNG whose mass stops well
+  inside its own canvas can sit closer to the copy than an **opaque rectangle**
+  can: with the card in place at 1080px, the card's left edge landed **47px past
+  the headline's rightmost ink** — a poster printed across the word "SOLUTIONS"
+  on any window between 1081 and 1128. `npm run verify` passed, the axe sweep
+  passed, and nothing else would ever have caught it.
+
+  The crossover is 1128px; 1180px leaves 53px at the boundary and 112px above
+  1240, where both sides are centred and the gap stops changing. **If the stage
+  contents change again, re-measure this — the number is a property of the
+  artwork, not of the layout.** Stacking is the fix rather than shrinking or
+  fading the stage, for the same reason it always was: nothing is layered over
+  anything, so the card runs at full opacity and the copy sits on flat black.
+
+  **That number lives in three places and they must agree**: two `@media` blocks
+  in `Hero.astro` and a `matchMedia('(min-width: 1181px)')` in its own script.
+  Editing the script changes its bytes, so `npm run csp` has to be re-run —
+  moving this breakpoint invalidated a CSP hash with no JavaScript logic
+  changing at all.
+
+  The 136px of top padding is separate and unchanged: `Header.astro` is
   `position: absolute` and occupies y 0–128, so the hero's own padding-top is
   the only thing clearing it — at 96px the badge collided with the header logo
   at every width from 375 to 1024.
 
 - **The hero source order IS the mobile layout, and the CTAs deliberately sit
-  after the helmet.** Below 1080px `.hero` is `display: block`, so the DOM
+  after the carousel.** Below 1180px `.hero` is `display: block`, so the DOM
   decides the stack: badge and headline, then the stage, then the actions. That
   is why `.hero__actions` lives in its own `.wrap` rather than inside
   `.hero__copy` — CSS `order` cannot interleave the stage (a child of `.hero`)
@@ -270,27 +288,36 @@ did not check. Changing one is a regression *you* would be introducing.
   short phone and that was the call, taken 2026-08-12.** Both CTAs are fully
   visible on a 390×844 and a 414×896. On a 375×667 iPhone SE and a 360×640
   Android **only the primary one is**, and only because a
-  `(max-height: 700px)` query shrinks the stage to 58vw and tightens two
-  margins; "Request a quote" is below the fold on both and that is the accepted
-  price. The margins are part of it — the stage shrink alone left the primary
-  CTA 8px past the fold at 360×640, which is the width where this is tightest.
+  `(max-height: 700px)` query shrinks the stage and tightens two margins;
+  "Request a quote" is below the fold on both and that is the accepted price.
+  The margins are part of it — the shrink alone was never enough by itself.
+  **That shrink was 58vw for the helmet and is 38vw for the carousel**: a 4:5
+  portrait card is ~24% taller than the landscape helmet stage at the same
+  width, and the carousel added a 44px control row that WCAG 2.2.2 does not let
+  us drop to buy the space back. Measured on the 360×640, the tighter of the
+  two, the primary CTA now clears the fold by 19px where the helmet cleared it
+  by 12px.
   An earlier version put the stage last to dodge the problem entirely — moving
   `.hero__actions` back inside the first `.hero__copy` reverts it. On desktop the stage is absolutely positioned under
   the copy, so the split is invisible there, but it does make `.hero` a two-row
   grid — which is why `.hero` sets `align-content: center`.
 
-- **The helmet artwork is not centred in its own canvas.** Its opaque pixels
-  run y=125..1085 of 1254, so the helmet's centre sits 1.675% above the middle
-  of the square PNG it ships in. CSS centres the picture *box*, so the halo,
-  sweep and ring are concentric with the transparent square and not with the
-  helmet — measured 22.6px of float at the desktop render size before the bob
-  adds anything. `--helmet-art-offset` corrects it on `.hero__helmet`. Two
-  consequences: the mobile `.hero__helmet` rule replaces the desktop
-  `transform` wholesale, so it has to re-declare the translate by hand or the
-  correction silently vanishes; and there is deliberately **no horizontal
-  counterpart**, because the opaque box is already centred to within 1px and
-  the ring clears the helmet by only ~26px on each side against ~83px above and
-  below. Re-measure off the alpha channel if the artwork is ever re-cut.
+- **The hero carousel is one clock in four places, and the seventh slide is not
+  a mistake.** The track renders `BANNERS.length + 1` slides: the last is a
+  second copy of the first. The animation runs 0 → −600% and restarts at 0, and
+  that reset is invisible *only* because both frames are the same image — delete
+  the duplicate and the loop either shows a blank frame or visibly rewinds
+  through five slides. `Ticker.astro` duplicates its track for the same reason.
+
+  Changing the slide count means changing **four** things together, and three of
+  them are silent if you miss them: the `hero-carousel` keyframe percentages,
+  the six `hero-pip` `animation-delay` values, the 42s duration on both, and the
+  `SLIDES` array. Get the delays wrong and the lit pip reports a slide that is
+  not the one showing — which looks like a rendering bug and is arithmetic.
+
+  The pips and the track must also **pause together**. They are stopped by one
+  `:has(.hero__toggle:checked)` rule for exactly that reason; pausing only the
+  track leaves the pip walking on alone.
 
 - **`image-size-responsive` (Lighthouse Best Practices 96) on product
   pages.** Source photography is natively 100–440px and must never be

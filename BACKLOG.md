@@ -56,14 +56,34 @@ see `handoff.md`). Priorities are P0 highest.
       2026-08-09: **a newsletter was never intended.** Removed rather than
       wired — see Done below.
 
-- [ ] **Confirm the AI-generated hero helmet with the client.** The landing hero
-      is an AI-generated image — its C2PA manifest asserts
-      `trainedAlgorithmicMedia` with GPT/openai markers. It depicts safety
-      equipment on a site whose first rule is that nothing about safety
-      equipment is invented. Shipping it was a deliberate decision taken on
-      2026-08-11 and recorded in `handoff.md` §7 and §11; it still needs a
-      person at the client to agree. A real product photograph drops in with no
-      markup change. `src/assets/hero/helmet-hero.png`.
+- [x] **Confirm the AI-generated hero helmet with the client.** **Moot as of
+      2026-08-17 — the helmet is no longer on the landing page.** It was
+      replaced by the campaign banner carousel (`handoff.md` §18), so the
+      sign-off this item was waiting for is no longer needed for anything that
+      ships. It was open for six days and never signed off, which is its own
+      small argument for having flagged it rather than quietly shipping it.
+
+      `src/assets/hero/helmet-hero.png` is **retained but unused**, on the same
+      reasoning that keeps the two client hero artworks: deleting supplied or
+      generated material to tidy up is the wrong trade while anyone might still
+      want it back. Nothing imports it. If the client confirms they never want
+      it, that is the moment to delete the file.
+
+- [ ] **Two campaign banners are excluded from the hero until reissued.** The
+      carousel shows six of nineteen; two are held out on accuracy rather than
+      taste, and both return by adding one line to `BANNERS` in `Hero.astro`.
+      - **Grip Guard GP1** — its EN 388 icon reads `4X43D` against the glove's
+        own label reading `4131X`. Already queued above as an artwork fix; this
+        is the second place it costs something.
+      - **Orbit Fan** — labelled `FW-40W`, a code belonging to no product.
+      The other eleven are out for page weight, not accuracy, and can be rotated
+      in by swapping entries rather than appending them.
+
+- [ ] **Re-measure the home page's Lighthouse score.** The hero went from one
+      18 KB AVIF to 121-200 KB of banner imagery (`handoff.md` §18 has the
+      table). §12 records a 23 KB font costing this page a whole point, so the
+      current figure is very unlikely to still be 94 — and 94 is what
+      `README.md` claims. Nobody should quote that number until it is re-run.
 
 - [x] **Finish the landing redesign's documentation.** Done — see Done below.
       Lighthouse was re-run and corrected this item's own premise: all three

@@ -38,13 +38,73 @@ test.describe('the hero headline', () => {
   });
 });
 
-test.describe('the hero artwork', () => {
-  test('the helmet image is decorative', async ({ page }) => {
+test.describe('the hero carousel', () => {
+  test('every slide is decorative, and the track carries a duplicate first', async ({ page }) => {
     await page.goto('/');
 
-    // The headline now carries the meaning (see above); the AI-generated
-    // helmet asserts nothing about a real product, so it must have alt="".
-    await expect(page.locator('.hero__helmet img')).toHaveAttribute('alt', '');
+    // Six banners plus a seventh that repeats the first. The animation ends on
+    // that duplicate at -600% and restarts at 0, which is invisible only
+    // because the two frames are the same image — drop the repeat and the loop
+    // either shows a blank frame or rewinds through five slides.
+    const slides = page.locator('.hero__slide');
+    await expect(slides).toHaveCount(7);
+    await expect(page.locator('.hero__pip')).toHaveCount(6);
+
+    // Decorative, exactly as the helmet it replaced was. These are marketing
+    // posters whose content is baked-in text that alt cannot reproduce, and
+    // every product they show is a real item in the catalogue below.
+    const alts = await page.locator('.hero__slide img').evaluateAll((els) =>
+      els.map((el) => (el as HTMLImageElement).getAttribute('alt')),
+    );
+    expect(alts).toEqual(['', '', '', '', '', '', '']);
+    await expect(page.locator('.hero__track')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  test('only the first slide is eager, so six posters cannot fight the LCP', async ({ page }) => {
+    await page.goto('/');
+
+    const loading = await page.locator('.hero__slide img').evaluateAll((els) =>
+      els.map((el) => (el as HTMLImageElement).getAttribute('loading')),
+    );
+    expect(loading[0]).toBe('eager');
+    expect(loading.slice(1)).toEqual(['lazy', 'lazy', 'lazy', 'lazy', 'lazy', 'lazy']);
+  });
+
+  test('auto-advancing motion has a pause mechanism that works without JavaScript', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // WCAG 2.2.2: motion that starts automatically and runs past five seconds
+    // needs a pause. axe does not test for it — the same blind spot that left a
+    // serious Label in Name failure on every product card at a green score.
+    const toggle = page.locator('#hero-carousel-pause');
+    const track = page.locator('.hero__track');
+
+    await expect(track).toHaveCSS('animation-play-state', 'running');
+
+    // Driven through the label, which is what a visitor actually clicks, rather
+    // than by checking the input directly.
+    await page.locator('.hero__pause').click();
+    await expect(toggle).toBeChecked();
+    await expect(track).toHaveCSS('animation-play-state', 'paused');
+
+    // The pips have to stop with the track or the lit pip drifts away from the
+    // slide it is meant to be reporting.
+    await expect(page.locator('.hero__pip').first()).toHaveCSS('animation-play-state', 'paused');
+
+    await page.locator('.hero__pause').click();
+    await expect(track).toHaveCSS('animation-play-state', 'running');
+  });
+
+  test('the pause control names itself the same way it reads', async ({ page }) => {
+    await page.goto('/');
+
+    // 2.5.3 Label in Name: the accessible name must contain the visible label,
+    // or a voice-control user saying "click Pause" cannot operate it.
+    const name = await page.locator('#hero-carousel-pause').getAttribute('aria-label');
+    expect(name?.toLowerCase()).toContain('pause');
+    await expect(page.locator('.hero__pause')).toHaveText(/pause/i);
   });
 });
 

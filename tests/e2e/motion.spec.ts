@@ -128,9 +128,19 @@ test.describe('prefers-reduced-motion', () => {
     // The three animated hero layers resolve to `animation: none` under the
     // media query in Hero.astro — this is the explicit `animation-name: none`
     // declaration, not global.css's blanket duration/iteration-count clamp.
-    await expect(page.locator('.hero__helmet img')).toHaveCSS('animation-name', 'none');
+    await expect(page.locator('.hero__track')).toHaveCSS('animation-name', 'none');
+    await expect(page.locator('.hero__pip').first()).toHaveCSS('animation-name', 'none');
     await expect(page.locator('.hero__glow')).toHaveCSS('animation-name', 'none');
-    await expect(page.locator('.hero__sweep')).toHaveCSS('animation-name', 'none');
+
+    // The carousel stops on slide one rather than mid-slide: a cancelled
+    // animation resolves to its 0% keyframe, which is translateX(0).
+    await expect(page.locator('.hero__track')).toHaveCSS('transform', 'none');
+
+    // And the pause control goes with it. A control that pauses something
+    // already stopped is a lie about what it does, and it was the only thing in
+    // the hero that could take focus and do nothing. Ticker.astro removes its
+    // own control here for the same reason.
+    await expect(page.locator('.hero__pause')).toBeHidden();
 
     // The title and actions use an entrance animation with `both` fill mode.
     // Cancelling that animation without also resetting opacity/transform

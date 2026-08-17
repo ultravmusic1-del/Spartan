@@ -1780,3 +1780,109 @@ on the orbit fan, where the wooden ceiling behind it could not be separated from
 the wire. It is invisible at the sizes the design actually uses (~180px tiles,
 ~400px spotlight) and was checked at both. It would show if the asset were ever
 used at full size — print, or a hero.
+
+---
+
+## 18. The hero is a campaign carousel, and the helmet is gone — 2026-08-17
+
+**Status: implemented and green.** `verify 16/16 · 207 unit · 220 e2e.`
+
+Replaced on instruction. The client's nineteen Kavalani campaign banners now
+rotate in the hero stage, and the AI-generated helmet — flagged since
+2026-08-11 and still unsigned-off — is no longer on the landing page.
+
+### What was NOT touched, and why that is the point
+
+The badge, the real `<h1>`, the two CTAs, the source order, the 136px of top
+padding and the `.hero__stage` hook are unchanged. Every one of those is a
+measured decision with a test behind it, and the brief was to change what sits
+in the stage rather than to rebuild the hero. Treating it as a swap is what kept
+`hero-mobile.spec.ts` meaningful instead of rewritten to match whatever the new
+code happened to do.
+
+### Six of nineteen, and two are excluded on a rule rather than on taste
+
+**The Grip Guard GP1 banner is out because it is wrong about a safety rating.**
+Its EN 388 icon reads `4X43D` while the glove's own label, photographed in that
+same banner, reads `4131X` — cut resistance advertised as **D** where the glove
+says **X, not tested**. §16 already treats banner artwork as a lead rather than
+a source of record; putting that specific banner in the most prominent position
+on the site would have published a false protection rating. **The Orbit Fan
+banner is out** for a smaller version of the same thing: it labels the fan
+`FW-40W`, a code belonging to no product (§17).
+
+Both return by adding one line to `BANNERS` once the artwork is reissued. The
+other eleven were left out for weight, not accuracy — see the byte budget below.
+
+### Pure CSS, and that was the design constraint
+
+No island, no hydration, works with JavaScript disabled. Seven slides on a flex
+track, `translateX` in six steps over 42s, with the seventh slide a duplicate of
+the first so the loop's reset lands on an identical frame. Six pips run the same
+42s clock on staggered delays, so the lit pip tracks the visible slide with no
+script tying them together.
+
+**It auto-advances, so WCAG 2.2.2 requires a pause mechanism** — decorative or
+not, and axe does not test for it. The control is a checkbox read by `:has()`,
+copied from `Ticker.astro`, which solved this first: a pause button that needs
+JavaScript to exist is no use to the visitor whose JavaScript is off, and the
+animation runs for them regardless.
+
+Slides are `alt=""` and the track is `aria-hidden`, exactly as the helmet was.
+These are posters whose content is baked-in text that alt cannot reproduce, and
+every product on them is a real item in the catalogue below.
+
+### Three defects found by auditing the rendered page, not by reading the code
+
+All three passed `npm run verify` and the axe sweep first.
+
+1. **The card printed across the headline between 1081 and 1128px.** The
+   helmet's stacking breakpoint was 1080px, measured on glyph pixels. A
+   transparent PNG whose mass stops inside its own canvas can sit closer to the
+   copy than an opaque rectangle can: measured with the card in place, its left
+   edge landed **47px past the headline's rightmost ink** at 1081px. The
+   breakpoint is now **1180px** (53px clear at the boundary, 112px above 1240).
+   I had written in the component that "1080px stands and is if anything
+   conservative" — that was an assumption stated as a measurement, and it was
+   wrong.
+
+2. **The inactive pip was 1.79:1 against the background.** I picked `#3a3a42`
+   because it looked right and annotated it "3.2:1" from memory. Measured, it
+   fails the 3:1 non-text bar it was claimed to meet. Now `#5c5c66` at
+   **3.04:1**, measured. This is precisely what rule 4 means, and axe does not
+   evaluate 1.4.11 on custom decorative-looking elements.
+
+3. **The pause control did not exist on desktop.** It hung 34px below the card
+   inside a hero with `overflow: hidden`, so it was clipped entirely — a WCAG
+   requirement rendered to zero pixels. The controls now sit in their own row
+   below the card, on flat black, which also fixed a fourth problem: white pips
+   over the near-white footer strip these banners carry were invisible, and any
+   scrim dark enough to fix that would have covered the client's own QR code.
+
+### The byte budget, which is the real cost
+
+The helmet was one 18 KB AVIF. Measured against the built output:
+
+|  | default quality, widths ≤872 | shipped: q42, widths ≤600 |
+|---|---|---|
+| desktop 1440 @1x | 147 KB | **121 KB** |
+| desktop 1440 @2x | 351 KB | **199 KB** |
+| phone 390 @3x | 381 KB | **200 KB** |
+
+Two things worth knowing before someone "optimises" this. **Astro's default
+quality is below 58** — asking for 58 made the files *bigger*, which is how that
+number was found. And `widths` deliberately stops at 600 rather than the 872 a
+DPR-2 desktop would request: a 3x phone renders the card at 226px and was
+pulling 678px of source for it. 42/600 was checked at 2x against the artwork's
+finest detail, the QR code, which still resolves cleanly.
+
+**This is still 7-11x the helmet's hero weight, and that is the price of the
+brief.** §12 records a 23 KB font costing this page a Lighthouse point, so the
+home score should be re-measured before anyone quotes it. It has not been.
+
+### One CSP fact worth carrying
+
+The carousel added no script, but **the hash still changed**: the breakpoint
+moved from 1080 to 1180 and that number appears in the parallax script's own
+`matchMedia`. One edited character in a media query invalidated the hash with no
+JavaScript logic changing at all. `npm run csp` re-run, `vercel.json` committed.
