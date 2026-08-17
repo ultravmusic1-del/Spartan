@@ -99,20 +99,28 @@ export const productSchema = z.object({
   /**
    * This product's page on the Kavalani site, where it can actually be bought.
    *
-   * Optional, and **absent on all 94 records today**: no Kavalani product URL
-   * exists anywhere in this repository, and a link to the wrong product page is
-   * exactly the class of error rule 1 exists to prevent — so none is guessed.
+   * Optional, and present on 10 of 94 records — Kavalani does not carry most of
+   * the Spartan range. A missing link is the common case and renders no control
+   * at all, which is correct: the alternative is a button that promises a
+   * listing that does not exist.
    *
-   * **The host is NOT pinned, and it should be.** A control reading "View on
-   * Kavalani" that navigates somewhere else is a lie, and the strongest guard
-   * against that is requiring the URL to be on Kavalani's own domain. That
-   * domain is not recorded anywhere here, so it cannot be written down without
-   * inventing it. Queued in BACKLOG.md; tighten this regex the day the client
-   * names it.
+   * **THE HOST IS PINNED, AND THAT IS THE POINT OF THIS FIELD BEING VALIDATED
+   * AT ALL.** A control reading "View on Kavalani" that navigates anywhere else
+   * is a lie, and no amount of care at the point of entry prevents a pasted
+   * wrong URL — only this does. The domain was confirmed by the client on
+   * 2026-08-17; until then this accepted any https URL and a unit test asserted
+   * that looseness so it stayed visible rather than being forgotten.
+   *
+   * `www.` is allowed because a redirect between the two is ordinary and a
+   * correct link should not fail the build over it. Any other host does fail,
+   * loudly, at build time.
    */
   kavalaniUrl: z
     .string()
-    .regex(/^https:\/\/[^\s]+$/, 'kavalaniUrl must be an absolute https URL')
+    .regex(
+      /^https:\/\/(?:www\.)?kavalani\.com\/[^\s]*$/,
+      'kavalaniUrl must be an https URL on kavalani.com',
+    )
     .optional(),
   /**
    * Provenance — where every value on this record can be checked against.

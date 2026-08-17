@@ -2144,3 +2144,76 @@ file, and the file holds 80 non-ASCII characters — `±`, `Ω`, `°`, `×`, inc
 — which is the mangling `docs/TRAPS.md` devotes an entry to. The seven `images`
 arrays were replaced in place and the non-ASCII count asserted unchanged before
 and after. The diff is seven lines.
+
+---
+
+## 21. Kavalani links: 10 of 94, and the host is pinned — 2026-08-17
+
+**Status: implemented and green.** `verify 17/17 --full · 242 unit · 258 e2e.`
+
+The client had all 94 products checked against kavalani.com and returned the
+results with per-row notes. Ten links are live, two are held, and the rest have a
+clear answer: **Kavalani does not carry most of the Spartan range.**
+
+That is the headline finding rather than a shortfall in the work. Seventy-two
+products came back with a specific reason — Kavalani's entire glove range is four
+SKUs and none is Spartan; it lists no goggles, no fall-arrest equipment, no
+portable air coolers, no LED bulbs; its spill control is 3M. Those need nothing
+further and should not be re-checked.
+
+### The host is pinned, which was the open half of the field
+
+`kavalaniUrl` now requires `https://kavalani.com/` or `https://www.kavalani.com/`.
+Until the domain was confirmed the schema accepted any https URL, and a unit test
+asserted that looseness deliberately so it stayed visible instead of being
+forgotten. That test is now its opposite, and it includes
+`https://kavalani.com.evil.test/` — a host containing the real domain as a
+substring, which is what a careless check lets through.
+
+This matters more than it looks. Nothing at the point of entry stops a pasted
+wrong URL, and a control reading "View on Kavalani" that navigates elsewhere is a
+lie the site would tell confidently. The build now refuses it.
+
+### Two are held, and why that is the right call
+
+Both are plausible matches on a Kavalani page that **prints no brand**, which is
+the single attribute that would settle them — the disposable coverall and the
+winter jacket. The sheet flagged both itself. They are not published, because a
+wrong link is worse than no button and the confirmation is a one-line question.
+
+### Eight more are recoverable, and they are the ones worth chasing
+
+In each case Kavalani carries the Spartan product but **neither side publishes
+the attribute that separates the variants**: three ventilation fans (three
+Spartan exhaust fans listed, no size or mounting type on either side), two safety
+glasses (three Spartan spectacles listed, our pages carry no model number), and
+three safety shoes (one Spartan SKU listed, no cut or upper material stated).
+
+This is a data-completeness problem on both catalogues rather than a matching
+problem, which is why it did not resolve itself with more searching. Somebody who
+knows the range assigns these in minutes.
+
+### A judgement recorded rather than buried
+
+**Six Spartan records describe a family that Kavalani splits into per-wattage or
+per-size SKUs**, and each links one member of its own family — the solar flood
+light links the 300W, pumps links the 1.5HP, the insect killer links the 2x15W,
+the welding jacket links the Large. The backlit panel is the sharpest case: our
+record covers 48W/80W/120W and Kavalani carries only the 80W.
+
+Taken deliberately. The control says "view on Kavalani", not "buy this exact
+variant", and the alternative — no link at all on six products Kavalani demonstrably
+carries — serves a buyer worse. It is recorded here because it will otherwise be
+reported as a mismatch by someone comparing the two catalogues side by side.
+
+A unit test asserts no two products share a Kavalani URL, which is the error case
+this shape could produce: two different records pointing at one page means one of
+them is wrong.
+
+### The negative case is tested, and it is the one that fails quietly
+
+`tests/e2e/catalogue.spec.ts` asserts the button is **absent** on Grip Guard GP5,
+chosen because Kavalani carries a four-SKU glove range with no Spartan in it —
+exactly the product a careless "close enough" match would have linked. An
+always-rendered button would send 84 products to a listing that does not exist,
+and nothing else on the site would notice.

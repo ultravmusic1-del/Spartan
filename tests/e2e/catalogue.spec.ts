@@ -309,6 +309,42 @@ test.describe('category pages', () => {
 });
 
 test.describe('product pages', () => {
+  /*
+   * "View on Kavalani" — present on the 10 products Kavalani actually carries
+   * and absent on the other 84. Both halves matter, and the absent half is the
+   * one that would fail quietly: an always-rendered button would send 84
+   * products to a listing that does not exist.
+   *
+   * Grip Guard GP5 is the negative case on purpose. Kavalani carries a four-SKU
+   * glove range and none of it is Spartan, so this is exactly the product a
+   * careless "close enough" match would have linked.
+   */
+  test('offers a Kavalani link on a product Kavalani carries', async ({ page }) => {
+    await page.goto('/products/pc-10-automatic-pump-controller');
+
+    const link = page.getByRole('link', { name: 'View on Kavalani' });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', /^https:\/\/(?:www\.)?kavalani\.com\//);
+    // Leaves the site, so it must not hand the opener a window reference.
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', /noopener/);
+  });
+
+  test('shows no Kavalani link on a product Kavalani does not carry', async ({ page }) => {
+    await page.goto('/products/grip-guard-gp5');
+    await expect(page.getByRole('link', { name: 'View on Kavalani' })).toHaveCount(0);
+  });
+
+  /*
+   * No datasheet exists for any product yet, so this control renders nowhere.
+   * Asserted rather than assumed: the field is optional and a default slipping
+   * in would put a dead download on all 94 pages.
+   */
+  test('shows no datasheet button while no product has one', async ({ page }) => {
+    await page.goto('/products/pc-10-automatic-pump-controller');
+    await expect(page.getByRole('link', { name: 'Download datasheet' })).toHaveCount(0);
+  });
+
   test('renders the product name as the h1 and shows its spec table', async ({ page }) => {
     await page.goto('/products/grip-guard-gp5');
 

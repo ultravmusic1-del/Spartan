@@ -45,11 +45,40 @@ describe('content data', () => {
   describe('the datasheet and Kavalani fields', () => {
     const base = products[0]!;
 
-    it('are absent from every product today, so neither control renders', () => {
-      const withDatasheet = products.filter((p) => 'datasheetUrl' in p);
-      const withKavalani = products.filter((p) => 'kavalaniUrl' in p);
-      expect(withDatasheet).toHaveLength(0);
-      expect(withKavalani).toHaveLength(0);
+    it('has no datasheet on any product yet, so that control renders nowhere', () => {
+      expect(products.filter((p) => 'datasheetUrl' in p)).toHaveLength(0);
+    });
+
+    /*
+     * 10 of 94, because Kavalani does not carry most of the Spartan range —
+     * confirmed by going through all 94 against their catalogue on 2026-08-17.
+     * A missing link is the ordinary case here and renders no control at all.
+     *
+     * The count is recorded rather than pinned to a target: it should rise as
+     * Kavalani lists more, and a test that treated growth as a failure would be
+     * the wrong shape. What is asserted is that every link present is a real
+     * Kavalani URL and that no two products point at the same page.
+     */
+    it('links only the products Kavalani actually carries', () => {
+      const linked = products.filter((p) => 'kavalaniUrl' in p);
+      expect(linked.length).toBeGreaterThan(0);
+      expect(linked.length).toBeLessThan(products.length);
+
+      for (const p of linked) {
+        expect(p.kavalaniUrl).toMatch(/^https:\/\/(?:www\.)?kavalani\.com\//);
+      }
+    });
+
+    /*
+     * Two products sharing one Kavalani page would mean one of them is wrong —
+     * the whole point of the link is that it lands on THIS product. Several
+     * Spartan records cover a family that Kavalani splits into per-wattage or
+     * per-size SKUs, so each such record points at one member of its own family;
+     * two DIFFERENT records pointing at the same page is the error case.
+     */
+    it('never points two products at the same Kavalani page', () => {
+      const urls = products.filter((p) => 'kavalaniUrl' in p).map((p) => p.kavalaniUrl);
+      expect(new Set(urls).size).toBe(urls.length);
     });
 
     it('accept a datasheet as a site-root path or an https PDF URL', () => {
@@ -72,26 +101,44 @@ describe('content data', () => {
       }
     });
 
-    it('accept an absolute https Kavalani URL and reject anything else', () => {
-      expect(() =>
-        productSchema.parse({ ...base, kavalaniUrl: 'https://example.com/p/1' }),
-      ).not.toThrow();
-      for (const url of ['http://example.com/p/1', '/p/1', 'example.com', '']) {
-        expect(() => productSchema.parse({ ...base, kavalaniUrl: url })).toThrow();
+    it('accept an https URL on kavalani.com, with or without www', () => {
+      for (const url of [
+        'https://kavalani.com/spartan-highbay-light-6500k.html',
+        'https://www.kavalani.com/spartan-highbay-light-6500k.html',
+        // Real links in this catalogue carry percent-encoded spaces.
+        'https://kavalani.com/welding%20sleeves%20grey%20leather.html',
+      ]) {
+        expect(() => productSchema.parse({ ...base, kavalaniUrl: url })).not.toThrow();
       }
     });
 
     /*
-     * The gap this leaves, stated rather than hidden: nothing above can tell a
-     * correct Kavalani URL from a valid one pointing at the wrong product, or at
-     * a different site entirely. Pinning the host would close half of it and the
-     * host is not recorded anywhere here, so it cannot be written down without
-     * inventing it. Queued in BACKLOG.md.
+     * THE HOST CHECK IS THE WHOLE VALUE OF THIS FIELD BEING VALIDATED.
+     *
+     * A control reading "View on Kavalani" that navigates anywhere else is a
+     * lie, and nothing at the point of entry prevents a pasted wrong URL — only
+     * this does. Until the client confirmed the domain on 2026-08-17 this
+     * accepted any https URL, and the test that sat here asserted that looseness
+     * explicitly so it stayed visible instead of being forgotten. It is now the
+     * opposite assertion.
+     *
+     * `kavalani.com.evil.test` is the one that matters: it contains the real
+     * domain as a substring, which is exactly what a careless check would let
+     * through.
      */
-    it('cannot yet tell a Kavalani URL from any other https URL', () => {
-      expect(() =>
-        productSchema.parse({ ...base, kavalaniUrl: 'https://not-kavalani.example/p/1' }),
-      ).not.toThrow();
+    it('reject any URL that is not on kavalani.com', () => {
+      for (const url of [
+        'https://example.com/p/1',
+        'https://not-kavalani.com/p/1',
+        'https://kavalani.com.evil.test/p/1',
+        'https://evil.test/?x=https://kavalani.com/',
+        'http://kavalani.com/p/1',
+        '/p/1',
+        'kavalani.com',
+        '',
+      ]) {
+        expect(() => productSchema.parse({ ...base, kavalaniUrl: url })).toThrow();
+      }
     });
   });
 

@@ -357,19 +357,48 @@ see `handoff.md`). Priorities are P0 highest.
       The existing P2 item about compressing the 163 MB brochure is the same
       blocker wearing a different hat.
 
-- [!] **Kavalani product URLs, and the domain to pin them to.** Blocked: client.
-      Requested 2026-08-17. `kavalaniUrl` is built and validated and **no product
-      carries one**, because no Kavalani product URL is written down anywhere in
-      this repository and a link to the wrong product page is exactly what rule 1
-      exists to prevent.
+- [ ] **Kavalani links: 10 of 94 done, 10 more recoverable.** The client had all
+      94 checked against kavalani.com on 2026-08-17 and supplied the results.
+      **Most of the Spartan range is simply not carried there**, which is the
+      headline finding and not a gap in the work — 72 products have a clear
+      "nothing comparable listed" answer and need nothing further.
 
-      **Ask for the domain in the same breath as the URLs.** The schema currently
-      accepts any absolute https URL, so nothing stops a "View on Kavalani"
-      control navigating somewhere that is not Kavalani. Requiring the host would
-      close half that gap and the host cannot be written down without inventing
-      it. `src/content.config.test.ts` asserts the current looseness explicitly so
-      it stays visible; tighten the regex in `src/content.config.ts` the day the
-      domain is known.
+      The host is now pinned to `kavalani.com` in `src/content.config.ts`, so a
+      link to anywhere else fails the build. That was the open half of this item
+      and it is closed.
+
+      **Two are held pending a one-line confirmation** — both are plausible
+      matches on a Kavalani page that prints no brand, which is the one thing
+      that would settle them. They are deliberately not published; a wrong link
+      is worse than no button.
+      - **Nonwoven Disposable Coverall** → `f_slv%20dispo_coverall%20white.html`
+        (white, hooded, full sleeve, the only disposable coverall listed — but no
+        brand and no GSM on the page).
+      - **Winter Jacket** → `winter-jacket-with-lining-hood.html` (navy, lining,
+        hood, reflective tape, no FR claim — but no brand printed).
+
+      **Eight more are resolvable by someone who knows the range**, and this is
+      the one worth chasing: in each case Kavalani carries the Spartan product,
+      but neither side publishes the attribute that tells the variants apart.
+      - **Three ventilation fans** — Kavalani has three Spartan exhaust fans
+        (window / wall / ceiling, `BH-ELEEXHSPBF-WM`, `BH-ELEEXH-SPC`,
+        `BH-ELEEXH-SPCM`). Neither side states size or mounting type.
+      - **Two safety glasses** — three Spartan spectacles are listed (`90960`,
+        `#91948`, `#9844A`) and our pages carry no model number, so "lightweight"
+        and "adjustable temple" cannot be told apart.
+      - **Three safety shoes** — one Spartan SKU is listed (`JP1 1023/8055`) and
+        neither side states cut or upper material, so it cannot be assigned to
+        KPU vs suede vs high-cut. One of the three is very likely this product.
+
+      **Six Spartan records map to a Kavalani family split by wattage or size**,
+      and each currently links one member of its own family: the solar flood
+      light (300W linked; 100W and 200W also exist, 50W and 150W do not), pumps
+      (1.5HP of four), the insect killer (2x15W of three), the welding jacket
+      (Large of four sizes), the backlit panel (Kavalani carries only the 80W of
+      our 48/80/120W family) and the floodlights (one listing covers 10W-1000W).
+      That is a deliberate call and a defensible one — the control says "view on
+      Kavalani", not "buy this exact variant" — but it is worth knowing before
+      someone reports it as a mismatch.
 
       The label is **"View on Kavalani", not "Buy on Kavalani"** — a control
       promising a purchase on a site with no prices, no cart and no checkout is
