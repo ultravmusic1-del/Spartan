@@ -149,40 +149,46 @@ let unitTests = null;
  * These numbers are the verified state recorded in handoff.md §6.
  */
 {
-  const products = JSON.parse(fs.readFileSync(path.join(root, 'src/data/products.json'), 'utf8'));
-  const categories = JSON.parse(
-    fs.readFileSync(path.join(root, 'src/data/categories.json'), 'utf8'),
-  );
-  const en388 = products.filter((p) => p.en388).length;
-  const problems = [];
-
-  // 72 from the brochure + 13 from the per-family datasheet PDFs + 9 from the
-  // Kavalani campaign banners. This was 72 while the brochure was the only
-  // source document; see handoff.md §6a, §16 and §17.
-  if (products.length !== 94) problems.push(`${products.length} products, expected 94`);
-  if (categories.length !== 15) problems.push(`${categories.length} categories, expected 15`);
-  if (en388 !== 6) problems.push(`${en388} EN 388 ratings, expected 6`);
+  const { checkInvariants, totals, readCatalogue } = await import('./catalogue-snapshot.mjs');
 
   /*
-   * Every product must still trace to a page of a named document. A record that
-   * loses its provenance has lost the only evidence that it was not typed in by
-   * hand.
+   * REWRITTEN 2026-08-17, ahead of the catalogue becoming editable from /admin.
    *
-   * This was a bare `sourcePage: number` while the brochure was the only source.
-   * It is `source: { doc, page }` now because it no longer is — 28 records cite
-   * a datasheet PDF instead, and a page number alone no longer identifies
-   * anything. Both halves are checked: a `doc` with no `page` points at a
-   * document without saying where in it, which is not provenance either.
+   * This block used to hard-code 94 products, 15 categories and 6 EN 388
+   * ratings, read out of src/data/products.json. Both halves of that stop being
+   * true once the admin can edit the catalogue: the totals move for good
+   * reasons, and products.json is no longer what the site is built from.
+   *
+   * Deleting the gate was the wrong answer — it is one of the few mechanical
+   * defences rule 1 has, on a catalogue of safety equipment. It splits instead:
+   * invariants that can never legitimately break are checked outright, and the
+   * totals are held against a committed snapshot a person regenerates on
+   * purpose. See tools/catalogue-snapshot.mjs.
+   *
+   * It follows CATALOGUE_SOURCE, so once the deployment renders from Postgres
+   * this checks the database rather than a file the build ignores.
    */
-  const unsourced = products
-    .filter((p) => !p.source?.doc || typeof p.source?.page !== 'number')
-    .map((p) => p.slug);
-  if (unsourced.length) problems.push(`no source {doc,page}: ${unsourced.join(', ')}`);
+  const catalogue = await readCatalogue();
+  const problems = checkInvariants(catalogue);
+
+  const snapshot = JSON.parse(
+    fs.readFileSync(path.join(root, 'tools/catalogue-snapshot.json'), 'utf8'),
+  );
+  const now = totals(catalogue);
+  for (const key of Object.keys(snapshot)) {
+    if (now[key] !== snapshot[key])
+      problems.push(
+        `${key}: ${now[key]}, snapshot says ${snapshot[key]} — ` +
+          'run `node tools/catalogue-snapshot.mjs --write` if this is intended',
+      );
+  }
 
   record(
     'catalogue shape',
     problems.length === 0,
-    problems.length ? problems.join('; ') : '94 products / 15 categories / 6 EN 388, all sourced',
+    problems.length
+      ? problems.join('; ')
+      : `${now.products} products / ${now.categories} categories / ${now.en388} EN 388, invariants hold`,
   );
 }
 
