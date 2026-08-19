@@ -79,7 +79,17 @@ const CATEGORY_COLUMNS = [
   'status',
   '"order"',
 ];
-const PRODUCT_COLUMNS = [
+/**
+ * The product table's columns, in the order `productCells` emits them.
+ *
+ * EXPORTED so a test can hold it against `productSchema`. On 2026-08-17 the
+ * schema gained `datasheetUrl` and `kavalaniUrl` and this list did not follow,
+ * so the seeder silently dropped both: the INSERT succeeded, every row was
+ * short two fields, and the parity build then reported a difference that read
+ * like a defect in the LOADER rather than in the data it had been given. The
+ * test that pins this to the schema is what stops that happening again.
+ */
+export const PRODUCT_COLUMNS = [
   'slug',
   'name',
   'variant_label',
@@ -90,6 +100,8 @@ const PRODUCT_COLUMNS = [
   'status',
   'source',
   '"order"',
+  'datasheet_url',
+  'kavalani_url',
 ];
 
 export const divisionCells = (d) => [
@@ -125,6 +137,15 @@ export const productCells = (p) => [
   lit(p.status ?? 'published'),
   json(p.source ?? null),
   p.order,
+  /*
+   * Absent stays absent, and here it matters twice over. Both fields are
+   * validated by a regex that an empty string FAILS, and the loader writes the
+   * key only when the column is non-NULL — so `''` would round-trip into the
+   * schema and break the build. `lit(null)` emits an unquoted `null`, which is
+   * how "this product has no datasheet" is said in SQL.
+   */
+  lit(p.datasheetUrl ?? null),
+  lit(p.kavalaniUrl ?? null),
 ];
 
 /**

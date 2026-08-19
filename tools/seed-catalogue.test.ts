@@ -148,3 +148,75 @@ describe('the emitted seed', () => {
     }
   });
 });
+
+/*
+ * ADDED 2026-08-17, after the Supabase table was found to be missing two
+ * columns the loader already reads.
+ *
+ * `productSchema` gained `datasheetUrl` and `kavalaniUrl` on 2026-08-17, months
+ * after this seeder was written, and nothing connected the two. The failure is
+ * silent in the worst way: the INSERT succeeds, the row is simply short a
+ * field, and `npm run catalogue:parity` then reports a difference that reads
+ * like a defect in the LOADER rather than in the seeder that produced the data.
+ *
+ * So the column list is asserted against the schema itself. A field added to
+ * one and not the other now fails here, naming the field, instead of surfacing
+ * as a mysterious parity failure later.
+ */
+describe('the seeder round-trips every field in the schema', () => {
+  it('PRODUCT_COLUMNS covers every key of productSchema, and nothing else', async () => {
+    const { productSchema } = await import('../src/content.config');
+    const { PRODUCT_COLUMNS } = await import('./seed-catalogue.mjs');
+
+    /** camelCase in the JSON and the schema; snake_case in Postgres. */
+    const toColumn = (key: string) => key.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
+    /** `"order"` is quoted in the column list because it is a reserved word. */
+    const bare = (col: string) => col.replace(/"/g, '');
+
+    const expected = Object.keys(productSchema.shape).map(toColumn).sort();
+    const actual = PRODUCT_COLUMNS.map(bare).sort();
+
+    expect(actual).toEqual(expected);
+  });
+
+  it('emits a cell for every column, so the two can never drift out of step', async () => {
+    const { PRODUCT_COLUMNS, productCells } = await import('./seed-catalogue.mjs');
+    const minimal = {
+      slug: 'x',
+      name: 'X',
+      variantLabel: null,
+      categoryId: 'hand',
+      images: ['a.png'],
+      specs: [],
+      status: 'published',
+      source: { doc: 'brochure', page: 1 },
+      order: 1,
+    };
+    expect(productCells(minimal)).toHaveLength(PRODUCT_COLUMNS.length);
+  });
+
+  it('writes an absent optional field as null, never as an empty string', async () => {
+    const { productCells } = await import('./seed-catalogue.mjs');
+    const cells = productCells({
+      slug: 'x',
+      name: 'X',
+      variantLabel: null,
+      categoryId: 'hand',
+      images: [],
+      specs: [],
+      status: 'published',
+      source: null,
+      order: 1,
+    });
+
+    /*
+     * This matters more than it looks. Both new fields are validated by a regex
+     * that an empty string FAILS, and the loader writes the key only when the
+     * column is non-NULL. An empty string would therefore round-trip into the
+     * schema and break the build -- which is the right outcome, but only
+     * because it is never written that way in the first place.
+     */
+    expect(cells).not.toContain("''");
+    expect(cells.filter((c) => c === 'null').length).toBeGreaterThan(0);
+  });
+});
