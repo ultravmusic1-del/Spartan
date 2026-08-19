@@ -71,7 +71,15 @@ describe('computeCounts', () => {
    * the catalogue still fails here. What it no longer does is fail when the
    * catalogue legitimately grows.
    */
-  it('reads the catalogue from src/data, not from a constant', () => {
+  /*
+   * RENAMED 2026-08-17. `computeCounts` now reads the snapshot rather than
+   * src/data directly, so the old name ("reads the catalogue from src/data")
+   * describes something it no longer does. The assertions are kept exactly as
+   * they were, and they are worth MORE than before: they now also prove the
+   * snapshot agrees with the committed data files, which is the thing that
+   * would silently drift once the two can be edited independently.
+   */
+  it('agrees with the committed data files, not with a constant', () => {
     const counts = computeCounts({ unitTests: 0 });
     expect(counts.products).toBe(data('products.json').length);
     expect(counts.categories).toBe(data('categories.json').length);
@@ -101,5 +109,42 @@ describe('computeCounts', () => {
     // verify.mjs already ran vitest and parsed the number. Running it a second
     // time here would double the slowest gate in the suite.
     expect(computeCounts({ unitTests: 999 }).unitTests).toBe(999);
+  });
+});
+
+/*
+ * ADDED 2026-08-17, ahead of the catalogue becoming editable.
+ *
+ * `computeCounts` reads src/data/*.json directly. That is correct while the
+ * committed files are what the site is built from, and wrong the moment
+ * CATALOGUE_SOURCE=postgres — the counts block would then describe a file the
+ * build ignores, which is the stale-number problem this whole tool exists to
+ * prevent, reintroduced one layer down.
+ *
+ * The snapshot is already the agreed single statement of the catalogue's
+ * totals, regenerated deliberately and gated by verify. Reading it here means
+ * one number, in one place, whichever source the build uses.
+ */
+describe('catalogueTotals', () => {
+  it('reads the snapshot rather than the JSON files', async () => {
+    const fs = await import('node:fs');
+    const { catalogueTotals } = await import('./counts.mjs');
+    const snapshot = JSON.parse(fs.readFileSync('tools/catalogue-snapshot.json', 'utf8'));
+
+    expect(catalogueTotals()).toEqual({
+      products: snapshot.products,
+      categories: snapshot.categories,
+      divisions: snapshot.divisions,
+    });
+  });
+
+  it('is what computeCounts uses, so the block and the gate cannot disagree', async () => {
+    const { computeCounts, catalogueTotals } = await import('./counts.mjs');
+    const counts = computeCounts({ unitTests: 0 });
+    const totals = catalogueTotals();
+
+    expect(counts.products).toBe(totals.products);
+    expect(counts.categories).toBe(totals.categories);
+    expect(counts.divisions).toBe(totals.divisions);
   });
 });

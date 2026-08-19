@@ -118,12 +118,37 @@ function runVitest() {
  * @param {{ unitTests?: number }} [opts]
  * @returns {Counts}
  */
+/**
+ * The catalogue's totals, from the committed snapshot.
+ *
+ * NOT from src/data/*.json, and the distinction starts mattering the moment
+ * CATALOGUE_SOURCE=postgres: the counts block would otherwise describe a set of
+ * files the build ignores. That is the stale-number problem this whole tool
+ * exists to prevent, reintroduced one layer down.
+ *
+ * `tools/catalogue-snapshot.json` is already the single agreed statement of
+ * these numbers — regenerated deliberately by a person, and gated by
+ * `npm run verify`, which checks it against whichever source is configured. One
+ * number, in one place, whichever way the site is built.
+ *
+ * @returns {{products: number, categories: number, divisions: number}}
+ */
+export function catalogueTotals() {
+  const snapshot = json('tools/catalogue-snapshot.json');
+  return {
+    products: snapshot.products,
+    categories: snapshot.categories,
+    divisions: snapshot.divisions,
+  };
+}
+
 export function computeCounts({ unitTests } = {}) {
   const vercel = fs.readFileSync(path.join(root, 'vercel.json'), 'utf8');
+  const catalogue = catalogueTotals();
   return {
-    products: json('src/data/products.json').length,
-    categories: json('src/data/categories.json').length,
-    divisions: json('src/data/divisions.json').length,
+    products: catalogue.products,
+    categories: catalogue.categories,
+    divisions: catalogue.divisions,
     ssrRoutes: ssrRoutes(),
     builtPages: builtPages(path.join(root, 'dist/client')),
     cspHashes: (vercel.match(/sha256-/g) ?? []).length,

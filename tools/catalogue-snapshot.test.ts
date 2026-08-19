@@ -140,7 +140,7 @@ describe('totals', () => {
 describe('the committed snapshot', () => {
   it('matches the catalogue as it stands', async () => {
     const fs = await import('node:fs');
-    const read = (f) => JSON.parse(fs.readFileSync(`src/data/${f}`, 'utf8'));
+    const read = (f: string) => JSON.parse(fs.readFileSync(`src/data/${f}`, 'utf8'));
     const snapshot = JSON.parse(fs.readFileSync('tools/catalogue-snapshot.json', 'utf8'));
 
     expect(

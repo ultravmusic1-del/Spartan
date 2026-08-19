@@ -13,7 +13,7 @@ Supabase Postgres · Vercel.
 
 **94 products** across **15 categories**, in **2 divisions**.
 
-**119 built pages** · **13 server-rendered routes** · **9 inline-script CSP hashes** · **242 unit tests**.
+**119 built pages** · **13 server-rendered routes** · **9 inline-script CSP hashes** · **259 unit tests**.
 
 <!-- counts:end -->
 
@@ -137,10 +137,18 @@ speaks for. It enforces rules 2 and 3 outright, plus the built output: no price
 or rating in structured data, one title and one canonical per page, one origin
 in robots.txt, CSP hashes that match the build, the service-role key absent from
 every client directory and every emitted asset. Rule 1 is gated in **shape
-only** — the product, category and EN 388 totals holding still, and a
-`source: { doc, page }` on every record. Nothing here can compare a value
-against source documents that are not on this machine, so an invented
-specification passes. Rule 4 has no static gate — nothing here resolves a
+only**, and since 2026-08-17 that means two different things rather than one:
+**invariants** that can never legitimately break — every `categoryId` and
+`divisionId` resolves, every `heroProductSlug` is null or real, no duplicate
+slugs, and every product either cites a `source: { doc, page }` or has a
+`catalogue_audit` entry naming who entered it — plus **totals** held against
+`tools/catalogue-snapshot.json`, which a person regenerates deliberately with
+`node tools/catalogue-snapshot.mjs --write`. The totals used to be three
+literals in `tools/verify.mjs`; they moved because an editable catalogue makes
+them change for good reasons. The gate follows `CATALOGUE_SOURCE`, so it checks
+the database once the deployment renders from Postgres. Nothing here can compare
+a value against source documents that are not on this machine, so an invented
+specification still passes. Rule 4 has no static gate — nothing here resolves a
 rendered font size against its background — but `--full` runs axe over 13
 sampled paths, which caught the 11px labels and still missed `.en td` at 4.48:1
 and a serious Label in Name failure on every product card. A green axe run is a
