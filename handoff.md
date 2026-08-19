@@ -2220,7 +2220,7 @@ and nothing else on the site would notice.
 
 ---
 
-## 19. The catalogue is in Postgres, and the gate that guarded it changed shape — 2026-08-19
+## 22. The catalogue is in Postgres, and the gate that guarded it changed shape — 2026-08-19
 
 **Status: Stage 1 complete in the repository; one Vercel setting outstanding.**
 `verify 17/17 · 259 unit · 258 e2e.` Plan:
@@ -2318,9 +2318,9 @@ live.
 
 ---
 
-## 20. Where to pick up — state as of 2026-08-19
+## 23. Where to pick up — state as of 2026-08-19
 
-Written so a new session can continue without re-deriving any of it. §19 is the
+Written so a new session can continue without re-deriving any of it. §22 is the
 reasoning; this is the state and the next action.
 
 ### What is true right now
@@ -2330,26 +2330,34 @@ reasoning; this is the state and the next action.
 | Catalogue | **94 products / 15 categories / 2 divisions**, in Postgres AND in the committed JSON, proven byte-identical |
 | Local build | Reads **Postgres** — `CATALOGUE_SOURCE=postgres` is in `.env` |
 | Vercel | `CATALOGUE_SOURCE=postgres` set on Production and Preview; **added on 2026-08-19, it had never existed before**, so every prior deploy read the JSON |
+| **Production** | **Rendering from Postgres, confirmed 2026-08-19.** Build succeeded and was fast |
 | Gates | `verify 17/17`, 259 unit, 258 e2e, 119 pages |
 | `main` | pushed, at `6b95e66` |
 | Credentials | `.env` exists at the repository root with Supabase, Resend and the Vercel deploy hook filled in. It is gitignored (`.env` and `.env.*`) |
 
-**The one thing not confirmed: whether the Vercel build that followed the push
-actually rendered from Postgres.** It cannot be checked from outside, and that
-is not a gap in the checking — it is what parity *means*. Both sources emit
-identical bytes, so the live HTML looks the same either way. The live JS bundle
-hash does match a local Postgres build, which is suggestive and not proof.
-**Open the Vercel dashboard and read the build log**: the loader prints its row
-counts. If the build failed, the loader threw rather than publishing a site with
-no products, and the previous deployment is still serving — which is the
-designed behaviour, not an outage.
+### Stage 1 is complete, and production is on Postgres
 
-The one plausible failure is that `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
-are scoped in Vercel to Runtime only. The build needs them at **build** time now.
+**Confirmed by the client on 2026-08-19: the Vercel build succeeded and was
+fast.** That closes Phase 2, which had been staged and unfinished since
+2026-08-13.
 
-### What remains of Stage 1
+Two things worth keeping from how that confirmation had to happen.
 
-Nothing in the repository. Only the confirmation above.
+**It could not be checked from outside, and that is not a gap in the checking —
+it is what parity means.** Both sources emit identical bytes, so the live HTML
+cannot tell you which one produced it. The live JS bundle hash matching a local
+Postgres build was suggestive and not proof. The build log was the only place
+the answer existed. Anyone re-running this migration on another environment
+should expect the same and go straight to the log.
+
+**Build time did not suffer.** The concern with moving the catalogue into
+Postgres was that a build now makes network round trips before it can render a
+single page — 94 products, 15 categories and 2 divisions fetched before the
+first byte of HTML. In practice the build was quick enough that the client
+volunteered it. Worth recording because it is the argument someone will
+otherwise re-have from first principles, and because **the honest trade was
+never speed — it was that offline builds have ended.** That is inherent to the
+choice, not a defect, and it is why the `json` escape hatch stays.
 
 ### What Stage 2 is, and exactly where to start
 

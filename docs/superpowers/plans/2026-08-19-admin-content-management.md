@@ -16,7 +16,7 @@ The request spans several subsystems. Planning all of them today would mean inve
 
 | Stage | Ships | Useful alone? | Planned where |
 |---|---|---|---|
-| **1. Complete the Postgres switch** | Live site renders from the database | No visible change; it is the foundation | **This document, in full** |
+| ~~1. Complete the Postgres switch~~ | **DONE 2026-08-19** — live site renders from the database | No visible change; it was the foundation | **This document, in full** |
 | **2. Site text + banner config into Postgres** | The same seam for `site.json` and the hero banner list | No visible change | **This document, in full** |
 | 3. Browse (read-only admin screens) | See the catalogue, text and banners in the admin | Yes | Own plan, written at its start |
 | 4. Edit existing records | Corrections without a developer | Yes | Own plan |
@@ -80,7 +80,7 @@ What that plan does **not** cover, and this one adds: front-end text (`src/data/
 
 ---
 
-# Stage 1 — Complete the Postgres switch
+# Stage 1 — Complete the Postgres switch — COMPLETE 2026-08-19
 
 The tables, the loader and the parity harness already exist. What remains is applying the current data, re-pointing two gates that read the JSON as truth, and flipping the switch on the deployment.
 
@@ -594,7 +594,7 @@ git commit -m "chore(counts): catalogue totals come from the snapshot, not the J
 
 ---
 
-### Task 6: Flip the deployment to Postgres — READY, needs one Vercel setting
+### Task 6: Flip the deployment to Postgres — DONE 2026-08-19, build green and fast
 
 **Files:** none. A Vercel setting and a redeploy.
 

@@ -170,7 +170,10 @@ see `handoff.md`). Priorities are P0 highest.
       detail view, a status change that persisted, the demand report and the CSV
       export. The subsystem is no longer verified only by reading. See Done.
 
-- [ ] **Switch production to the Postgres catalogue.** Everything is proved and
+- [x] **Switch production to the Postgres catalogue.** **DONE 2026-08-19.**
+      `CATALOGUE_SOURCE=postgres` set on Production and Preview — the variable
+      had never existed in Vercel before, so every deploy until now read the
+      committed JSON. Build succeeded, and was fast. `handoff.md` §22 and §23. Everything is proved and
       staged; this is one setting in Vercel and nothing in the repository.
       Add **`CATALOGUE_SOURCE=postgres`** to the Vercel project's environment
       variables (Production, and Preview if preview builds should match), then
