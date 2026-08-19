@@ -177,7 +177,7 @@ see `handoff.md`). Priorities are P0 highest.
       redeploy. Leave CI and the local default alone — see
       `src/content.config.ts` for why the code default stays `json`.
 
-      **UNBLOCKED 2026-08-17. The database is current and parity is proven.**
+      **UNBLOCKED 2026-08-19. The database is current and parity is proven.**
       It held 85 products against the repository's 94, still carried the removed
       shrinkage rows, and was missing the `datasheet_url` and `kavalani_url`
       columns entirely. All three are fixed: the columns were added by migration,
@@ -199,7 +199,7 @@ see `handoff.md`). Priorities are P0 highest.
       fails and the previous deployment stays live. Nothing half-publishes.
 
 - [x] **BEFORE any catalogue editing lands, point the catalogue-shape gate at
-      the database.** **Done 2026-08-17.** `tools/catalogue-snapshot.mjs` now
+      the database.** **Done 2026-08-19.** `tools/catalogue-snapshot.mjs` now
       holds the invariants — every `categoryId` and `divisionId` resolves, every
       `heroProductSlug` is null or real, no duplicate slugs, and every product
       either cites a source or has a `catalogue_audit` entry naming who entered

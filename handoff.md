@@ -1,6 +1,6 @@
 # Spartan Catalogue Website — Handoff
 
-**Last updated:** 2026-08-17
+**Last updated:** 2026-08-19
 **Branch:** `main`. Every feature branch — `feat/catalogue-site`, `feat/landing-redesign`, `agent/improvements` — is merged into it and `git log main..<branch>` is empty for all three, so the warning this line used to carry no longer applies.
 **State:** **The catalogue build is complete and verified, and admin Phase 1 is complete.** The public site builds end to end, the full enquiry path works from product card to submitted RFQ, and an operator can now sign in, work the inbox, change a status, read the demand report and download the CSV. See §13. What is left is deployment and the client-supplied items in §8.
 
@@ -2220,11 +2220,11 @@ and nothing else on the site would notice.
 
 ---
 
-## 19. The catalogue is in Postgres, and the gate that guarded it changed shape — 2026-08-17
+## 19. The catalogue is in Postgres, and the gate that guarded it changed shape — 2026-08-19
 
 **Status: Stage 1 complete in the repository; one Vercel setting outstanding.**
 `verify 17/17 · 259 unit · 258 e2e.` Plan:
-`docs/superpowers/plans/2026-08-17-admin-content-management.md`.
+`docs/superpowers/plans/2026-08-19-admin-content-management.md`.
 
 Phase 2 had been staged since 2026-08-13 — tables, loader, parity harness, code
 default left at `json` — and never finished. This finishes it, and it found
@@ -2315,3 +2315,94 @@ holds no Supabase credentials by design, keeps building.
 If that build fails, the loader threw rather than publishing a site with no
 products — that is the designed behaviour, and the previous deployment stays
 live.
+
+---
+
+## 20. Where to pick up — state as of 2026-08-19
+
+Written so a new session can continue without re-deriving any of it. §19 is the
+reasoning; this is the state and the next action.
+
+### What is true right now
+
+| | |
+|---|---|
+| Catalogue | **94 products / 15 categories / 2 divisions**, in Postgres AND in the committed JSON, proven byte-identical |
+| Local build | Reads **Postgres** — `CATALOGUE_SOURCE=postgres` is in `.env` |
+| Vercel | `CATALOGUE_SOURCE=postgres` set on Production and Preview; **added on 2026-08-19, it had never existed before**, so every prior deploy read the JSON |
+| Gates | `verify 17/17`, 259 unit, 258 e2e, 119 pages |
+| `main` | pushed, at `6b95e66` |
+| Credentials | `.env` exists at the repository root with Supabase, Resend and the Vercel deploy hook filled in. It is gitignored (`.env` and `.env.*`) |
+
+**The one thing not confirmed: whether the Vercel build that followed the push
+actually rendered from Postgres.** It cannot be checked from outside, and that
+is not a gap in the checking — it is what parity *means*. Both sources emit
+identical bytes, so the live HTML looks the same either way. The live JS bundle
+hash does match a local Postgres build, which is suggestive and not proof.
+**Open the Vercel dashboard and read the build log**: the loader prints its row
+counts. If the build failed, the loader threw rather than publishing a site with
+no products, and the previous deployment is still serving — which is the
+designed behaviour, not an outage.
+
+The one plausible failure is that `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+are scoped in Vercel to Runtime only. The build needs them at **build** time now.
+
+### What remains of Stage 1
+
+Nothing in the repository. Only the confirmation above.
+
+### What Stage 2 is, and exactly where to start
+
+Plan: `docs/superpowers/plans/2026-08-19-admin-content-management.md`, Tasks 7
+to 9. It puts **front-end text and hero banner selection** behind the same seam
+the catalogue now uses. No UI, no visible change — it is the second half of the
+foundation, and the editor stages sit on top of it.
+
+Start with **Task 7**, which is self-contained and needs nothing new:
+
+1. Create `src/data/hero-banners.json` from the six entries currently hardcoded
+   in `Hero.astro`'s `BANNERS` array.
+2. Create `src/lib/site-content.ts` with `getHeroBanners()` — this is to site
+   text and banners what `catalog.ts` is to products.
+3. Rewire `Hero.astro` to read through it, resolving filenames with
+   `import.meta.glob` because `astro:assets` cannot take a runtime string path.
+
+**The trap in Task 7, which the plan states and is worth repeating here: the
+carousel's pip count, its keyframe percentages and its 42-second clock are all
+derived from there being exactly six slides.** Making the list data-driven
+without making those computed produces a carousel whose lit pip reports the
+wrong slide — which looks like a rendering bug and is arithmetic. Derive the
+per-slide percentage from `banners.length`.
+
+Then Task 8 (route the 15 `site.json` consumers through the seam, and tighten
+the rule 3 gate to cover it) and Task 9 (tables, loader and seeder for
+`site_settings` and `hero_banners`).
+
+### Two known gaps in the plan itself
+
+- **Four steps in Task 9 describe rather than show code** — the site-content
+  loader, its seeder, the `CATALOGUE_SOURCE` wiring and the parity extension.
+  This was found in the plan's own self-review and left deliberately: Stage 1
+  had to land first, and writing them speculatively would have meant inventing
+  detail about code that did not exist. **Fill them in before executing Task 9.**
+- The plan's Stages 3 to 6 (browse, edit, create/delete, upload and Publish) are
+  specified but not planned. Each gets its own plan at its start, which is the
+  convention the admin design doc set and the reason Phase 1's plan was worth
+  following.
+
+### Decisions taken, do not relitigate
+
+- **Every admin may publish.** No `admins.role` column; allow-list membership is
+  the whole permission model. Restricting it later is one column plus one check.
+- **Publishing is an explicit button**, not publish-on-save (2026-08-13).
+- **Admin-created products may leave `source` empty**; `catalogue_audit` records
+  who created each row, and the shape gate accepts an audit entry in place of a
+  source (2026-08-13, decision 1.1). The gate implementing this is live.
+
+### One housekeeping item
+
+The service-role key, the Resend key and the Vercel deploy hook URL were pasted
+into a chat transcript on 2026-08-19. All three rotate in minutes. The
+service-role key is the one that matters: it bypasses row-level security on
+every table, including the one holding every name, email address and phone
+number the site has collected.

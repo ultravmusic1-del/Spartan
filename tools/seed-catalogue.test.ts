@@ -150,7 +150,7 @@ describe('the emitted seed', () => {
 });
 
 /*
- * ADDED 2026-08-17, after the Supabase table was found to be missing two
+ * ADDED 2026-08-19, after the Supabase table was found to be missing two
  * columns the loader already reads.
  *
  * `productSchema` gained `datasheetUrl` and `kavalaniUrl` on 2026-08-17, months

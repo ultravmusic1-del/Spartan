@@ -72,7 +72,7 @@ describe('computeCounts', () => {
    * catalogue legitimately grows.
    */
   /*
-   * RENAMED 2026-08-17. `computeCounts` now reads the snapshot rather than
+   * RENAMED 2026-08-19. `computeCounts` now reads the snapshot rather than
    * src/data directly, so the old name ("reads the catalogue from src/data")
    * describes something it no longer does. The assertions are kept exactly as
    * they were, and they are worth MORE than before: they now also prove the
@@ -113,7 +113,7 @@ describe('computeCounts', () => {
 });
 
 /*
- * ADDED 2026-08-17, ahead of the catalogue becoming editable.
+ * ADDED 2026-08-19, ahead of the catalogue becoming editable.
  *
  * `computeCounts` reads src/data/*.json directly. That is correct while the
  * committed files are what the site is built from, and wrong the moment

@@ -137,7 +137,7 @@ speaks for. It enforces rules 2 and 3 outright, plus the built output: no price
 or rating in structured data, one title and one canonical per page, one origin
 in robots.txt, CSP hashes that match the build, the service-role key absent from
 every client directory and every emitted asset. Rule 1 is gated in **shape
-only**, and since 2026-08-17 that means two different things rather than one:
+only**, and since 2026-08-19 that means two different things rather than one:
 **invariants** that can never legitimately break — every `categoryId` and
 `divisionId` resolves, every `heroProductSlug` is null or real, no duplicate
 slugs, and every product either cites a `source: { doc, page }` or has a

@@ -152,7 +152,7 @@ let unitTests = null;
   const { checkInvariants, totals, readCatalogue } = await import('./catalogue-snapshot.mjs');
 
   /*
-   * REWRITTEN 2026-08-17, ahead of the catalogue becoming editable from /admin.
+   * REWRITTEN 2026-08-19, ahead of the catalogue becoming editable from /admin.
    *
    * This block used to hard-code 94 products, 15 categories and 6 EN 388
    * ratings, read out of src/data/products.json. Both halves of that stop being

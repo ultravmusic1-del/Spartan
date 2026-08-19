@@ -38,20 +38,20 @@ What that plan does **not** cover, and this one adds: front-end text (`src/data/
 
 **Every task below is blocked on the first item.** There are no Supabase credentials on this machine, which is why all catalogue work so far has been verifiable only by typecheck, build and unit test.
 
-- [x] **P1. A `.env` with working Supabase credentials.** **Done 2026-08-17.** `.env` was created at the repository root on 2026-08-17 with every key present and commented; the values are still blank. Fill `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` from Supabase → Project Settings → Data API / API Keys.
+- [x] **P1. A `.env` with working Supabase credentials.** **Done 2026-08-19.** `.env` was created at the repository root on 2026-08-19 with every key present and commented; the values are still blank. Fill `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_ANON_KEY` from Supabase → Project Settings → Data API / API Keys.
 
       **Still required even though the Supabase connector works.** The connector can read and write the database, but `npm run catalogue:parity` runs a local BUILD that reads from Postgres, and that build needs the credentials in the process environment. Without them Stage 1's acceptance test cannot run, and Task 6 must not be attempted on an unproven migration.
 
-- [x] **P2. Confirm the tables exist and match the column lists.** **Done 2026-08-17 via the Supabase connector**, and it found two things:
+- [x] **P2. Confirm the tables exist and match the column lists.** **Done 2026-08-19 via the Supabase connector**, and it found two things:
 
       - All three catalogue tables exist, plus `catalogue_audit` (0 rows) — which Stage 5 needs and which therefore no longer has to be created.
       - **`products` held 85 rows against the repository's 94**, confirming the staleness Task 1 exists to fix, and the table was **missing `datasheet_url` and `kavalani_url`** entirely. The loader already reads both. **Both columns were added** by migration `add_datasheet_and_kavalani_url_to_products`. `divisions` and `categories` were brought current at the same time; `products` is still stale pending P1.
 
       Project `spartan`, ref `wslylysakixrirxkozih`, region **ap-south-1 (Mumbai)**, ACTIVE_HEALTHY. That region is also the answer to the hosting question about where compute should sit: the enquiry path and every admin page round-trip to this database, while the pages buyers browse do not.
 
-- [x] **P3. A Vercel deploy hook URL.** **Done 2026-08-17**, stored in `.env`. Nothing reads it until Stage 6., from Project Settings → Git → Deploy Hooks. Needed by Stage 6, but worth creating now so it is not a blocker later. Store as `VERCEL_DEPLOY_HOOK_URL`; the key is already present and blank in `.env`.
+- [x] **P3. A Vercel deploy hook URL.** **Done 2026-08-19**, stored in `.env`. Nothing reads it until Stage 6., from Project Settings → Git → Deploy Hooks. Needed by Stage 6, but worth creating now so it is not a blocker later. Store as `VERCEL_DEPLOY_HOOK_URL`; the key is already present and blank in `.env`.
 
-- [x] **P4. Who may publish. DECIDED 2026-08-17: every admin may publish.** No role column is needed and `public.admins` stays as it is — membership of the allow-list is the whole permission model, which keeps it the single thing to reason about. Recorded because the alternative is cheap to add later and expensive to retrofit opinions about: if publishing is ever restricted, it is an `admins.role` column plus a check in the publish endpoint, and nothing else changes.
+- [x] **P4. Who may publish. DECIDED 2026-08-19: every admin may publish.** No role column is needed and `public.admins` stays as it is — membership of the allow-list is the whole permission model, which keeps it the single thing to reason about. Recorded because the alternative is cheap to add later and expensive to retrofit opinions about: if publishing is ever restricted, it is an `admins.role` column plus a check in the publish endpoint, and nothing else changes.
 
 ---
 
@@ -86,7 +86,7 @@ The tables, the loader and the parity harness already exist. What remains is app
 
 **This stage ships alone. Nothing else lands in these commits.**
 
-### Task 1: Apply the current catalogue to Postgres — DONE 2026-08-17
+### Task 1: Apply the current catalogue to Postgres — DONE 2026-08-19
 
 The database still holds the 2026-08-13 catalogue: 85 products, with the fire-retardant shrinkage rows, no spill control range and no per-spec `source`. The repository holds 94. **Flipping the switch before this task would roll the live site back several weeks.**
 
@@ -145,7 +145,7 @@ Expected: real characters. **If you see `┬▒`, `╬⌐` or `ΓÇö`, the past
 
 ---
 
-### Task 2: Make the seeder round-trip every column — DONE 2026-08-17 (`1120820`)
+### Task 2: Make the seeder round-trip every column — DONE 2026-08-19 (`1120820`)
 
 `productSchema` gained `datasheetUrl`, `kavalaniUrl` and per-spec `source` after the seeder was written. A seeder that silently drops a column produces a database that parity then correctly reports as different — and the difference looks like a loader bug.
 
@@ -208,7 +208,7 @@ git commit -m "fix(catalogue): the seeder was dropping two columns it never knew
 
 ---
 
-### Task 3: Prove the two sources are identical — DONE 2026-08-17, 642 files byte-identical
+### Task 3: Prove the two sources are identical — DONE 2026-08-19, 642 files byte-identical
 
 **Files:** none modified. This is a gate.
 
@@ -228,7 +228,7 @@ A difference is a migration defect, not a tolerance. The three causes seen so fa
 
 ---
 
-### Task 4: Re-point the catalogue-shape gate at invariants — DONE 2026-08-17 (`cd83114`)
+### Task 4: Re-point the catalogue-shape gate at invariants — DONE 2026-08-19 (`cd83114`)
 
 The gate hard-codes `94 products / 15 categories / 6 EN 388`, read from `src/data/products.json`. Once the catalogue is editable those numbers move for good reasons, and once it is in Postgres that file is no longer the truth. It must not simply be deleted: it is one of the few mechanical defences rule 1 has.
 
@@ -520,7 +520,7 @@ git commit -m "feat(verify): the catalogue gate checks invariants and a snapshot
 
 ---
 
-### Task 5: Teach `npm run counts` to read the snapshot — DONE 2026-08-17 (`7727571`)
+### Task 5: Teach `npm run counts` to read the snapshot — DONE 2026-08-19 (`7727571`)
 
 **Files:**
 - Modify: `tools/counts.mjs`, `tools/counts.test.ts`
