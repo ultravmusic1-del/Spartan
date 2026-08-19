@@ -2217,3 +2217,101 @@ chosen because Kavalani carries a four-SKU glove range with no Spartan in it —
 exactly the product a careless "close enough" match would have linked. An
 always-rendered button would send 84 products to a listing that does not exist,
 and nothing else on the site would notice.
+
+---
+
+## 19. The catalogue is in Postgres, and the gate that guarded it changed shape — 2026-08-17
+
+**Status: Stage 1 complete in the repository; one Vercel setting outstanding.**
+`verify 17/17 · 259 unit · 258 e2e.` Plan:
+`docs/superpowers/plans/2026-08-17-admin-content-management.md`.
+
+Phase 2 had been staged since 2026-08-13 — tables, loader, parity harness, code
+default left at `json` — and never finished. This finishes it, and it found
+three things that a staged-but-unfinished migration hides well.
+
+### What the database actually held
+
+Credentials arrived on this machine for the first time, and the Supabase
+connector was reachable. The catalogue tables were **not** in the state the
+staging commit implied:
+
+- **85 products against the repository's 94.** Nine products added since
+  2026-08-13 had never been seeded, and the three fire-retardant `Shrinkage`
+  rows removed on 2026-08-16 were still there. **Flipping the switch at any
+  point in those four days would have rolled the live catalogue back.**
+- **`datasheet_url` and `kavalani_url` did not exist as columns**, though
+  `mapProduct` in the loader had been reading them since they were added. A
+  Postgres build would have quietly produced 94 products with no datasheet and
+  no Kavalani link, and the parity harness would have reported it as a
+  difference that reads like a defect in the loader.
+- `catalogue_audit` already existed and was empty, which Stage 5 needs and no
+  longer has to create.
+
+Project `spartan`, ref `wslylysakixrirxkozih`, **ap-south-1 (Mumbai)**. Worth
+recording because it is also the answer to where compute should sit: the enquiry
+path and every admin page round-trip to this database, while the pages buyers
+actually browse make no server calls at all.
+
+### The seeder had the same hole as the table
+
+`PRODUCT_COLUMNS` never gained the two new fields either, so the tool that keeps
+the two sources in step would have re-introduced the gap on its next run. It is
+fixed, and **pinned to `productSchema` by a test** — a field added to one and not
+the other now fails by name, rather than surfacing later as a mysterious parity
+failure. That test is the durable part; the column list was the symptom.
+
+### Parity, and what it is worth
+
+`npm run catalogue:parity` reports **642 files byte-identical from both
+sources**. That is the acceptance condition the design doc set for this phase and
+the reason it ships alone.
+
+Counts alone would not have been enough, so the data was checked for what
+actually changed: 0 shrinkage rows, 7 spill control products, `AF-40W` reading
+"Orbit Fan", 10 Kavalani links, 6 EN 388 ratings, 19 products carrying per-spec
+provenance, 0 orphaned products, 0 broken hero references. And the non-ASCII
+round trip is clean — `±`, `Ω` and `°` came back as themselves, which is the
+check that caught the mojibake disaster on 2026-08-13.
+
+### The shape gate had to change, and deleting it was the wrong answer
+
+`npm run verify` hard-coded 94 products / 15 categories / 6 EN 388, read out of
+`src/data/products.json`. Both halves of that stop being true the moment the
+admin can edit the catalogue: the totals move for good reasons, and that file is
+no longer what the site is built from.
+
+It would have been easy to delete. It is one of the few **mechanical** defences
+rule 1 has, on a catalogue of safety equipment, so it split in two instead:
+
+- **Invariants**, checked outright, because they can never legitimately break
+  whatever anyone types into an editor: every `categoryId` and `divisionId`
+  resolves, every `heroProductSlug` is null or real, no duplicate slugs, and
+  every product either cites a `source: { doc, page }` **or** has a
+  `catalogue_audit` entry naming who entered it. That last clause is decision
+  1.1 of the 2026-08-13 plan: training governs whether someone invents a figure
+  today, but it does not survive staff turnover and it cannot answer a
+  maintainer in two years asking where a rating came from.
+- **Totals**, held against `tools/catalogue-snapshot.json`, regenerated
+  deliberately with `node tools/catalogue-snapshot.mjs --write`. A number still
+  cannot move without somebody acknowledging it; it is simply no longer a
+  literal in a source file. Exactly the pattern the counts block already uses.
+
+It follows `CATALOGUE_SOURCE`, so it checks the database rather than a file the
+build ignores. Verified against both sources: identical totals, zero violations.
+
+**It was proved to still bite**, because a gate that cannot fail is worse than no
+gate: a stale snapshot fails naming the command that fixes it, and a planted
+broken `heroProductSlug` fails naming the category. `npm run counts` reads the
+same snapshot for the same reason — one number, one place, whichever way the
+site is built.
+
+### What is left
+
+**One Vercel environment variable.** `CATALOGUE_SOURCE=postgres`, Production and
+Preview, then redeploy. The code default stays `json` permanently so CI, which
+holds no Supabase credentials by design, keeps building.
+
+If that build fails, the loader threw rather than publishing a site with no
+products — that is the designed behaviour, and the previous deployment stays
+live.

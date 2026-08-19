@@ -177,14 +177,17 @@ see `handoff.md`). Priorities are P0 highest.
       redeploy. Leave CI and the local default alone — see
       `src/content.config.ts` for why the code default stays `json`.
 
-      **BLOCKED ON A SEED SINCE 2026-08-16 — read before flipping it.** Three
-      `Shrinkage` rows were removed from the fire-retardant garments in
-      `src/data/products.json` (`handoff.md` §15) and the database still holds
-      them. Flipping this switch first would silently restore all three on the
-      live site with nobody having edited anything. Apply the regenerated
-      `seed.sql` and confirm `npm run catalogue:parity` is clean, then flip.
-      Parity is expected to FAIL until that is done; that failure is the removal,
-      not a regression.
+      **UNBLOCKED 2026-08-17. The database is current and parity is proven.**
+      It held 85 products against the repository's 94, still carried the removed
+      shrinkage rows, and was missing the `datasheet_url` and `kavalani_url`
+      columns entirely. All three are fixed: the columns were added by migration,
+      the catalogue was applied, and `npm run catalogue:parity` reports **642
+      files byte-identical from both sources**. Verified beyond the counts —
+      0 shrinkage rows, 7 spill control products, AF-40W reads "Orbit Fan",
+      10 Kavalani links, 0 orphans, 0 broken hero references, and the non-ASCII
+      round trip is clean.
+
+      **What remains is this one Vercel setting.** Nothing else blocks it.
 
       Verified 2026-08-13 before staging: `npm run catalogue:parity` reports 522
       files byte-identical from both sources; the database holds 85 products, 15
@@ -195,16 +198,17 @@ see `handoff.md`). Priorities are P0 highest.
       **Failure mode if Supabase is unreachable during a deploy:** the build
       fails and the previous deployment stays live. Nothing half-publishes.
 
-- [ ] **BEFORE any catalogue editing lands, point the catalogue-shape gate at
-      the database.** It currently reads `src/data/products.json` and pins 85 /
-      15 / 6. Once production renders from Postgres, that file stops being what
-      visitors see — so the moment anything can edit the database, the gate is
-      checking a copy and would not notice the real catalogue losing a source,
-      an orphaned category or a duplicated slug. Harmless today because nothing
-      writes to those tables; a hole the day Phase 3b ships. The replacement is
-      described in `docs/superpowers/plans/2026-08-13-catalogue-editing.md` §2.4
-      — invariants checked against the database, counts recorded rather than
-      pinned.
+- [x] **BEFORE any catalogue editing lands, point the catalogue-shape gate at
+      the database.** **Done 2026-08-17.** `tools/catalogue-snapshot.mjs` now
+      holds the invariants — every `categoryId` and `divisionId` resolves, every
+      `heroProductSlug` is null or real, no duplicate slugs, and every product
+      either cites a source or has a `catalogue_audit` entry naming who entered
+      it — and the totals live in a committed snapshot regenerated deliberately
+      with `node tools/catalogue-snapshot.mjs --write`. It follows
+      `CATALOGUE_SOURCE`, so it checks the database once the deployment renders
+      from Postgres, and it was verified against both sources: identical totals,
+      zero violations. Proved it still bites — a stale snapshot and a broken
+      `heroProductSlug` were each planted and each failed by name.
 
 - [ ] **Cover the one auth case production has not exercised.** An
       **authenticated non-admin must be refused** — a valid Supabase account
