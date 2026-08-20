@@ -100,25 +100,49 @@ test.describe('short screens buy the primary CTA back by spending card', () => {
       expect(box!.y + box!.height).toBeLessThanOrEqual(size.height);
     });
 
-    test(`the stage is shrunk to 38vw on ${size.name}`, async ({ page }) => {
+    test(`the banner band spans the column on ${size.name}`, async ({ page }) => {
       await page.setViewportSize({ width: size.width, height: size.height });
       await page.goto('/');
 
+      // Was "shrunk to 38vw", which pinned a card floating beside the copy. The
+      // centred stack of 2026-08-20 makes the band full-width, so what is worth
+      // checking is that it fills the column and does not overflow it — 20px of
+      // --wrap-pad each side below 640px.
       const width = await page
         .locator('.hero__stage')
         .evaluate((el) => el.getBoundingClientRect().width);
-      expect(width).toBeCloseTo(size.width * 0.38, 0);
+      expect(width).toBeCloseTo(size.width - 40, 0);
     });
   }
 
-  test('a tall phone keeps the full-size card', async ({ page }) => {
-    // Keyed on height, so 390x844 has the vertical budget and pays nothing.
+  test('the slot opens out to 3:2 on a phone, not the 4:1 it holds on desktop', async ({
+    page,
+  }) => {
+    // 2800 x 700 is a 4:1 band, and the slot reserves exactly the shape it will
+    // receive — but at 375px wide that is 84px tall, too short to read as a
+    // banner or to hold its own label. The mobile mockup draws it near 3:2 and
+    // that is what ships below 720px.
+    //
+    // This is a real tension rather than a detail, which is why it is pinned:
+    // one 4:1 artwork cannot fill both, so when banners arrive either the phone
+    // letterboxes them or a second crop is supplied. Nothing is cropped today
+    // because the slot is empty.
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    const width = await page
-      .locator('.hero__stage')
-      .evaluate((el) => el.getBoundingClientRect().width);
-    expect(width).toBeCloseTo(390 * 0.58, 0);
+    const phone = await page.locator('.hero__slot').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width / r.height;
+    });
+    expect(phone).toBeCloseTo(1.5, 1);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/');
+
+    const desktop = await page.locator('.hero__slot').evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width / r.height;
+    });
+    expect(desktop).toBeCloseTo(4, 1);
   });
 });

@@ -10,10 +10,29 @@ import { getHeroBanners, getSiteSettings, heroClock } from './site-content';
  * `docs/superpowers/plans/2026-08-19-admin-content-management.md` then does.
  */
 describe('getHeroBanners', () => {
+  /*
+   * THE LIST IS EMPTY, AND THAT IS THE SHIPPED STATE — 2026-08-20.
+   *
+   * The client asked for the mockup's insertable slot and had all six posters
+   * deleted: they are portrait (1261:1561) and the slot is specified at
+   * 2800 x 700, a 4:1 band. Letterboxing a portrait poster into a 4:1 strip
+   * would have been worse than showing the shape honestly.
+   *
+   * This is asserted rather than left implicit so that a banner reappearing is
+   * a deliberate act with a test to change, not a silent one. The two tests
+   * below that could only describe a populated list — ordering and duplicate
+   * filenames — went with the data; they are in this commit's parent and
+   * BACKLOG.md carries the item to restore them with the first real banner.
+   */
+  it('is empty, because every banner was removed pending 4:1 artwork', async () => {
+    expect(await getHeroBanners()).toEqual([]);
+  });
+
   it('returns only enabled banners, in order', async () => {
     const banners = await getHeroBanners();
 
-    expect(banners.length).toBeGreaterThan(0);
+    // Vacuous while the list is empty, and kept for exactly that reason: it is
+    // the contract the seam has to honour the moment a banner returns.
     expect(banners.every((b) => b.enabled)).toBe(true);
 
     const orders = banners.map((b) => b.order);
@@ -49,15 +68,17 @@ describe('getHeroBanners', () => {
   });
 
   /*
-   * The carousel's clock is derived from this number — the keyframe stops, the
-   * pip count and the cycle length are one system. Two banners is the floor at
-   * which a "carousel" is still a carousel, and the duplicate-first-slide trick
-   * that makes the loop seamless needs at least that.
+   * "At least two banners, or the carousel is not one" used to live here. It
+   * was a real constraint — the clock, the pip count and the duplicate-first
+   * slide are one system with a floor of two — and it is exactly the assertion
+   * an empty list cannot satisfy.
+   *
+   * It was DELETED rather than relaxed to `>= 0`. A floor of zero is not a
+   * weaker version of that rule, it is the absence of it dressed as a passing
+   * test. Hero.astro now handles the empty case explicitly, `heroClock` still
+   * throws below one slide for every other caller, and BACKLOG.md carries the
+   * item to restore this with the first real banner.
    */
-  it('returns at least two banners, or the carousel is not one', async () => {
-    expect((await getHeroBanners()).length).toBeGreaterThanOrEqual(2);
-  });
-
   it('has no duplicate files, which would show as the same slide twice', async () => {
     const files = (await getHeroBanners()).map((b) => b.file);
     expect(new Set(files).size).toBe(files.length);

@@ -6,61 +6,53 @@ import PillButton from '../primitives/PillButton.astro';
 import { getHeroBanners, heroClock } from '../../lib/site-content';
 
 /**
- * Hero — the campaign carousel.
+ * Hero — headline, an empty banner band, and the two CTAs.
  *
- * REPLACED THE AI-GENERATED HELMET on 2026-08-17, on instruction. Everything
- * around the stage is unchanged and deliberately so: the badge, the real <h1>,
- * the CTAs, the source order and the 136px of top
- * padding are all measured decisions with tests behind them (see the notes
- * further down and tests/e2e/hero-mobile.spec.ts). Only what sits IN the stage
- * changed, which is why this is a swap rather than a rebuild.
+ * THE BAND IS EMPTY ON PURPOSE, as of 2026-08-20. The client asked for the
+ * mockup's insertable slot and for the existing posters to go. All six were
+ * deleted — artwork and data entries — because they are portrait (1261:1561)
+ * and the slot is specified at 2800 x 700, a 4:1 band. Letterboxing a portrait
+ * poster into a 4:1 strip would have been worse than showing the shape
+ * honestly and waiting for the right artwork.
  *
- * SIX OF NINETEEN BANNERS, AND TWO ARE EXCLUDED ON PURPOSE.
+ * THE CAROUSEL CODE IS STILL HERE, and that is deliberate rather than
+ * forgetful. Drop a file into src/assets/banners/ and add a line to
+ * src/data/hero-banners.json and it renders, clock and pips and pause
+ * included — which is the seam doing its job. **That path is currently
+ * unexercised by any test**, because there is no banner to exercise it with;
+ * the tests that covered it are in this commit's parent and BACKLOG.md carries
+ * the item to restore them with the first real banner. Read that as a known
+ * gap, not as coverage.
  *
- *   - The Grip Guard GP1 banner prints an EN 388 icon reading 4X43D while the
- *     glove's own label — photographed in that same banner — reads 4131X. It
- *     overstates cut resistance as D where the glove says X, NOT TESTED. Putting
- *     that on the home page would publish a false protection rating in the most
- *     prominent place on the site, which is the exact failure rule 1 exists to
- *     prevent. Queued for reissue in BACKLOG.md.
- *   - The Orbit Fan banner labels the fan FW-40W. That code belongs to no
- *     product: the fan is AF-40W, confirmed by its datasheet's photograph and
- *     assembly diagram (handoff.md §17). A wrong model code is a smaller error
- *     than a wrong safety rating, but it is still a wrong fact on the home page.
+ * TWO BANNERS MUST NEVER COME BACK UNCORRECTED. The Grip Guard GP1 poster
+ * prints an EN 388 icon reading 4X43D while the glove's own label —
+ * photographed in that same banner — reads 4131X, overstating cut resistance
+ * as D where the glove says X, NOT TESTED. The Orbit Fan poster labels the fan
+ * FW-40W, a code belonging to no product (handoff.md §17). Both are in
+ * BACKLOG.md for reissue, and src/lib/site-content.test.ts still asserts
+ * neither filename is enabled, so restoring one means deliberately changing a
+ * test that says why not to.
  *
- * Both return by flipping `enabled` in `src/data/hero-banners.json` once the
- * artwork is corrected — no change to this file, which is the point of the
- * seam. `src/lib/site-content.test.ts` asserts neither is enabled, so one
- * cannot be switched back on without that test being deliberately changed.
+ * DECORATIVE EITHER WAY. Slides carry alt="" and the track is aria-hidden;
+ * the empty slot is aria-hidden too. These are marketing posters whose content
+ * is baked-in text — headlines, spec blocks, a QR code, a phone number — that
+ * alt text cannot reproduce, and every product they show is reachable in the
+ * catalogue below. The <h1> and the two CTAs carry the hero's meaning.
  *
- * The remaining eleven were left out for page weight, not for accuracy — a hero
- * that loads nineteen posters is not a hero. Six was chosen to balance the two
- * divisions three and three, and to vary the tonality so consecutive slides do
- * not read as one image. **The carousel no longer assumes six**: the clock is
- * derived from however many are enabled.
+ * IT AUTO-ADVANCES WHEN IT HAS SLIDES, SO IT NEEDS A PAUSE MECHANISM. WCAG
+ * 2.2.2 applies to any motion that starts automatically and runs past five
+ * seconds, decorative or not, and axe does not test for it. The control is a
+ * checkbox read by `:has()`, deliberately not an island — a pause button that
+ * needs JavaScript to exist is no use to a visitor whose JavaScript is off,
+ * and the animation runs for them regardless. The whole control row is absent
+ * in the empty state, because a pause button with nothing to pause is a
+ * control that cannot do what it says.
  *
- * DECORATIVE, LIKE THE HELMET IT REPLACES. Every slide is `alt=""` and the
- * track is aria-hidden. These are marketing posters whose content is baked-in
- * text — headlines, spec blocks, a QR code, a phone number — that alt text
- * cannot reproduce, and every product they show is a real, reachable item in
- * the catalogue below. The <h1> and the two CTAs carry the meaning, exactly as
- * they did when the stage held a helmet with `alt=""`. This is the same
- * reasoning Ticker.astro records for its own aria-hidden track.
- *
- * IT AUTO-ADVANCES, SO IT NEEDS A PAUSE MECHANISM. WCAG 2.2.2 applies to any
- * motion that starts automatically and runs past five seconds, decorative or
- * not, and axe does not test for it. The control is a checkbox read by
- * `:has()`, deliberately not an island — a pause button that needs JavaScript
- * to exist is no use to a visitor whose JavaScript is off, and the animation
- * runs for them regardless. Copied from Ticker.astro, which solved this first.
- *
- * NO NEW SCRIPT. The carousel is pure CSS — no island, no hydration, and it
- * works with JavaScript disabled entirely. The only script here is the cursor
- * parallax that was already present, but ITS HASH DID CHANGE: the stacking
- * breakpoint moved from 1080px to 1180px and that number appears in the script's
- * own media query, so one edited character invalidated the hash. `npm run csp`
- * re-run and `vercel.json` committed with it. A stale hash does not fail the
- * build; it ships a hero that silently never parallaxes.
+ * NO SCRIPT AT ALL NOW. The carousel is pure CSS and the cursor parallax was
+ * deleted with the side-by-side layout — it moved the stage against the copy
+ * beside it, and a centred column has nothing to move against. That took the
+ * page's inline-script count from 9 to 8: `npm run csp` re-run and
+ * vercel.json committed with it.
  */
 
 /*
@@ -106,7 +98,7 @@ const BANNERS = await Promise.all(
  * back to the real slide 1 is invisible because the two are the same image.
  * Ticker.astro duplicates its track for the same reason.
  */
-const SLIDES = [...BANNERS, BANNERS[0]];
+const SLIDES = BANNERS.length > 0 ? [...BANNERS, BANNERS[0]] : [];
 
 /*
  * THE CLOCK, AND WHY IT IS COMPUTED RATHER THAN TYPED.
@@ -130,27 +122,34 @@ const SLIDES = [...BANNERS, BANNERS[0]];
  * CSP hash: `style-src` is `'self' 'unsafe-inline'`, unlike `script-src`, which
  * is hash-based with no 'unsafe-inline' at all.
  */
-const clock = heroClock(BANNERS.length);
+/*
+ * NULL WHEN THERE ARE NO BANNERS, and the guard is load-bearing rather than
+ * defensive. `heroClock` throws below one slide, on purpose — a carousel with
+ * nothing in it is a bug everywhere except here, where an empty stage is the
+ * shipped design. So the empty case is handled at the one place that knows it
+ * is legitimate, and the throw stays intact for every other caller.
+ */
+const clock = BANNERS.length > 0 ? heroClock(BANNERS.length) : null;
 
 const pct = (n: number) => `${Number(n.toFixed(3))}%`;
 /** `translateX(0)` for the first slide rather than `-0%`, which computes the same and reads as a typo. */
 const shift = (i: number) => (i === 0 ? '0' : `-${i * 100}%`);
 
-const carouselCss = `
+const carouselCss = clock === null ? '' : `
 @keyframes hero-carousel {
 ${BANNERS.map(
   (_, i) =>
-    `  ${pct(i * clock.stepPct)}, ${pct(i * clock.stepPct + clock.holdPct)} { transform: translateX(${shift(i)}); }`,
+    `  ${pct(i * clock!.stepPct)}, ${pct(i * clock!.stepPct + clock!.holdPct)} { transform: translateX(${shift(i)}); }`,
 ).join('\n')}
   100% { transform: translateX(${shift(BANNERS.length)}); }
 }
 @keyframes hero-pip {
   0% { background: var(--accent); width: 26px; }
-  ${pct(clock.stepPct)}, 100% { background: var(--line-control); width: 18px; }
+  ${pct(clock!.stepPct)}, 100% { background: var(--line-control); width: 18px; }
 }
 [data-hero-stage] .hero__track,
-[data-hero-stage] .hero__pip { animation-duration: ${clock.cycleSeconds}s; }
-${clock.pipDelays
+[data-hero-stage] .hero__pip { animation-duration: ${clock!.cycleSeconds}s; }
+${clock!.pipDelays
   .map((delay, i) => `[data-hero-stage] .hero__pip:nth-child(${i + 1}) { animation-delay: ${delay}s; }`)
   .join('\n')}
 `.trim();
@@ -187,7 +186,7 @@ const SIZES =
   '(max-width: 1180px) and (max-height: 700px) min(38vw, 300px), (max-width: 1180px) min(58vw, 300px), 436px';
 ---
 
-<section class="hero" data-hero>
+<section class="hero">
   <div class="hero__grid" aria-hidden="true"></div>
 
   {/* Registration marks and the two red edge ticks. Purely decorative, so
@@ -203,107 +202,129 @@ const SIZES =
     <span class="hero__tick hero__tick--r"></span>
   </div>
 
-  {/* SOURCE ORDER IS THE MOBILE LAYOUT. Below 1180px `.hero` is `display:
-      block`, so the DOM decides the stack: badge + headline, then the stage,
-      then the CTAs. That is why the actions sit in their own `.wrap` instead of
-      inside `.hero__copy` — CSS `order` cannot interleave the stage (a child of
-      `.hero`) with the actions (a grandchild of `.hero__wrap`), so the split is
-      what makes the order expressible at all.
+  {/* ONE CENTRED COLUMN, AND THE SOURCE-ORDER SPLIT IS GONE WITH IT.
 
-      THIS ORDER COSTS ABOVE-THE-FOLD CTA VISIBILITY ON SHORT PHONES, and that
-      was a deliberate call on 2026-08-12, not an oversight. An earlier version
-      put the stage last precisely to avoid it.
+      This used to be two `.wrap`s with the stage between them, because the
+      desktop layout floated the stage beside the copy while the phone stacked
+      badge, headline, stage, CTAs — and CSS `order` could not interleave a
+      child of `.hero` with a grandchild of `.hero__wrap`. Splitting the
+      markup was the only way to express both.
 
-      The carousel made that budget tighter, because a 4:5 portrait card is
-      taller than the landscape helmet stage it replaced at the same width. The
-      short-screen width was cut from 58vw to 38vw to pay for it — see the
-      `(max-height: 700px)` block at the foot of this stylesheet.
-      `tests/e2e/hero-mobile.spec.ts` pins the primary CTA's bottom edge on a
-      375x667 and a 360x640, so this is checked rather than asserted.
-
-      On desktop the stage is `position: absolute` under the copy's z-index, so
-      the split is invisible there — but it does make `.hero` a two-row grid,
-      which is why `.hero` sets `align-content: center`. */}
+      The client asked for the mockup's centred stack on 2026-08-20, so both
+      layouts are now the same order and the split has nothing left to buy. One
+      column, one wrap, DOM order is the layout at every width. */}
   <div class="wrap hero__wrap">
-    <div class="hero__copy">
-      <div class="hero__badge">
-        <span class="hero__badge-hazard"></span>
-        <span class="hero__badge-body">
-          <span class="hero__badge-est">Est. 2015</span>
-        </span>
-      </div>
-
-      <h1 class="hero__title">Home and <br />industrial <br /><span>solutions.</span></h1>
+    <div class="hero__badge">
+      <span class="hero__badge-hazard"></span>
+      <span class="hero__badge-body">
+        <span class="hero__badge-est">Est. 2015</span>
+      </span>
     </div>
-  </div>
 
-  <div class="hero__stage" data-hero-stage>
+    <h1 class="hero__title">Home and industrial <span>solutions.</span></h1>
 
-    {/* The checkbox is the state and the label is the control, so the pause
-        works with no JavaScript at all. `:has()` on the figure reads it.
+    <div class="hero__stage" data-hero-stage>
+      {
+        BANNERS.length === 0 ? (
+          /* THE EMPTY SLOT — the shipped state as of 2026-08-20.
 
-        The accessible name has to START with the visible label text ("Pause"),
-        or the mismatch is itself a 2.5.3 Label in Name failure — the same
-        defect that sat on every product card at a green axe score. */}
-    <input
-      class="hero__toggle"
-      type="checkbox"
-      id="hero-carousel-pause"
-      role="switch"
-      aria-label="Pause the rotating product banners"
-    />
+             The six posters were deleted on instruction: they are portrait
+             (1261:1561) and cannot fill a 4:1 band, so letterboxing them into
+             one would have been worse than showing the shape honestly.
 
-    <figure class="hero__frame">
-      <div class="hero__track" aria-hidden="true">
-        {
-          SLIDES.map((banner, i) => (
-            <div class="hero__slide">
-              <Picture
-                src={banner.src}
-                alt=""
-                widths={WIDTHS}
-                sizes={SIZES}
-                formats={['avif', 'webp']}
-                fallbackFormat="jpg"
-                quality={42}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                fetchpriority={i === 0 ? 'high' : 'auto'}
-                decoding="async"
-              />
+             aria-hidden, because it is a note to whoever supplies the artwork
+             and not content. A screen-reader user has no use for "2800 x 700"
+             and the <h1> and CTAs carry the hero's actual meaning, exactly as
+             they did when this held a carousel.
+
+             THE MOCKUP'S "or browse files" LINK IS DELIBERATELY NOT HERE. It
+             would be an affordance that does nothing — the same defect this
+             repo has already removed twice, from the footer's newsletter field
+             and its three href="#" social icons, both recorded in Footer.astro.
+             Real upload is Stage 6 of the admin content plan and belongs there,
+             not faked here. */
+          <div class="hero__slot" aria-hidden="true">
+            <svg class="hero__slot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <circle cx="8.5" cy="9.5" r="1.6" />
+              <path d="m3.5 17 4.8-4.4a1.8 1.8 0 0 1 2.4 0L16 17" />
+              <path d="m14 14.4 1.7-1.5a1.8 1.8 0 0 1 2.4 0l2.4 2.1" />
+            </svg>
+            {/* The dimensions are one token and must not break across lines —
+                "2800 ×" on one line and "700 (4:1)" on the next reads as two
+                numbers rather than one size. */}
+            <p class="hero__slot-label">
+              Drop the horizontal hero banner —{' '}
+              <span class="hero__slot-dim">2800 &times; 700 (4:1)</span>
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* The checkbox is the state and the label is the control, so the
+                pause works with no JavaScript at all. `:has()` on the stage
+                reads it.
+
+                The accessible name has to START with the visible label text
+                ("Pause"), or the mismatch is itself a 2.5.3 Label in Name
+                failure — the same defect that sat on every product card at a
+                green axe score. */}
+            <input
+              class="hero__toggle"
+              type="checkbox"
+              id="hero-carousel-pause"
+              role="switch"
+              aria-label="Pause the rotating product banners"
+            />
+
+            <figure class="hero__frame">
+              <div class="hero__track" aria-hidden="true">
+                {SLIDES.map((banner, i) => (
+                  <div class="hero__slide">
+                    <Picture
+                      src={banner.src}
+                      alt=""
+                      widths={WIDTHS}
+                      sizes={SIZES}
+                      formats={['avif', 'webp']}
+                      fallbackFormat="jpg"
+                      quality={42}
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      fetchpriority={i === 0 ? 'high' : 'auto'}
+                      decoding="async"
+                    />
+                  </div>
+                ))}
+              </div>
+            </figure>
+
+            {/* Pips and pause sit BELOW the band, never over the artwork: these
+                posters carry near-white footer strips, a white pip on one is
+                invisible, and a scrim dark enough to fix that would cover the
+                client's own QR code. Found by looking at the rendered page.
+
+                THE WHOLE ROW IS ABSENT IN THE EMPTY STATE ABOVE. A pause button
+                with nothing to pause is the same dead affordance as the drop
+                link, and WCAG 2.2.2 only asks for a control when something
+                actually moves. */}
+            <div class="hero__controls">
+              <div class="hero__pips" aria-hidden="true">
+                {BANNERS.map(() => (
+                  <span class="hero__pip" />
+                ))}
+              </div>
+
+              <label class="hero__pause" for="hero-carousel-pause">
+                Pause
+              </label>
             </div>
-          ))
-        }
-      </div>
-
-    </figure>
-
-    {/* The controls sit BELOW the card, on the hero's flat black, not over the
-        artwork. Three reasons, all found by looking at the rendered page rather
-        than by reasoning about it: a white pip over the near-white footer strip
-        that most of these banners carry is invisible; a scrim dark enough to fix
-        that would cover the client's own QR code and call to action; and the
-        control was being clipped entirely by the hero's `overflow: hidden` when
-        it hung off the card's bottom edge. On black both are measurable against
-        a known surface, which is the only way rule 4 can be satisfied here. */}
-    <div class="hero__controls">
-      {/* Progress pips. Each runs the same 42s clock as the track with its own
-          delay, so the lit pip is always the visible slide without a line of
-          script tying them together. The final duplicate slide has no pip — it
-          IS slide one, and lighting a seventh pip would say otherwise. */}
-      <div class="hero__pips" aria-hidden="true">
-        {BANNERS.map(() => <span class="hero__pip"></span>)}
-      </div>
-
-      <label class="hero__pause" for="hero-carousel-pause">Pause</label>
+          </>
+        )
+      }
     </div>
-  </div>
 
-  <div class="wrap hero__wrap">
-    <div class="hero__copy">
-      <div class="hero__actions">
-        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-        <PillButton href="/enquiry">Request a quote</PillButton>
-      </div>
+    <div class="hero__actions">
+      <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+      <PillButton href="/enquiry">Request a quote</PillButton>
     </div>
   </div>
 </section>
@@ -323,19 +344,25 @@ const SIZES =
      "Contact" sat over the poster's own headline. The card now lives entirely in
      the band below the header, and the hero is as tall as that band needs to be
      for a 4:5 portrait to have any presence beside a 76px headline. */
+  /* THE CENTRED STACK — the client's mockup, adopted 2026-08-20.
+
+     Everything here used to be geometry for a stage that floated to the right
+     of the copy: a 760px min-height so a 4:5 portrait had presence beside a
+     76px headline, an absolutely positioned stage with a negative top margin,
+     and a two-row grid with align-content to stop the CTAs drifting to the
+     bottom edge. None of it survives a single centred column, and keeping any
+     of it would have been geometry defending a layout that no longer exists.
+
+     The height is now whatever the content needs. padding-top clears the
+     absolutely positioned chrome above it — a 44px utility bar plus an 84px
+     nav is 128px, and the extra is the mockup's breathing room above the
+     badge. */
   .hero {
     position: relative;
     background: var(--surface-alt);
-    min-height: 760px;
     overflow: hidden;
-    display: grid;
-    align-items: center;
-
-    /* The copy and the actions are two separate grid items (see the source-order
-       note in the markup), so this grid has two rows. Without
-       `align-content: center` the default stretch would spread those two rows
-       across the whole 660px and park the CTAs near the bottom edge. */
-    align-content: center;
+    padding: 152px 0 76px;
+    text-align: center;
   }
 
   /* The 80px graph paper behind everything. Decorative and very low contrast,
@@ -422,16 +449,60 @@ const SIZES =
      margin pulls the stage up to sit centred on 444 instead. Measured at 1440:
      the card's top edge lands at y=152, clearing the header's box by 24px, and
      the controls' bottom edge at y=736, clearing the hero's own edge by 24px. */
+  /* THE BANNER BAND — 4:1, because that is the ratio the artwork is specified
+     at (2800 x 700) and the slot should reserve exactly the shape it will
+     receive. Full wrap width, so at the 1240px cap the band is 310px tall,
+     which is the proportion the mockup draws.
+
+     There is no absolute positioning and no parallax transform left. The
+     cursor parallax was deleted with this layout: it moved the stage against
+     the copy beside it, and in a centred column there is nothing to move
+     against. That removed an inline script, so the CSP hash count went 9 -> 8
+     — `npm run csp` re-run and vercel.json committed. */
   .hero__stage {
-    position: absolute;
-    right: max(0px, calc(50% - 620px));
-    top: 50%;
-    width: 436px;
-    margin-top: -228px;
-    transform: translate3d(calc(var(--px, 0) * -26px), calc(var(--py, 0) * -18px), 0);
-    transition: transform 700ms var(--ease-out);
+    position: relative;
+    width: 100%;
+    margin-top: 30px;
     z-index: 1;
   }
+
+  /* THE EMPTY SLOT.
+
+     4:1 wherever there is width to hold it. Below 720px a 4:1 band is under
+     90px tall on a phone — too short to read as a banner and too short to hold
+     its own label — so it opens out to 3:2, which is the proportion the mobile
+     mockup draws. That is a real tension worth stating rather than hiding: a
+     single 2800 x 700 artwork cannot fill both, so when real banners arrive
+     either the phone letterboxes them or a second crop is supplied. The slot is
+     empty today, so nothing is being cropped yet. */
+  .hero__slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    aspect-ratio: 4 / 1;
+    border: 1px dashed var(--line-control);
+    background: var(--surface-page);
+    color: var(--text-muted);
+    padding: 24px;
+  }
+
+  .hero__slot-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .hero__slot-label {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 44ch;
+  }
+
+  .hero__slot-dim {
+    white-space: nowrap;
+  }
+
 
   /* Carried over from the helmet stage so the card is not a bright rectangle
      sitting on flat black with nothing between them. Sized to the card rather
@@ -637,12 +708,12 @@ const SIZES =
   .hero__wrap {
     position: relative;
     z-index: 2;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .hero__copy {
-    max-width: 660px;
-  }
+
 
   .hero__badge {
     display: inline-flex;
@@ -684,14 +755,21 @@ const SIZES =
   }
 
   .hero__title {
-    margin: 26px 0 0;
+    margin: 22px 0 0;
     font-family: var(--font-display);
-    font-size: clamp(44px, 6vw, 76px);
+    font-size: clamp(38px, 5.6vw, 76px);
     font-weight: var(--fw-display);
     line-height: 0.96;
     letter-spacing: -0.035em;
     text-transform: uppercase;
     color: var(--text);
+    /* 900px is the wrap point, not a container width. At the 76px ceiling
+       "HOME AND INDUSTRIAL" measures ~800px and fits; adding " SOLUTIONS."
+       exceeds 900 and breaks — which is exactly the two-line desktop headline
+       the mockup draws, without a hard <br> that would then be wrong on a
+       phone. Below ~700px the viewport is narrower than this cap and does the
+       wrapping itself, giving the mockup's three mobile lines. */
+    max-width: 900px;
     animation: hero-rise 0.7s var(--ease-out) 0.08s both;
   }
 
@@ -703,8 +781,9 @@ const SIZES =
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 14px;
-    margin-top: 44px;
+    margin-top: 28px;
     animation: hero-rise 0.7s var(--ease-out) 0.18s both;
   }
 
@@ -770,26 +849,20 @@ const SIZES =
      clears it. 136px clears that box with 8px and the visible logo by 31px. */
   @media (max-width: 1180px) {
     .hero {
-      display: block;
-      min-height: 0;
       padding: 136px 0 64px;
     }
+  }
 
-    /* The stage stops being a fixed 660px box and becomes the card itself plus
-       the room the pause control needs beneath it, so `height: auto` and a
-       bottom margin rather than the desktop's absolute geometry. */
-    .hero__stage {
-      position: relative;
-      right: auto;
-      top: auto;
-      width: min(58vw, 300px);
-      margin: 32px auto 0;
-      transform: none;
-      transition: none;
-    }
+  /* THE SLOT OPENS OUT ON A PHONE. At 375px a 4:1 band is 84px tall — too short
+     to read as a banner and too short to hold its own label. 3:2 is what the
+     mobile mockup draws, and it is the honest shape for the empty state.
 
-    .hero__actions {
-      margin-top: 32px;
+     When real 2800 x 700 artwork arrives this becomes a decision rather than a
+     detail: either the phone letterboxes it or a second crop is supplied.
+     Nothing is cropped today because the slot is empty. */
+  @media (max-width: 720px) {
+    .hero__slot {
+      aspect-ratio: 3 / 2;
     }
   }
 
@@ -844,13 +917,16 @@ const SIZES =
      has the room and keeps the larger card. It also catches a phone held in
      landscape, which has even less height and wants the same treatment. */
   @media (max-width: 1180px) and (max-height: 700px) {
+    /* The band is full-width now, so there is no card width left to shrink —
+       only vertical gaps. The stage keeps its ratio and the trims come out of
+       the space around it. */
     .hero__stage {
-      width: min(38vw, 300px);
       margin-top: 16px;
     }
 
-    /* The control row is a WCAG 2.2.2 requirement, so it cannot be dropped to
-       buy space here; its gap can be tightened instead. */
+    /* The control row is a WCAG 2.2.2 requirement whenever a carousel is
+       actually running, so it cannot be dropped to buy space; its gap can be
+       tightened instead. */
     .hero__controls {
       margin-top: 8px;
     }
@@ -917,56 +993,15 @@ const SIZES =
 
   IT COSTS NO CSP HASH, and that is worth knowing rather than assuming:
   `style-src` is `'self' 'unsafe-inline'`, where `script-src` is hash-based
-  with no 'unsafe-inline' at all. A generated <script> here would be a very
-  different proposition -- it would need `npm run csp` re-run on every change to
-  a value it interpolates.
+  with no 'unsafe-inline' at all. A generated script tag here would be a very
+  different proposition.
+
+  IT RENDERS TO AN EMPTY STRING WHEN THERE ARE NO BANNERS. `carouselCss` is
+  built from the clock, and the clock is null when the stage is empty, so this
+  emits nothing at all rather than a stylesheet full of keyframes for slides
+  that do not exist.
 
   Every selector is prefixed `[data-hero-stage]`, because this block is NOT
-  scoped and `docs/TRAPS.md` records what an unscoped rule sharing a class name
-  did to the demand report's chart bars.
+  scoped by Astro and would otherwise be global.
 */}
 <style is:inline set:html={carouselCss}></style>
-
-<script>
-  /*
-   * Cursor parallax.
-   *
-   * UNCHANGED from the helmet hero — same selectors, same behaviour, same
-   * bytes, so the same CSP hash. It is left in place because the effect belongs
-   * to the stage rather than to what is in it, and the carousel is a card that
-   * benefits from the same depth.
-   *
-   * THIS SHIPS AS AN INLINE SCRIPT AND COSTS A CSP HASH. Astro extracts a
-   * processed <script> to an external /_astro/ chunk only when it is shared
-   * across pages; a script used on exactly one page is inlined into that page's
-   * HTML instead. The hero renders only on `/`, so this is inlined.
-   *
-   * `script-src` is hash-based with no 'unsafe-inline', so ANY edit to the code
-   * below needs `npm run csp` re-run and `vercel.json` committed with it. A
-   * stale hash does not fail the build — it ships a hero that never parallaxes.
-   */
-  const hero = document.querySelector<HTMLElement>('[data-hero]');
-  const stage = document.querySelector<HTMLElement>('[data-hero-stage]');
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  // Below this the stage is stacked in flow and the 1180px CSS breakpoint
-  // replaces the whole `transform` declaration, so --px/--py are never read.
-  // Gated here too, or the listener still fires on every mouse move on a narrow
-  // desktop window and writes two custom properties for no effect.
-  const wide = window.matchMedia('(min-width: 1181px)');
-
-  if (hero && stage && !reduce.matches && wide.matches) {
-    hero.addEventListener('pointermove', (event) => {
-      // Pointer, not mouse: a touch drag would otherwise leave the stage stuck
-      // wherever the finger lifted.
-      if (event.pointerType !== 'mouse') return;
-      const rect = hero.getBoundingClientRect();
-      stage.style.setProperty('--px', String((event.clientX - rect.left) / rect.width - 0.5));
-      stage.style.setProperty('--py', String((event.clientY - rect.top) / rect.height - 0.5));
-    });
-
-    hero.addEventListener('pointerleave', () => {
-      stage.style.setProperty('--px', '0');
-      stage.style.setProperty('--py', '0');
-    });
-  }
-</script>

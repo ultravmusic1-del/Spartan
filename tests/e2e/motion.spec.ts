@@ -125,33 +125,29 @@ test.describe('prefers-reduced-motion', () => {
   }) => {
     await page.goto('/');
 
-    // The two animated hero layers resolve to `animation: none` under the
-    // media query in Hero.astro — this is the explicit `animation-name: none`
-    // declaration, not global.css's blanket duration/iteration-count clamp.
-    await expect(page.locator('.hero__track')).toHaveCSS('animation-name', 'none');
-    await expect(page.locator('.hero__pip').first()).toHaveCSS('animation-name', 'none');
-
-    // There were three. `.hero__glow` was deleted with the white theme on
-    // 2026-08-20 — a pulsing red bloom is a dark-surface device and reads as a
-    // pink smudge on white.
-    //
-    // This asserts the element is GONE rather than dropping the line. A
-    // `toHaveCSS` against a selector that matches nothing is not a passing
-    // assertion, it is an assertion that cannot run, and deleting it would
-    // leave nothing to notice if the glow ever came back untested. It also
-    // documents why this list is two and not three, which is the question the
-    // next reader will have.
+    /*
+     * THE HERO HAS NOTHING MOVING IN IT TO CANCEL, as of 2026-08-20.
+     *
+     * Three assertions used to sit here — the track and the pips resolving to
+     * `animation-name: none`, the track resting at translateX(0) rather than
+     * mid-slide, and the pause control hiding because a control that pauses
+     * something already stopped is a lie about what it does.
+     *
+     * `.hero__glow` went first, with the white theme: a pulsing red bloom is a
+     * dark-surface device that reads as a pink smudge on white. The track, the
+     * pips and the pause went with the banners, which the client had deleted
+     * because they are portrait and the slot is a 4:1 band.
+     *
+     * They are asserted ABSENT rather than dropped. A `toHaveCSS` against a
+     * selector matching nothing is not a passing assertion, it is one that
+     * cannot run — and dropping the lines would leave nothing to notice if a
+     * carousel came back with no reduced-motion handling at all. That
+     * restoration is a P1 item in BACKLOG.md, and this is the marker for it.
+     */
     await expect(page.locator('.hero__glow')).toHaveCount(0);
-
-    // The carousel stops on slide one rather than mid-slide: a cancelled
-    // animation resolves to its 0% keyframe, which is translateX(0).
-    await expect(page.locator('.hero__track')).toHaveCSS('transform', 'none');
-
-    // And the pause control goes with it. A control that pauses something
-    // already stopped is a lie about what it does, and it was the only thing in
-    // the hero that could take focus and do nothing. Ticker.astro removes its
-    // own control here for the same reason.
-    await expect(page.locator('.hero__pause')).toBeHidden();
+    await expect(page.locator('.hero__track')).toHaveCount(0);
+    await expect(page.locator('.hero__pip')).toHaveCount(0);
+    await expect(page.locator('.hero__pause')).toHaveCount(0);
 
     // The title and actions use an entrance animation with `both` fill mode.
     // Cancelling that animation without also resetting opacity/transform

@@ -461,6 +461,42 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P1 — discoverability and hardening
 
+- [ ] **Restore the hero carousel's test coverage with the first real banner.**
+      The client had all six posters deleted on 2026-08-20 — they are portrait
+      (1261:1561) and the slot is specified at 2800 × 700 — so the hero ships an
+      empty 4:1 band. **The carousel rendering path is still in `Hero.astro` and
+      is currently exercised by nothing.** Drop a file into
+      `src/assets/banners/` and add a line to `src/data/hero-banners.json` and
+      it renders, clock and pips and pause included; nothing checks that it
+      does.
+
+      What was removed, and must come back with the artwork:
+
+      - `tests/e2e/home.spec.ts` — seven slides against six banners, six pips,
+        one eager image and five lazy, and the pause control stopping the track
+        and the pips *together*. That last one is **WCAG 2.2.2** and axe does
+        not test for it, so it has no other guard.
+      - `src/lib/site-content.test.ts` — "at least two banners, or the carousel
+        is not one". Deleted rather than relaxed to `>= 0`: a floor of zero is
+        not a weaker version of that rule, it is the absence of it dressed as a
+        passing test.
+
+      All of it is in the parent of the commit that emptied the band, so this is
+      a restore rather than a rewrite.
+
+      **Do not restore the Grip Guard GP1 or Orbit Fan artwork** — see the two
+      wrong-product-fact items below. `site-content.test.ts` still names both
+      filenames.
+
+- [ ] **Decide what a phone does with a 4:1 banner.** The slot holds 4:1 above
+      720px and opens out to 3:2 below it, because at 375px a 4:1 band is 84px
+      tall — too short to read as a banner or hold its own label. One 2800 × 700
+      artwork cannot fill both, so the first real banner forces a choice:
+      letterbox it on the phone, or supply a second crop. Nothing is cropped
+      today because the band is empty. Pinned by
+      `tests/e2e/hero-mobile.spec.ts` so the tension is visible rather than
+      discovered.
+
 - [ ] **Re-run Lighthouse on all three page types.** The table in `README.md`
       was measured on 2026-08-11 and the footer has changed since — the social
       icons came out, which is site chrome and therefore moves every page.
