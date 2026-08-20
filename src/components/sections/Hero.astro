@@ -648,8 +648,13 @@ const SIZES =
     display: inline-flex;
     align-items: stretch;
     transform: skewX(-12deg);
-    border: 1px solid var(--line);
-    background: rgba(21, 21, 25, 0.6);
+    border: 1px solid var(--line-control);
+    /* Was rgba(21, 21, 25, 0.6) — a translucent near-black that let the dark
+       hero through behind the wordmark. On white it renders as a mid-grey slab
+       with red text on it, and no hex sweep could see it because it is not a
+       hex. The client's mockup draws this badge as white with a hairline, which
+       is also what --surface-raised gives. */
+    background: var(--surface-raised);
     overflow: hidden;
     animation: hero-rise 0.6s var(--ease-out) both;
   }
