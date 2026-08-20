@@ -125,12 +125,23 @@ test.describe('prefers-reduced-motion', () => {
   }) => {
     await page.goto('/');
 
-    // The three animated hero layers resolve to `animation: none` under the
+    // The two animated hero layers resolve to `animation: none` under the
     // media query in Hero.astro — this is the explicit `animation-name: none`
     // declaration, not global.css's blanket duration/iteration-count clamp.
     await expect(page.locator('.hero__track')).toHaveCSS('animation-name', 'none');
     await expect(page.locator('.hero__pip').first()).toHaveCSS('animation-name', 'none');
-    await expect(page.locator('.hero__glow')).toHaveCSS('animation-name', 'none');
+
+    // There were three. `.hero__glow` was deleted with the white theme on
+    // 2026-08-20 — a pulsing red bloom is a dark-surface device and reads as a
+    // pink smudge on white.
+    //
+    // This asserts the element is GONE rather than dropping the line. A
+    // `toHaveCSS` against a selector that matches nothing is not a passing
+    // assertion, it is an assertion that cannot run, and deleting it would
+    // leave nothing to notice if the glow ever came back untested. It also
+    // documents why this list is two and not three, which is the question the
+    // next reader will have.
+    await expect(page.locator('.hero__glow')).toHaveCount(0);
 
     // The carousel stops on slide one rather than mid-slide: a cancelled
     // animation resolves to its 0% keyframe, which is translateX(0).

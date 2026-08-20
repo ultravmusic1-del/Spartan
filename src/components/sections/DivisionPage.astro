@@ -124,7 +124,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   headerOnMedia
 >
   <main id="main">
-    <section class="dh">
+    <section class="dh on-dark">
       <div class="dh__bg">
         {
           heroImage && (
@@ -232,6 +232,11 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   /* Shorter than the home page hero — this one opens a landing rather than the
      site — but the same construction: 44px utility bar + 84px nav are both out
      of flow above it, so the padding-top has to clear them. */
+  /* THE ONE SECTION ON THE PUBLIC SITE THAT IS STILL DARK, and it carries
+     `on-dark` to say so. Its background is a photograph under a three-layer
+     scrim, including a top band painted specifically so the header reads on it.
+     Everything inside resolves the dark palette; axe caught .dh__stat at 1.64:1
+     when the recolour left it inheriting light text over that scrim. */
   .dh {
     position: relative;
     display: flex;

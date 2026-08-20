@@ -117,6 +117,16 @@ describe('white theme sweep', () => {
     'src/components/sections/Ticker.astro', // red band
     'src/components/sections/TrustBand.astro', // red band
     'src/layouts/BaseLayout.astro', // skip link, on --accent-fill
+    // Red-filled controls: the enquiry submit and add buttons, the drawer's
+    // review button, the catalogue's selected filter chip and division tabs.
+    // axe caught all five at 3.92:1 after a blanket substitution turned their
+    // white labels into --text — ink on brand red, which is the mirror image of
+    // the white-on-white defect this list was created for. Both directions are
+    // the same mistake: deciding a colour without knowing its surface.
+    'src/styles/enquiry.css',
+    'src/pages/catalogue/index.astro',
+    'src/pages/enquiry.astro',
+    'src/components/sections/FeaturedLines.astro',
   ];
 
   it('no public file hardcodes white text except on a red fill or the dark footer', () => {

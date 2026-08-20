@@ -869,8 +869,17 @@ const SIZES =
      and it was the only thing in the hero that could take focus and do nothing.
      Ticker.astro hides its own control here for the same reason. */
   @media (prefers-reduced-motion: reduce) {
+    /* `.hero__glow` was the third selector in this list until 2026-08-20.
+       Deleting it took the closing brace with it and left `.hero__track` and
+       `.hero__pip` dangling onto the rule below — so the carousel kept
+       animating for a visitor who had asked it not to, while the page still
+       looked correct. tests/e2e/motion.spec.ts caught it; nothing else would
+       have. */
     .hero__track,
-    .hero__pip,
+    .hero__pip {
+      animation: none;
+    }
+
     .hero__pip:first-child {
       background: var(--accent);
       width: 26px;
