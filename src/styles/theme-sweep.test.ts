@@ -55,7 +55,7 @@ const PUBLIC_FILES = globSync('src/**/*.{astro,tsx,css}', {
   .map((f) => f.split(sep).join('/'))
   .filter(
     (f) =>
-      !f.includes('admin') &&
+      !f.toLowerCase().includes('admin') &&
       // The palette is where these are legitimately declared, and `.on-dark`
       // in global.css is where they are legitimately re-pointed.
       f !== 'src/styles/tokens.css' &&
@@ -96,6 +96,37 @@ describe('white theme sweep', () => {
       offenders,
       '--color-grey is 3.43:1 on white — large text only. Use --text-muted for ' +
         'text, or --line-control for a boundary that carries meaning.',
+    ).toEqual([]);
+  });
+
+  /**
+   * Files where `color: #fff` is correct because the surface behind it is a red
+   * fill or the dark footer, neither of which the semantic layer covers: white
+   * on --accent-fill is 4.91:1 and is the intended pairing.
+   *
+   * ADDED AFTER THIS GATE MISSED ONE. The token bans below were all green while
+   * ProductCard.astro rendered `.card__name` as white on a white card — 1.00:1,
+   * every product name on every category page invisible. No banned token was
+   * involved, because the offending colour was never a token. It took
+   * tests/e2e/contrast.spec.ts, which needs a browser and a build, to find a
+   * defect a substring search could have caught in milliseconds.
+   */
+  const WHITE_TEXT_IS_CORRECT = [
+    'src/components/layout/Footer.astro', // inside .on-dark
+    'src/components/primitives/SolidButton.astro', // on --accent-fill
+    'src/components/sections/Ticker.astro', // red band
+    'src/components/sections/TrustBand.astro', // red band
+    'src/layouts/BaseLayout.astro', // skip link, on --accent-fill
+  ];
+
+  it('no public file hardcodes white text except on a red fill or the dark footer', () => {
+    const offenders = PUBLIC_FILES.filter(
+      (f) => !WHITE_TEXT_IS_CORRECT.includes(f) && /color:\s*#(fff|ffffff)\b/i.test(code(f)),
+    );
+    expect(
+      offenders,
+      'White text on the light site is invisible. Use --text, or add the file to ' +
+        'WHITE_TEXT_IS_CORRECT only if its surface really is a red fill or the dark footer.',
     ).toEqual([]);
   });
 

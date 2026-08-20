@@ -30,13 +30,44 @@ import { expect, test } from '@playwright/test';
  * queued separately in `BACKLOG.md`.
  */
 
-/** Elements whose contrast depends on the weight scale holding. */
+/**
+ * Elements whose contrast depends on the weight scale, or on the surface map,
+ * holding.
+ *
+ * EXPANDED FOR THE WHITE THEME, 2026-08-20. Two of the original five inverted
+ * rather than disappeared, and both were rewritten rather than deleted — a
+ * deleted case is a pairing nobody measures again.
+ */
 const CASES = [
   { path: '/', selector: '.card__title', what: 'ServiceCards card title (19px red on white)' },
   { path: '/why-spartan', selector: '.rs__title', what: 'why-spartan reason title (19px red on white)' },
   { path: '/about', selector: '.dv__name', what: 'about division name (21px, inherits h3 weight)' },
-  { path: '/', selector: '.hero__title span', what: 'hero accent (large display, 3:1 bar)' },
-  { path: '/', selector: '.eyebrow', what: 'eyebrow micro label on dark' },
+  // Moved from --color-black to --surface-alt. Measures 3.99:1 there and passes
+  // ONLY as large display type — the same >=18.66px-bold boundary the
+  // 2026-08-11 typography spec showed can be crossed silently by a weight
+  // change in a different file.
+  { path: '/', selector: '.hero__title span', what: 'hero accent (large display on --surface-alt, 3:1 bar)' },
+  // Was described as "micro label on dark". It is on light now, and at 11px the
+  // bar is 4.5:1, which is why Eyebrow resolves --accent-text rather than
+  // brand red.
+  { path: '/', selector: '.eyebrow', what: 'eyebrow micro label on light (11px, 4.5:1 bar)' },
+  // Product cards and breadcrumbs live on a category page, not on the home
+  // page or the catalogue index. hand-protection is chosen because it is the
+  // range that also carries EN 388 tables.
+  { path: '/catalogue/hand-protection', selector: '.card__kicker', what: 'product card kicker (muted micro label)' },
+  { path: '/catalogue/hand-protection', selector: '.card__name', what: 'product card name' },
+  { path: '/catalogue/hand-protection', selector: '.crumbs__current', what: 'breadcrumb current item on light' },
+  { path: '/products/chem-guard', selector: '.en td', what: 'EN 388 rating cell — shipped once at 4.48:1, axe did not catch it' },
+  // Both are hidden by media query on a phone: the utility bar below 820px and
+  // the desktop nav below 1080px. `minWidth` skips rather than lets them fail
+  // as "missing" — a skip says the element is absent by design, where a failure
+  // would say the page is broken.
+  { path: '/', selector: '.util__label', what: 'utility bar label on --surface-alt', minWidth: 821 },
+  { path: '/', selector: '.nav__link', what: 'header nav link on white', minWidth: 1081 },
+  // The one dark surface left on the public site. Inside `.on-dark`,
+  // --text-muted resolves back to --color-grey, which is 6.13:1 on the
+  // footer's black — this asserts that re-pointing actually happened.
+  { path: '/', selector: '.f-bot', what: 'footer muted text inside .on-dark' },
 ];
 
 /** sRGB relative luminance, WCAG 2.x §relative-luminance. */
@@ -56,8 +87,15 @@ function ratio(fg: number[], bg: number[]): number {
 const parseRgb = (s: string): number[] =>
   (s.match(/[\d.]+/g) ?? ['0', '0', '0']).slice(0, 3).map(Number);
 
-for (const { path, selector, what } of CASES) {
-  test(`${what} clears its WCAG bar`, async ({ page }) => {
+for (const { path, selector, what, minWidth } of CASES) {
+  test(`${what} clears its WCAG bar`, async ({ page }, testInfo) => {
+    const width = page.viewportSize()?.width ?? 0;
+    test.skip(
+      minWidth !== undefined && width < minWidth,
+      `${selector} is hidden by media query below ${minWidth}px — absent by ` +
+        `design at ${testInfo.project.name}'s ${width}px, not broken`,
+    );
+
     await page.goto(path);
 
     const el = page.locator(selector).first();
@@ -68,10 +106,29 @@ for (const { path, selector, what } of CASES) {
       const s = getComputedStyle(node as Element);
       // Walk up for the first painted background. `transparent` and
       // `rgba(…, 0)` both mean "keep looking".
+      //
+      // ALPHA IS PARSED, NOT PATTERN-MATCHED — fixed 2026-08-20. This tested
+      // `!/,\s*0\s*\)$/` against the whole colour string, and `rgb(0, 0, 0)`
+      // ends in ", 0)" — so PURE BLACK was read as transparent and the walk
+      // continued past it. The bug was invisible for as long as it existed
+      // because the dark theme's surfaces are #08080a, #0e0e11 and #151519 and
+      // none of them is pure black. The footer is `#000`, and the moment a case
+      // measured inside it the walk sailed past the footer to the white body
+      // and reported 3.43:1 against a background that is not there.
+      //
+      // A gate that resolves the wrong background does not fail loudly; it
+      // reports a plausible number for a pairing that does not exist.
+      const opaque = (c: string): boolean => {
+        if (!c || c === 'transparent') return false;
+        const parts = c.match(/[\d.]+/g);
+        if (!parts) return false;
+        return parts.length < 4 || Number(parts[3]) !== 0;
+      };
+
       let bg = 'rgba(0, 0, 0, 0)';
       for (let n: Element | null = node as Element; n; n = n.parentElement) {
         const c = getComputedStyle(n).backgroundColor;
-        if (c && c !== 'transparent' && !/,\s*0\s*\)$/.test(c)) {
+        if (opaque(c)) {
           bg = c;
           break;
         }
