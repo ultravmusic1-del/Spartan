@@ -126,12 +126,12 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
     display: flex;
     flex-direction: column;
     width: 100%;
-    background: var(--color-card);
+    background: var(--surface-raised);
     transition: background var(--dur-base) var(--ease-out);
   }
 
   .card:hover {
-    background: #1b1b21;
+    background: var(--surface-alt);
   }
 
   .card__link {
@@ -145,7 +145,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
   /* The ring belongs to the card, not to the heading text inside it, so pull it
      inside the 1px grid gap where it stays fully visible. */
   .card__link:focus-visible {
-    outline: 2px solid var(--color-red);
+    outline: 2px solid var(--accent);
     outline-offset: -3px;
   }
 
@@ -171,7 +171,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
     font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-grey);
+    color: var(--text-muted);
     line-height: 1.2;
   }
 
@@ -190,7 +190,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
     font-weight: var(--fw-label);
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .card__specs {
@@ -202,7 +202,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
     gap: 6px;
     font-size: 12.5px;
     line-height: 1.45;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .card__specs li {
@@ -214,7 +214,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
   }
 
   .card__spec-label {
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .card__spec-label::after {

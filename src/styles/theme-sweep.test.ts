@@ -31,10 +31,19 @@ const ROOT = new URL('../../', import.meta.url);
 
 const read = (f: string) => readFileSync(new URL(f, ROOT), 'utf8');
 
-/** Block comments and whole-line `//` comments. Leaves `https://` alone. */
+/**
+ * CSS/JS block comments, HTML comments, and whole-line `//` comments. Leaves
+ * `https://` alone.
+ *
+ * HTML comments are not optional here: Astro templates use `<!-- -->` for
+ * anything outside the frontmatter, and `enquiry.astro` documents its whole
+ * colour scheme in one. The first cut of this stripper handled only `/* * /`
+ * and reported that file as an offender for explaining itself.
+ */
 function stripComments(source: string): string {
-  const withoutBlocks = source.replace(/\/\*[\s\S]*?\*\//g, '');
-  return withoutBlocks
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
     .split('\n')
     .filter((line) => !line.trim().startsWith('//'))
     .join('\n');

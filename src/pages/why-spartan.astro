@@ -140,8 +140,8 @@ const reasons = [
 
   .rs {
     padding: 104px 0;
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--surface-alt);
+    color: var(--text);
   }
 
   .rs__grid {
@@ -149,15 +149,15 @@ const reasons = [
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     margin-top: 52px;
-    background: var(--color-paper-line);
-    border: 1px solid var(--color-paper-line);
+    background: var(--line);
+    border: 1px solid var(--line);
   }
 
   .rs__card {
     display: flex;
     flex-direction: column;
     padding: 36px 32px;
-    background: #fff;
+    background: var(--surface-raised);
   }
 
   /* 34px display type is far above WCAG's 24px large-text threshold, so brand
@@ -170,7 +170,7 @@ const reasons = [
     font-weight: var(--fw-section);
     letter-spacing: -0.04em;
     line-height: 1;
-    color: var(--color-red);
+    color: var(--accent);
   }
 
   /* 19px at weight 700 is 14.25pt bold, which clears WCAG's 14pt-bold
@@ -183,20 +183,20 @@ const reasons = [
     /* red-deep — same reason as ServiceCards' .card__title: 19px on white was
        large text only while headings were 700, and brand red's 4.30:1 fails the
        normal-text floor. See handoff.md §3. */
-    color: var(--color-red-deep);
+    color: var(--accent-text);
   }
 
   /* --color-grey is 3.17:1 on light and must never be used here; ink-muted is
      4.96:1 and passes AA. */
   .rs__body {
     font-size: 14px;
-    color: var(--color-ink-muted);
+    color: var(--text-muted);
   }
 
   .wc {
     position: relative;
     padding: 96px 0;
-    background: var(--color-panel);
+    background: var(--surface-alt);
     overflow: hidden;
   }
 
@@ -214,7 +214,7 @@ const reasons = [
   .wc__body {
     max-width: 56ch;
     font-size: 15px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .wc__actions {

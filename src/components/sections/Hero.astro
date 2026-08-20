@@ -453,9 +453,11 @@ const SIZES =
     border: 1px solid var(--line);
     border-radius: 4px;
     background: var(--surface-raised);
-    box-shadow:
-      0 46px 60px rgba(0, 0, 0, 0.75),
-      0 0 40px rgba(235, 41, 39, 0.14);
+    /* Re-tuned for a white page. The dark hero carried 0.75-alpha black plus a
+       red bloom; both were reading the black behind them. On white that shadow
+       is grey mud and the bloom is the glow this theme deleted, so the frame
+       now lifts with a single soft shadow and nothing else. */
+    box-shadow: 0 24px 48px rgba(8, 8, 10, 0.14);
   }
 
   /*

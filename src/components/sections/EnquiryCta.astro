@@ -152,7 +152,7 @@ const divisions = await getDivisions();
   .cta {
     position: relative;
     padding: 96px 0;
-    background: var(--color-black);
+    background: var(--surface-alt);
     overflow: hidden;
   }
 
@@ -184,7 +184,7 @@ const divisions = await getDivisions();
     margin-top: 14px;
     font-size: 14px;
     line-height: 1.5;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .cta__status:empty {
@@ -194,18 +194,18 @@ const divisions = await getDivisions();
   /* Small text on a dark card, so the light red — brand red measures 4.23:1
      here and fails AA for normal text (handoff.md §3). */
   .cta__box[data-state='error'] .cta__status {
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .cta__nojs {
     margin-top: 14px;
     font-size: 14px;
     line-height: 1.5;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .cta__nojs a {
-    color: var(--color-red-light);
+    color: var(--accent-text);
     text-decoration: underline;
   }
 
@@ -221,7 +221,7 @@ const divisions = await getDivisions();
 
   .cta__body {
     max-width: 48ch;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .cta__actions {
@@ -237,20 +237,20 @@ const divisions = await getDivisions();
     list-style: none;
     margin: 30px 0 0;
     padding: 0;
-    border-top: 1px solid var(--color-line);
+    border-top: 1px solid var(--line);
   }
 
   .cta__claims li {
     padding: 16px 0;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
     font-size: 14px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .cta__box {
     padding: 32px;
-    background: var(--color-card);
-    border: 1px solid var(--color-line);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
   }
 
   .cta__field {
@@ -266,25 +266,25 @@ const divisions = await getDivisions();
     letter-spacing: 0.14em;
     text-transform: uppercase;
     /* 5.6:1 on the card surface. */
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .cta__field input,
   .cta__field select {
     width: 100%;
     padding: 13px 14px;
-    background: #0b0b0e;
-    border: 1px solid var(--color-line);
+    background: var(--surface-page);
+    border: 1px solid var(--line);
     font-family: var(--font-body);
     font-size: 14px;
-    color: #fff;
+    color: var(--text);
   }
 
   /* The mockup's #5C5C64 placeholder is 3.2:1 on this field background, below
      AA. --color-grey is 5.2:1 and keeps the same recessive role — the same
      substitution the footer makes. */
   .cta__field input::placeholder {
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   /* Two states, and they are different on purpose. Without JavaScript there is

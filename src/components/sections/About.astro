@@ -98,8 +98,8 @@ const image = loader ? (await loader()).default : undefined;
   .about {
     position: relative;
     padding: 76px 0;
-    background: var(--color-panel);
-    border-top: 1px solid var(--color-line);
+    background: var(--surface-alt);
+    border-top: 1px solid var(--line);
     overflow: hidden;
   }
 
@@ -120,14 +120,14 @@ const image = loader ? (await loader()).default : undefined;
     line-height: 1.04;
     letter-spacing: -0.025em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
   }
 
   .about__body {
     max-width: 52ch;
     margin-bottom: 16px;
     font-size: 15px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   /* Hairline strip: 1px gaps over --color-line, so the rules between cells are
@@ -137,15 +137,15 @@ const image = loader ? (await loader()).default : undefined;
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     margin-top: 34px;
-    background: var(--color-line);
-    border: 1px solid var(--color-line);
+    background: var(--line);
+    border: 1px solid var(--line);
   }
 
   .about__stat {
     display: flex;
     flex-direction: column;
     padding: 20px;
-    background: var(--color-panel);
+    background: var(--surface-alt);
   }
 
   /* The number reads first but describes the label, so the label is the <dt>
@@ -157,7 +157,7 @@ const image = loader ? (await loader()).default : undefined;
     font-weight: var(--fw-section);
     letter-spacing: -0.03em;
     line-height: 1.1;
-    color: #fff;
+    color: var(--text);
   }
 
   .about__stat-label {
@@ -165,7 +165,7 @@ const image = loader ? (await loader()).default : undefined;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     /* Dark surface only — 6.13:1 on --color-panel. */
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .about__cta {
@@ -184,7 +184,7 @@ const image = loader ? (await loader()).default : undefined;
   .about__vis :global(img) {
     width: 92%;
     height: auto;
-    filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.75));
+    filter: drop-shadow(0 24px 36px rgba(8, 8, 10, 0.18));
   }
 
   @media (max-width: 820px) {

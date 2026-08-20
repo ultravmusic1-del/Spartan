@@ -58,8 +58,8 @@ const faqs = [
 <style>
   .faq {
     padding: 76px 0;
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--surface-page);
+    color: var(--text);
   }
 
   /* Scoped override of the shared SectionHeading, not an edit to that
@@ -125,7 +125,7 @@ const faqs = [
     line-height: 1;
     /* 16px is under the AA large-text bar, so this is the deep red, not brand
        red: 8.40:1 on --color-paper against 3.99:1. */
-    color: var(--color-red-deep);
+    color: var(--accent-text);
   }
 
   /* Open: the disc inverts to a red surface behind a white glyph, so the fill
@@ -134,13 +134,13 @@ const faqs = [
      --color-red-fill disc would read as an artefact. */
   .faq__item[open] .faq__q::after {
     content: '–';
-    border-color: var(--color-red-fill);
-    background: var(--color-red-fill);
+    border-color: var(--accent-fill);
+    background: var(--accent-fill);
     color: #fff;
   }
 
   .faq__q:focus-visible {
-    outline: 2px solid var(--color-red-deep);
+    outline: 2px solid var(--accent-text);
     outline-offset: 2px;
   }
 
@@ -149,7 +149,7 @@ const faqs = [
     max-width: 74ch;
     padding: 0 46px 24px 0;
     font-size: 14.5px;
-    color: var(--color-ink-muted);
+    color: var(--text-muted);
   }
 
 </style>

@@ -62,16 +62,16 @@ const countLabel = `${count} ${count === 1 ? 'Product' : 'Products'}`;
     gap: 16px;
     min-height: 212px;
     padding: 24px;
-    background: var(--color-card);
+    background: var(--surface-raised);
     transition: background var(--dur-base) var(--ease-out);
   }
 
   .tile:hover {
-    background: #1b1b21;
+    background: var(--surface-alt);
   }
 
   .tile:focus-visible {
-    outline: 2px solid var(--color-red);
+    outline: 2px solid var(--accent);
     outline-offset: -3px;
   }
 
@@ -109,11 +109,11 @@ const countLabel = `${count} ${count === 1 ? 'Product' : 'Products'}`;
     font-weight: var(--fw-label);
     letter-spacing: 0.13em;
     text-transform: uppercase;
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .tile__count--soon {
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   @media (max-width: 640px) {

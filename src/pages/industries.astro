@@ -192,27 +192,27 @@ const industries = (site.industries as string[]).map((name) => {
     grid-template-columns: repeat(2, 1fr);
     gap: 1px;
     list-style: none;
-    background: var(--color-line);
-    border: 1px solid var(--color-line);
+    background: var(--line);
+    border: 1px solid var(--line);
   }
 
   .ind {
     display: flex;
     flex-direction: column;
     padding: 32px;
-    background: var(--color-card);
+    background: var(--surface-raised);
   }
 
   .ind__name {
     font-size: 20px;
-    color: #fff;
+    color: var(--text);
   }
 
   .ind__note {
     max-width: 52ch;
     margin: 12px 0 20px;
     font-size: 14.5px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .ind__cats {
@@ -230,17 +230,17 @@ const industries = (site.industries as string[]).map((name) => {
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     padding: 10px 15px;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
     font-size: 13px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
     transition:
       border-color var(--dur-base) var(--ease-out),
       color var(--dur-base) var(--ease-out);
   }
 
   .ind__cats a:hover {
-    border-color: var(--color-red);
-    color: #fff;
+    border-color: var(--accent);
+    color: var(--text);
   }
 
   /* 11px/700 is normal-size text and needs 4.5:1. Brand red on --color-card is
@@ -251,7 +251,7 @@ const industries = (site.industries as string[]).map((name) => {
     font-size: 11px;
     font-weight: var(--fw-label);
     letter-spacing: 0.06em;
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .ic {
@@ -260,8 +260,8 @@ const industries = (site.industries as string[]).map((name) => {
 
   .ic__inner {
     padding: 48px 40px;
-    border: 1px solid var(--color-line);
-    background: var(--color-panel);
+    border: 1px solid var(--line);
+    background: var(--surface-alt);
   }
 
   .ic__title {
@@ -273,7 +273,7 @@ const industries = (site.industries as string[]).map((name) => {
   .ic__body {
     max-width: 56ch;
     font-size: 15px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .ic__actions {

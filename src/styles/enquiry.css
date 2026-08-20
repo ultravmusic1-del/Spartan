@@ -91,19 +91,19 @@ html[data-js] .eq-add-wrap--pending {
   width: 100%;
   padding: 11px 16px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  color: #fff;
+  border: 1px solid var(--line-control);
+  color: var(--text);
   font-size: 11.5px;
 }
 
 .eq-add--card:hover {
-  border-color: var(--color-red);
-  background: color-mix(in srgb, var(--color-red) 12%, transparent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .eq-add--card.eq-add--done {
-  border-color: var(--color-red);
-  background: color-mix(in srgb, var(--color-red) 16%, transparent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 /* On a product detail page: the mockup's solid "ADD TO ENQUIRY", matching
@@ -113,9 +113,9 @@ html[data-js] .eq-add-wrap--pending {
 .eq-add--solid {
   min-width: 218px;
   padding: 14px 26px;
-  background: var(--color-red-fill);
+  background: var(--accent-fill);
   border: none;
-  color: #fff;
+  color: var(--text);
   font-size: 13.5px;
   letter-spacing: 0.03em;
 }
@@ -173,8 +173,8 @@ html[data-enquiry] .eq-slot > astro-island {
   height: 44px;
   flex-shrink: 0;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff;
+  border: 1px solid var(--line-control);
+  color: var(--text);
   cursor: pointer;
   transition:
     border-color var(--dur-base) var(--ease-out),
@@ -182,8 +182,8 @@ html[data-enquiry] .eq-slot > astro-island {
 }
 
 .eq-badge:hover {
-  border-color: var(--color-red);
-  background: color-mix(in srgb, var(--color-red) 12%, transparent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .eq-badge__icon {
@@ -203,8 +203,8 @@ html[data-enquiry] .eq-slot > astro-island {
   padding: 0 5px;
   border-radius: 999px;
   /* A red surface carrying white text, so the fill token, not brand red. */
-  background: var(--color-red-fill);
-  color: #fff;
+  background: var(--accent-fill);
+  color: var(--text);
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: var(--fw-label);
@@ -236,8 +236,8 @@ html[data-enquiry] .eq-slot > astro-island {
   /* Never wider than the viewport: at 375px this is exactly 375px and the page
      behind it gains no horizontal scroll. */
   width: min(420px, 100%);
-  background: var(--color-panel);
-  border-left: 1px solid var(--color-line);
+  background: var(--surface-alt);
+  border-left: 1px solid var(--line);
   animation: eq-slide var(--dur-base) var(--ease-out);
 }
 
@@ -260,7 +260,7 @@ html[data-enquiry] .eq-slot > astro-island {
   gap: 16px;
   flex-shrink: 0;
   padding: 16px 16px 16px 24px;
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--line);
 }
 
 .eq-drawer__title {
@@ -269,7 +269,7 @@ html[data-enquiry] .eq-slot > astro-island {
   font-weight: var(--fw-subhead);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--text);
 }
 
 .eq-drawer__close {
@@ -280,8 +280,8 @@ html[data-enquiry] .eq-slot > astro-island {
   height: 44px;
   flex-shrink: 0;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff;
+  border: 1px solid var(--line-control);
+  color: var(--text);
   cursor: pointer;
   transition:
     border-color var(--dur-base) var(--ease-out),
@@ -289,8 +289,8 @@ html[data-enquiry] .eq-slot > astro-island {
 }
 
 .eq-drawer__close:hover {
-  border-color: var(--color-red);
-  background: color-mix(in srgb, var(--color-red) 12%, transparent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .eq-drawer__close svg {
@@ -310,7 +310,7 @@ html[data-enquiry] .eq-slot > astro-island {
 
 .eq-item {
   padding: 20px 24px;
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--line);
 }
 
 .eq-item__head {
@@ -325,7 +325,7 @@ html[data-enquiry] .eq-slot > astro-island {
   font-size: 14.5px;
   font-weight: var(--fw-label);
   line-height: 1.3;
-  color: #fff;
+  color: var(--text);
 }
 
 .eq-item__remove {
@@ -339,13 +339,13 @@ html[data-enquiry] .eq-slot > astro-island {
   flex-shrink: 0;
   background: transparent;
   border: 0;
-  color: var(--color-grey);
+  color: var(--text-muted);
   cursor: pointer;
   transition: color var(--dur-base) var(--ease-out);
 }
 
 .eq-item__remove:hover {
-  color: var(--color-red);
+  color: var(--accent);
 }
 
 .eq-item__remove svg {
@@ -358,7 +358,7 @@ html[data-enquiry] .eq-slot > astro-island {
   align-items: center;
   margin-top: 12px;
   width: fit-content;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--line);
 }
 
 .eq-qty__step {
@@ -370,7 +370,7 @@ html[data-enquiry] .eq-slot > astro-island {
   flex-shrink: 0;
   background: transparent;
   border: 0;
-  color: #fff;
+  color: var(--text);
   cursor: pointer;
   transition:
     background var(--dur-base) var(--ease-out),
@@ -378,8 +378,8 @@ html[data-enquiry] .eq-slot > astro-island {
 }
 
 .eq-qty__step:hover {
-  background: color-mix(in srgb, var(--color-red) 14%, transparent);
-  color: var(--color-red);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
 }
 
 .eq-qty__step svg {
@@ -391,14 +391,14 @@ html[data-enquiry] .eq-slot > astro-island {
   width: 58px;
   height: 44px;
   padding: 0 4px;
-  background: #0b0b0e;
+  background: var(--surface-page);
   border: 0;
-  border-inline: 1px solid var(--color-line);
+  border-inline: 1px solid var(--line);
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: var(--fw-label);
   text-align: center;
-  color: #fff;
+  color: var(--text);
   /* The native spinners are a 12px target sitting beside two 44px ones. The
      explicit steppers replace them; min/max and the numeric keypad stay. */
   appearance: textfield;
@@ -420,22 +420,22 @@ html[data-enquiry] .eq-slot > astro-island {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
-  background: #0b0b0e;
-  border: 1px solid var(--color-line);
+  background: var(--surface-page);
+  border: 1px solid var(--line);
   border-radius: 0;
   font-family: var(--font-body);
   font-size: 13.5px;
   line-height: 1.5;
-  color: #fff;
+  color: var(--text);
   resize: vertical;
 }
 
 .eq-item__field::placeholder {
-  color: var(--color-grey);
+  color: var(--text-muted);
 }
 
 .eq-item__field:hover {
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: var(--line-control);
 }
 
 .eq-empty {
@@ -447,14 +447,14 @@ html[data-enquiry] .eq-slot > astro-island {
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: var(--fw-subhead);
-  color: #fff;
+  color: var(--text);
 }
 
 .eq-empty__note {
   max-width: 34ch;
   margin: 10px auto 0;
   font-size: 13.5px;
-  color: var(--color-grey-lt);
+  color: var(--text-muted);
 }
 
 .eq-empty__link {
@@ -464,18 +464,18 @@ html[data-enquiry] .eq-slot > astro-island {
   min-height: 44px;
   margin-top: 18px;
   padding: 10px 4px;
-  border-bottom: 1px solid var(--color-red);
+  border-bottom: 1px solid var(--accent);
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: var(--fw-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--text);
   transition: color var(--dur-base) var(--ease-out);
 }
 
 .eq-empty__link:hover {
-  color: var(--color-red-light);
+  color: var(--accent-text);
 }
 
 .eq-drawer__foot {
@@ -485,7 +485,7 @@ html[data-enquiry] .eq-slot > astro-island {
   gap: 16px;
   flex-shrink: 0;
   padding: 16px 24px;
-  border-top: 1px solid var(--color-line);
+  border-top: 1px solid var(--line);
   background: var(--color-black);
 }
 
@@ -495,7 +495,7 @@ html[data-enquiry] .eq-slot > astro-island {
   font-weight: var(--fw-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-grey-lt);
+  color: var(--text-muted);
 }
 
 .eq-drawer__review {
@@ -506,8 +506,8 @@ html[data-enquiry] .eq-slot > astro-island {
   min-height: 44px;
   padding: 12px 22px;
   /* A red surface carrying white text, so the fill token, not brand red. */
-  background: var(--color-red-fill);
-  color: #fff;
+  background: var(--accent-fill);
+  color: var(--text);
   font-family: var(--font-display);
   font-size: 12.5px;
   font-weight: var(--fw-label);

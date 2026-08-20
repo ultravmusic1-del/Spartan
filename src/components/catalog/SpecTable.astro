@@ -66,8 +66,8 @@ const { specs, caption, class: cls = '' } = Astro.props;
      Values match the mockup's `th`. */
   .spec th {
     width: 38%;
-    background: #000;
-    color: #fff;
+    background: var(--surface-alt);
+    color: var(--text);
     font-family: var(--font-display);
     font-size: 10.5px;
     font-weight: var(--fw-label);
@@ -75,7 +75,7 @@ const { specs, caption, class: cls = '' } = Astro.props;
     text-transform: uppercase;
     text-align: left;
     padding: 12px;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
     vertical-align: top;
   }
 
@@ -87,8 +87,8 @@ const { specs, caption, class: cls = '' } = Astro.props;
      of the pair finally read as two different kinds of thing. */
   .spec td {
     padding: 12px;
-    border: 1px solid var(--color-line);
-    color: var(--color-grey-lt);
+    border: 1px solid var(--line);
+    color: var(--text-muted);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     /* Declared, not inherited. The mono ships with its weight axis clipped to
@@ -106,7 +106,7 @@ const { specs, caption, class: cls = '' } = Astro.props;
      prose in mono because it happens to sit in a table is the font doing
      decoration, which is the one thing --font-mono exists to avoid. */
   .spec__feature {
-    color: #fff;
+    color: var(--text);
     font-weight: 500;
     font-family: var(--font-body);
     font-variant-numeric: normal;

@@ -55,7 +55,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 const year = new Date().getFullYear();
 ---
 
-<footer class="f">
+<footer class="f on-dark">
   <div class="f-top">
     <div class="wrap f-top__inner">
       <div class="f-item">
@@ -140,9 +140,19 @@ const year = new Date().getFullYear();
 </footer>
 
 <style>
+  /* THE ONE DARK SURFACE LEFT ON THE PUBLIC SITE.
+     It carries `on-dark` on the element itself (see the markup above), which
+     re-points the semantic layer at the palette's dark values for everything
+     inside it. That is why this file is the single entry in
+     src/styles/theme-sweep.test.ts's DARK_SURFACE_FILES: --color-grey and
+     --color-red-light are correct here and illegal everywhere else.
+
+     It also keeps spartan-logo-light.svg. The header took the black-wordmark
+     lockup with the white theme; this is now the only place the white-wordmark
+     one belongs. */
   .f {
     /* Mockup values with no equivalent in tokens.css. The footer sits on pure
-       black, one step darker than the page's --color-black. */
+       black, one step darker than --color-black. */
     --f-bg: #000;
     --f-divider: #1a1a1f;
     --f-circle: #26262c;

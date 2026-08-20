@@ -101,8 +101,8 @@ const hasUntested = product?.en388
   .spot {
     position: relative;
     padding: 76px 0;
-    background: var(--color-panel);
-    border-top: 1px solid var(--color-line);
+    background: var(--surface-alt);
+    border-top: 1px solid var(--line);
     overflow: hidden;
   }
 
@@ -120,8 +120,8 @@ const hasUntested = product?.en388
     place-items: center;
     aspect-ratio: 1;
     padding: 52px;
-    background: radial-gradient(circle at 50% 45%, #22222a 0%, var(--color-panel) 68%);
-    border: 1px solid var(--color-line);
+    background: radial-gradient(circle at 50% 45%, var(--surface-alt) 0%, var(--surface-page) 68%);
+    border: 1px solid var(--line);
   }
 
   /* The cutout is transparent and sits straight on the radial gradient. It is
@@ -131,7 +131,7 @@ const hasUntested = product?.en388
   .spot__vis :global(img) {
     max-height: 100%;
     width: auto;
-    filter: drop-shadow(0 30px 50px rgba(0, 0, 0, 0.7));
+    filter: drop-shadow(0 20px 32px rgba(8, 8, 10, 0.18));
   }
 
   .spot__title {
@@ -148,7 +148,7 @@ const hasUntested = product?.en388
   .spot__body {
     max-width: 50ch;
     font-size: 15px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   /* The mockup groups each table under a full-width table header. A real
@@ -161,13 +161,13 @@ const hasUntested = product?.en388
     font-weight: var(--fw-label);
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .spot__note {
     margin-top: 10px;
     font-size: 12.5px;
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .spot__actions {

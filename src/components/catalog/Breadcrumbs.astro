@@ -71,7 +71,7 @@ const { trail, class: cls = '' } = Astro.props;
 
   /* 6.9:1 on --color-black; these pages are dark throughout. */
   .crumbs a {
-    color: var(--color-grey);
+    color: var(--text-muted);
     padding-block: 4px;
     transition: color var(--dur-base) var(--ease-out);
   }
@@ -82,10 +82,10 @@ const { trail, class: cls = '' } = Astro.props;
 
   .crumbs__sep {
     margin-inline: 10px;
-    color: var(--color-line);
+    color: var(--line);
   }
 
   .crumbs__current {
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 </style>

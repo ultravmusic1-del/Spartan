@@ -113,8 +113,8 @@ const TABS = [
 
 <style>
   .fl {
-    background: var(--color-panel);
-    border-top: 1px solid var(--color-line);
+    background: var(--surface-page);
+    border-top: 1px solid var(--line);
     padding: 76px 0;
   }
 
@@ -134,7 +134,7 @@ const TABS = [
     font-weight: var(--fw-display);
     letter-spacing: -0.02em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
   }
 
   /* Three buttons at min-height:44px / padding:0 20px / 11px 700 0.14em
@@ -157,8 +157,8 @@ const TABS = [
     padding: 0 20px;
     cursor: pointer;
     background: transparent;
-    color: var(--color-grey-lt);
-    border: 1px solid var(--color-line);
+    color: var(--text-muted);
+    border: 1px solid var(--line);
     font-family: var(--font-display);
     font-size: 11px;
     font-weight: var(--fw-label);
@@ -167,9 +167,9 @@ const TABS = [
   }
 
   .fl__tab[aria-pressed='true'] {
-    background: var(--color-red-fill);
-    border-color: var(--color-red-fill);
-    color: #fff;
+    background: var(--accent-fill);
+    border-color: var(--accent-fill);
+    color: var(--text);
   }
 
   .fl__grid {
@@ -184,15 +184,15 @@ const TABS = [
   .fl__card {
     display: block;
     height: 100%;
-    background: var(--color-card);
-    border: 1px solid var(--color-line);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
     text-decoration: none;
     transition: border-color var(--dur-base) var(--ease-out);
   }
 
   .fl__card:hover,
   .fl__card:focus-visible {
-    border-color: var(--color-red);
+    border-color: var(--accent);
   }
 
   .fl__media {
@@ -221,7 +221,7 @@ const TABS = [
     font-size: 11px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .fl__name {
@@ -231,7 +231,7 @@ const TABS = [
     font-size: 16px;
     font-weight: var(--fw-subhead);
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
   }
 
   .fl__cta {
@@ -242,7 +242,7 @@ const TABS = [
     font-weight: var(--fw-label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   @media (max-width: 1100px) {

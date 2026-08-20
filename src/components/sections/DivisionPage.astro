@@ -285,7 +285,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     letter-spacing: -0.035em;
     line-height: 0.96;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
   }
 
   .dh__blurb {
@@ -303,8 +303,8 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1px;
     margin-top: 30px;
-    background: var(--color-line);
-    border: 1px solid var(--color-line);
+    background: var(--line);
+    border: 1px solid var(--line);
   }
 
   .dh__stat {
@@ -324,7 +324,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     font-weight: var(--fw-section);
     letter-spacing: -0.03em;
     line-height: 1.1;
-    color: #fff;
+    color: var(--text);
   }
 
   .dh__stat dt {
@@ -332,7 +332,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     /* Dark surface only. */
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .dh__actions {
@@ -355,7 +355,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     max-width: 60ch;
     margin-top: 14px;
     font-size: 15px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   /* Hairline grid, same construction as the home page's category grid. */
@@ -365,13 +365,13 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     gap: 1px;
     margin-top: 32px;
     list-style: none;
-    background: var(--color-line);
-    border: 1px solid var(--color-line);
+    background: var(--line);
+    border: 1px solid var(--line);
   }
 
   .dc__grid > li {
     display: flex;
-    background: var(--color-card);
+    background: var(--surface-raised);
   }
 
   /* CategoryTile renders its own <a>; stretching it keeps every cell full
@@ -409,7 +409,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     max-width: 58ch;
     margin-top: 14px;
     font-size: 15px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .ds__foot {

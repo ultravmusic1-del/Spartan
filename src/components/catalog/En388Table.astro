@@ -73,8 +73,8 @@ const columns = en388 ? en388Columns(en388) : [];
   }
 
   .en th {
-    background: #000;
-    color: #fff;
+    background: var(--surface-alt);
+    color: var(--text);
     font-family: var(--font-display);
     font-size: 10.5px;
     font-weight: var(--fw-label);
@@ -82,7 +82,7 @@ const columns = en388 ? en388Columns(en388) : [];
     text-transform: uppercase;
     text-align: center;
     padding: 12px;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
   }
 
   /* 16px is 12pt, and WCAG's large-text bar for bold type is 14pt (18.66px),
@@ -103,13 +103,13 @@ const columns = en388 ? en388Columns(en388) : [];
      guarantees the digits keep their advance if the family ever falls back. */
   .en td {
     padding: 12px;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
     text-align: center;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-weight: var(--fw-subhead);
     font-size: 16px;
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   /* "Abrasion" and "Puncture" are single words that cannot wrap, so at 10.5px

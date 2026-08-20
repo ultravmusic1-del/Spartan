@@ -128,14 +128,18 @@ const site = await getSiteSettings();
      src/styles/enquiry.css because /enquiry is the only route that renders it,
      and every other page would otherwise carry the bytes.
 
-     Every surface here is dark, but that does not make brand red safe at any
-     size — it is 4.23:1 on --color-card, under the 4.5:1 floor for normal-size
-     text. --color-red is correct for icons, rules and borders; small red
-     *text* uses --color-red-light (4.62:1 on --color-card). The one red
-     *surface* carrying white text is the submit button, which uses
-     --color-red-fill (4.91:1) and --color-red-dark on hover (6.52:1). Muted
-     copy is --color-grey / --color-grey-lt, both of which are
-     dark-surface-only tokens. -->
+     EVERY SURFACE HERE IS LIGHT as of the white theme, 2026-08-20, and the
+     rule that made brand red unsafe survives the inversion unchanged — only
+     the numbers moved. It is 3.99:1 on --surface-alt, under the 4.5:1 floor
+     for normal-size text, exactly as it was 4.23:1 on --color-card. --accent
+     is correct for icons, rules and borders; small red *text* uses
+     --accent-text (8.40:1 on --surface-alt). The one red *surface* carrying
+     white text is the submit button: --accent-fill at 4.91:1, with
+     --color-red-dark on hover.
+
+     Muted copy is --text-muted. It was --color-grey / --color-grey-lt, which
+     are dark-surface-only tokens measuring 3.17:1 and 1.91:1 here — the exact
+     failure src/styles/theme-sweep.test.ts exists to catch. -->
 <style is:global>
   /* Two gates, one flag. `data-js` is set on <html> by BaseLayout's inline
      script before the first paint, so neither of these ever flashes the wrong
@@ -157,29 +161,29 @@ const site = await getSiteSettings();
   .eb__nojs {
     max-width: 62ch;
     padding: 32px;
-    background: var(--color-card);
-    border: 1px solid var(--color-line);
-    border-left: 3px solid var(--color-red);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
   }
 
   .eb__nojs-title {
     font-size: 22px;
-    color: #fff;
+    color: var(--text);
   }
 
   .eb__nojs-body {
     margin-top: 12px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .eb__nojs-detail {
     margin-top: 22px;
-    border-top: 1px solid var(--color-line);
+    border-top: 1px solid var(--line);
   }
 
   .eb__nojs-detail > div {
     padding: 14px 0;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
   }
 
   .eb__nojs-detail dt {
@@ -188,7 +192,7 @@ const site = await getSiteSettings();
     font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .eb__nojs-detail dd a {
@@ -197,7 +201,7 @@ const site = await getSiteSettings();
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     font-size: 15.5px;
-    color: #fff;
+    color: var(--text);
   }
 
   .eb__nojs-link {
@@ -207,13 +211,13 @@ const site = await getSiteSettings();
     min-height: 44px;
     margin-top: 12px;
     padding: 10px 2px;
-    border-bottom: 1px solid var(--color-red);
+    border-bottom: 1px solid var(--accent);
     font-family: var(--font-display);
     font-size: 12px;
     font-weight: var(--fw-label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
   }
 
   /* ------------------------------------------------------------- layout --- */
@@ -228,8 +232,8 @@ const site = await getSiteSettings();
   .ef-list,
   .ef-form {
     padding: 28px;
-    background: var(--color-card);
-    border: 1px solid var(--color-line);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
   }
 
   .ef-panel__title {
@@ -239,7 +243,7 @@ const site = await getSiteSettings();
     letter-spacing: 0.16em;
     text-transform: uppercase;
     /* 5.6:1 on --color-card. */
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   /* --------------------------------------------------------------- list --- */
@@ -250,7 +254,7 @@ const site = await getSiteSettings();
     justify-content: space-between;
     gap: 16px;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
   }
 
   .ef-list__count {
@@ -259,7 +263,7 @@ const site = await getSiteSettings();
     font-weight: var(--fw-label);
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .ef-list__empty {
@@ -270,13 +274,13 @@ const site = await getSiteSettings();
     font-family: var(--font-display);
     font-size: 16px;
     font-weight: var(--fw-subhead);
-    color: #fff;
+    color: var(--text);
   }
 
   .ef-list__empty-note {
     margin-top: 10px;
     font-size: 14px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .ef-list__empty-link {
@@ -286,18 +290,18 @@ const site = await getSiteSettings();
     min-height: 44px;
     margin-top: 10px;
     padding: 10px 2px;
-    border-bottom: 1px solid var(--color-red);
+    border-bottom: 1px solid var(--accent);
     font-family: var(--font-display);
     font-size: 12px;
     font-weight: var(--fw-label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
     transition: color var(--dur-base) var(--ease-out);
   }
 
   .ef-list__empty-link:hover {
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .ef-items {
@@ -306,7 +310,7 @@ const site = await getSiteSettings();
 
   .ef-item {
     padding: 20px 0;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
   }
 
   .ef-item:last-child {
@@ -326,7 +330,7 @@ const site = await getSiteSettings();
     font-size: 15px;
     font-weight: var(--fw-subhead);
     line-height: 1.3;
-    color: #fff;
+    color: var(--text);
   }
 
   .ef-item__remove {
@@ -340,13 +344,13 @@ const site = await getSiteSettings();
     flex-shrink: 0;
     background: transparent;
     border: 0;
-    color: var(--color-grey);
+    color: var(--text-muted);
     cursor: pointer;
     transition: color var(--dur-base) var(--ease-out);
   }
 
   .ef-item__remove:hover {
-    color: var(--color-red);
+    color: var(--accent);
   }
 
   .ef-item__remove svg {
@@ -365,7 +369,7 @@ const site = await getSiteSettings();
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
   }
 
   .ef-qty__step {
@@ -377,7 +381,7 @@ const site = await getSiteSettings();
     flex-shrink: 0;
     background: transparent;
     border: 0;
-    color: #fff;
+    color: var(--text);
     cursor: pointer;
     transition:
       background var(--dur-base) var(--ease-out),
@@ -385,8 +389,8 @@ const site = await getSiteSettings();
   }
 
   .ef-qty__step:hover {
-    background: color-mix(in srgb, var(--color-red) 14%, transparent);
-    color: var(--color-red);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--accent);
   }
 
   .ef-qty__step svg {
@@ -398,14 +402,14 @@ const site = await getSiteSettings();
     width: 54px;
     height: 44px;
     padding: 0 4px;
-    background: #0b0b0e;
+    background: var(--surface-page);
     border: 0;
-    border-inline: 1px solid var(--color-line);
+    border-inline: 1px solid var(--line);
     font-family: var(--font-display);
     font-size: 14px;
     font-weight: var(--fw-label);
     text-align: center;
-    color: #fff;
+    color: var(--text);
     /* The native spinners are a 12px target sitting beside two 44px ones. The
        explicit steppers replace them; min/max and the numeric keypad stay. */
     appearance: textfield;
@@ -431,20 +435,20 @@ const site = await getSiteSettings();
     width: 100%;
     min-height: 44px;
     padding: 10px 12px;
-    background: #0b0b0e;
-    border: 1px solid var(--color-line);
+    background: var(--surface-page);
+    border: 1px solid var(--line);
     border-radius: 0;
     font-family: var(--font-body);
     font-size: 13.5px;
     line-height: 1.5;
-    color: #fff;
+    color: var(--text);
     resize: vertical;
   }
 
   .ef-item__field::placeholder {
     /* The mockup's #5C5C64 is 3.2:1 on this field background, below AA.
        --color-grey is 5.2:1 and keeps the same recessive role. */
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   /* --------------------------------------------------------------- form --- */
@@ -468,13 +472,13 @@ const site = await getSiteSettings();
     letter-spacing: 0.14em;
     text-transform: uppercase;
     /* 5.6:1 on --color-card. */
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   /* 11px/700 on --color-card: brand red is 4.23:1 and fails the 4.5:1 floor
      for normal-size text. --color-red-light is 4.62:1. */
   .ef-field__req {
-    color: var(--color-red-light);
+    color: var(--accent-text);
     letter-spacing: 0.1em;
   }
 
@@ -484,13 +488,13 @@ const site = await getSiteSettings();
     padding: 13px 14px;
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
-    background: #0b0b0e;
-    border: 1px solid var(--color-line);
+    background: var(--surface-page);
+    border: 1px solid var(--line);
     border-radius: 0;
     font-family: var(--font-body);
     font-size: 14px;
     line-height: 1.6;
-    color: #fff;
+    color: var(--text);
   }
 
   .ef-field textarea {
@@ -499,11 +503,11 @@ const site = await getSiteSettings();
 
   .ef-field input:hover,
   .ef-field textarea:hover {
-    border-color: rgba(255, 255, 255, 0.28);
+    border-color: var(--line-control);
   }
 
   .ef-field [aria-invalid='true'] {
-    border-color: var(--color-red);
+    border-color: var(--accent);
   }
 
   /* Brand red is 4.22:1 against --color-card, under the AA floor for text this
@@ -515,11 +519,11 @@ const site = await getSiteSettings();
   .ef-alert {
     margin-top: 8px;
     padding: 10px 12px;
-    border-left: 3px solid var(--color-red);
-    background: color-mix(in srgb, var(--color-red) 14%, transparent);
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
     font-size: 13.5px;
     line-height: 1.5;
-    color: #fff;
+    color: var(--text);
   }
 
   .ef-alert {
@@ -537,9 +541,9 @@ const site = await getSiteSettings();
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     /* A red surface carrying white text, so the fill token, not brand red. */
-    background: var(--color-red-fill);
+    background: var(--accent-fill);
     border: none;
-    color: #fff;
+    color: var(--text);
     cursor: pointer;
     font-family: var(--font-display);
     font-size: 13.5px;
@@ -564,15 +568,15 @@ const site = await getSiteSettings();
      inactive control is exempt from the contrast minimum, and looking inactive
      is the entire point — the handler does not exist yet. */
   .ef-submit--pending {
-    background: var(--color-line);
-    color: var(--color-grey);
+    background: var(--line);
+    color: var(--text-muted);
     cursor: default;
   }
 
   .ef-note {
     margin-top: 12px;
     font-size: 12.5px;
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   /* Honeypot. Off-screen rather than `display: none`, which the cruder bots
@@ -591,15 +595,15 @@ const site = await getSiteSettings();
   .ef-done {
     max-width: 62ch;
     padding: 40px 32px;
-    background: var(--color-card);
-    border: 1px solid var(--color-line);
-    border-left: 3px solid var(--color-red);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
   }
 
   .ef-done__mark {
     width: 34px;
     height: 34px;
-    color: var(--color-red);
+    color: var(--accent);
   }
 
   .ef-done__title {
@@ -608,21 +612,21 @@ const site = await getSiteSettings();
     font-size: clamp(26px, 3.4vw, 34px);
     font-weight: var(--fw-section);
     letter-spacing: -0.02em;
-    color: #fff;
+    color: var(--text);
   }
 
   .ef-done__body {
     margin-top: 14px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .ef-done__pending {
     margin-top: 18px;
     padding: 14px 16px;
-    border-left: 3px solid var(--color-red);
-    background: color-mix(in srgb, var(--color-red) 14%, transparent);
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
     font-size: 14px;
-    color: #fff;
+    color: var(--text);
   }
 
   .ef-done__pending a {
@@ -636,18 +640,18 @@ const site = await getSiteSettings();
     min-height: 44px;
     margin-top: 20px;
     padding: 10px 2px;
-    border-bottom: 1px solid var(--color-red);
+    border-bottom: 1px solid var(--accent);
     font-family: var(--font-display);
     font-size: 12px;
     font-weight: var(--fw-label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
     transition: color var(--dur-base) var(--ease-out);
   }
 
   .ef-done__link:hover {
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   @media (max-width: 980px) {

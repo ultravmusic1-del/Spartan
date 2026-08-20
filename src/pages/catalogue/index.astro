@@ -204,15 +204,15 @@ const rows = products.map((product) => {
     max-width: calc(var(--cols, 4) / 4 * 100%);
     gap: 1px;
     list-style: none;
-    background: var(--color-card);
-    border: 1px solid var(--color-line);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
   }
 
   .cat__tiles > li,
   .cat__grid > li {
     display: flex;
-    background: var(--color-card);
-    box-shadow: 0 0 0 1px var(--color-line);
+    background: var(--surface-raised);
+    box-shadow: 0 0 0 1px var(--line);
   }
 
   /* CategoryTile and ProductCard render their own root, which has to fill the
@@ -237,8 +237,8 @@ const rows = products.map((product) => {
   .cat__none {
     margin-top: 0;
     padding: 48px 32px;
-    border: 1px solid var(--color-line);
-    background: var(--color-card);
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
     text-align: center;
   }
 
@@ -246,14 +246,14 @@ const rows = products.map((product) => {
     font-family: var(--font-display);
     font-size: 17px;
     font-weight: var(--fw-subhead);
-    color: #fff;
+    color: var(--text);
   }
 
   .cat__none-note {
     max-width: 52ch;
     margin: 10px auto 0;
     font-size: 14px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .cat__none-action {
@@ -293,7 +293,7 @@ const rows = products.map((product) => {
     align-items: flex-end;
     gap: 20px 28px;
     padding-bottom: 22px;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
   }
 
   /* Until it hydrates the bar must not be operable — a control that looks live
@@ -334,7 +334,7 @@ const rows = products.map((product) => {
     letter-spacing: 0.16em;
     text-transform: uppercase;
     /* 5.9:1 on --color-black. */
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .cf__radios {
@@ -350,12 +350,12 @@ const rows = products.map((product) => {
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     padding: 10px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.32);
+    border: 1px solid var(--line-control);
     border-radius: 999px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
     transition:
       border-color var(--dur-base) var(--ease-out),
       background var(--dur-base) var(--ease-out),
@@ -363,8 +363,8 @@ const rows = products.map((product) => {
   }
 
   .cf__radio:hover {
-    border-color: var(--color-red);
-    color: #fff;
+    border-color: var(--accent);
+    color: var(--text);
   }
 
   /* The native control stays in the accessibility tree and keeps its arrow-key
@@ -386,15 +386,15 @@ const rows = products.map((product) => {
 
   .cf__radio--on {
     /* A red surface carrying white text, so the fill token, not brand red. */
-    background: var(--color-red-fill);
-    border-color: var(--color-red-fill);
-    color: #fff;
+    background: var(--accent-fill);
+    border-color: var(--accent-fill);
+    color: var(--text);
   }
 
   .cf__radio--on:hover {
     background: var(--color-red-dark);
     border-color: var(--color-red-dark);
-    color: #fff;
+    color: var(--text);
   }
 
   .cf__select {
@@ -402,12 +402,12 @@ const rows = products.map((product) => {
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     padding: 11px 14px;
-    background: #0b0b0e;
-    border: 1px solid var(--color-line);
+    background: var(--surface-page);
+    border: 1px solid var(--line);
     border-radius: 0;
     font-family: var(--font-body);
     font-size: 14px;
-    color: #fff;
+    color: var(--text);
   }
 
   /* Matches .cf__select exactly — same surface, border, type and 44px minimum.
@@ -418,19 +418,19 @@ const rows = products.map((product) => {
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     padding: 11px 14px;
-    background: #0b0b0e;
-    border: 1px solid var(--color-line);
+    background: var(--surface-page);
+    border: 1px solid var(--line);
     border-radius: 0;
     font-family: var(--font-body);
     font-size: 14px;
-    color: #fff;
+    color: var(--text);
   }
 
   /* The mockup's #5C5C64 placeholder measures 3.2:1 on this field background,
      below AA. --color-grey is 4.6:1 here — the same substitution the footer and
      the contact form make. */
   .cf__search::placeholder {
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   /* Safari draws its own clear button and it inherits none of this. Left alone
@@ -455,7 +455,7 @@ const rows = products.map((product) => {
     font-weight: var(--fw-label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .cf__reset {
@@ -463,18 +463,18 @@ const rows = products.map((product) => {
     padding: 10px 4px;
     background: none;
     border: 0;
-    border-bottom: 1px solid var(--color-red);
+    border-bottom: 1px solid var(--accent);
     cursor: pointer;
     font-family: var(--font-display);
     font-size: 12px;
     font-weight: var(--fw-label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
   }
 
   .cf__reset:hover {
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   @media (max-width: 820px) {
