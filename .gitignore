@@ -29,3 +29,6 @@ brand-sheet-preview/
 # a copy of src/data/*.json in another format, and a committed copy is a second
 # source of truth that will eventually disagree with the first.
 seed.sql
+
+# Superpowers brainstorming scratch (visual companion mockups)
+.superpowers/
