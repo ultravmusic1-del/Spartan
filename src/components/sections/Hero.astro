@@ -145,8 +145,8 @@ ${BANNERS.map(
   100% { transform: translateX(${shift(BANNERS.length)}); }
 }
 @keyframes hero-pip {
-  0% { background: #fff; width: 26px; }
-  ${pct(clock.stepPct)}, 100% { background: #5c5c66; width: 18px; }
+  0% { background: var(--accent); width: 26px; }
+  ${pct(clock.stepPct)}, 100% { background: var(--line-control); width: 18px; }
 }
 [data-hero-stage] .hero__track,
 [data-hero-stage] .hero__pip { animation-duration: ${clock.cycleSeconds}s; }
@@ -190,6 +190,19 @@ const SIZES =
 <section class="hero" data-hero>
   <div class="hero__grid" aria-hidden="true"></div>
 
+  {/* Registration marks and the two red edge ticks. Purely decorative, so
+      aria-hidden — and constrained by tests/e2e/hero-marks.spec.ts rather than
+      by eye, because the client found them landing on the CTAs in their own
+      mobile mockup. */}
+  <div class="hero__marks" aria-hidden="true">
+    <span class="hero__mark hero__mark--tl"></span>
+    <span class="hero__mark hero__mark--tr"></span>
+    <span class="hero__mark hero__mark--bl"></span>
+    <span class="hero__mark hero__mark--br"></span>
+    <span class="hero__tick hero__tick--l"></span>
+    <span class="hero__tick hero__tick--r"></span>
+  </div>
+
   {/* SOURCE ORDER IS THE MOBILE LAYOUT. Below 1180px `.hero` is `display:
       block`, so the DOM decides the stack: badge + headline, then the stage,
       then the CTAs. That is why the actions sit in their own `.wrap` instead of
@@ -225,7 +238,6 @@ const SIZES =
   </div>
 
   <div class="hero__stage" data-hero-stage>
-    <div class="hero__glow" aria-hidden="true"></div>
 
     {/* The checkbox is the state and the label is the control, so the pause
         works with no JavaScript at all. `:has()` on the figure reads it.
@@ -313,7 +325,7 @@ const SIZES =
      for a 4:5 portrait to have any presence beside a 76px headline. */
   .hero {
     position: relative;
-    background: var(--color-black);
+    background: var(--surface-alt);
     min-height: 760px;
     overflow: hidden;
     display: grid;
@@ -328,13 +340,70 @@ const SIZES =
 
   /* The 80px graph paper behind everything. Decorative and very low contrast,
      so it never competes with the copy. */
+  /* A 22px dot field, replacing the 80px white line grid the dark hero used.
+     It reads as a drawing sheet rather than graph paper, which is what the
+     client's mockup asked for, and it survives being scaled to a phone in a way
+     an 80px grid does not. */
   .hero__grid {
     position: absolute;
     inset: 0;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-    background-size: 80px 80px;
+    background-image: radial-gradient(var(--line) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* CROP MARKS AND EDGE TICKS — decorative, aria-hidden, and constrained by a
+     test rather than by eye. See tests/e2e/hero-marks.spec.ts: the client
+     spotted these colliding with the CTAs in their own mobile mockup, and a
+     decoration landing on a tap target is a defect, not a taste question. */
+  .hero__mark {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: 0 solid var(--line-control);
+  }
+
+  .hero__mark--tl {
+    top: 28px;
+    left: 28px;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+
+  .hero__mark--tr {
+    top: 28px;
+    right: 28px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+  }
+
+  .hero__mark--bl {
+    bottom: 28px;
+    left: 28px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
+
+  .hero__mark--br {
+    bottom: 28px;
+    right: 28px;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+  }
+
+  .hero__tick {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero__tick--l {
+    left: 0;
+  }
+
+  .hero__tick--r {
+    right: 0;
   }
 
   /* The parallax target. The script writes --px/--py; with no script they stay
@@ -371,24 +440,6 @@ const SIZES =
   /* Centred on the CARD rather than on the stage, because the stage now carries
      a control row underneath and centring on the whole thing would push the halo
      low. `bottom: 44px` is that row's height plus its gap. */
-  .hero__glow {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 44px;
-    aspect-ratio: 1;
-    width: auto;
-    transform: translateX(-50%) scale(1.16);
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      rgba(235, 41, 39, 0.3) 0%,
-      rgba(235, 41, 39, 0.1) 45%,
-      rgba(235, 41, 39, 0) 70%
-    );
-    filter: blur(8px);
-    animation: hero-pulse 6s ease-in-out infinite;
-  }
 
   /* The card. `aspect-ratio` rather than a height, so the banners' native 0.808
      drives the box and the image never letterboxes inside its own frame. In
@@ -399,9 +450,9 @@ const SIZES =
     aspect-ratio: 1261 / 1561;
     margin: 0;
     overflow: hidden;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
     border-radius: 4px;
-    background: var(--color-card);
+    background: var(--surface-raised);
     box-shadow:
       0 46px 60px rgba(0, 0, 0, 0.75),
       0 0 40px rgba(235, 41, 39, 0.14);
@@ -468,20 +519,26 @@ const SIZES =
      surface — over the artwork, where these started, no ratio could be stated at
      all.
 
-     #5c5c66, NOT the #3a3a42 this shipped with for an hour. That value was
-     picked to look right and asserted at "3.2:1" from memory; measured against
-     --color-black it is 1.79:1, which fails the bar it was claimed to meet. This
-     is exactly what rule 4 means by "colour is measured, not chosen", and it got
-     past a green axe run — axe does not evaluate 1.4.11 on decorative-looking
-     custom elements. Measured now, not remembered:
+     The dark-theme pair was #5c5c66 and #ffffff on --color-black, and the
+     history is worth keeping: this shipped for an hour at #3a3a42, a value
+     picked to look right and asserted at "3.2:1" from memory when it actually
+     measured 1.79:1. That is exactly what rule 4 means by "colour is measured,
+     not chosen", and it got past a green axe run — axe does not evaluate 1.4.11
+     on decorative-looking custom elements.
 
-       inactive #5c5c66 on --color-black   3.04:1   passes the 3:1 non-text bar
-       active   #ffffff on --color-black  20.01:1   passes at any size */
+     Re-measured for the white theme against --surface-alt #f6f6f7, not carried
+     over and not estimated:
+
+       inactive --line-control #8a8a92 on #f6f6f7   3.17:1   passes the 3:1 bar
+       active   --accent       #eb2927 on #f6f6f7   3.99:1   passes the 3:1 bar
+
+     The active pip is brand red rather than ink: it is non-text UI at 3.99:1,
+     well clear of its bar, and red is what the client's mockup shows. */
   .hero__pip {
     width: 18px;
     height: 3px;
     border-radius: 2px;
-    background: #5c5c66;
+    background: var(--line-control);
     animation: hero-pip step-end infinite;
     animation-duration: 42s;
   }
@@ -511,9 +568,9 @@ const SIZES =
     align-items: center;
     gap: 7px;
     padding: 5px 12px;
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
     border-radius: 2px;
-    background: var(--color-card);
+    background: var(--surface-raised);
     font-family: var(--font-display);
     font-size: 11px;
     font-weight: var(--fw-label);
@@ -522,7 +579,7 @@ const SIZES =
     /* grey-lt on card measures 8.90:1. `--color-grey` would be 4.14:1 here,
        which fails AA for text this size — 11px is nowhere near the 24px large
        bar. handoff.md §3. */
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
     cursor: pointer;
   }
 
@@ -530,15 +587,15 @@ const SIZES =
     content: '';
     width: 7px;
     height: 8px;
-    background: var(--color-red-light);
+    background: var(--accent-text);
     /* Two bars — the pause glyph — drawn rather than typed, so no font has to
        carry it and no text alternative is implied. */
     clip-path: polygon(0 0, 2px 0, 2px 8px, 0 8px, 5px 0, 7px 0, 7px 8px, 5px 8px);
   }
 
   .hero__pause:hover {
-    border-color: var(--color-red);
-    color: #fff;
+    border-color: var(--accent);
+    color: var(--text);
   }
 
   /* The checkbox is visually hidden but still focusable, so the focus ring has
@@ -546,23 +603,28 @@ const SIZES =
      the label is not a sibling of the input any more — it is inside the control
      row, two levels down. */
   .hero__stage:has(.hero__toggle:focus-visible) .hero__pause {
-    outline: 2px solid var(--color-red-light);
+    outline: 2px solid var(--accent-text);
     outline-offset: 2px;
   }
 
   /* THE PAUSE ITSELF. `:has()` lets the checked state reach back up to the stage
      and stop both the track and the pips — they have to stop together or the lit
-     pip drifts away from the visible slide. The glow keeps pulsing: it is
-     ambient, it is not what the control is about, and stopping it would make the
-     paused hero look broken rather than paused. */
+     pip drifts away from the visible slide.
+
+     There used to be a third moving thing here — a pulsing red glow behind the
+     stage, deliberately left running because it was ambient rather than
+     informational. It was deleted with the white theme on 2026-08-20: a red
+     radial bloom is a dark-surface device and on white it reads as a pink
+     smudge. Nothing now moves in this hero except the track and the pips, and
+     the pause control stops both. */
   .hero__stage:has(.hero__toggle:checked) .hero__track,
   .hero__stage:has(.hero__toggle:checked) .hero__pip {
     animation-play-state: paused;
   }
 
   .hero__stage:has(.hero__toggle:checked) .hero__pause {
-    color: #fff;
-    border-color: var(--color-red);
+    color: var(--text);
+    border-color: var(--accent);
   }
 
   .hero__stage:has(.hero__toggle:checked) .hero__pause::before {
@@ -584,7 +646,7 @@ const SIZES =
     display: inline-flex;
     align-items: stretch;
     transform: skewX(-12deg);
-    border: 1px solid var(--color-line);
+    border: 1px solid var(--line);
     background: rgba(21, 21, 25, 0.6);
     overflow: hidden;
     animation: hero-rise 0.6s var(--ease-out) both;
@@ -593,7 +655,7 @@ const SIZES =
   .hero__badge-hazard {
     width: 30px;
     display: block;
-    background-image: repeating-linear-gradient(115deg, var(--color-red) 0 7px, #08080a 7px 14px);
+    background-image: repeating-linear-gradient(115deg, var(--accent) 0 7px, var(--surface-page) 7px 14px);
   }
 
   .hero__badge-body {
@@ -611,7 +673,7 @@ const SIZES =
     font-weight: var(--fw-label);
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .hero__title {
@@ -622,13 +684,13 @@ const SIZES =
     line-height: 0.96;
     letter-spacing: -0.035em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
     animation: hero-rise 0.7s var(--ease-out) 0.08s both;
   }
 
   /* Brand red is correct here — this is display type well over the 24px bar. */
   .hero__title span {
-    color: var(--color-red);
+    color: var(--accent);
   }
 
   .hero__actions {
@@ -657,10 +719,6 @@ const SIZES =
    * that fades is ambiguous about which slide is actually showing.
    */
 
-  @keyframes hero-pulse {
-    0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.06); }
-  }
 
   @keyframes hero-rise {
     from { opacity: 0; transform: translateY(16px); }
@@ -743,6 +801,25 @@ const SIZES =
     }
   }
 
+  /* THE BOTTOM CROP MARKS ARE DROPPED HERE, NOT MOVED — and 640px is chosen to
+     sit clear above the 560px breakpoint where the CTAs go full-width and
+     stacked, rather than exactly on it.
+
+     Once the buttons span the column, the bottom corners of the hero are inside
+     the button block. There is nowhere to relocate a mark to; shifting it just
+     moves the collision somewhere else on the same two elements. Decoration
+     loses to a tap target, so the decoration goes.
+
+     The top pair stays at every width — nothing is above the badge — which is
+     what keeps tests/e2e/hero-marks.spec.ts honest at 375px: it asserts at least
+     one mark is still rendered, so hiding all four could never pass as a fix. */
+  @media (max-width: 640px) {
+    .hero__mark--bl,
+    .hero__mark--br {
+      display: none;
+    }
+  }
+
   /* SHORT SCREENS BUY THE PRIMARY CTA BACK BY SPENDING CARD.
      Putting the CTAs under the stage costs above-the-fold visibility on a 667px
      screen. The helmet stage paid for that by shrinking to 58vw; a 4:5 portrait
@@ -792,11 +869,8 @@ const SIZES =
   @media (prefers-reduced-motion: reduce) {
     .hero__track,
     .hero__pip,
-    .hero__glow {
-      animation: none;
-    }
     .hero__pip:first-child {
-      background: #fff;
+      background: var(--accent);
       width: 26px;
     }
     .hero__pause,
