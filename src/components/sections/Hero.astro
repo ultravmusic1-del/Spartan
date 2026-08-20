@@ -360,6 +360,20 @@ const SIZES =
     overflow: hidden;
     padding: 152px 0 76px;
     text-align: center;
+
+    /* WHERE THE HEADER CHROME ENDS, and every decoration below starts there.
+
+       The hero runs from y=0 because the utility bar and nav are absolutely
+       positioned over it, so without this the dot field and the crop marks ran
+       up behind the logo and the nav links. Measured rather than assumed: the
+       bar occupies 0 to 44, the nav 44 to 128, and its progress rule 128 to
+       130, giving 130px.
+
+       It is the same 130 at every width. Below 820px the utility bar hides,
+       but `.site-header--transparent` stays pinned at `top: 44px` on purpose
+       (see UtilityBar.astro), so the chrome ends in the same place and one
+       constant is correct rather than convenient. */
+    --hero-chrome: 130px;
   }
 
   /* The 80px graph paper behind everything. Decorative and very low contrast,
@@ -385,7 +399,9 @@ const SIZES =
      naming it here keeps the two dot rules below in step. */
   .hero__grid {
     position: absolute;
-    inset: 0;
+    /* Starts below the header, not at the top of the hero. The nav sits on
+       flat --surface-alt now instead of on texture. */
+    inset: var(--hero-chrome) 0 0 0;
     --hero-dot: #c2c2ca;
     background-image: radial-gradient(var(--hero-dot) 1.4px, transparent 1.4px);
     background-size: 22px 22px;
@@ -413,15 +429,19 @@ const SIZES =
     border: 0 solid var(--line-control);
   }
 
+  /* The top pair hangs off the header's bottom edge, not the hero's. At 28px
+     from the top of the section they sat inside the utility bar row, level
+     with the social icons, which made them read as header furniture rather
+     than as a frame around the landing content. */
   .hero__mark--tl {
-    top: 28px;
+    top: calc(var(--hero-chrome) + 26px);
     left: 28px;
     border-top-width: 1px;
     border-left-width: 1px;
   }
 
   .hero__mark--tr {
-    top: 28px;
+    top: calc(var(--hero-chrome) + 26px);
     right: 28px;
     border-top-width: 1px;
     border-right-width: 1px;
@@ -441,9 +461,12 @@ const SIZES =
     border-right-width: 1px;
   }
 
+  /* Centred on the textured region rather than on the section, for the same
+     reason the marks moved: half of `.hero` is the header band, so a plain
+     `top: 50%` sat above the true middle of the frame these ticks belong to. */
   .hero__tick {
     position: absolute;
-    top: 50%;
+    top: calc(var(--hero-chrome) + (100% - var(--hero-chrome)) / 2);
     width: 16px;
     height: 1px;
     background: var(--accent);
