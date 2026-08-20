@@ -197,7 +197,7 @@ Append to the `:root` block in `src/styles/tokens.css`, immediately before the c
 npx vitest run src/styles/tokens.test.ts
 ```
 
-Expected: PASS, 13 tests.
+Expected: PASS, 12 tests (ten pairs plus two guards).
 
 - [ ] **Step 5: Commit**
 

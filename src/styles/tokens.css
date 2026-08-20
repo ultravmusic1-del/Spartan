@@ -69,6 +69,54 @@
   --dur-fast: 150ms;
   --dur-base: 220ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---------------------------------------------------------------------
+     THE SEMANTIC SURFACE LAYER — added 2026-08-20 with the white theme.
+     See docs/superpowers/specs/2026-08-20-white-theme-design.md.
+
+     Everything ABOVE this comment is the PALETTE and keeps the meaning it has
+     always had: --color-black is black. Nothing above was re-pointed, which is
+     the only reason src/styles/admin.css needed no edit at all — the admin area
+     is still dark and still names palette colours directly.
+
+     Everything BELOW is a JOB. Public components name jobs, never colours. The
+     site is light, so these default to light; `.on-dark` in global.css
+     re-points the same ten names at the dark palette and is the only place on
+     the public site that does.
+
+     Ratios are asserted by src/styles/tokens.test.ts, not by comment.
+     --------------------------------------------------------------------- */
+  --surface-page: #ffffff;
+  --surface-alt: #f6f6f7;
+  /* Same value as --surface-page today, and deliberately NOT the same token.
+     A card is raised whether it sits on a white band or a grey one — the
+     separation comes from the hairline, not from the fill. Keeping the name
+     distinct is what lets a card gain a tint or a border later without hunting
+     every white in the codebase again, which is the failure this layer exists
+     to prevent. */
+  --surface-raised: #ffffff;
+
+  /* Decorative separators. 1.27:1 against white, and that is correct: WCAG's
+     3:1 non-text bar covers boundaries that convey information or state, not
+     hairlines between bands. */
+  --line: #e4e4e7;
+  /* Boundaries that DO carry meaning — input, select and checkbox edges. This
+     is --color-grey, demoted: it was never a legal muted-text colour on light
+     (3.43:1 against a 4.5:1 bar) but it is a sound control edge against a 3:1
+     one. */
+  --line-control: #8a8a92;
+
+  --text: #0e0e11;
+  --text-muted: #6a6a72;
+
+  /* Small red text on a light surface. */
+  --accent-text: #970000;
+  /* Brand red: display type, rules, icons, focus rings. 4.30:1 on white —
+     LARGE TEXT ONLY, meaning >=24px or >=18.66px bold. Never set this on
+     anything smaller; that is what --accent-text is for. */
+  --accent: #eb2927;
+  /* Red surfaces carrying white text. 4.91:1 under #fff. */
+  --accent-fill: #dd1e1c;
 }
 
 @media (max-width: 640px) {
