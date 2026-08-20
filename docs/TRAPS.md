@@ -376,3 +376,28 @@ did not check. Changing one is a regression *you* would be introducing.
 - **RLS enabled with zero policies on `enquiries`.** Supabase's linter
   reports `rls_enabled_no_policy` at INFO forever. Do not "fix" it by adding
   a policy.
+
+- **The hero carousel's clock is derived from the slide count, and the rules
+  that carry it are NOT scoped.** `heroClock()` in `src/lib/site-content.ts`
+  returns the cycle length, the keyframe step and the pip delays from one input:
+  how many banners are enabled. Three sets of literals used to encode that, all
+  assuming six, so enabling a seventh lit the wrong pip — a rendering bug to
+  look at, arithmetic in fact.
+
+  Two consequences. **Astro's scoped `<style>` cannot interpolate a frontmatter
+  value**, so the generated keyframes ship in an `is:inline` block instead —
+  which is unscoped, so every selector in it is prefixed `[data-hero-stage]`.
+  Drop that prefix and you have the `.ad-bar` collision above, on a class the
+  rest of the site does not use yet but might.
+
+  And **an inline `<style>` costs no CSP hash while an inline `<script>` does**:
+  `style-src` is `'self' 'unsafe-inline'`, `script-src` is hash-based with no
+  `'unsafe-inline'` at all. Do not reason from one to the other. Generating a
+  script the same way would need `npm run csp` re-run on every change to any
+  value it interpolates.
+
+- **Nothing under `src/data/` may be imported by a page or component, and that
+  now includes `site.json`.** It was exempt until 2026-08-19 because there was
+  nowhere else for a page to get a phone number; `src/lib/site-content.ts` is
+  that somewhere. The gate matches any `data/*.json` import from `src/pages` or
+  `src/components`, so the exemption cannot be reinstated by accident.

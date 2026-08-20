@@ -630,7 +630,7 @@ which holds no Supabase credentials by design, keeps building."
 
 The same seam and the same pattern, applied to the two things Stage 1 does not cover. **No UI. The public site must not change.**
 
-### Task 7: Extract the hero banner list into data
+### Task 7: Extract the hero banner list into data — DONE 2026-08-19 (`9a8dd0e`)
 
 `Hero.astro` holds a hardcoded array of six imports. A banner cannot be selected, reordered or disabled without editing the component.
 
@@ -770,7 +770,7 @@ git commit -m "refactor(hero): the banner list is data behind the site-content s
 
 ---
 
-### Task 8: Route site text through the same seam
+### Task 8: Route site text through the same seam — DONE 2026-08-19 (`1a9861e`)
 
 Fifteen files import `src/data/site.json` directly. That is legal today because `site.json` is explicitly exempt from rule 3, but it means changing its source means changing fifteen files.
 
@@ -870,7 +870,7 @@ git commit -m "refactor(site): site text goes through the seam, and the gate now
 
 ---
 
-### Task 9: Tables, loader and seeder for site content
+### Task 9: Tables, loader and seeder for site content — NOT STARTED. Four of its steps still describe rather than show code; fill those in first.
 
 **Files:**
 - Create: `src/loaders/supabase-site.ts`, `src/loaders/supabase-site.test.ts`, `tools/seed-site.mjs`

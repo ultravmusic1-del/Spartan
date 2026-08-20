@@ -2359,32 +2359,42 @@ otherwise re-have from first principles, and because **the honest trade was
 never speed — it was that offline builds have ended.** That is inherent to the
 choice, not a defect, and it is why the `json` escape hatch stays.
 
-### What Stage 2 is, and exactly where to start
+### Stage 2: Tasks 7 and 8 are done; Task 9 is what remains
 
-Plan: `docs/superpowers/plans/2026-08-19-admin-content-management.md`, Tasks 7
-to 9. It puts **front-end text and hero banner selection** behind the same seam
-the catalogue now uses. No UI, no visible change — it is the second half of the
-foundation, and the editor stages sit on top of it.
+Plan: `docs/superpowers/plans/2026-08-19-admin-content-management.md`.
 
-Start with **Task 7**, which is self-contained and needs nothing new:
+**Done.** `src/lib/site-content.ts` is now the seam for everything the public
+site renders that is not the catalogue — what `catalog.ts` is for products.
+Hero banners are `src/data/hero-banners.json` with an `order` and an `enabled`
+flag; site text goes through `getSiteSettings()`; and **`site.json` has lost its
+exemption from rule 3**, so a direct import of anything in `src/data/` now fails
+the gate.
 
-1. Create `src/data/hero-banners.json` from the six entries currently hardcoded
-   in `Hero.astro`'s `BANNERS` array.
-2. Create `src/lib/site-content.ts` with `getHeroBanners()` — this is to site
-   text and banners what `catalog.ts` is to products.
-3. Rewire `Hero.astro` to read through it, resolving filenames with
-   `import.meta.glob` because `astro:assets` cannot take a runtime string path.
+Two things from that work worth knowing before touching either file:
 
-**The trap in Task 7, which the plan states and is worth repeating here: the
-carousel's pip count, its keyframe percentages and its 42-second clock are all
-derived from there being exactly six slides.** Making the list data-driven
-without making those computed produces a carousel whose lit pip reports the
-wrong slide — which looks like a rendering bug and is arithmetic. Derive the
-per-slide percentage from `banners.length`.
+- **The carousel's clock is derived, not typed.** `heroClock(count)` in
+  `site-content.ts` is pure and tested, and returns the cycle length, the
+  keyframe step and the pip delays. At six banners it computes exactly the
+  values that used to be hard-coded, which is what made the refactor verifiable.
+  Proved by disabling a banner: five slides gave a 35s cycle and five pips.
+  **Astro scoped styles cannot interpolate a frontmatter value**, so the
+  generated rules ship in an `is:inline` <style>. That costs no CSP hash —
+  `style-src` is `'self' 'unsafe-inline'` where `script-src` is hash-based with
+  none — and every selector is prefixed `[data-hero-stage]` because the block is
+  not scoped.
+- **`seo.ts` no longer reads `site.json`.** `organizationJsonLd` takes the
+  founding year as an option and omits `foundingDate` entirely when none is
+  given, rather than guessing. That restores the rule that module's own header
+  states and had quietly broken for one field.
 
-Then Task 8 (route the 15 `site.json` consumers through the seam, and tighten
-the rule 3 gate to cover it) and Task 9 (tables, loader and seeder for
-`site_settings` and `hero_banners`).
+**Task 9 is what is left of Stage 2**: `site_settings` and `hero_banners`
+tables, a loader for them modelled on `supabase-catalogue.ts`, a seeder, the
+`CATALOGUE_SOURCE` wiring, and extending the parity harness to cover the whole
+site rather than the catalogue alone.
+
+**Four of Task 9's steps still describe rather than show code.** That was
+deliberate — Stage 1 had to land first — but it is now the thing blocking a
+clean execution. Fill them in before starting.
 
 ### Two known gaps in the plan itself
 
