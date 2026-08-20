@@ -23,7 +23,9 @@
  * `site.json` is site chrome, not catalogue content: the `catalog.ts` seam rule
  * covers products, categories and divisions only.
  */
-import site from '../../data/site.json';
+import { getSiteSettings } from '../../lib/site-content';
+
+const site = await getSiteSettings();
 import logoLight from '../../assets/brand/spartan-logo-light.svg';
 import UtilityBar from './UtilityBar.astro';
 import MobileNav from './MobileNav.tsx';

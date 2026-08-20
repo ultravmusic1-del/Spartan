@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getHeroBanners, heroClock } from './site-content';
+import { getHeroBanners, getSiteSettings, heroClock } from './site-content';
 
 /**
  * The seam for everything the public site renders that is NOT the catalogue.
@@ -120,5 +120,35 @@ describe('heroClock', () => {
 
   it('refuses a slide count that cannot make a carousel', () => {
     expect(() => heroClock(0)).toThrow(/at least one slide/);
+  });
+});
+
+describe('getSiteSettings', () => {
+  it('returns the contact block and the industries list', async () => {
+    const s = await getSiteSettings();
+
+    expect(typeof s.phone).toBe('string');
+    expect(typeof s.email).toBe('string');
+    expect(typeof s.address).toBe('string');
+    expect(Array.isArray(s.industries)).toBe(true);
+    expect(s.industries).toHaveLength(8);
+  });
+
+  /*
+   * handoff.md §8 item 5: the eight industries are inferred from the product
+   * mix, not stated in the brochure, and the data says so. The flag has to
+   * travel WITH the data so the admin can present them as unconfirmed rather
+   * than as fact -- the whole reason it exists is that nobody remembers a
+   * caveat that lives only in a document.
+   */
+  it('carries the flag saying the industries are still client-unconfirmed', async () => {
+    const s = await getSiteSettings();
+    expect(typeof s.industriesPendingClientConfirmation).toBe('boolean');
+  });
+
+  it('gives established as a number, which is what the JSON-LD builder needs', async () => {
+    const s = await getSiteSettings();
+    expect(typeof s.established).toBe('number');
+    expect(s.established).toBeGreaterThan(1900);
   });
 });

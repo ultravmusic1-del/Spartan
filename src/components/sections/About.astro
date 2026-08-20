@@ -4,7 +4,9 @@ import { Image } from 'astro:assets';
 import Chevron from '../primitives/Chevron.astro';
 import Eyebrow from '../primitives/Eyebrow.astro';
 import PillButton from '../primitives/PillButton.astro';
-import site from '../../data/site.json';
+import { getSiteSettings } from '../../lib/site-content';
+
+const site = await getSiteSettings();
 import { getDivisions, getProduct, getProducts } from '../../lib/catalog';
 
 /**

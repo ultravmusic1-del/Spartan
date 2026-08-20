@@ -28,7 +28,9 @@ import { getDivisions } from '../../lib/catalog';
  * Every field has a real, visible <label> tied to it by id, and the division
  * options come from the catalogue rather than being typed in twice.
  */
-import site from '../../data/site.json';
+import { getSiteSettings } from '../../lib/site-content';
+
+const site = await getSiteSettings();
 
 const divisions = await getDivisions();
 ---

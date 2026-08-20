@@ -115,7 +115,13 @@ let unitTests = null;
  * products.json from a page silently couples that page to the file format and
  * the migration stops being a one-module change.
  *
- * site.json is exempt — it is site chrome, not catalogue content.
+ * SITE.JSON IS NO LONGER EXEMPT, as of 2026-08-19. It was, on the reasoning
+ * that it is site chrome rather than catalogue content — which was true, and
+ * beside the point: the exemption existed because there was nowhere else for a
+ * page to get a phone number. `src/lib/site-content.ts` is that somewhere now,
+ * so a direct import is the same defect as importing products.json, and for
+ * the same reason: Stage 2 of the admin plan moves this data into Postgres,
+ * and that has to stay a one-module change.
  */
 {
   const offenders = [];
@@ -126,8 +132,8 @@ let unitTests = null;
     // prose, and the word `getCollection` appears in explanations of why it is
     // not called. A naive grep flags the documentation, not the defect.
     const code = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-    if (/from\s+['"][^'"]*data\/(?!site\.json)[^'"]*\.json['"]/.test(code))
-      offenders.push(`${rel} imports catalogue JSON directly`);
+    if (/from\s+['"][^'"]*data\/[^'"]*\.json['"]/.test(code))
+      offenders.push(`${rel} imports data JSON directly — go through src/lib/`);
     if (/\bgetCollection\s*\(/.test(code)) offenders.push(`${rel} calls getCollection`);
   }
   record(

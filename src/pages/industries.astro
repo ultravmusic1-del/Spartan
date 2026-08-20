@@ -5,7 +5,9 @@ import Chevron from '../components/primitives/Chevron.astro';
 import Eyebrow from '../components/primitives/Eyebrow.astro';
 import SolidButton from '../components/primitives/SolidButton.astro';
 import PillButton from '../components/primitives/PillButton.astro';
-import site from '../data/site.json';
+import { getSiteSettings } from '../lib/site-content';
+
+const site = await getSiteSettings();
 import { getCategories } from '../lib/catalog';
 
 /**

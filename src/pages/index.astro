@@ -12,6 +12,7 @@ import Faq from '../components/sections/Faq.astro';
 import EnquiryCta from '../components/sections/EnquiryCta.astro';
 import { getCategories, getProducts } from '../lib/catalog';
 import { organizationJsonLd, requireSite } from '../lib/seo';
+import { getSiteSettings } from '../lib/site-content';
 
 const [products, categories] = await Promise.all([getProducts(), getCategories()]);
 
@@ -32,7 +33,11 @@ const site = requireSite(Astro.site);
  * src/data/site.json, and publishing a placeholder address as structured data
  * would put a fabricated location into map results.
  */
-const jsonLd = organizationJsonLd(site, { logo: '/favicon.png' });
+const settings = await getSiteSettings();
+const jsonLd = organizationJsonLd(site, {
+  logo: '/favicon.png',
+  established: settings.established,
+});
 
 /**
  * The product count used to be typed into this description as "72". It was the

@@ -3,7 +3,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionHeading from '../components/primitives/SectionHeading.astro';
 import Chevron from '../components/primitives/Chevron.astro';
 import EnquiryForm from '../components/enquiry/EnquiryForm.tsx';
-import site from '../data/site.json';
+import { getSiteSettings } from '../lib/site-content';
+
+const site = await getSiteSettings();
 
 /**
  * /enquiry — the end of the site's only conversion path.

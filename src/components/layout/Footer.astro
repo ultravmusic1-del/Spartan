@@ -20,7 +20,9 @@
  * Dark surface, so this takes the **light** logo lockup (red helmet, white
  * wordmark).
  */
-import site from '../../data/site.json';
+import { getSiteSettings } from '../../lib/site-content';
+
+const site = await getSiteSettings();
 import logoLight from '../../assets/brand/spartan-logo-light.svg';
 import { getCategories } from '../../lib/catalog';
 

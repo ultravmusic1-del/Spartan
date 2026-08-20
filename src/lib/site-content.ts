@@ -15,6 +15,35 @@
  * still exempt from the seam gate; Task 8 closes that.
  */
 import bannersJson from '../data/hero-banners.json';
+import siteJson from '../data/site.json';
+
+export interface SiteSettings {
+  phone: string;
+  email: string;
+  address: string;
+  /** Empty string means "no WhatsApp affordance", which renders nothing at all. */
+  whatsapp: string;
+  established: number;
+  industries: string[];
+  /**
+   * handoff.md §8 item 5: the eight industries are inferred from the product
+   * mix rather than stated in the brochure. The flag travels WITH the data so
+   * the admin can show them as unconfirmed instead of presenting them as fact.
+   * A caveat that lives only in a document is a caveat nobody reads.
+   */
+  industriesPendingClientConfirmation: boolean;
+}
+
+/**
+ * Every piece of site chrome the pages render: contact details, the founding
+ * year, the industries list.
+ *
+ * Async because `getHeroBanners` and `catalog.ts` are, and because Task 9 makes
+ * this read Postgres — a caller that already awaits does not change then.
+ */
+export async function getSiteSettings(): Promise<SiteSettings> {
+  return siteJson as SiteSettings;
+}
 
 export interface HeroBanner {
   /** Filename within `src/assets/banners/`. */

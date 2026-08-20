@@ -21,7 +21,9 @@ import PillButton from '../components/primitives/PillButton.astro';
 import storyImage from '../assets/hero/workwear.jpg';
 import electricalImage from '../assets/hero/electrical.jpg';
 import safetyImage from '../assets/hero/safety.jpg';
-import site from '../data/site.json';
+import { getSiteSettings } from '../lib/site-content';
+
+const site = await getSiteSettings();
 import { getCategories, getDivisions, getProducts } from '../lib/catalog';
 
 /**

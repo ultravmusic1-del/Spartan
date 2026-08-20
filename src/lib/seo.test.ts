@@ -59,7 +59,7 @@ describe('breadcrumbJsonLd', () => {
 
 describe('organizationJsonLd', () => {
   it('emits an Organization with the founding year', () => {
-    const ld = organizationJsonLd(SITE);
+    const ld = organizationJsonLd(SITE, { established: 2015 });
     expect(ld['@type']).toBe('Organization');
     expect(ld.name).toBe('Spartan');
     expect(ld.foundingDate).toBe('2015');
@@ -249,7 +249,7 @@ describe('requireSite', () => {
 
 describe('organizationJsonLd — what it may claim', () => {
   it('states only name, url, logo and founding date', () => {
-    const ld = organizationJsonLd(SITE);
+    const ld = organizationJsonLd(SITE, { established: 2015 });
     expect(Object.keys(ld).sort()).toEqual(
       ['@context', '@type', 'foundingDate', 'logo', 'name', 'url'].sort(),
     );

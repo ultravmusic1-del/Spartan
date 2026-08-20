@@ -18,7 +18,6 @@
  * `Astro.site`, so they stay pure and testable outside a page render.
  */
 import type { Product } from './catalog';
-import site from '../data/site.json';
 
 const SCHEMA_CONTEXT = 'https://schema.org';
 
@@ -89,7 +88,8 @@ export interface OrganizationJsonLd {
   name: string;
   url: string;
   logo: string;
-  foundingDate: string;
+  /** Absent when no founding year is supplied — never guessed. */
+  foundingDate?: string;
 }
 
 export interface Crumb {
@@ -265,6 +265,19 @@ export function itemListJsonLd(products: Product[], siteUrl: string): ItemListJs
 export interface OrganizationJsonLdOptions {
   /** Root-relative or absolute URL of the logo image. */
   logo?: string;
+  /**
+   * The founding year, from `getSiteSettings().established`.
+   *
+   * PASSED IN RATHER THAN IMPORTED, which is this module's own rule: "builders
+   * take the site origin as an argument rather than reading `Astro.site`, so
+   * they stay pure and testable outside a page render." Reading site.json at
+   * module scope broke that for one field, and it was the last thing keeping a
+   * lib module coupled to a data file. Omitted, `foundingDate` is left out
+   * entirely rather than guessed — an invented founding date is a fabricated
+   * fact in structured data, which is the whole thing this module exists to
+   * prevent.
+   */
+  established?: number;
 }
 
 /**
@@ -290,8 +303,9 @@ export function organizationJsonLd(
     name: BRAND_NAME,
     url: absoluteUrl('/', siteUrl),
     logo: absoluteUrl(opts.logo ?? '/favicon.png', siteUrl),
-    // site.json holds it as a number; schema.org wants an ISO 8601 date, and a
-    // bare year is a valid one.
-    foundingDate: String(site.established),
+    // The data holds it as a number; schema.org wants an ISO 8601 date, and a
+    // bare year is a valid one. Absent when not supplied — see the note on the
+    // option: a guessed founding date is a fabricated fact.
+    ...(opts.established === undefined ? {} : { foundingDate: String(opts.established) }),
   };
 }

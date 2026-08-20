@@ -4,7 +4,9 @@ import SectionHeading from '../components/primitives/SectionHeading.astro';
 import Chevron from '../components/primitives/Chevron.astro';
 import SolidButton from '../components/primitives/SolidButton.astro';
 import PillButton from '../components/primitives/PillButton.astro';
-import site from '../data/site.json';
+import { getSiteSettings } from '../lib/site-content';
+
+const site = await getSiteSettings();
 import { getDivisions } from '../lib/catalog';
 
 /**

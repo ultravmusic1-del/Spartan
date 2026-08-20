@@ -13,7 +13,7 @@ Supabase Postgres · Vercel.
 
 **94 products** across **15 categories**, in **2 divisions**.
 
-**119 built pages** · **13 server-rendered routes** · **9 inline-script CSP hashes** · **269 unit tests**.
+**119 built pages** · **13 server-rendered routes** · **9 inline-script CSP hashes** · **272 unit tests**.
 
 <!-- counts:end -->
 
@@ -72,8 +72,14 @@ anything. 502 means *every configured channel* failed. `npm run verify` gates
 that both clients read `recorded`.
 
 **3. The admin seam holds.** No page or component may import from `src/data/*`
-(except `site.json`) or call `getCollection`. Everything goes through
-`src/lib/catalog.ts`. This is what makes the future CMS a one-module change.
+at all, or call `getCollection`. Catalogue data goes through
+`src/lib/catalog.ts`; site text and hero banners go through
+`src/lib/site-content.ts`. This is what makes the CMS a one-module change.
+
+`site.json` was exempt until 2026-08-19, on the reasoning that it is site chrome
+rather than catalogue content — true, and beside the point. The exemption
+existed because there was nowhere else for a page to get a phone number. There
+is now, so the exemption is gone and `npm run verify` enforces it.
 
 **4. Colour is measured, not chosen.** Small red text on dark uses
 `--color-red-light`; red surfaces under white text use `--color-red-fill`; small
