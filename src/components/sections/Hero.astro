@@ -215,10 +215,7 @@ const SIZES =
       column, one wrap, DOM order is the layout at every width. */}
   <div class="wrap hero__wrap">
     <div class="hero__badge">
-      <span class="hero__badge-hazard"></span>
-      <span class="hero__badge-body">
-        <span class="hero__badge-est">Est. 2015</span>
-      </span>
+      <span class="hero__badge-est">Est. 2015</span>
     </div>
 
     <h1 class="hero__title">Home and industrial <span>solutions.</span></h1>
@@ -371,11 +368,38 @@ const SIZES =
      It reads as a drawing sheet rather than graph paper, which is what the
      client's mockup asked for, and it survives being scaled to a phone in a way
      an 80px grid does not. */
+  /* STRONGER DOTS, BUT MASKED — the two go together and neither works alone.
+
+     At --line (#e4e4e7, 1.27:1 against the band) the field was barely there on
+     a bright screen. Simply darkening it puts texture directly behind a 76px
+     headline and a dashed slot, and the page starts to read as busy rather
+     than considered.
+
+     So the dots are darker AND denser at the edges, fading out through the
+     middle where the content sits. The mask does the work: the type and the
+     slot land on clean ground, the frame keeps its drawing-sheet texture, and
+     the grid reads as a deliberate border treatment rather than wallpaper.
+
+     `--hero-dot` is a local token, not a semantic one. It is decoration with
+     no contrast requirement, so it has no place in the global scale, and
+     naming it here keeps the two dot rules below in step. */
   .hero__grid {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(var(--line) 1px, transparent 1px);
+    --hero-dot: #c2c2ca;
+    background-image: radial-gradient(var(--hero-dot) 1.4px, transparent 1.4px);
     background-size: 22px 22px;
+    /* The mask never reaches full transparency. A first attempt used
+       `transparent 38%` and cleared the dots across most of the visible band,
+       which made the field LESS present than the faint version it replaced.
+       Holding the centre at 30% alpha keeps the texture continuous across the
+       whole hero while still easing it behind the headline. */
+    -webkit-mask-image: radial-gradient(
+      ellipse 58% 52% at 50% 46%,
+      rgb(0 0 0 / 30%) 0%,
+      #000 72%
+    );
+    mask-image: radial-gradient(ellipse 58% 52% at 50% 46%, rgb(0 0 0 / 30%) 0%, #000 72%);
   }
 
   /* CROP MARKS AND EDGE TICKS — decorative, aria-hidden, and constrained by a
@@ -715,43 +739,41 @@ const SIZES =
 
 
 
+  /* THE HAZARD STRIPES AND THE SKEW ARE GONE, on request, 2026-08-20.
+
+     This was a skewed parallelogram with a 30px block of red diagonal stripes
+     before the wordmark. Both were dark-theme devices. The stripes read as
+     industrial signage against black; on white they became the loudest element
+     above a 76px headline, which inverts the hierarchy the hero is built on.
+     The skew went with them, because a slanted box with nothing slanted
+     anywhere near it reads as a rendering fault rather than a decision, and
+     the client's mockup draws this as a plain rectangle.
+
+     Smaller, too. At 12px with 18px side padding it competed with the
+     headline; a kicker should sit under one. --surface-page rather than
+     raised: this sits directly on the hero band and is not a card. */
   .hero__badge {
     display: inline-flex;
-    align-items: stretch;
-    transform: skewX(-12deg);
+    align-items: center;
+    padding: 7px 15px;
     border: 1px solid var(--line-control);
-    /* Was rgba(21, 21, 25, 0.6) — a translucent near-black that let the dark
-       hero through behind the wordmark. On white it renders as a mid-grey slab
-       with red text on it, and no hex sweep could see it because it is not a
-       hex. The client's mockup draws this badge as white with a hairline, which
-       is also what --surface-raised gives. */
-    background: var(--surface-raised);
-    overflow: hidden;
+    background: var(--surface-page);
     animation: hero-rise 0.6s var(--ease-out) both;
   }
 
-  .hero__badge-hazard {
-    width: 30px;
-    display: block;
-    background-image: repeating-linear-gradient(115deg, var(--accent) 0 7px, var(--surface-page) 7px 14px);
-  }
-
-  .hero__badge-body {
-    display: flex;
-    align-items: center;
-    padding: 8px 18px;
-    transform: skewX(12deg);
-  }
-
-  /* red-light, not red: this is small text on --color-card, where brand red is
-     4.23:1 and fails AA. See handoff.md §3. */
+  /* --accent-text, not brand red: 10.5px is normal-size text and needs 4.5:1,
+     which brand red does not clear on any light surface. See handoff.md §3. */
   .hero__badge-est {
     font-family: var(--font-display);
-    font-size: 12px;
+    font-size: 10.5px;
     font-weight: var(--fw-label);
-    letter-spacing: 0.18em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--accent-text);
+    /* Uppercase tracking leaves a gap after the final letter that optically
+       pushes the text left inside its box. Half the tracking back re-centres
+       it. */
+    padding-left: 0.2em;
   }
 
   .hero__title {
@@ -785,6 +807,33 @@ const SIZES =
     gap: 14px;
     margin-top: 28px;
     animation: hero-rise 0.7s var(--ease-out) 0.18s both;
+  }
+
+  /* THE TWO CTAs NOW READ AS ONE PAIR.
+
+     SolidButton is uppercase display type in a square box; PillButton is
+     sentence-case body type in a rounded one. Side by side that is three
+     differences at once (case, family, shape), and it read as two controls
+     from two different designs rather than a primary and a secondary. The
+     client's mockup draws them as a matched pair.
+
+     SCOPED TO THE HERO ON PURPOSE. PillButton is used on six other pages, and
+     restyling the primitive would restyle all of them for a complaint about
+     this one. `:global()` is required because the button is a child component
+     and Astro's scoping does not reach into it. */
+  .hero__actions :global(.pill) {
+    border-radius: 0;
+    padding: 14px 24px;
+    font-family: var(--font-display);
+    font-size: 13.5px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border-color: var(--text);
+  }
+
+  .hero__actions :global(.pill:hover) {
+    border-color: var(--accent);
   }
 
   /*
