@@ -21,7 +21,7 @@ import { getCategories, getDivisions, getProducts } from '../lib/catalog';
  * Every number in the copy is derived at build time — the glove counts included
  * — so the page cannot drift out of step with the data.
  *
- * No hero photograph, so `darkHeader={false}` gives the solid sticky header.
+ * No hero photograph, so `overlayHeader={false}` gives the solid sticky header.
  */
 const [divisions, categories, products, gloves] = await Promise.all([
   getDivisions(),
@@ -75,7 +75,7 @@ const reasons = [
 <BaseLayout
   title="Why Spartan — two divisions, specifications as printed"
   description={`${products.length} products across ${categories.length} categories in ${divisions.length} divisions, with specifications stated per product and EN 388 levels published where they exist.`}
-  darkHeader={false}
+  overlayHeader={false}
 >
   <main id="main">
     <section class="wh">

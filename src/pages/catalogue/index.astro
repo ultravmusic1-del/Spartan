@@ -32,7 +32,7 @@ import { productSearchText } from '../../lib/search';
  * owns beats the plain class rule; a Tailwind utility would sit in
  * `@layer utilities` and lose to unlayered component CSS outright).
  *
- * No hero, so `darkHeader={false}` gives the solid sticky header.
+ * No hero, so `overlayHeader={false}` gives the solid sticky header.
  */
 const [categories, divisions, products] = await Promise.all([
   getCategories(),
@@ -84,7 +84,7 @@ const rows = products.map((product) => {
 <BaseLayout
   title="Catalogue — Spartan Electricals & Spartan Safety"
   description={`Every Spartan product in one place: ${products.length} products across ${categories.length} categories in ${divisions.length} divisions. Filter by division or category, or open a category for its full range.`}
-  darkHeader={false}
+  overlayHeader={false}
 >
   <main id="main">
     {/* `data-js` — which the filter bar's pending state below depends on — is

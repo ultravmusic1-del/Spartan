@@ -15,7 +15,7 @@ import { breadcrumbJsonLd, itemListJsonLd, requireSite, type Crumb } from '../..
  * is real, the client's brief lists it, and the brochure has nothing in it yet.
  * Those pages say so and offer a way to ask, which is the honest state.
  *
- * No hero, so `darkHeader={false}` gives the solid sticky header.
+ * No hero, so `overlayHeader={false}` gives the solid sticky header.
  */
 export async function getStaticPaths() {
   const categories = await getCategories();
@@ -84,7 +84,7 @@ const metaDescription =
 <BaseLayout
   title={`${category.name} — ${division?.name ?? 'Spartan'}`}
   description={metaDescription}
-  darkHeader={false}
+  overlayHeader={false}
   division={category.divisionId}
   jsonLd={jsonLd}
 >

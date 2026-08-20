@@ -19,7 +19,7 @@ const site = await getSiteSettings();
  * secondary to the content and can wait; here the island *is* the page, and
  * deferring it would leave the one screen that matters inert.
  *
- * No hero photograph, so `darkHeader={false}` gives the solid sticky header.
+ * No hero photograph, so `overlayHeader={false}` gives the solid sticky header.
  *
  * CONTACT DETAILS ARE PLACEHOLDERS — `sales@spartan.example` is what sits in
  * site.json until the client supplies the real address (handoff.md section 8,
@@ -31,7 +31,7 @@ const site = await getSiteSettings();
 <BaseLayout
   title="Send your enquiry — Spartan"
   description="Review the products on your list, add quantities and notes, and send one enquiry across both Spartan divisions. Our team responds with availability and pricing."
-  darkHeader={false}
+  overlayHeader={false}
 >
   <main id="main">
     <section class="eh">

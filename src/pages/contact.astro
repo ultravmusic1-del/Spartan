@@ -39,7 +39,7 @@ import { getDivisions } from '../lib/catalog';
  * else is stated: no opening hours, no response time, no WhatsApp number, no
  * named contact, because none of those is known.
  *
- * No hero photograph, so `darkHeader={false}` gives the solid sticky header.
+ * No hero photograph, so `overlayHeader={false}` gives the solid sticky header.
  */
 const divisions = await getDivisions();
 
@@ -56,7 +56,7 @@ const details = [
 <BaseLayout
   title="Contact Spartan"
   description="Get in touch with Spartan about the Electricals or Safety range. Send a general enquiry, or raise a product-specific request straight from the catalogue."
-  darkHeader={false}
+  overlayHeader={false}
 >
   <main id="main">
     <section class="ch">

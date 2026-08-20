@@ -3,11 +3,12 @@
  * UtilityBar — the 44px strip that sits above the nav on every page.
  *
  * Positioning is load-bearing. In `transparent` mode the bar is
- * `position: absolute; top: 0` so it overlays the top of a dark photographic
- * hero. It must NOT be left in normal flow inside a flex hero: it gets treated
- * as a flex item and drops to the bottom of the viewport. In `solid` mode the
- * page has no hero, so the bar is a normal-flow block on `--color-black` and
- * scrolls away while the nav below it sticks.
+ * `position: absolute; top: 0` so it overlays the top of a hero. On the two
+ * division pages that hero is a photograph and the bar carries `on-dark`; on
+ * the home page it is the white hero and it does not. It must NOT be left in
+ * normal flow inside a flex hero — it becomes a flex item and drops to the
+ * bottom of the viewport. In `solid` mode the page has no hero, so the bar is
+ * a normal-flow block on `--surface-alt` and scrolls away while the nav sticks.
  *
  * The provenance line that used to sit on the right — "Established <year> ·
  * Manufactured in India & China" — was removed on request, 2026-08-13. It was
@@ -22,12 +23,14 @@
  */
 interface Props {
   mode?: 'transparent' | 'solid';
+  /** Over dark photography rather than the page. See Header's `onMedia`. */
+  onMedia?: boolean;
 }
 
-const { mode = 'transparent' } = Astro.props;
+const { mode = 'transparent', onMedia = false } = Astro.props;
 ---
 
-<div class:list={['util', `util--${mode}`]}>
+<div class:list={['util', `util--${mode}`, { 'on-dark': onMedia }]}>
   <div class="wrap util__inner">
     <div class="util__left">
       <span class="util__label">Follow Spartan</span>
@@ -63,9 +66,9 @@ const { mode = 'transparent' } = Astro.props;
     left: 0;
     right: 0;
     z-index: 25;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    border-bottom: 1px solid var(--line);
     font-size: 12px;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   /* Over a hero: out of flow, pinned to the top of the document. */
@@ -74,10 +77,10 @@ const { mode = 'transparent' } = Astro.props;
     top: 0;
   }
 
-  /* No hero: normal flow on the page's own black. */
+  /* No hero: normal flow on the page's own alternating surface. */
   .util--solid {
     position: relative;
-    background: var(--color-black);
+    background: var(--surface-alt);
   }
 
   /* `space-between` had two children to separate; with one left it would push
@@ -101,7 +104,7 @@ const { mode = 'transparent' } = Astro.props;
     flex-shrink: 0;
     width: 26px;
     height: 26px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid var(--line-control);
     border-radius: 50%;
   }
 

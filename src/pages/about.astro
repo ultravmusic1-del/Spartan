@@ -40,7 +40,7 @@ import { getCategories, getDivisions, getProducts } from '../lib/catalog';
  * of experience beyond the founding year, awards and memberships. If this page
  * feels short, that is the honest length.
  *
- * No hero photograph behind the header, so `darkHeader={false}` gives the solid
+ * No hero photograph behind the header, so `overlayHeader={false}` gives the solid
  * sticky header instead of the transparent overlay.
  */
 const [divisions, categories, products] = await Promise.all([
@@ -76,7 +76,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
 <BaseLayout
   title="About Spartan — established 2015"
   description={`A growing and trusted brand established in ${site.established}, supplying ${products.length} products across ${categories.length} categories in ${divisions.length} divisions, manufactured in India and China.`}
-  darkHeader={false}
+  overlayHeader={false}
 >
   <main id="main">
     <section class="ab">

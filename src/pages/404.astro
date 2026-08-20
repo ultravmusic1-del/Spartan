@@ -15,7 +15,7 @@ import { getCategories, getDivisions, getProducts } from '../lib/catalog';
  * from a stale link has a way back to whichever half of the range they wanted.
  * Every link points at a route that exists.
  *
- * No hero photograph, so `darkHeader={false}` gives the solid sticky header
+ * No hero photograph, so `overlayHeader={false}` gives the solid sticky header
  * rather than a transparent one over nothing.
  */
 const [divisions, categories, products] = await Promise.all([
@@ -28,7 +28,7 @@ const [divisions, categories, products] = await Promise.all([
 <BaseLayout
   title="Page not found — Spartan"
   description="That page does not exist. Browse the Spartan catalogue, or start from either division."
-  darkHeader={false}
+  overlayHeader={false}
 >
   <main id="main">
     <section class="nf">

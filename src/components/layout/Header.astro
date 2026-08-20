@@ -8,11 +8,15 @@
  * inside a flex hero — they would be treated as flex items and drop to the
  * bottom of the viewport.
  *
- * `solid` is for pages with no hero: the nav gets `--color-black` and sticks to
- * the top of the viewport while the utility bar scrolls away above it.
+ * `solid` is for pages with no hero: the nav gets `--surface-page` and sticks
+ * to the top of the viewport while the utility bar scrolls away above it.
  *
- * Both modes are dark surfaces, so this uses the **light** logo lockup
- * (red helmet, white wordmark). The black-wordmark lockup would be invisible.
+ * BOTH MODES ARE LIGHT SURFACES as of the white theme, 2026-08-20, so this uses
+ * the **black-wordmark** lockup. The white-wordmark one stays in the footer,
+ * which is the only dark surface left on the public site. `handoff.md` §3
+ * records that putting the wrong lockup on the wrong surface is a real bug that
+ * has already happened once on this project — it is invisible to every gate
+ * here, because an invisible wordmark is still a rendered <img>.
  *
  * The desktop menu and the mobile trigger are hidden by exactly complementary
  * media queries — `(max-width: 1080px)` and `not all and (max-width: 1080px)` —
@@ -26,7 +30,7 @@
 import { getSiteSettings } from '../../lib/site-content';
 
 const site = await getSiteSettings();
-import logoLight from '../../assets/brand/spartan-logo-light.svg';
+import logoDark from '../../assets/brand/spartan-logo.svg';
 import UtilityBar from './UtilityBar.astro';
 import MobileNav from './MobileNav.tsx';
 import EnquiryBadge from '../enquiry/EnquiryBadge.tsx';
@@ -36,9 +40,16 @@ import { buildCategoryGroups, isCurrentNavItem, normalisePath, type NavItem } fr
 
 interface Props {
   mode?: 'transparent' | 'solid';
+  /**
+   * The header is over dark photography rather than the page. Adds `.on-dark`,
+   * which re-points the semantic layer — so every colour in this file is
+   * written once and resolves correctly on both. See BaseLayout's
+   * `headerOnMedia` for why this is a separate prop from `mode`.
+   */
+  onMedia?: boolean;
 }
 
-const { mode = 'transparent' } = Astro.props;
+const { mode = 'transparent', onMedia = false } = Astro.props;
 
 /*
  * THE HEADER NOW READS CATALOGUE CONTENT, AND IT GOES THROUGH THE SEAM.
@@ -85,12 +96,12 @@ const current = normalisePath(Astro.url.pathname);
 const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 ---
 
-<UtilityBar mode={mode} />
+<UtilityBar mode={mode} onMedia={onMedia} />
 
-<header class:list={['site-header', `site-header--${mode}`]}>
+<header class:list={['site-header', `site-header--${mode}`, { 'on-dark': onMedia }]}>
   <div class="wrap nav">
     <a class="nav__logo" href="/">
-      <img src={logoLight.src} width={logoLight.width} height={logoLight.height} alt="Spartan" />
+      <img src={logoDark.src} width={logoDark.width} height={logoDark.height} alt="Spartan" />
     </a>
 
     <nav class="nav__menu" aria-label="Primary">
@@ -196,6 +207,11 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
       <MobileNav client:media="(max-width: 1080px)" items={items} current={current} />
     </div>
   </div>
+
+  {/* Decorative, and aria-hidden for that reason: it duplicates information the
+      scrollbar already carries, and a `role="progressbar"` here would announce a
+      value no assistive-technology user needs read to them. */}
+  <div class="site-header__progress" aria-hidden="true"></div>
 </header>
 
 {/* The drawer the badge opens. It sits here rather than in BaseLayout so the
@@ -220,8 +236,8 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .site-header--solid {
     position: sticky;
     top: 0;
-    background: var(--color-black);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    background: var(--surface-page);
+    border-bottom: 1px solid var(--line);
   }
 
   .nav {
@@ -229,6 +245,51 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     align-items: center;
     gap: 40px;
     height: 84px;
+  }
+
+  /* THE SCROLL-PROGRESS RULE — added with the white theme, 2026-08-20.
+     From the client's mockup, where a red rule under the nav stops partway
+     across the page.
+
+     A SCROLL-DRIVEN CSS ANIMATION, DELIBERATELY, NOT A SCRIPT. An inline
+     script here would need a CSP hash, and `npm run csp` derives hashes from
+     `dist/client` — so it would work locally and be blocked in production with
+     nothing failing. This needs no hash at all and the 9-hash count is
+     unchanged by it.
+
+     Browsers without `animation-timeline` paint the static hairline and never
+     scale the bar, which is the correct degraded state: the indicator is
+     decorative, and a scroll position is something the scrollbar already
+     reports. */
+  .site-header__progress {
+    height: 2px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .site-header__progress::after {
+    content: '';
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .site-header__progress::after {
+      animation: header-progress linear;
+      animation-timeline: scroll(root block);
+    }
+  }
+
+  @keyframes header-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
   }
 
   /* Padding takes the logo link to a 44px target without scaling the lockup.
@@ -292,7 +353,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
        scrim is what clears AA, not this token: the raw pre-scrim pixels
        measure as low as 1.11:1. Swapping a division hero photograph
        requires re-measuring this pairing against the new image. */
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
     transition:
       color var(--dur-base) var(--ease-out),
       border-color var(--dur-base) var(--ease-out);
@@ -300,8 +361,8 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
   .nav__link:hover,
   .nav__link--on {
-    color: #fff;
-    border-color: var(--color-red);
+    color: var(--text);
+    border-color: var(--accent);
   }
 
   .nav__link {
@@ -323,7 +384,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
   .nav__caret {
     display: inline-flex;
-    color: var(--color-red-light);
+    color: var(--accent-text);
     transition: transform var(--dur-base) var(--ease-out);
   }
 
@@ -349,8 +410,8 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
        centred under a centred row has room to spare. */
     width: min(560px, calc(100vw - 32px));
     padding: 22px 26px 18px;
-    background: var(--color-black);
-    border: 1px solid var(--color-line);
+    background: var(--surface-page);
+    border: 1px solid var(--line);
     box-shadow: 0 28px 60px rgba(0, 0, 0, 0.62);
     opacity: 0;
     visibility: hidden;
@@ -377,18 +438,18 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     display: block;
     padding-bottom: 9px;
     margin-bottom: 9px;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
     font-family: var(--font-display);
     font-size: 11px;
     font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
     transition: color var(--dur-base) var(--ease-out);
   }
 
   .nav__division:hover {
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .nav__sublist {
@@ -411,13 +472,13 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     font-weight: 450;
     letter-spacing: 0;
     text-transform: none;
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
     transition: color var(--dur-base) var(--ease-out);
   }
 
   .nav__sub:hover,
   .nav__sub[aria-current='page'] {
-    color: #fff;
+    color: var(--text);
   }
 
   /* Nothing in this range yet. The page it leads to says so in full; this is here
@@ -438,7 +499,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     font-weight: var(--fw-label);
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 
   .nav__all {
@@ -447,23 +508,23 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     gap: 7px;
     margin-top: 16px;
     padding-top: 14px;
-    border-top: 1px solid var(--color-line);
+    border-top: 1px solid var(--line);
     width: 100%;
     font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     letter-spacing: 0;
     text-transform: none;
-    color: #fff;
+    color: var(--text);
   }
 
   .nav__all-chev {
-    color: var(--color-red);
+    color: var(--accent);
     font-weight: var(--fw-label);
   }
 
   .nav__all:hover {
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
   .nav__tel {
@@ -534,8 +595,8 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     height: 44px;
     flex-shrink: 0;
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #fff;
+    border: 1px solid var(--line-control);
+    color: var(--text);
     cursor: pointer;
     transition:
       border-color var(--dur-base) var(--ease-out),
@@ -544,8 +605,8 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
   .mnav-trigger:hover,
   .mnav-close:hover {
-    border-color: var(--color-red);
-    background: color-mix(in srgb, var(--color-red) 12%, transparent);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
   }
 
   .mnav-trigger svg {
@@ -566,7 +627,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     flex-direction: column;
     overflow-y: auto;
     padding: 0 var(--wrap-pad) 48px;
-    background: var(--color-black);
+    background: var(--surface-page);
   }
 
   .mnav-panel__bar {
@@ -589,7 +650,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     min-height: 60px;
     padding-left: 14px;
     border-left: 2px solid transparent;
-    border-bottom: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--line);
     font-family: var(--font-display);
     font-size: 20px;
     font-weight: var(--fw-subhead);
@@ -599,7 +660,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
        --color-black regardless of header mode, and matching the desktop
        token keeps the two from reading as two different greys across the
        1080px breakpoint. */
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
     transition:
       color var(--dur-base) var(--ease-out),
       border-color var(--dur-base) var(--ease-out);
@@ -607,8 +668,8 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
   .mnav-link:hover,
   .mnav-link--on {
-    color: #fff;
-    border-left-color: var(--color-red);
+    color: var(--text);
+    border-left-color: var(--accent);
   }
 
   /* The mobile equivalent of the desktop dropdown, and it is deliberately NOT a
@@ -618,7 +679,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
      need state, a keyboard contract and hydration timing to do it. */
   .mnav-group {
     padding-left: 14px;
-    border-left: 1px solid var(--color-line);
+    border-left: 1px solid var(--line);
     margin: 8px 0 8px 14px;
   }
 
@@ -631,7 +692,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--text);
   }
 
   .mnav-sub {
@@ -645,12 +706,12 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     font-weight: 450;
     /* Same token as .mnav-link and .nav__link: one grey for every navigation
        surface on --color-black, so nothing drifts across the breakpoint. */
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
   }
 
   .mnav-sub:hover,
   .mnav-sub[aria-current='page'] {
-    color: #fff;
+    color: var(--text);
   }
 
   /* Same word and same size as .nav__soon on desktop, deliberately. One state
@@ -663,6 +724,6 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     font-weight: var(--fw-label);
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-grey);
+    color: var(--text-muted);
   }
 </style>

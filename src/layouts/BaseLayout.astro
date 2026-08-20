@@ -8,19 +8,40 @@ interface Props {
   title: string;
   description: string;
   /**
-   * True (the default) for pages that open with a dark photographic hero: the
-   * header overlays it. False for pages with no hero, which get a solid black
-   * sticky header instead — the white wordmark needs a dark background either
-   * way.
+   * POSITIONING ONLY. True (the default) for pages that open with a hero: the
+   * header lifts out of flow and overlays it. False for pages with no hero,
+   * which get a solid sticky header instead.
+   *
+   * This was `darkHeader` until 2026-08-20, and the rename is a bug fix rather
+   * than tidying. It conflated two independent things — where the header sits
+   * and what colour it is — which was harmless while every hero was dark and
+   * became wrong the moment the home hero turned white. Home wants overlay
+   * positioning with light chrome; the division pages want overlay positioning
+   * with dark chrome. One boolean cannot say both.
    */
-  darkHeader?: boolean;
+  overlayHeader?: boolean;
+  /**
+   * COLOUR ONLY. True for the two division pages, whose hero is a photograph
+   * under a scrim — including a `rgba(8, 8, 10, 0.85)` top band painted
+   * specifically so the header reads against it. Those are the only public
+   * surfaces left where the header is on dark, and getting this wrong ships
+   * #6a6a72 nav links on a near-black photograph with every gate green.
+   */
+  headerOnMedia?: boolean;
   /** Division id, for the social card. See Seo.astro. */
   division?: string;
   /** Structured data for this page — one node or several. See Seo.astro. */
   jsonLd?: object | object[];
 }
 
-const { title, description, darkHeader = true, division, jsonLd } = Astro.props;
+const {
+  title,
+  description,
+  overlayHeader = true,
+  headerOnMedia = false,
+  division,
+  jsonLd,
+} = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
@@ -80,7 +101,7 @@ const { title, description, darkHeader = true, division, jsonLd } = Astro.props;
   </head>
   <body>
     <a href="#main" class="skip-link sr-only focus:not-sr-only">Skip to content</a>
-    <Header mode={darkHeader ? 'transparent' : 'solid'} />
+    <Header mode={overlayHeader ? 'transparent' : 'solid'} onMedia={headerOnMedia} />
     <slot />
     <Footer />
   </body>
@@ -96,7 +117,7 @@ const { title, description, darkHeader = true, division, jsonLd } = Astro.props;
     z-index: 100;
     padding: 12px 18px;
     /* Red surface behind white text, so the fill token, not brand red. */
-    background: var(--color-red-fill);
+    background: var(--accent-fill);
     color: #fff;
     font-family: var(--font-display);
     font-size: 13px;
