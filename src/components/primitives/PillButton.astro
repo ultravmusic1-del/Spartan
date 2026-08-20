@@ -4,16 +4,19 @@
  *
  * Renders an `<a>` when `href` is given, otherwise a `<button>`.
  *
- * `onLight` re-tunes the outline and text for `--color-paper` sections. The
- * chevron stays brand red: it is a large decorative glyph, not small text, so
- * the 4.30:1 white-background limit does not apply to it — but any *text*
- * inside this button must not be red on a light section.
+ * THE `onLight` PROP IS GONE, 2026-08-20. Its base outline was white at 0.32
+ * alpha — invisible on the white site — and the light tuning was an opt-in flag
+ * every caller had to remember. The outline now names `--line-control`, which
+ * the surface resolves, so there is nothing to forget.
+ *
+ * The chevron stays brand red: it is a large decorative glyph, not small text,
+ * so the 4.30:1 limit does not apply to it — but any *text* inside this button
+ * must not be red on a light surface.
  */
 interface Props {
   href?: string;
   type?: 'button' | 'submit';
   class?: string;
-  onLight?: boolean;
   /**
    * Passed straight through for links that leave the site or hand over a file.
    * All three are ignored when this renders a `<button>`, which is why they are
@@ -32,7 +35,6 @@ const {
   href,
   type = 'button',
   class: cls = '',
-  onLight = false,
   download = false,
   target,
   rel,
@@ -46,7 +48,7 @@ const Tag = href ? 'a' : 'button';
   download={href && download ? true : undefined}
   target={href ? target : undefined}
   rel={href ? rel : undefined}
-  class:list={['pill', { 'pill--on-light': onLight }, cls]}
+  class:list={['pill', cls]}
 >
   <slot /><span class="chev" aria-hidden="true">›</span>
 </Tag>
@@ -59,7 +61,11 @@ const Tag = href ? 'a' : 'button';
     gap: 9px;
     background: transparent;
     color: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.32);
+    /* Was a white outline at 0.32 alpha, which on the white site is nothing at
+       all. A button's outline is what makes it a button, so this is a boundary
+       that carries meaning and takes --line-control (3.43:1) rather than the
+       decorative --line (1.27:1). */
+    border: 1px solid var(--line-control);
     border-radius: 999px;
     cursor: pointer;
     font-family: var(--font-body);
@@ -74,22 +80,12 @@ const Tag = href ? 'a' : 'button';
   }
 
   .pill:hover {
-    border-color: var(--color-red);
-    background: color-mix(in srgb, var(--color-red) 10%, transparent);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
   }
 
   .pill .chev {
-    color: var(--color-red);
+    color: var(--accent);
     font-weight: var(--fw-label);
-  }
-
-  .pill--on-light {
-    border-color: rgba(0, 0, 0, 0.18);
-    color: var(--color-ink);
-  }
-
-  .pill--on-light:hover {
-    border-color: var(--color-red);
-    background: color-mix(in srgb, var(--color-red) 6%, transparent);
   }
 </style>

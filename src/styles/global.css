@@ -18,8 +18,8 @@
 
 body {
   font-family: var(--font-body);
-  background: var(--color-black);
-  color: #fff;
+  background: var(--surface-page);
+  color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -35,7 +35,7 @@ a { color: inherit; text-decoration: none; }
 img, svg { display: block; max-width: 100%; }
 
 :focus-visible {
-  outline: 2px solid var(--color-red);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
@@ -45,11 +45,42 @@ img, svg { display: block; max-width: 100%; }
   padding-inline: var(--wrap-pad);
 }
 
-/* Small red text fails WCAG AA against --color-paper (3.99:1).
-   Light sections must use the deep red (8.40:1). See spec section 2.
-   The 4.30:1 / 9.09:1 figures quoted here previously were measured
-   against pure white, not the paper surface actually used. */
-.on-light .text-brand { color: var(--color-red-deep); }
+/* THIS BLOCK INVERTED ON 2026-08-20, AND THE RENAME IS THE POINT.
+
+   It was `.on-light`, the narrow exception on a dark-first site. The site is
+   light now, so the exception is darkness. `.on-dark` re-points the semantic
+   layer at the palette's dark values; it is the only place on the public site
+   that does, and the dark footer is its only user.
+
+   A leftover `.on-light` would apply light-surface rules inside the dark
+   footer and nothing would fail, so src/styles/theme-sweep.test.ts bans the
+   name outright rather than trusting a grep at review time.
+
+   The greys come back here on purpose: --color-grey is 3.17:1 on --color-paper
+   and illegal on the light site, but it is a legitimate muted text colour once
+   the surface behind it is --color-panel again. Same for --color-red-light,
+   which exists precisely because brand red is under 4.5:1 on all three dark
+   surfaces. */
+.on-dark {
+  --surface-page: var(--color-black);
+  --surface-alt: var(--color-panel);
+  --surface-raised: var(--color-card);
+  --line: var(--color-line);
+  --line-control: var(--color-grey);
+  --text: #fff;
+  --text-muted: var(--color-grey);
+  --accent-text: var(--color-red-light);
+  --accent: var(--color-red);
+  --accent-fill: var(--color-red-fill);
+
+  background: var(--surface-page);
+  color: var(--text);
+}
+
+/* Small red text needs the deep red on light (8.40:1 on --surface-alt); brand
+   red is 3.99:1 there and legal only at display sizes. Inside `.on-dark` the
+   same utility resolves through --accent-text to the light red instead. */
+.text-brand { color: var(--accent-text); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

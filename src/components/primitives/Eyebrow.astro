@@ -4,31 +4,31 @@
  * almost every heading.
  *
  * At 11px/700 this is normal-size text by WCAG, so it needs 4.5:1 on every
- * surface it lands on and neither brand red nor a single red covers both
- * directions:
+ * surface it lands on and no single red covers both directions:
  *
+ *   light — `--color-red-deep`, 9.07:1 on white and 8.40:1 on --surface-alt.
+ *           Brand red is 4.30:1 / 3.99:1 there and fails.
  *   dark  — `--color-red-light`, 4.62:1 on card / 4.89:1 on panel / 5.08:1 on
  *           black. Brand red is 4.23:1 and 4.48:1 on the first two and fails.
- *   light — `onLight` swaps in `--color-red-deep`, 8.40:1 on paper. Brand red
- *           is 3.99:1 there and fails.
  *
- * Brand red is used on this component nowhere, including on `--color-black`
- * where it would pass: the eyebrow is one element that appears on all three
- * dark surfaces, and two reds a few percent apart across them reads as a
- * defect rather than a system.
+ * THE `onLight` PROP IS GONE, 2026-08-20. It existed because a dark-first site
+ * needed a per-instance opt-out, and it was set by hand at every call site —
+ * which is a switch someone can forget. `--accent-text` already resolves to the
+ * deep red on light and the light red inside `.on-dark`, so the surface decides
+ * and no caller can get it wrong.
+ *
+ * Brand red is used on this component nowhere, including on surfaces where it
+ * would pass: the eyebrow appears on every surface the site has, and two reds a
+ * few percent apart across them reads as a defect rather than a system.
  */
 interface Props {
   center?: boolean;
-  onLight?: boolean;
 }
 
-const { center = false, onLight = false } = Astro.props;
+const { center = false } = Astro.props;
 ---
 
-<div
-  class:list={['eyebrow', { 'eyebrow--center': center }]}
-  style={onLight ? 'color: var(--color-red-deep)' : undefined}
->
+<div class:list={['eyebrow', { 'eyebrow--center': center }]}>
   <slot />
 </div>
 
@@ -42,10 +42,10 @@ const { center = false, onLight = false } = Astro.props;
     font-weight: var(--fw-label);
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--color-red-light);
+    color: var(--accent-text);
   }
 
-  /* `currentColor` so the dash follows the onLight switch automatically. */
+  /* `currentColor` so the dash follows the surface automatically. */
   .eyebrow::before {
     content: '';
     width: 16px;

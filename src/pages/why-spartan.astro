@@ -89,11 +89,10 @@ const reasons = [
       </div>
     </section>
 
-    <section class="rs on-light">
+    <section class="rs">
       <div class="wrap">
         <SectionHeading
           center
-          onLight
           eyebrow="Reasons"
           title="Six things we can stand behind."
           lede="Each of these is either a property of the catalogue you can count for yourself, or a statement from Spartan's own brochure."
@@ -162,9 +161,9 @@ const reasons = [
   }
 
   /* 34px display type is far above WCAG's 24px large-text threshold, so brand
-     red is allowed here on --color-paper (3.99:1 clears the 3:1 large-text
-     bar). The small red text on this page — the eyebrows — goes through
-     `onLight` and comes out as --color-red-deep instead. */
+     red is allowed here on --surface-alt (3.99:1 clears the 3:1 large-text
+     bar). The small red text on this page — the eyebrows — resolves
+     --accent-text and comes out deep red instead. */
   .rs__n {
     font-family: var(--font-display);
     font-size: 34px;

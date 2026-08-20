@@ -7,10 +7,12 @@ import { getCategories, getDivisions } from '../../lib/catalog';
  * ServiceCards — "What we supply". Port of the mockup's `.light` + `.svc`
  * block: centred heading, then a 3x2 hairline grid of white cards.
  *
- * This is a LIGHT section, so it carries `on-light` and every primitive inside
- * it takes `onLight`. Brand red measures 3.99:1 on --color-paper and fails AA
- * for normal-size text; the eyebrow, lede and pill switch to the deep red and
- * ink-muted automatically once told they are on light.
+ * This was the one light section on a dark site and carried a class and a prop
+ * per primitive to say so. The whole site is light as of 2026-08-20, so both
+ * are gone and this section is unremarkable. Brand red still measures 3.99:1 on
+ * --surface-alt and still fails AA for normal-size text — the eyebrow, lede and
+ * pill resolve --accent-text and --text-muted from the surface instead of being
+ * told, which is why there is no longer a flag anyone can forget to pass.
  *
  * The six cards are real categories, named by id — heading, body copy and link
  * all come from the catalogue, so nothing here can describe a range the data
@@ -62,11 +64,10 @@ const byId = new Map(categories.map((c) => [c.id, c]));
 const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
 ---
 
-<section class="services on-light">
+<section class="services">
   <div class="wrap">
     <SectionHeading
       center
-      onLight
       eyebrow="What we supply"
       title="Built for the sites<br>we supply."
       lede={`${categories.length} categories across ${divisions.length} divisions. Every specification is taken directly from the current Spartan product brochure.`}
@@ -89,7 +90,7 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
             />
             <h3 class="card__title">{category.name}</h3>
             <p class="card__body">{category.description}</p>
-            <PillButton href={`/catalogue/${category.slug}`} onLight>
+            <PillButton href={`/catalogue/${category.slug}`}>
               Read More
             </PillButton>
           </article>
@@ -176,7 +177,7 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
   /* 19px at weight 700 is 14.25pt bold, which clears WCAG's 14pt-bold
      large-text threshold, so the 3:1 bar applies and brand red on white
      measures 4.30:1. Small red text on a light surface (the eyebrow, the pill
-     label) uses --color-red-deep instead — that is what `onLight` does. */
+     label) resolves --accent-text and comes out deep red instead. */
   .card__title {
     margin: 20px 0 12px;
     font-size: 19px;

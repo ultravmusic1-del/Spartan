@@ -16,7 +16,6 @@ interface Props {
   title: string;
   lede?: string;
   center?: boolean;
-  onLight?: boolean;
   /**
    * Heading level. Sections default to `h2`. A listing or detail page whose
    * subject IS this heading passes `h1`, so the document keeps exactly one and
@@ -35,13 +34,12 @@ const {
   title,
   lede,
   center = false,
-  onLight = false,
   level: Heading = 'h2',
 } = Astro.props;
 ---
 
-<div class:list={['sec', { 'sec--center': center, 'sec--on-light': onLight }]}>
-  <Eyebrow center={center} onLight={onLight}>{eyebrow}</Eyebrow>
+<div class:list={['sec', { 'sec--center': center }]}>
+  <Eyebrow center={center}>{eyebrow}</Eyebrow>
   <Heading set:html={title} />
   {lede && <p>{lede}</p>}
 </div>
@@ -54,19 +52,18 @@ const {
     letter-spacing: -0.028em;
   }
 
+  /* Was --color-grey-lt with a `.sec--on-light` override, and the override was
+     the bug waiting to happen: --color-grey-lt is 1.91:1 on --surface-alt and
+     --color-grey only 3.17:1, both under the 4.5:1 floor this 15px lede needs,
+     so a caller who forgot the flag shipped unreadable text and nothing said
+     so. --text-muted is 5.36:1 on white and 4.96:1 on --surface-alt, and inside
+     `.on-dark` it resolves back to the grey the dark footer wants. One name,
+     no flag, no way to forget it. */
   .sec p {
-    color: var(--color-grey-lt);
+    color: var(--text-muted);
     margin-top: 16px;
     max-width: 56ch;
     font-size: 15px;
-  }
-
-  /* --color-grey-lt is tuned for near-black backgrounds and is far too pale on
-     --color-paper (1.9:1). --color-grey is no better (3.17:1, still under the
-     4.5:1 AA floor for 15px text). --color-ink-muted is the light-surface
-     counterpart: 4.96:1, muted enough to keep the lede below the heading. */
-  .sec--on-light p {
-    color: var(--color-ink-muted);
   }
 
   .sec--center {

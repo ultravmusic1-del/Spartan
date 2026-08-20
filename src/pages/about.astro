@@ -141,10 +141,9 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
       </div>
     </section>
 
-    <section class="dv on-light">
+    <section class="dv">
       <div class="wrap">
         <SectionHeading
-          onLight
           eyebrow="Structure"
           title="Two divisions, one catalogue."
           lede={`The range is organised into two divisions covering ${categories.length} categories in all. ${
@@ -176,7 +175,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
                   <p class="dv__count">
                     {prodCount} products · {catCount} categories
                   </p>
-                  <PillButton href={`/${division.slug}`} onLight>
+                  <PillButton href={`/${division.slug}`}>
                     Explore {division.name}
                   </PillButton>
                 </div>
