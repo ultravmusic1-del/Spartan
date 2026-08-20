@@ -74,13 +74,69 @@ Both extracted as **vector** from the brochure. Neither was redrawn, and neither
 | `src/assets/brand/spartan-logo.svg` | Red helmet, **black** wordmark | Light backgrounds |
 | `src/assets/brand/spartan-logo-light.svg` | Red helmet, **white** wordmark | Dark backgrounds |
 
-The site is dark-first, so most surfaces need the **light** lockup. Using the dark one on a dark surface makes the wordmark invisible — that is a real bug that occurred during design.
+**This reversed on 2026-08-20.** The site was dark-first and most surfaces needed the **light** lockup; the site is light now, so the header and every page take the **dark** lockup, and the light one is used in exactly one place — the footer, the only dark surface left on the public site. (`/admin` is dark and unaffected.)
+
+Using the wrong lockup makes the wordmark invisible, and that is a real bug that has already occurred once on this project. **No gate can catch it**: an invisible wordmark is still a rendered `<img>` with correct `alt`, correct dimensions and a 200 response. Check it by eye whenever a surface changes.
 
 Minimum rendered height 28px. Clear space on all sides = half the helmet height.
 
 The brochure cover also carries an Arabic wordmark (**سبارتان**). Not used in this build; deferred.
 
 ### Colour — measured, not chosen
+
+> **THE SITE IS LIGHT AS OF 2026-08-20.** Everything below still holds, but read
+> it in two halves. The **palette** is unchanged — every hex, every name, every
+> meaning — and it is still what `/admin` and the dark footer use directly. On
+> top of it sits a **semantic layer** whose names are jobs rather than colours,
+> and that is what every public component now reads. See
+> `docs/superpowers/specs/2026-08-20-white-theme-design.md`.
+>
+> The pairs a dark-first site cared about are now the *exception* set, and the
+> light pairs are the everyday ones. Both tables are below, in that order.
+
+#### The semantic layer — what public components name
+
+```
+--surface-page    #ffffff   the page
+--surface-alt     #f6f6f7   alternating bands, sunken wells
+--surface-raised  #ffffff   cards, panels (same value, NOT the same token)
+--line            #e4e4e7   decorative hairlines, grid gaps
+--line-control    #8a8a92   boundaries that carry meaning — input, checkbox
+--text            #0e0e11   body and headings
+--text-muted      #6a6a72   kickers, captions, meta
+--accent-text     #970000   small red text
+--accent          #eb2927   large display red, rules, icons, focus rings
+--accent-fill     #dd1e1c   red surfaces under white text
+```
+
+`.on-dark` in `src/styles/global.css` re-points all ten at the dark palette. It
+has exactly two users on the public site: `Footer.astro`, and the division-page
+hero in `DivisionPage.astro`, whose background is a scrimmed photograph.
+
+**Light pairs, measured:**
+
+| Pair | on `#ffffff` | on `#f6f6f7` | Verdict |
+|---|---|---|---|
+| `--text` | 19.27:1 | 17.85:1 | passes AA at any size |
+| `--text-muted` | 5.36:1 | 4.96:1 | passes AA at any size |
+| `--accent-text` | 9.07:1 | 8.40:1 | passes AAA |
+| **`--accent`** | **4.30:1** | **3.99:1** | **large text only** — ≥24px, or ≥18.66px bold |
+| `--line-control` | 3.43:1 | 3.17:1 | passes the 3:1 non-text bar |
+| white on `--accent-fill` | 4.91:1 | — | passes AA at any size |
+
+`--line` is 1.27:1 and that is correct: WCAG's 3:1 non-text bar covers boundaries
+that convey information or state, not hairlines between bands. A boundary that
+does carry meaning uses `--line-control`.
+
+**`--color-grey` was demoted, not deleted.** It was muted text on dark; on light
+it is 3.43:1, which is illegal for the 11–15px labels it used to colour but
+correct for a control edge. It is `--line-control` now.
+**`--color-grey-lt` has no light-surface role at all** — 2.06:1, fails at every
+size. Both are banned outside the dark footer by
+`src/styles/theme-sweep.test.ts`, because 80 public-site usages of them would
+otherwise have survived the inversion looking approximately fine.
+
+#### The palette — unchanged, and still what `/admin` and `.on-dark` use
 
 All values sampled from the brochure PDF. Tokens live in `src/styles/tokens.css`.
 
@@ -133,7 +189,14 @@ On light, red is permitted **only** for text ≥24px, or ≥18.66px bold, or non
 
 And in the other direction: **any red *surface* carrying white text uses `red-fill`; brand red stays the colour for text, icons, rules, borders and decorative fills.** That covers the solid CTA, the trust band, the red catalogue tile, the footer Submit button and social hover disc, the open FAQ toggle and the skip link. It applies even where the white text is large enough for brand red to pass on its own — two reds a few percent apart inside one component reads as a defect.
 
-`Eyebrow`, `PillButton` and `SectionHeading` take an `onLight` prop that switches these automatically — that is how the rule is enforced in code rather than remembered.
+`Eyebrow`, `PillButton` and `SectionHeading` took an `onLight` prop that switched these automatically. **That prop is gone as of 2026-08-20.** It was an opt-in flag every call site had to remember, and forgetting it shipped `--color-grey-lt` at 1.91:1 with nothing failing. The three primitives now name `--accent-text` and `--text-muted`, which the surface resolves — so the rule is enforced by where the element *is*, not by what its caller passed.
+
+**Two gates now cover this section, and neither existed before 2026-08-20:**
+
+- `src/styles/tokens.test.ts` — static. Reads the declared token values and asserts every pair in the light table above clears its bar. Also asserts `--accent` does **not** clear 4.5:1, so "fixing" it means changing the brand red and saying so out loud.
+- `tests/e2e/contrast.spec.ts` — rendered. Eleven selectors, resolved against their real backgrounds in a browser. It found `.card__name` at 1.00:1 (white on white) and five red-filled controls at 3.92:1 during the inversion, none of which any static check would have caught.
+
+Its background walk had a latent bug worth knowing about: it detected transparency by pattern-matching a trailing `, 0)`, and `rgb(0, 0, 0)` ends in exactly that — so **pure black read as transparent** and the walk continued past it to whatever was behind. It never mattered while the dark surfaces were `#08080a`, `#0e0e11` and `#151519`, none of them pure black. The footer is `#000`. Alpha is parsed now.
 
 ### Typography
 

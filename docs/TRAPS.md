@@ -11,6 +11,43 @@ in `handoff.md`; this file states the trap and moves on.
 
 `astro check` passes through every one of these. Nothing warns you.
 
+- **A dark-surface grey on the light site.** `--color-grey` is 3.43:1 on white
+  and `--color-grey-lt` is 2.06:1. Both were tuned for near-black backgrounds,
+  and both render as approximately-fine grey on white — legible enough that
+  nobody queries it, and under the 4.5:1 floor every label they colour needs.
+  There were 80 public-site usages before the white theme.
+  *Caught by:* `src/styles/theme-sweep.test.ts`, which bans both outside
+  `Footer.astro`. Use `--text-muted` for text, `--line-control` for a boundary.
+
+- **A hardcoded `#fff` that used to be correct.** The token bans above cannot
+  see it, because it was never a token. `ProductCard`'s `.card__name` shipped
+  briefly as white on a white card — 1.00:1, every product name on every
+  category page invisible — while every token gate was green. The mirror image
+  happens too: turning a white label into `--text` on a red-filled button gives
+  3.92:1.
+  *Caught by:* the same sweep's white-text rule, plus
+  `tests/e2e/contrast.spec.ts`. Before changing a colour, know what surface it
+  sits on.
+
+- **`.on-light` inverted into `.on-dark` on 2026-08-20.** The class did not
+  move, it changed meaning: light is the default now and darkness is the
+  exception. A leftover `.on-light` applies light-surface rules inside the dark
+  footer and renders grey on black.
+  *Caught by:* `src/styles/theme-sweep.test.ts`.
+
+- **Deleting one selector from a shared list takes the whole rule with it.**
+  Removing `.hero__glow` from a `.hero__track, .hero__pip, .hero__glow {
+  animation: none }` block left the first two dangling onto the rule below — so
+  the hero carousel kept animating for visitors who had asked for reduced
+  motion, and the page looked completely correct.
+  *Caught by:* `tests/e2e/motion.spec.ts`, and nothing else would have.
+
+- **The logo lockup does not fail loudly.** The header takes the black-wordmark
+  lockup and the footer the white one. Put either on the wrong surface and the
+  wordmark is invisible — but it is still a rendered `<img>` with correct
+  `alt`, correct dimensions and a 200 response.
+  *Caught by:* nothing. Check it by eye whenever a surface changes.
+
 - **Playwright attaches to a dev server on :4321 instead of building.**
   `playwright.config.ts` sets `reuseExistingServer: true` and its
   `webServer.command` builds first — but if anything is already listening on
