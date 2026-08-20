@@ -1,14 +1,9 @@
 ---
 import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
-
-import spillControl from '../../assets/banners/spill-control.jpg';
-import highbayLights from '../../assets/banners/highbay-lights.jpg';
-import solarLights from '../../assets/banners/solar-lights.jpg';
-import coveralls from '../../assets/banners/fire-retardant-coveralls.jpg';
-import safetyVests from '../../assets/banners/safety-vests.jpg';
-import insectKiller from '../../assets/banners/insect-killer.jpg';
+import { getHeroBanners, heroClock } from '../../lib/site-content';
 
 /**
  * Hero — the campaign carousel.
@@ -33,11 +28,16 @@ import insectKiller from '../../assets/banners/insect-killer.jpg';
  *     assembly diagram (handoff.md §17). A wrong model code is a smaller error
  *     than a wrong safety rating, but it is still a wrong fact on the home page.
  *
- * Both return by adding a line to BANNERS once the artwork is corrected. The
- * remaining thirteen were left out for length, not for accuracy — a hero that
- * loads nineteen posters is not a hero. Six was chosen to balance the two
+ * Both return by flipping `enabled` in `src/data/hero-banners.json` once the
+ * artwork is corrected — no change to this file, which is the point of the
+ * seam. `src/lib/site-content.test.ts` asserts neither is enabled, so one
+ * cannot be switched back on without that test being deliberately changed.
+ *
+ * The remaining eleven were left out for page weight, not for accuracy — a hero
+ * that loads nineteen posters is not a hero. Six was chosen to balance the two
  * divisions three and three, and to vary the tonality so consecutive slides do
- * not read as one image.
+ * not read as one image. **The carousel no longer assumes six**: the clock is
+ * derived from however many are enabled.
  *
  * DECORATIVE, LIKE THE HELMET IT REPLACES. Every slide is `alt=""` and the
  * track is aria-hidden. These are marketing posters whose content is baked-in
@@ -64,30 +64,96 @@ import insectKiller from '../../assets/banners/insect-killer.jpg';
  */
 
 /*
- * The slide order is the render order. Alternating Safety and Electricals keeps
- * consecutive slides from sharing a palette — spill control is red and dark,
- * the highbay is a blue-lit warehouse, solar is a violet dusk, the coveralls are
- * orange, the vests hi-viz yellow, the insect killer near-white.
+ * WHICH BANNERS, AND IN WHAT ORDER, IS DATA — see src/lib/site-content.ts.
+ *
+ * It was a literal array here until 2026-08-19. Moving it behind the seam is
+ * what makes banner selection editable from /admin later without touching this
+ * component, and it is the same structural decision rule 3 makes for products.
+ *
+ * The order still matters and is set in the data: alternating Safety and
+ * Electricals keeps consecutive slides from sharing a palette — spill control
+ * is red and dark, the highbay a blue-lit warehouse, solar a violet dusk, the
+ * coveralls orange, the vests hi-viz yellow, the insect killer near-white.
+ *
+ * `astro:assets` cannot take a runtime string path, so each filename is
+ * resolved through the established `import.meta.glob` pattern. Root-absolute
+ * glob gives root-absolute keys, and it is lazy, so only banners actually
+ * enabled are ever emitted.
  */
-const BANNERS = [
-  { src: spillControl, name: 'Spill Control' },
-  { src: highbayLights, name: 'Highbay Lights' },
-  { src: solarLights, name: 'Solar Lighting' },
-  { src: coveralls, name: 'Fire Retardant Coveralls' },
-  { src: safetyVests, name: 'Safety Vests' },
-  { src: insectKiller, name: 'Insect Killers' },
-];
+const bannerImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/banners/*.jpg',
+);
+
+const BANNERS = await Promise.all(
+  (await getHeroBanners()).map(async (banner) => {
+    const loader = bannerImages[`/src/assets/banners/${banner.file}`];
+    if (!loader)
+      throw new Error(
+        `hero banner "${banner.file}" is enabled but not in src/assets/banners/. ` +
+          'A banner that cannot be resolved must fail the build rather than ' +
+          'render a gap in the carousel.',
+      );
+    return { ...banner, src: (await loader()).default };
+  }),
+);
 
 /*
  * The track carries one extra slide: a second copy of the first.
  *
- * The animation runs 0 -> -600% and then restarts at 0. Without the repeat that
- * final frame would be blank, and a "rewind" back through five slides is the
+ * The animation runs 0 -> -N00% and then restarts at 0. Without the repeat that
+ * final frame would be blank, and a "rewind" back through every slide is the
  * alternative — visible, and wrong. Landing on a copy of slide 1 and cutting
  * back to the real slide 1 is invisible because the two are the same image.
  * Ticker.astro duplicates its track for the same reason.
  */
 const SLIDES = [...BANNERS, BANNERS[0]];
+
+/*
+ * THE CLOCK, AND WHY IT IS COMPUTED RATHER THAN TYPED.
+ *
+ * The track's keyframe stops, the pips' stagger and the cycle length are ONE
+ * system derived from the slide count. While the count was a literal six, so
+ * were all three — and enabling a seventh banner would then have produced a
+ * carousel whose lit pip reported a slide that was not showing. That reads as a
+ * rendering bug and is arithmetic, which is the worst kind to debug.
+ *
+ * So the count is the only input. Each slide holds for HOLD seconds and moves
+ * for SLIDE seconds; the cycle is the sum times the count. At six banners this
+ * computes to exactly the values that were previously hard-coded — 42s, stops
+ * at 14.286% and 16.667%, pips every 7s — which is what makes this refactor
+ * verifiable: the rendered page does not change.
+ *
+ * ASTRO SCOPED STYLES CANNOT INTERPOLATE A FRONTMATTER VALUE. That is why the
+ * generated rules go in an `is:inline` <style> below rather than in the scoped
+ * block, and it is the same constraint that forces `Hero.astro`'s PORTRAIT
+ * media query to be written twice in the retained-artwork version. It costs no
+ * CSP hash: `style-src` is `'self' 'unsafe-inline'`, unlike `script-src`, which
+ * is hash-based with no 'unsafe-inline' at all.
+ */
+const clock = heroClock(BANNERS.length);
+
+const pct = (n: number) => `${Number(n.toFixed(3))}%`;
+/** `translateX(0)` for the first slide rather than `-0%`, which computes the same and reads as a typo. */
+const shift = (i: number) => (i === 0 ? '0' : `-${i * 100}%`);
+
+const carouselCss = `
+@keyframes hero-carousel {
+${BANNERS.map(
+  (_, i) =>
+    `  ${pct(i * clock.stepPct)}, ${pct(i * clock.stepPct + clock.holdPct)} { transform: translateX(${shift(i)}); }`,
+).join('\n')}
+  100% { transform: translateX(${shift(BANNERS.length)}); }
+}
+@keyframes hero-pip {
+  0% { background: #fff; width: 26px; }
+  ${pct(clock.stepPct)}, 100% { background: #5c5c66; width: 18px; }
+}
+[data-hero-stage] .hero__track,
+[data-hero-stage] .hero__pip { animation-duration: ${clock.cycleSeconds}s; }
+${clock.pipDelays
+  .map((delay, i) => `[data-hero-stage] .hero__pip:nth-child(${i + 1}) { animation-delay: ${delay}s; }`)
+  .join('\n')}
+`.trim();
 
 /*
  * THE BYTE BUDGET, WHICH IS THE REAL COST OF THIS CHANGE.
@@ -353,7 +419,9 @@ const SIZES =
   .hero__track {
     display: flex;
     height: 100%;
-    animation: hero-carousel 42s var(--ease-out, cubic-bezier(0.4, 0, 0.2, 1)) infinite;
+    /* Duration is generated from the slide count; see the inline style block. */
+    animation: hero-carousel var(--ease-out, cubic-bezier(0.4, 0, 0.2, 1)) infinite;
+    animation-duration: 42s;
   }
 
   .hero__slide {
@@ -414,15 +482,13 @@ const SIZES =
     height: 3px;
     border-radius: 2px;
     background: #5c5c66;
-    animation: hero-pip 42s step-end infinite;
+    animation: hero-pip step-end infinite;
+    animation-duration: 42s;
   }
 
-  .hero__pip:nth-child(1) { animation-delay: 0s; }
-  .hero__pip:nth-child(2) { animation-delay: 7s; }
-  .hero__pip:nth-child(3) { animation-delay: 14s; }
-  .hero__pip:nth-child(4) { animation-delay: 21s; }
-  .hero__pip:nth-child(5) { animation-delay: 28s; }
-  .hero__pip:nth-child(6) { animation-delay: 35s; }
+  /* The per-pip delays are GENERATED from the slide count -- see the inline
+     style block at the foot of this file. They were six literals here until
+     2026-08-19, which meant a seventh banner would light the wrong pip. */
 
   /* The checkbox itself is never seen; the label is the button. Not
      `display: none` — that would take it out of the tab order and off every
@@ -574,40 +640,22 @@ const SIZES =
   }
 
   /*
-   * Six holds and six slides across 42s. Each slide holds for 6s and moves for
-   * 1s, which is 14.286% and 2.381% of the cycle.
+   * `@keyframes hero-carousel` AND `@keyframes hero-pip` ARE GENERATED, in the
+   * inline <style> at the foot of this file, because Astro's scoped styles
+   * cannot interpolate a frontmatter value and the stops depend on the slide
+   * count. At six banners they compute to exactly what used to be written here:
+   * stops at 14.286% and 16.667%, a 42s cycle, and the last step landing on the
+   * duplicate slide at -600%.
    *
-   * The last step lands on the duplicate seventh slide at -600% and the
-   * animation restarts at 0. Both frames show the same image, so the reset is
-   * invisible; there is deliberately no hold at 100%, because a hold there would
-   * show the duplicate for a beat and make the loop stutter once per cycle.
+   * There is deliberately no hold at 100%. A hold there would show the
+   * duplicate for a beat and make the loop stutter once per cycle.
    */
-  @keyframes hero-carousel {
-    0%, 14.286% { transform: translateX(0); }
-    16.667%, 30.952% { transform: translateX(-100%); }
-    33.333%, 47.619% { transform: translateX(-200%); }
-    50%, 64.286% { transform: translateX(-300%); }
-    66.667%, 80.952% { transform: translateX(-400%); }
-    83.333%, 97.619% { transform: translateX(-500%); }
-    100% { transform: translateX(-600%); }
-  }
 
   /*
-   * `step-end` and a 16.667% window: the pip is lit for exactly one slide's
-   * worth of the cycle and dark for the rest, and the delay walks that window
-   * along. Stepped rather than eased because a pip that fades is ambiguous about
-   * which slide is actually showing.
+   * `hero-pip`'s window is one slide's share of the cycle -- 16.667% at six
+   * banners -- so it too is generated. Stepped rather than eased because a pip
+   * that fades is ambiguous about which slide is actually showing.
    */
-  @keyframes hero-pip {
-    0% {
-      background: #fff;
-      width: 26px;
-    }
-    16.667%, 100% {
-      background: #5c5c66;
-      width: 18px;
-    }
-  }
 
   @keyframes hero-pulse {
     0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
@@ -767,6 +815,27 @@ const SIZES =
     }
   }
 </style>
+
+{/*
+  THE GENERATED CLOCK.
+
+  `is:inline` so Astro emits it verbatim: a processed <style> is hoisted into
+  the bundle and scoped, and neither is wanted here -- the rules have to carry
+  values computed in the frontmatter, and Astro's scoped styles cannot
+  interpolate one. That is the same constraint that forces the retained-artwork
+  hero's PORTRAIT media query to be written out twice.
+
+  IT COSTS NO CSP HASH, and that is worth knowing rather than assuming:
+  `style-src` is `'self' 'unsafe-inline'`, where `script-src` is hash-based
+  with no 'unsafe-inline' at all. A generated <script> here would be a very
+  different proposition -- it would need `npm run csp` re-run on every change to
+  a value it interpolates.
+
+  Every selector is prefixed `[data-hero-stage]`, because this block is NOT
+  scoped and `docs/TRAPS.md` records what an unscoped rule sharing a class name
+  did to the demand report's chart bars.
+*/}
+<style is:inline set:html={carouselCss}></style>
 
 <script>
   /*

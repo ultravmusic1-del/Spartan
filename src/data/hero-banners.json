@@ -1,0 +1,8 @@
+[
+  { "file": "spill-control.jpg", "name": "Spill Control", "order": 1, "enabled": true },
+  { "file": "highbay-lights.jpg", "name": "Highbay Lights", "order": 2, "enabled": true },
+  { "file": "solar-lights.jpg", "name": "Solar Lighting", "order": 3, "enabled": true },
+  { "file": "fire-retardant-coveralls.jpg", "name": "Fire Retardant Coveralls", "order": 4, "enabled": true },
+  { "file": "safety-vests.jpg", "name": "Safety Vests", "order": 5, "enabled": true },
+  { "file": "insect-killer.jpg", "name": "Insect Killers", "order": 6, "enabled": true }
+]
