@@ -25,18 +25,16 @@
  * update`, so reseeding an already-seeded stack is a no-op rewrite, not a
  * duplicate.
  *
- * Migrations also leave `service_role` unable to touch any of the six public
- * tables. Confirmed with `\dp public.admins` after a cold `supabase start`:
- * the role has TRUNCATE/REFERENCES/TRIGGER/MAINTAIN but no SELECT, INSERT,
- * UPDATE or DELETE, so the admin-allow-list upsert below failed with
- * `permission denied for table admins`. In production those grants exist
- * because the tables were created through Studio, which issues them
- * automatically; a schema rebuilt from hand-written `create table` migrations
- * never gets them. Safe to add here rather than in the migrations: every
- * table has RLS enabled with zero policies (verified in Task 1), so granting
- * `service_role` full CRUD does not open anything up — RLS with no policies
- * still denies every row to every role except the one with BYPASSRLS, which
- * is `service_role` alone. `anon`/`authenticated` are left untouched.
+ * The missing GRANTs that made this script fail on a cold start are fixed in
+ * the schema now, not here. A rebuilt database had tables `service_role` could
+ * not write to, because Supabase issues those grants itself for anything made
+ * through Studio and a hand-written `create table` never gets them.
+ *
+ * That belongs in a migration rather than in test tooling: these migrations are
+ * the disaster-recovery artifact for this database, and one that rebuilds
+ * tables the application cannot write to is not a recovery path. See
+ * supabase/migrations/20260820120000_table_grants.sql, which also explains why
+ * granting `anon` everything is harmless while RLS carries zero policies.
  */
 import { execFileSync } from 'node:child_process';
 import { createClient } from '@supabase/supabase-js';
@@ -75,11 +73,6 @@ function psql(sql) {
   );
 }
 
-/** See the module comment: migrations create tables with no grants at all. */
-function grantServiceRole() {
-  psql('grant select, insert, update, delete on all tables in schema public to service_role;\n');
-}
-
 /** Feeds the generated catalogue seed straight to psql inside the db container. */
 function seedCatalogue() {
   psql(seedSql().join('\n') + '\n');
@@ -88,7 +81,6 @@ function seedCatalogue() {
 export async function start() {
   run(['start']);
 
-  grantServiceRole();
   seedCatalogue();
 
   const status = JSON.parse(capture(['status', '-o', 'json']));
