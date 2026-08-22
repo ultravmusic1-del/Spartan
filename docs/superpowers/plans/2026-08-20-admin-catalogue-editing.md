@@ -212,21 +212,30 @@ export async function start() {
 
   // Idempotent: `supabase start` on an existing container keeps its data.
   const { data: existing } = await db.auth.admin.listUsers();
-  const already = existing?.users.find((u) => u.email === TEST_ADMIN.email);
-  if (!already) {
-    const { error } = await db.auth.admin.createUser({
+  let user = existing?.users.find((u) => u.email === TEST_ADMIN.email);
+  if (!user) {
+    const { data, error } = await db.auth.admin.createUser({
       email: TEST_ADMIN.email,
       password: TEST_ADMIN.password,
       email_confirm: true,
     });
     if (error) throw new Error(`could not create the test admin: ${error.message}`);
+    user = data.user;
   }
 
-  // Membership of `admins` is the whole permission model. A Supabase Auth user
-  // that is not in this table cannot reach a single admin page.
+  /*
+   * Membership of `admins` is the whole permission model. A Supabase Auth user
+   * that is not in this table cannot reach a single admin page.
+   *
+   * KEYED ON user_id, NOT email. `public.admins` is
+   * `user_id uuid primary key references auth.users(id)`, and `email` carries
+   * no unique constraint, so an upsert with `onConflict: 'email'` fails. The
+   * auth user has to exist first because the foreign key demands it, which is
+   * why this runs after createUser rather than beside it.
+   */
   const { error: allowError } = await db
     .from('admins')
-    .upsert({ email: TEST_ADMIN.email }, { onConflict: 'email' });
+    .upsert({ user_id: user.id, email: TEST_ADMIN.email }, { onConflict: 'user_id' });
   if (allowError) throw new Error(`could not allow-list the test admin: ${allowError.message}`);
 
   return { url, serviceKey };
