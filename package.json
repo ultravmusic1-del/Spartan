@@ -16,6 +16,8 @@
     "counts": "node tools/counts.mjs --write",
     "catalogue:parity": "node tools/catalogue-parity.mjs",
     "catalogue:seed": "node tools/seed-catalogue.mjs",
+    "test:db:start": "node tools/test-db.mjs start",
+    "test:db:stop": "node tools/test-db.mjs stop",
     "normalise": "node tools/normalise-products.mjs",
     "extract:catalog": "node tools/extract-catalog.mjs",
     "extract:logo": "node tools/extract-logo.mjs",
