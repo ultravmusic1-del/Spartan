@@ -94,29 +94,56 @@ Add this comment at the top of the file:
 # because the defaults looked wrong is not.
 ```
 
-- [ ] **Step 3: Capture the live schema**
+- [ ] **Step 3: Capture the live schema from migration history**
 
-```bash
-npx --yes supabase@latest db dump --db-url "$(grep -E '^SUPABASE_DB_URL=' .env | cut -d= -f2-)" --schema public -f supabase/migrations/20260820000000_initial_schema.sql
+**No database password is needed.** Supabase recorded the SQL for all five migrations that built this project, and the Supabase MCP connector can read them. Verified 2026-08-20; each has exactly one statement:
+
+| Version | Name |
+|---|---|
+| 20260809083807 | create_enquiries |
+| 20260809092836 | create_admins |
+| 20260813143225 | add_test_enquiry_status |
+| 20260813185433 | catalogue_tables |
+| 20260819115602 | add_datasheet_and_kavalani_url_to_products |
+
+Read them with the connector:
+
+```sql
+select version, name, statements from supabase_migrations.schema_migrations order by version;
 ```
 
-If `SUPABASE_DB_URL` is not in `.env`, build it from the Supabase dashboard's connection string (Project Settings → Database → Connection string → URI) and add it to `.env` with the other keys. It is needed only for this dump and by `tools/test-db.mjs`.
+Write each one to `supabase/migrations/<version>_<name>.sql`, unchanged, one file per row. Do not merge them into a single file: keeping the original versions means the local database is built by the same steps that built production, and a future migration appends rather than rewrites.
 
-- [ ] **Step 4: Verify the dump recreates the tables**
+`SUPABASE_URL` in `.env` is the REST endpoint, `https://<ref>.supabase.co`. It is **not** a Postgres connection string and cannot be used for a `db dump`. This route avoids needing one.
+
+- [ ] **Step 4: Verify the reconstruction is complete**
+
+Migration history captures what was applied *through migrations*. Anything created another way — through the dashboard SQL editor, for instance — would be missing, and the failure would be silent: the stack would start, the tests would run, and something would behave differently from production for reasons nobody could see.
+
+So this is checked against a real inventory rather than assumed. Production held exactly this on 2026-08-20:
+
+- **6 tables:** `admins`, `catalogue_audit`, `categories`, `divisions`, `enquiries`, `products`
+- **1 view:** `enquiry_lines`
+- **11 indexes:** `admins_pkey`, `catalogue_audit_entity_idx`, `catalogue_audit_pkey`, `categories_pkey`, `categories_slug_key`, `divisions_pkey`, `divisions_slug_key`, `enquiries_created_at_idx`, `enquiries_pkey`, `enquiries_status_idx`, `products_pkey`
+- **0 RLS policies** and **0 functions**. The zero is correct and load-bearing: `CLAUDE.md` records that enquiries has RLS enabled with no policies, which is why the service-role key is the only way in.
+
+Start the stack and compare:
 
 ```bash
 export PATH="$PATH:/c/Users/Vivaan/AppData/Local/Programs/DockerDesktop/resources/bin"
 npx --yes supabase@latest start
-npx --yes supabase@latest status
+docker exec supabase_db_spartan psql -U postgres -t -c "select 'table:'||table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' union all select 'view:'||table_name from information_schema.views where table_schema='public' union all select 'index:'||indexname from pg_indexes where schemaname='public' order by 1;"
 ```
 
-Expected: the stack starts and applies the migration without error. Then confirm the tables exist:
+Expected: 6 tables, 1 view and 11 indexes, matching the list above exactly.
 
-```bash
-docker exec supabase_db_spartan psql -U postgres -c "\dt public.*"
+**If `enquiry_lines` is missing**, it was created outside migration history. Recover its definition with the connector and add it as a new migration file, `supabase/migrations/20260820000001_enquiry_lines_view.sql`:
+
+```sql
+select pg_get_viewdef('public.enquiry_lines'::regclass, true);
 ```
 
-Expected: `divisions`, `categories`, `products`, `enquiries`, `admins`, `catalogue_audit`.
+Anything else missing is the same problem with the same fix: get its definition, add a migration, re-run this comparison until the two match.
 
 - [ ] **Step 5: Stop the stack and commit**
 
