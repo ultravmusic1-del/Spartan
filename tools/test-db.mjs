@@ -37,18 +37,61 @@
  * granting `anon` everything is harmless while RLS carries zero policies.
  */
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { seedSql } from './seed-catalogue.mjs';
 
-/** Docker Desktop installs per-user on this machine and is not on the PATH. */
-const DOCKER_BIN = 'C:\\Users\\Vivaan\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin';
+/**
+ * Where Docker's CLI lives, resolved rather than assumed.
+ *
+ * This was a hard-coded path to one developer's machine until 2026-08-20, which
+ * worked exactly until the repository was opened on a second computer. Docker
+ * Desktop on Windows installs per-user under AppData when it is installed
+ * without administrator rights and into Program Files when it is not, so there
+ * is no single correct answer to hard-code.
+ *
+ * The Supabase CLI shells out to `docker`, so it needs the directory on PATH
+ * even when this script itself never calls it directly.
+ */
+const DOCKER_CANDIDATES = [
+  join(homedir(), 'AppData', 'Local', 'Programs', 'DockerDesktop', 'resources', 'bin'),
+  join('C:', 'Program Files', 'Docker', 'Docker', 'resources', 'bin'),
+  '/usr/local/bin',
+  '/usr/bin',
+];
+
+/** Empty when `docker` is already on PATH, which is the case on Linux and CI. */
+function dockerBin() {
+  try {
+    execFileSync('docker', ['--version'], { stdio: 'ignore', shell: true });
+    return '';
+  } catch {
+    // Not on PATH. Fall through and look in the usual places.
+  }
+
+  const found = DOCKER_CANDIDATES.find((dir) => existsSync(join(dir, 'docker.exe')) || existsSync(join(dir, 'docker')));
+  if (found) return found;
+
+  throw new Error(
+    'Docker could not be found. It is required for the throwaway test database.\n' +
+      'Install Docker Desktop and start it, or add its bin directory to PATH.\n' +
+      `Looked in: ${DOCKER_CANDIDATES.join(', ')}`,
+  );
+}
+
+const DOCKER_BIN = dockerBin();
 
 /** Fixed by `project_id = "spartan"` in supabase/config.toml. */
 const DB_CONTAINER = 'supabase_db_spartan';
 
 export const TEST_ADMIN = { email: 'test-admin@spartan.local', password: 'test-admin-password-1' };
 
-const cliEnv = () => ({ ...process.env, PATH: `${process.env.PATH};${DOCKER_BIN}` });
+const cliEnv = () => ({
+  ...process.env,
+  PATH: DOCKER_BIN ? `${process.env.PATH};${DOCKER_BIN}` : process.env.PATH,
+});
 
 const run = (args) =>
   execFileSync('npx', ['--yes', 'supabase@latest', ...args], {

@@ -20,13 +20,41 @@
 
 ## Environment facts, already verified
 
-Do not re-litigate these; they were measured on 2026-08-20.
+Measured 2026-08-20. Do not re-litigate the ones that are about this project; the ones about a particular machine are marked as such.
 
-- Docker Desktop 4.87.0, engine 29.7.2. The binary is at `C:\Users\Vivaan\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe` and is **not on the Git Bash PATH**. Every shell command that touches Docker must prepend it.
+- **`tools/test-db.mjs` resolves Docker itself.** It checks PATH first, then the usual Windows install locations, and fails with an instruction if it finds nothing. Do not hard-code a path — it was hard-coded to one developer's machine originally and broke the moment the repo was opened on a second one.
 - The trimmed stack runs 4 containers using **262 MB** total. WSL grows to about 2 GB to host them.
-- The machine has 7.7 GB. Chrome must be closed during test runs.
-- `npx supabase` resolves 2.115.0. No global install.
-- All seven `.env` values are populated, including `VERCEL_DEPLOY_HOOK_URL`.
+- `npx supabase` resolves 2.115.0. No global install needed.
+- `seed.sql` at the repo root is **gitignored and generated** by `tools/seed-catalogue.mjs`. Do not pipe the file; import `seedSql` from the generator, which is what `tools/test-db.mjs` does. A fresh clone has no `seed.sql` at all.
+- *(Machine-specific)* The original development PC has 7.7 GB of RAM and Chrome had to be closed during test runs. On a machine with more memory this does not apply.
+
+## Resuming on a different machine
+
+Everything needed is in the repository except one file. To pick this up on a new computer:
+
+1. **Clone, then `npm ci`.**
+2. **Recreate `.env`.** It is correctly gitignored and does not travel with the clone. Seven keys are needed: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `ENQUIRY_TO_EMAIL`, `ENQUIRY_FROM_EMAIL`, `CATALOGUE_SOURCE=postgres`, plus `VERCEL_DEPLOY_HOOK_URL` for Task 9. **`SUPABASE_SERVICE_ROLE_KEY` bypasses row-level security completely and is the only thing between the internet and every name, email address and phone number the site has collected — move it the way you would move a password, not by email or chat.**
+3. **Install Docker Desktop and start it.** On Windows it needs WSL 2: `wsl --install` in an Administrator PowerShell, then reboot, then install Docker and choose the WSL 2 backend.
+4. **`npx playwright install`** for the browser binaries.
+5. **Verify the environment** before writing code:
+   ```bash
+   npm run verify          # expect 16/16
+   npm run test:db:start   # expect 94 products, 15 categories, 2 divisions
+   npm run test:db:stop
+   ```
+
+Node must be 22.12 or newer; the work was done on 24.
+
+## Progress
+
+- **Tasks 1, 2, 3: done and committed.** The schema is captured as migrations, `npm run test:db:start` gives a seeded throwaway database with a working test admin, and `src/lib/admin/catalogue.ts` has its read side with the mapping tested both ways.
+- **An unplanned fix landed between 2 and 3:** `supabase/migrations/20260820120000_table_grants.sql`. The captured DDL rebuilt a database the application could not write to, because Supabase issues GRANTs itself for anything made through Studio. Read that file's comment before touching permissions.
+- **Task 3 moved the Zod schemas** out of `src/content.config.ts` into `src/lib/catalogue-schema.ts`, which re-exports them so every existing import still works. There is still exactly one `productSchema`. This was done because importing `content.config.ts` from admin code dragged the whole Content Layer graph — and a module-scope `throw` — into the server bundle.
+- **Task 4 is next and has not been started.** An earlier attempt died mid-edit and was reverted; the branch is clean and green at 16/16.
+
+### One decision Task 4 must respect
+
+`productSchema` marks `source` as **required** while the database column is nullable. Verified against the live database: **all 94 products have a non-null source, zero nulls.** So Task 4 carries `source` over from the existing record and never reads it from the form. Do not relax the schema and do not synthesise a source. This becomes a real decision only when admin-*created* products land, which is a later stage.
 
 ## A scope decision this plan makes
 
@@ -69,7 +97,6 @@ Nothing can be tested against a throwaway database until something can create on
 - [ ] **Step 1: Initialise the local project**
 
 ```bash
-export PATH="$PATH:/c/Users/Vivaan/AppData/Local/Programs/DockerDesktop/resources/bin"
 npx --yes supabase@latest init --force
 ```
 
@@ -130,7 +157,6 @@ So this is checked against a real inventory rather than assumed. Production held
 Start the stack and compare:
 
 ```bash
-export PATH="$PATH:/c/Users/Vivaan/AppData/Local/Programs/DockerDesktop/resources/bin"
 npx --yes supabase@latest start
 docker exec supabase_db_spartan psql -U postgres -t -c "select 'table:'||table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' union all select 'view:'||table_name from information_schema.views where table_schema='public' union all select 'index:'||indexname from pg_indexes where schemaname='public' order by 1;"
 ```
