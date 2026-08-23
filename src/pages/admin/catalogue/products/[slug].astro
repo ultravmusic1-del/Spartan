@@ -1,0 +1,350 @@
+---
+/**
+ * Edit one product.
+ *
+ * WHAT IS EDITABLE IS DECIDED IN src/lib/admin/catalogue.ts, NOT HERE. Every
+ * field below that is shown disabled is disabled as a courtesy to the person
+ * reading it — the control that matters is that `acceptProductEdit` never looks
+ * at those keys, so a hand-crafted POST carrying a new slug or a new EN 388
+ * grade changes nothing. If you add a field here, it does not become editable
+ * until it is added there, and that ordering is deliberate.
+ *
+ * No client-side JavaScript, so no "add a row" button that a script would wire
+ * up. Three blank specification rows are rendered instead: type into them and
+ * save. See the note on the fieldset.
+ */
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import DataState from '../../../../components/admin/DataState.astro';
+import Notice from '../../../../components/admin/Notice.astro';
+import { noticeFor } from '../../../../lib/admin/notices';
+import { getProduct, listCategories } from '../../../../lib/admin/catalogue';
+
+export const prerender = false;
+
+const admin = Astro.locals.admin!;
+const slug = Astro.params.slug ?? '';
+const result = await getProduct(slug);
+
+/*
+ * Only a successful read that found nothing is a redirect, for the reason the
+ * enquiry detail page gives: a failed or unconfigured read must not bounce to
+ * the list saying the product does not exist, because it may exist perfectly
+ * well and be unreadable.
+ */
+if (result.state === 'ok' && result.data === null) {
+  return Astro.redirect('/admin/catalogue?notice=not-found', 302);
+}
+
+const product = result.state === 'ok' ? result.data : null;
+const categories = await listCategories();
+const notice = noticeFor(Astro.url.searchParams.get('notice'));
+
+/*
+ * THREE BLANK ROWS, AND THE INDICES MUST LINE UP WITH `current.specs`.
+ * `specsFromForm` carries a row's per-row `source` over by index, so row N of
+ * this form has to be row N of the record. Rendering the existing rows first,
+ * in order, is what makes that true — reordering or reindexing them here would
+ * silently re-attribute a citation to a different value.
+ *
+ * Blank rows are how a specification is added. A button would need JavaScript
+ * to do anything a blank row does not already do, and there is none on any
+ * admin page; three is enough for an ordinary edit and saving yields three more.
+ */
+const specRows = [
+  ...(product?.specs ?? []),
+  { label: null, value: '' },
+  { label: null, value: '' },
+  { label: null, value: '' },
+];
+---
+
+<AdminLayout title={product ? product.name : 'Product'} admin={admin}>
+  <div class="ad-head">
+    <div>
+      <p class="ad-eyebrow"><a class="ad-back" href="/admin/catalogue">← Catalogue</a></p>
+      <h1 class="ad-title">{product ? product.name : 'Product'}</h1>
+      {product && <p class="ad-sub">{product.slug}</p>}
+    </div>
+  </div>
+
+  <Notice notice={notice} />
+
+  {
+    product === null ? (
+      <DataState state={result.state === 'failed' ? 'failed' : 'unconfigured'} subject="product" />
+    ) : (
+      <form method="post" action={`/api/admin/catalogue/products/${product.slug}`}>
+        <section class="ad-card">
+          <h2 class="ad-card__title">Identity</h2>
+          <div class="ad-fields">
+            <p class="ad-field">
+              <label class="ad-label" for="name">
+                Name
+              </label>
+              <input class="ad-input" id="name" name="name" value={product.name} required />
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="variant-label">
+                Variant label
+              </label>
+              <input
+                class="ad-input"
+                id="variant-label"
+                name="variant-label"
+                value={product.variantLabel ?? ''}
+              />
+              <span class="ad-hint">
+                The size, wattage or finish that distinguishes this record from its siblings. Leave
+                empty if there is none.
+              </span>
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="slug-display">
+                Slug
+              </label>
+              <input class="ad-input" id="slug-display" value={product.slug} disabled />
+              <span class="ad-hint">
+                Read only. A slug is a permanent URL: changing it breaks every existing link to this
+                product and discards its search ranking.
+              </span>
+            </p>
+          </div>
+        </section>
+
+        <section class="ad-card">
+          <h2 class="ad-card__title">Classification</h2>
+          <div class="ad-fields">
+            <p class="ad-field">
+              <label class="ad-label" for="category-id">
+                Category
+              </label>
+              {categories.state === 'ok' ? (
+                <select class="ad-select" id="category-id" name="category-id">
+                  {categories.data.map((c) => (
+                    <option value={c.id} selected={c.id === product.categoryId}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                /* The categories could not be read, so the only safe control is
+                   none: a select rendered empty would post an empty category and
+                   fail the build's referential invariant. The rest of the form
+                   still saves, and the category is carried over untouched. */
+                <>
+                  <input class="ad-input" value={product.categoryId} disabled />
+                  <span class="ad-hint">
+                    The category list could not be read, so this cannot be changed right now.
+                    Everything else on this form still saves.
+                  </span>
+                </>
+              )}
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="order">
+                Order
+              </label>
+              <input
+                class="ad-input ad-input--short"
+                id="order"
+                name="order"
+                type="number"
+                step="1"
+                value={product.order}
+                required
+              />
+              <span class="ad-hint">Position within the category. Lower comes first.</span>
+            </p>
+          </div>
+        </section>
+
+        <section class="ad-card">
+          <h2 class="ad-card__title">Specifications</h2>
+          <div class="ad-specs">
+            {specRows.map((s, i) => (
+              <p class="ad-spec">
+                <input
+                  class="ad-input"
+                  name={`spec-label-${i}`}
+                  value={s.label ?? ''}
+                  placeholder="Label (optional)"
+                  aria-label={`Specification ${i + 1} label`}
+                />
+                <input
+                  class="ad-input"
+                  name={`spec-value-${i}`}
+                  value={s.value}
+                  placeholder="Value"
+                  aria-label={`Specification ${i + 1} value`}
+                />
+              </p>
+            ))}
+          </div>
+          <p class="ad-hint ad-specs__note">
+            A row with no value is discarded, which is how one is deleted. A row with no label is a
+            bullet, which the brochure prints and which is valid. Type into a blank row to add a
+            specification; saving gives you three more.
+          </p>
+        </section>
+
+        <section class="ad-card">
+          <h2 class="ad-card__title">Links</h2>
+          <div class="ad-fields">
+            <p class="ad-field">
+              <label class="ad-label" for="datasheet-url">
+                Datasheet URL
+              </label>
+              <input
+                class="ad-input"
+                id="datasheet-url"
+                name="datasheet-url"
+                value={product.datasheetUrl ?? ''}
+                placeholder="/datasheets/example.pdf"
+              />
+              <span class="ad-hint">
+                A site-root path or an https URL, ending in <code>.pdf</code>. The control says
+                “Download datasheet”, so anything else would make the button lie. Empty it to remove
+                the link.
+              </span>
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="kavalani-url">
+                Kavalani URL
+              </label>
+              <input
+                class="ad-input"
+                id="kavalani-url"
+                name="kavalani-url"
+                value={product.kavalaniUrl ?? ''}
+                placeholder="https://kavalani.com/..."
+              />
+              <span class="ad-hint">
+                Must be on <code>kavalani.com</code>. A “View on Kavalani” button that navigates
+                anywhere else is a lie, and this is the only thing that prevents a pasted wrong URL.
+                Empty it to remove the link.
+              </span>
+            </p>
+          </div>
+        </section>
+
+        <section class="ad-card">
+          <h2 class="ad-card__title">EN 388 rating</h2>
+          {product.en388 ? (
+            <dl class="ad-dl">
+              <dt>Abrasion</dt>
+              <dd>{product.en388.abrasion}</dd>
+              <dt>Blade cut</dt>
+              <dd>{product.en388.bladeCut}</dd>
+              <dt>Tear</dt>
+              <dd>{product.en388.tear}</dd>
+              <dt>Puncture</dt>
+              <dd>{product.en388.puncture}</dd>
+              <dt>TDM cut</dt>
+              <dd>{product.en388.tdmCut}</dd>
+            </dl>
+          ) : (
+            <p class="ad-muted">
+              No published rating. Shown as no rating rather than as a default, because a missing
+              test result is not a zero.
+            </p>
+          )}
+          <p class="ad-hint">
+            Read only. <strong>X means the glove was not submitted for that test</strong>, not that
+            it failed — promoting one would advertise resistance the glove has never been tested
+            for. It is set from the brochure by a developer.
+          </p>
+        </section>
+
+        <section class="ad-card">
+          <h2 class="ad-card__title">Provenance</h2>
+          <dl class="ad-dl">
+            <dt>Source</dt>
+            <dd>
+              {product.source ? (
+                `${product.source.doc}, page ${product.source.page}`
+              ) : (
+                <span class="ad-muted">none recorded</span>
+              )}
+            </dd>
+            <dt>Images</dt>
+            <dd>{product.images.join(', ')}</dd>
+          </dl>
+          <p class="ad-hint">
+            Read only. Provenance records where a value was read, and is not a value an editor
+            supplies. Images are files in the repository, so changing one is a deployment rather
+            than an edit.
+          </p>
+        </section>
+
+        <div class="ad-actions">
+          <button class="ad-btn" type="submit">Save changes</button>
+          <a class="ad-link" href={`/products/${product.slug}`}>View on the site</a>
+        </div>
+      </form>
+    )
+  }
+</AdminLayout>
+
+<style>
+  /* Matches the enquiry detail page: the back link sits in the eyebrow slot and
+     inherits its colour and tracking. */
+  .ad-back {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ad-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* A disabled field is still information worth reading, so it dims rather than
+     disappearing — and it must stay legible: --color-grey-lt is 7.9:1 on the
+     panel, and 0.75 opacity keeps it above 4.5:1. */
+  .ad-input:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+
+  .ad-input--short {
+    max-width: 10ch;
+  }
+
+  .ad-specs {
+    display: grid;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  /* Label and value side by side on a desktop, stacked on a phone. The label
+     column is narrower because labels are short ("Liner", "Material") and
+     values are not. */
+  .ad-spec {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 10px;
+    margin: 0;
+  }
+
+  @media (max-width: 620px) {
+    .ad-spec {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .ad-specs__note {
+    margin-top: 14px;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: var(--color-black);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+</style>
