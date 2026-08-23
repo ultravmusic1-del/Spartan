@@ -22,6 +22,25 @@ export default defineConfig({
   site: 'https://spartan-ebon.vercel.app',
   output: 'static',
   adapter: vercel(),
+
+  /*
+   * Hosts the BUILD may download an image from. Hero banners are uploaded to
+   * Supabase Storage, and `<Picture>` fetches each one during the build and
+   * re-emits it as a local asset.
+   *
+   * THIS IS NOT A CSP, AND CONFUSING THE TWO WOULD BE EXPENSIVE. It grants
+   * nothing to a visitor's browser: the shipped page references `/_astro/*`
+   * only, and `img-src 'self'` in vercel.json is unchanged and still the thing
+   * that decides what a browser may load. Widening one because the other looked
+   * too narrow would fix nothing and weaken the site.
+   *
+   * Derived from SUPABASE_URL so it follows the project rather than pinning one
+   * reference, and empty when that is unset — which is the state with no
+   * database, where there are no banners to fetch anyway.
+   */
+  image: {
+    domains: process.env.SUPABASE_URL ? [new URL(process.env.SUPABASE_URL).hostname] : [],
+  },
   integrations: [
     preact({ compat: false }),
     /*

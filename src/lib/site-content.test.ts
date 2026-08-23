@@ -11,77 +11,44 @@ import { getHeroBanners, getSiteSettings, heroClock } from './site-content';
  */
 describe('getHeroBanners', () => {
   /*
-   * THE LIST IS EMPTY, AND THAT IS THE SHIPPED STATE — 2026-08-20.
+   * THE BANNERS MOVED TO POSTGRES AND STORAGE ON 2026-08-23, and four tests
+   * that used to live here went with them. What replaced them, and what did
+   * not, is worth stating rather than leaving as a shorter file.
    *
-   * The client asked for the mockup's insertable slot and had all six posters
-   * deleted: they are portrait (1261:1561) and the slot is specified at
-   * 2800 x 700, a 4:1 band. Letterboxing a portrait poster into a 4:1 strip
-   * would have been worse than showing the shape honestly.
+   * Gone because they cannot mean anything any more:
    *
-   * This is asserted rather than left implicit so that a banner reappearing is
-   * a deliberate act with a test to change, not a silent one. The two tests
-   * below that could only describe a populated list — ordering and duplicate
-   * filenames — went with the data; they are in this commit's parent and
-   * BACKLOG.md carries the item to restore them with the first real banner.
+   *   - "names a file that exists on disk" — there is no disk. The image is an
+   *     object in a private bucket, and `getHeroBanners` already throws when
+   *     one cannot be signed, which is a stronger check made at build time
+   *     against the real thing.
+   *   - "no duplicate files" — `hero_banners.path` is `unique`, so the
+   *     database refuses the duplicate rather than a test noticing it later.
+   *   - "returns only enabled banners, in order" — now a `where enabled` and
+   *     two `order by` clauses in the query. Task 9's end-to-end test exercises
+   *     it against a real database, which is the only place it is decidable.
+   *
+   * GONE AND NOT REPLACED, WHICH IS A REAL LOSS AND NOT A TIDY-UP:
+   *
+   *   "excludes the two banners held back for stating a wrong product fact".
+   *   The Grip Guard GP1 poster prints an EN 388 icon reading 4X43D while the
+   *   glove's own label, photographed in that same banner, reads 4131X — cut
+   *   resistance advertised as D where the glove says X, NOT TESTED. The Orbit
+   *   Fan banner labels the fan FW-40W, a code belonging to no product.
+   *
+   *   That test worked by filename. Uploaded banners have generated paths and
+   *   an admin-chosen name, so nothing in code can recognise those two
+   *   artworks any more. The protection is now a person not uploading them,
+   *   the standing warning at the top of Hero.astro, and the two BACKLOG.md
+   *   items. **If either poster is ever reissued, correct the artwork first.**
    */
-  it('is empty, because every banner was removed pending 4:1 artwork', async () => {
+  it('returns nothing when there is no database, rather than throwing', async () => {
+    /*
+     * Vitest runs with no Supabase credentials, so this is the unconfigured
+     * contract: no banners, and specifically NOT an error. The hero's empty
+     * band is a designed state and a build without a database must still
+     * produce a home page.
+     */
     expect(await getHeroBanners()).toEqual([]);
-  });
-
-  it('returns only enabled banners, in order', async () => {
-    const banners = await getHeroBanners();
-
-    // Vacuous while the list is empty, and kept for exactly that reason: it is
-    // the contract the seam has to honour the moment a banner returns.
-    expect(banners.every((b) => b.enabled)).toBe(true);
-
-    const orders = banners.map((b) => b.order);
-    expect([...orders].sort((a, b) => a - b)).toEqual(orders);
-  });
-
-  /*
-   * Not a formality. Both of these artworks state a product fact that is wrong,
-   * and the hero is the most prominent surface on the site:
-   *
-   *   Grip Guard GP1 prints an EN 388 icon reading 4X43D while the glove's own
-   *   label, photographed in that same banner, reads 4131X — cut resistance
-   *   advertised as D where the glove says X, NOT TESTED.
-   *
-   *   The Orbit Fan banner labels the fan FW-40W, a code belonging to no
-   *   product (handoff.md §17).
-   *
-   * Both are queued for reissue in BACKLOG.md and both return by flipping
-   * `enabled` once the artwork is corrected. This test is what stops one being
-   * switched on without that happening.
-   */
-  it('excludes the two banners held back for stating a wrong product fact', async () => {
-    const files = (await getHeroBanners()).map((b) => b.file);
-    expect(files).not.toContain('grip-guard-gp1.jpg');
-    expect(files).not.toContain('orbit-fan.jpg');
-  });
-
-  it('names a file that exists on disk for every banner', async () => {
-    const fs = await import('node:fs');
-    for (const b of await getHeroBanners()) {
-      expect(fs.existsSync(`src/assets/banners/${b.file}`)).toBe(true);
-    }
-  });
-
-  /*
-   * "At least two banners, or the carousel is not one" used to live here. It
-   * was a real constraint — the clock, the pip count and the duplicate-first
-   * slide are one system with a floor of two — and it is exactly the assertion
-   * an empty list cannot satisfy.
-   *
-   * It was DELETED rather than relaxed to `>= 0`. A floor of zero is not a
-   * weaker version of that rule, it is the absence of it dressed as a passing
-   * test. Hero.astro now handles the empty case explicitly, `heroClock` still
-   * throws below one slide for every other caller, and BACKLOG.md carries the
-   * item to restore this with the first real banner.
-   */
-  it('has no duplicate files, which would show as the same slide twice', async () => {
-    const files = (await getHeroBanners()).map((b) => b.file);
-    expect(new Set(files).size).toBe(files.length);
   });
 });
 

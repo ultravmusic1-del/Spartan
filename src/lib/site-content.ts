@@ -14,8 +14,8 @@
  * this exists. `src/data/site.json` is still imported in fifteen places and is
  * still exempt from the seam gate; Task 8 closes that.
  */
-import bannersJson from '../data/hero-banners.json';
 import siteJson from '../data/site.json';
+import { env, configured } from './env';
 
 export interface SiteSettings {
   phone: string;
@@ -46,8 +46,15 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 }
 
 export interface HeroBanner {
-  /** Filename within `src/assets/banners/`. */
-  file: string;
+  id: string;
+  /**
+   * A short-lived signed URL into the private `banners` bucket.
+   *
+   * Spent DURING THE BUILD and never in the output: `<Image>` downloads it,
+   * optimises it and re-emits a local asset, so nothing time-limited and
+   * nothing pointing at Supabase reaches a visitor.
+   */
+  url: string;
   /**
    * Shown in the admin only. The slides themselves are decorative and carry
    * `alt=""` — they are marketing posters whose content is baked-in text that
@@ -55,8 +62,9 @@ export interface HeroBanner {
    * catalogue below. See the note at the top of `Hero.astro`.
    */
   name: string;
+  width: number;
+  height: number;
   order: number;
-  enabled: boolean;
 }
 
 /**
@@ -72,9 +80,49 @@ export interface HeroBanner {
  * `Hero.astro`, which computes all three rather than hard-coding them.
  */
 export async function getHeroBanners(): Promise<HeroBanner[]> {
-  return (bannersJson as HeroBanner[])
-    .filter((banner) => banner.enabled)
-    .sort((a, b) => a.order - b.order);
+  /*
+   * UNCONFIGURED RETURNS AN EMPTY LIST, and the hero renders its designed empty
+   * band. There is no offline banner path: the files live in storage, and
+   * inventing a second source would mean two rendering routes in Hero.astro for
+   * a state nobody is in. A build with no database still produces a home page.
+   */
+  if (!configured('SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY')) return [];
+
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabase = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data, error } = await supabase
+    .from('hero_banners')
+    .select('id, path, name, width, height, order')
+    .eq('enabled', true)
+    .order('order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(`hero banners could not be read: ${error.message}`);
+
+  const rows = (data ?? []) as Array<Omit<HeroBanner, 'url'> & { path: string }>;
+
+  return Promise.all(
+    rows.map(async ({ path, ...banner }) => {
+      const { data: signed, error: signError } = await supabase.storage
+        .from('banners')
+        .createSignedUrl(path, 3600);
+
+      /*
+       * Loud, for the reason Hero.astro has always given: a banner that cannot
+       * be resolved must fail the build rather than render a gap. The home page
+       * is the one page where a silent hole is least acceptable.
+       */
+      if (signError || !signed) {
+        throw new Error(
+          `hero banner "${path}" is enabled but its file could not be read: ` +
+            `${signError?.message ?? 'no signed URL'}`,
+        );
+      }
+      return { ...banner, url: signed.signedUrl };
+    }),
+  );
 }
 
 /** How long each slide sits still, and how long it takes to move. */
