@@ -2926,3 +2926,53 @@ missing table stops a deploy rather than silently rendering a hero with no band.
 ### Counts
 
 Four new server-rendered routes — 19 to 23.
+
+## 27. The hero header gets the mockup's character — 2026-08-23
+
+The client supplied a mockup of the headline block and asked for it. Three
+additions — a hexagon badge with red rules running out of it, a heavy oblique
+headline, a notched closing rule — and one deliberate exception to the type
+scale.
+
+**Weight 800 exceeds the scale on purpose.** `--fw-display` is 500, and §12
+runs weight *down* as size runs *up* because optical weight grows with size.
+That is still the right default, and every other display heading is untouched.
+§12 also says the scale is "a ceiling per band, not a mandate"; this is one
+element exceeding it on request, scoped to `.hero__title` rather than to the
+token. Contrast is unaffected — at 76px this is large text either way, so brand
+red on `SOLUTIONS.` is judged against 3:1 whatever the weight. `BACKLOG.md`
+already carries "sign off the weight scale against the approved design", and
+this is evidence for that conversation rather than a pre-emption of it.
+
+**The badge outline is two clipped boxes.** `clip-path` removes a border along
+with everything else outside the shape, so a bordered element cannot draw this.
+The outer box is filled with the line colour, the inner with the page colour,
+and the 1px difference is the outline — which stays 1px on the angled ends,
+where a real border would have mitred badly.
+
+### Three things that reported success without achieving it
+
+All three were caught by looking at a screenshot, and none of them would have
+failed a test written against the computed style.
+
+**`font-style: oblique 9deg` did nothing.** Archivo ships no italic and no slant
+axis, Chrome declines to synthesise one, and `getComputedStyle` returned
+`"oblique 9deg"` while the glyphs rendered upright. The slant is a `skewX`
+transform now.
+
+**The transform was then overwritten by the entrance animation.** `transform`
+is one property; `hero-rise` ends at `translateY(0)` and `animation-fill-mode:
+both` keeps that, so the skew declared on the element lost the moment the
+animation applied. `hero-rise-lean` carries the skew in both keyframes, and the
+`prefers-reduced-motion` branch keeps it too — reduced motion asks for
+stillness, not for a different design.
+
+**A local build was writing expiring storage URLs into the page.** See §26 and
+the first entry added to `docs/TRAPS.md` that day. `astro.config.mjs` read
+`SUPABASE_URL` from `process.env`, which Vercel populates and a local `.env`
+does not, so `image.domains` was empty on a developer machine — and Astro
+passes a remote image it may not optimise straight through instead of failing.
+Production was never affected and was checked rather than assumed: the live
+home page carries zero storage references and serves `/_astro` assets.
+`npm run verify` gained an eighteenth gate sweeping the built HTML for a signed
+storage URL, because every other check stayed green through it.

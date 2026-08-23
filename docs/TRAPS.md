@@ -405,6 +405,37 @@ in `handoff.md`; this file states the trap and moves on.
   *Caught by:* the failure screenshot, which showed a correct page. Look at it
   before changing application code.
 
+- **`.env` does not populate `process.env`, and `astro.config.mjs` runs before
+  anything that would.** Vercel sets platform variables in `process.env`, so a
+  config that reads `process.env.SUPABASE_URL` works in production and silently
+  reads `undefined` on a developer machine. That emptied `image.domains`, and
+  **Astro's response to a remote image it is not allowed to optimise is to pass
+  the URL straight through** rather than to fail — so a local build wrote a
+  signed, one-hour storage URL into the HTML for every hero banner. Dead an hour
+  later, blocked by `img-src 'self'` before that, and green in the build,
+  `astro check` and every test. Use `loadEnv(mode, cwd, '')` from Vite in the
+  config; the empty prefix is required, since the default only exposes `VITE_`.
+  *Caught by:* `npm run verify`'s "no signed storage URL in the built output"
+  gate, added the day it happened. Before that, a broken image icon in a
+  screenshot.
+
+- **A `transform` declared on an element loses to any animation that also sets
+  `transform`.** `.hero__title` carries `hero-rise`, whose last keyframe is
+  `translateY(0)`, and `animation-fill-mode: both` keeps that final value — so
+  `transform: skewX(-9deg)` on the same element is simply overwritten and the
+  headline stands upright with nothing in the CSS looking wrong. The skew has to
+  be in every keyframe, which is why `hero-rise-lean` exists. The same applies
+  to the `prefers-reduced-motion` branch: `transform: none` there flattens a
+  slant that is typography rather than motion.
+  *Caught by:* looking at it. Nothing else can see this.
+
+- **`font-style: oblique <angle>` reports success it did not achieve.** Archivo
+  ships no italic and no slant axis, Chrome declines to synthesise an oblique
+  for it, and `getComputedStyle(el).fontStyle` returns `"oblique 9deg"` anyway
+  while the glyphs render upright. A test asserting the computed style would
+  pass against an unslanted headline. Use a transform when the slant matters.
+  *Caught by:* a screenshot.
+
 ## Looks like a defect, is not
 
 Several of these have already been reported as regressions by someone who
