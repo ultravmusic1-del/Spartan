@@ -232,6 +232,48 @@ let unitTests = null;
   );
 }
 
+/* ------------------------------------- 6b. no remote image URL in the output -- */
+
+/*
+ * NOTHING BUILT MAY POINT AT SUPABASE STORAGE, AND THIS IS NOT A STYLE RULE.
+ *
+ * Hero banners live in a private bucket and `src/lib/site-content.ts` signs a
+ * one-hour URL per enabled banner so the BUILD can fetch it. Astro is supposed
+ * to download each one, re-encode it and emit a local asset — after which the
+ * signed URL has served its purpose and must not appear anywhere in dist.
+ *
+ * When it does appear, the page is broken in two ways at once and looks fine in
+ * every other check: the URL expires an hour after the build, and `img-src
+ * 'self'` blocks it before that. It happened on 2026-08-23. `astro.config.mjs`
+ * read SUPABASE_URL from `process.env` only, which Vercel populates and a local
+ * `.env` does not, so `image.domains` came back empty on a developer machine —
+ * and Astro's response to a remote image it is not allowed to optimise is to
+ * pass the URL straight through rather than to fail.
+ *
+ * The build succeeded. `astro check` was clean. The screenshot showed a broken
+ * image icon and nothing said why. This gate is what says why.
+ */
+{
+  const pages = htmlFiles(path.join(root, 'dist/client'));
+  const banned = ['supabase.co/storage', '/storage/v1/object/sign', '?token=eyJ'];
+  const hits = [];
+  for (const file of pages) {
+    const text = fs.readFileSync(file, 'utf8');
+    for (const token of banned) {
+      if (text.includes(token))
+        hits.push(
+          `${path.relative(root, file)} contains ${token} — a signed storage URL reached the ` +
+            'output, so Astro did not optimise that image. Check image.domains in astro.config.mjs.',
+        );
+    }
+  }
+  record(
+    'no signed storage URL in the built output',
+    hits.length === 0,
+    hits.length ? hits.slice(0, 3).join('; ') : `${pages.length} pages swept, 0 hits`,
+  );
+}
+
 /* ------------------------------------------------- 7. one title, one canonical -- */
 
 /*

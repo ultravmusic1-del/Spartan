@@ -1,4 +1,35 @@
 import { defineConfig } from 'astro/config';
+import { loadEnv } from 'vite';
+
+/**
+ * The Supabase host, read from BOTH `.env` and the real environment.
+ *
+ * `process.env.SUPABASE_URL` alone was wrong and failed silently, which is the
+ * trap `src/lib/env.ts` documents from the other direction. On Vercel the
+ * platform puts variables in `process.env`, so it worked there. Locally `.env`
+ * is loaded by Vite into `import.meta.env` and NEVER into `process.env`, so
+ * this config saw nothing, `image.domains` came back empty, and Astro then did
+ * the worst possible thing with a remote image it is not allowed to optimise:
+ * it passed the URL straight through into the markup.
+ *
+ * The page still built and still looked plausible. What it actually contained
+ * was a SIGNED, EXPIRING storage URL per banner — dead an hour later, and
+ * blocked by `img-src 'self'` before that. `npm run verify` now has a gate that
+ * fails on exactly that output, because nothing else noticed.
+ *
+ * `loadEnv(mode, root, '')` reads `.env` the way Vite does, and the empty
+ * prefix is required: the default only exposes `VITE_`-prefixed names.
+ */
+const SUPABASE_HOST = (() => {
+  const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
+  const url = process.env.SUPABASE_URL ?? env.SUPABASE_URL;
+  if (!url) return '';
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return '';
+  }
+})();
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
 import vercel from '@astrojs/vercel';
@@ -39,7 +70,7 @@ export default defineConfig({
    * database, where there are no banners to fetch anyway.
    */
   image: {
-    domains: process.env.SUPABASE_URL ? [new URL(process.env.SUPABASE_URL).hostname] : [],
+    domains: SUPABASE_HOST ? [SUPABASE_HOST] : [],
   },
   integrations: [
     preact({ compat: false }),
