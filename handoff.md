@@ -2661,3 +2661,85 @@ A failed audit insert does not fail the save. The row is already written by
 then, so returning `failed` would tell an editor their change was lost when it
 was kept — rule 2's principle in a third place. It logs loudly instead, naming
 the record that was saved but not audited.
+
+## 25. The specification table stops being two layouts at once — 2026-08-23
+
+`SpecTable.astro` renders two kinds of row, because the brochure prints two
+kinds of line: labelled pairs (`Colors` / `Red | White | Blue …`) and unlabelled
+sentences (`6-Point adjustment - perfect load distribution`). It was drawing
+them in one bordered grid, so where they interleave the column boundary and the
+grey `--surface-alt` label fill appeared and vanished down the table.
+
+Measured on `/products/safety-helmets` before the change: four rows were a
+single cell of 583px and one was 221px + 361px. **A vertical rule and a grey
+block existed on exactly one row in five.** 49 of the 94 products mix the two
+kinds, so this was over half the catalogue.
+
+### What was rejected, and why it matters
+
+The tidy fix is to group the labelled rows into a table and the sentences into a
+feature list beneath. **It was rejected because 16 products interleave them
+meaningfully.** On `low-cut-safety-shoes-kpu` the line "Quarter | Tongue lining:
+Black mesh" sits directly under `[Upper] KPU (Knitted Polyurethane)` because it
+describes the upper; `winter-jacket` and `fire-retardant-pants` have the same
+shape. Moving those to a list at the bottom changes which attribute a statement
+appears to qualify. That is not a fabricated fact, but it is an altered one, and
+on protective equipment the distinction is not worth relying on. **Source order
+is preserved everywhere.**
+
+What changed instead: the vertical rules and the fill are gone, rows are
+separated by a single horizontal rule, and an unlabelled row indents into the
+value column so that every piece of *content* shares one left edge with the
+labels in a margin beside it. All five rows on the helmet page now measure
+222@637 + 362@859.
+
+The indent is an empty `<td>`, not a percentage padding on a spanning cell,
+because a percentage on that cell resolves against a different box than the
+`th`'s `width: 38%` does and lands a few pixels out — on the one alignment the
+layout is built around, approximately aligned is worse than not aligned.
+
+Products whose specs are *all* unlabelled (9 of them) get no gutter at all;
+`hasLabels` decides. A 38% margin held open for nothing is not a margin.
+
+### The approved mockup does not cover this
+
+`design/direction-b-forge.html` line 303 uses `th` as a full-width black section
+header — `<tr><th colspan="2">Construction</th></tr>` over `td`/`td` data rows.
+It never drew a per-row label and never drew an unlabelled line. The two-column
+labelled row with a grey gutter cell is this implementation's own extrapolation,
+so this is filling a gap the design left rather than departing from it.
+
+### Two things found on the way, both silent
+
+**A CSS block that had never once applied.** `.spec__feature` set the body face,
+weight 500 and `--text`, under a comment explaining that these lines are prose
+and setting prose in mono is the font doing decoration. All three declarations
+lost to `.spec td` — (0,1,1) against (0,1,0) — so every feature line rendered as
+mono at `--text-muted`, indistinguishable from the value cells. Confirmed in the
+browser before touching it: computed `font-family` came back `"JetBrains Mono"`,
+weight 400, `rgb(106,106,114)`. It is `.spec td.spec__feature` now. The fix only
+raises contrast: `--text` is 17.9:1 on white against `--text-muted`'s 5.4:1.
+
+**The same trap immediately bit the fix.** The mobile rule's `.spec__gutter {
+display: none }` also lost to `.spec td`, and the cell stayed in the layout —
+caught only by reading geometry back out of the browser rather than looking at
+the page. Both are now in `docs/TRAPS.md`.
+
+### Mobile stacks, and that needed ARIA
+
+At 375px the table is 335px wide, so the 38% gutter took 127px and left 208px,
+in which "6-Point adjustment - perfect load distribution" wrapped to three lines
+beside 127px of nothing. No narrower fixed gutter rescues it either — the
+longest label in the catalogue is 31 characters ("Full Electrical
+Characteristics"), so `white-space: nowrap` is not available.
+
+Below 620px the pair stacks: `display: block` on the table, tbody, tr, th and
+td, label over value, full width, gutter dropped. **That transformation removes
+the implicit table semantics in Chrome and Firefox**, so every role is restated
+explicitly — `table`, `rowgroup`, `row`, `rowheader`, `cell`. Verified by
+reading the accessibility tree at 375px: `table → rowgroup → row → rowheader
+"Colors" → cell`. Without the roles that tree is a stack of anonymous blocks,
+and nothing in the build, `astro check` or axe would have said so.
+
+Table height on the helmet page went from 5 rows at up to 68px each to 277px
+total, with no horizontal overflow.

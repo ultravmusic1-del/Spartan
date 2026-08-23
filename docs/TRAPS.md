@@ -349,6 +349,34 @@ in `handoff.md`; this file states the trap and moves on.
   *Caught by:* `forge()` in that file, which requires a 302 to
   `notice=catalogue-saved` before it will check anything.
 
+- **A styling block that loses on specificity, under a comment saying what it
+  was for.** `SpecTable.astro` had `.spec__feature { color: var(--text);
+  font-weight: 500; font-family: var(--font-body) }` beneath a comment arguing
+  that unlabelled spec lines are sentences and must not be set in mono. Every
+  declaration lost to `.spec td`, which is (0,1,1) against a lone class's
+  (0,1,0), so roughly a third of all spec rows rendered as mono at
+  `--text-muted` — pixel-identical to the value cells they were meant to be
+  distinguishable from. It shipped that way for the life of the component. The
+  same trap then bit the mobile rule written to fix it: `.spec__gutter {
+  display: none }` also lost to `.spec td`, and the cell it was meant to hide
+  stayed in the layout.
+  *Caught by:* nothing — `astro check` is happy, axe is happy, and the rendered
+  page looks deliberate. Only `getComputedStyle` in a browser tells you. When a
+  rule targets an element that a *less* specific selector in the same
+  stylesheet already reaches, qualify it (`.spec td.spec__feature`) and then
+  read the computed value back rather than trusting the cascade.
+
+- **`display: block` on a table strips its semantics from the accessibility
+  tree.** The responsive rule that stacks a spec label above its value sets
+  `display: block` on the table, tbody, tr, th and td. In Chrome and Firefox
+  that removes the implicit table roles — rows, row headers, and the pairing
+  between a label and its value all disappear for a screen reader, silently,
+  while the page looks correct and axe reports nothing. `SpecTable.astro`
+  restates `role="table"`, `"rowgroup"`, `"row"`, `"rowheader"` and `"cell"`
+  explicitly so the table survives the transformation.
+  *Caught by:* reading the accessibility tree at a mobile width, which is the
+  only place the loss is visible. Do not delete those roles as redundant.
+
 ## Looks like a defect, is not
 
 Several of these have already been reported as regressions by someone who

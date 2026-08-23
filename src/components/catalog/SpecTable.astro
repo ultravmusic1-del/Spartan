@@ -20,6 +20,14 @@ import type { Product } from '../../lib/catalog';
  *
  * `caption` is a real `<caption>`, visually hidden: it names the table for
  * screen readers without duplicating the heading that always sits above it.
+ *
+ * EVERY ROLE IS RESTATED EXPLICITLY — role="table", "rowgroup", "row",
+ * "rowheader", "cell" — and that redundancy is load-bearing. Below 620px the
+ * stylesheet sets `display: block` on all of them so the label/value pair can
+ * stack, and in Chrome and Firefox that REMOVES the implicit table semantics:
+ * the rows, the row headers and the pairing between a label and its value
+ * disappear from the accessibility tree, silently, while the page still looks
+ * correct. The roles keep it a table at every width. Do not "tidy" them away.
  */
 interface Props {
   specs: Product['specs'];
@@ -29,24 +37,43 @@ interface Props {
 }
 
 const { specs, caption, class: cls = '' } = Astro.props;
+
+/*
+ * Does this table have a label column at all?
+ *
+ * 49 of the 94 products mix labelled rows with unlabelled ones, 36 are all
+ * labelled and 9 are all sentences. A feature row indents into the value column
+ * so that every piece of CONTENT shares one left edge and the labels sit in a
+ * margin — but on a product with no labels there is no margin to sit in, and
+ * indenting into an empty one would be 38% of the width given to nothing.
+ */
+const hasLabels = specs.some((spec) => spec.label !== null && spec.label !== '');
 ---
 
 {
   specs.length > 0 && (
-    <table class:list={['spec', cls]}>
+    <table class:list={['spec', cls]} role="table">
       <caption class="vh">{caption}</caption>
-      <tbody>
+      <tbody role="rowgroup">
         {specs.map((spec) =>
           spec.label === null ? (
-            <tr>
-              <td class="spec__feature" colspan="2">
+            <tr role="row">
+              {/* The empty cell is what makes the indent EXACT. Padding the
+                  spanning cell by 38% instead would resolve that percentage
+                  against a different box than the `th`'s width does, and land
+                  a few pixels off — which on the one alignment this table is
+                  built around is worse than not indenting at all. */}
+              {hasLabels && <td class="spec__gutter" role="cell" />}
+              <td class="spec__feature" role="cell" colspan={hasLabels ? undefined : '2'}>
                 {spec.value}
               </td>
             </tr>
           ) : (
-            <tr>
-              <th scope="row">{spec.label}</th>
-              <td>{spec.value}</td>
+            <tr role="row">
+              <th scope="row" role="rowheader">
+                {spec.label}
+              </th>
+              <td role="cell">{spec.value}</td>
             </tr>
           ),
         )}
@@ -56,17 +83,36 @@ const { specs, caption, class: cls = '' } = Astro.props;
 }
 
 <style>
+  /*
+   * HORIZONTAL RULES ONLY, AND NO FILL. This was a fully boxed grid — every
+   * cell bordered, every `th` filled with --surface-alt — which works when
+   * every row is a label/value pair and falls apart the moment they are mixed.
+   * Measured on /products/safety-helmets: four rows spanned the full 583px and
+   * one was 221px + 361px, so the vertical rule and the grey block existed on
+   * exactly one row in five, appearing and vanishing down the table.
+   *
+   * A rule that only some rows draw is the defect. Removing the verticals and
+   * the fill removes it outright, and costs nothing: the label is already
+   * distinguishable as Archivo caps against a mono value, so the box was
+   * separating two things that were never going to be confused.
+   *
+   * THE APPROVED MOCKUP DOES NOT SETTLE THIS. Its `th` is a full-width black
+   * section header ("Construction") over `td`/`td` data rows — it never drew a
+   * per-row label, and it never drew an unlabelled line at all. The two-column
+   * labelled row is this implementation's own extrapolation, so this is filling
+   * a gap the design left rather than departing from it. See
+   * design/direction-b-forge.html line 303.
+   */
   .spec {
     width: 100%;
     border-collapse: collapse;
+    border-top: 1px solid var(--line);
     font-size: 13.5px;
   }
 
-  /* Row headers, not a header row: the brochure labels each line individually.
-     Values match the mockup's `th`. */
+  /* Row headers, not a header row: the brochure labels each line individually. */
   .spec th {
     width: 38%;
-    background: var(--surface-alt);
     color: var(--text);
     font-family: var(--font-display);
     font-size: 10.5px;
@@ -74,9 +120,16 @@ const { specs, caption, class: cls = '' } = Astro.props;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     text-align: left;
-    padding: 12px;
-    border: 1px solid var(--line);
+    padding: 12px 12px 12px 0;
+    border-bottom: 1px solid var(--line);
     vertical-align: top;
+  }
+
+  /* The empty half of a feature row. It draws nothing and exists only so the
+     table's own column algorithm — not a percentage that resolves against a
+     different box — puts the sentence beside it on the value column's edge. */
+  .spec__gutter {
+    border-bottom: 1px solid var(--line);
   }
 
   /* Value cells are mono: these are the figures a buyer transcribes into an
@@ -86,8 +139,8 @@ const { specs, caption, class: cls = '' } = Astro.props;
      approximate. The label column stays Archivo uppercase, so the two halves
      of the pair finally read as two different kinds of thing. */
   .spec td {
-    padding: 12px;
-    border: 1px solid var(--line);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
@@ -105,11 +158,69 @@ const { specs, caption, class: cls = '' } = Astro.props;
      these, and they are sentences — `100% Copper motor`, not a value. Setting
      prose in mono because it happens to sit in a table is the font doing
      decoration, which is the one thing --font-mono exists to avoid. */
-  .spec__feature {
+  /* `.spec td.spec__feature`, NOT `.spec__feature`. THIS BLOCK DID NOTHING FOR
+     ITS ENTIRE LIFE: `.spec td` is specificity (0,1,1) and a lone class is
+     (0,1,0), so every declaration below lost and every feature line rendered as
+     mono at --text-muted — indistinguishable from the value cells beside it,
+     which is precisely what the comment above says must not happen. Confirmed
+     in the browser before it was changed: computed font-family came back
+     "JetBrains Mono", weight 400, colour rgb(106,106,114).
+
+     --text on white is 17.9:1 against --text-muted's 5.4:1, so this only ever
+     raises contrast. */
+  .spec td.spec__feature {
     color: var(--text);
     font-weight: 500;
     font-family: var(--font-body);
     font-variant-numeric: normal;
+  }
+
+  /*
+   * BELOW 620px THE GUTTER STOPS PAYING FOR ITSELF, so the pair stacks.
+   *
+   * Measured at 375px before this rule existed: the table is 335px wide, the
+   * 38% gutter takes 127px of it, and a sentence like "6-Point adjustment -
+   * perfect load distribution" wrapped to three lines in the 208px left over —
+   * beside 127px of nothing. The longest label in the catalogue is 31
+   * characters ("Full Electrical Characteristics"), so no fixed narrow gutter
+   * rescues it either.
+   *
+   * Stacked, the label reads as a heading over its value, every row uses the
+   * full width, and the empty gutter cell is dropped outright. The alignment
+   * the desktop layout is built around is not lost here — at this width there
+   * is only ever one column, so there is nothing to align to.
+   */
+  @media (max-width: 620px) {
+    .spec,
+    .spec tbody,
+    .spec tr,
+    .spec th,
+    .spec td {
+      display: block;
+      width: auto;
+    }
+
+    .spec tr {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .spec th,
+    .spec td {
+      padding: 0;
+      border: 0;
+    }
+
+    .spec th {
+      margin-bottom: 5px;
+    }
+
+    /* Nothing to indent past any more. Qualified as `.spec td.spec__gutter`
+       for the same reason `.spec td.spec__feature` is: the `display: block`
+       rule above is `.spec td`, and a lone class loses to it. */
+    .spec td.spec__gutter {
+      display: none;
+    }
   }
 
   .vh {
