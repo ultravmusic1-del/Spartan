@@ -208,11 +208,22 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
       layouts are now the same order and the split has nothing left to buy. One
       column, one wrap, DOM order is the layout at every width. */}
   <div class="wrap hero__wrap">
-    <div class="hero__badge">
-      <span class="hero__badge-est">Est. 2015</span>
+    {/* The crest: the badge, and a red rule running out of each side of it.
+        The rules are pseudo-elements on this wrapper, so they never enter the
+        accessibility tree and "Est. 2015" stays the only thing here that is
+        content rather than decoration. */}
+    <div class="hero__crest">
+      <div class="hero__badge">
+        <span class="hero__badge-est">Est. 2015</span>
+      </div>
     </div>
 
     <h1 class="hero__title">Home and industrial <span>solutions.</span></h1>
+
+    {/* The closing rule, mirroring the crest above the badge. Decorative, and
+        a div rather than a border on the headline because it carries a centred
+        notch that a border cannot draw. */}
+    <div class="hero__underline" aria-hidden="true"></div>
 
     <div class="hero__stage" data-hero-stage>
       {
@@ -784,18 +795,88 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
      Smaller, too. At 12px with 18px side padding it competed with the
      headline; a kicker should sit under one. --surface-page rather than
      raised: this sits directly on the hero band and is not a card. */
-  .hero__badge {
-    display: inline-flex;
+  /*
+   * THE CREST — the badge with a red rule running out of either side.
+   *
+   * The rules are pseudo-elements, so nothing decorative is in the markup and
+   * nothing here reaches the accessibility tree. Each one is a 2px bar that is
+   * clipped to an angled inner end and faded at the outer end, which is what
+   * gives the mockup's sense of a line arriving at the badge rather than a
+   * border sitting under it.
+   *
+   * `min-width: 0` on the rules and a capped `flex-basis` keep the pair
+   * symmetrical while the badge stays its content width at every viewport.
+   */
+  .hero__crest {
+    display: flex;
     align-items: center;
-    padding: 7px 15px;
-    border: 1px solid var(--line-control);
-    background: var(--surface-page);
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
     animation: hero-rise 0.6s var(--ease-out) both;
+  }
+
+  .hero__crest::before,
+  .hero__crest::after {
+    content: '';
+    flex: 1 1 0;
+    min-width: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  /* Angled at the badge end, faded at the outer end. The two are mirror images,
+     so the clip and the gradient both reverse. */
+  .hero__crest::before {
+    clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+    mask-image: linear-gradient(to right, transparent, #000 22%);
+  }
+
+  .hero__crest::after {
+    clip-path: polygon(9px 0, 100% 0, 100% 100%, 0 100%);
+    mask-image: linear-gradient(to left, transparent, #000 22%);
+  }
+
+  /*
+   * THE BADGE IS A FLATTENED HEXAGON, AND ITS 1px OUTLINE IS TWO CLIPPED BOXES.
+   *
+   * `clip-path` clips a border away with everything else outside the shape, so
+   * a bordered element cannot make this outline. Instead the outer box is
+   * filled with the line colour and the inner one with the page colour, 1px
+   * smaller on every side — the difference between them IS the outline, and it
+   * stays 1px on the angled ends where a border would have mitred badly.
+   */
+  .hero__badge {
+    --hero-notch: 13px;
+    display: inline-flex;
+    padding: 1px;
+    background: var(--line-control);
+    clip-path: polygon(
+      var(--hero-notch) 0,
+      calc(100% - var(--hero-notch)) 0,
+      100% 50%,
+      calc(100% - var(--hero-notch)) 100%,
+      var(--hero-notch) 100%,
+      0 50%
+    );
   }
 
   /* --accent-text, not brand red: 10.5px is normal-size text and needs 4.5:1,
      which brand red does not clear on any light surface. See handoff.md §3. */
   .hero__badge-est {
+    display: block;
+    padding: 7px 22px;
+    background: var(--surface-page);
+    clip-path: polygon(
+      var(--hero-notch) 0,
+      calc(100% - var(--hero-notch)) 0,
+      100% 50%,
+      calc(100% - var(--hero-notch)) 100%,
+      var(--hero-notch) 100%,
+      0 50%
+    );
     font-family: var(--font-display);
     font-size: 10.5px;
     font-weight: var(--fw-label);
@@ -805,18 +886,82 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
     /* Uppercase tracking leaves a gap after the final letter that optically
        pushes the text left inside its box. Half the tracking back re-centres
        it. */
-    padding-left: 0.2em;
+    padding-left: calc(22px + 0.2em);
   }
 
+  /*
+   * THE CLOSING RULE, mirroring the crest.
+   *
+   * One element, three parts: a faded line either side and a shallow notch in
+   * the middle, all cut out of a single red bar by one clip-path. Drawing it as
+   * three elements would have been easier to read and would have put two more
+   * decorative divs in the markup for no gain.
+   */
+  .hero__underline {
+    width: 100%;
+    max-width: 760px;
+    height: 9px;
+    margin: 26px auto 0;
+    background: var(--accent);
+    clip-path: polygon(
+      0 0,
+      calc(50% - 60px) 0,
+      calc(50% - 44px) 100%,
+      calc(50% + 44px) 100%,
+      calc(50% + 60px) 0,
+      100% 0,
+      100% 2px,
+      calc(50% + 62px) 2px,
+      calc(50% + 46px) calc(100% - 2px),
+      calc(50% - 46px) calc(100% - 2px),
+      calc(50% - 62px) 2px,
+      0 2px
+    );
+    mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent);
+    animation: hero-rise 0.7s var(--ease-out) 0.14s both;
+  }
+
+  /*
+   * WEIGHT 800 HERE IS A DELIBERATE EXCEPTION TO THE SCALE, NOT A MISS.
+   *
+   * `--fw-display` is 500 and the scale runs weight DOWN as size runs UP,
+   * because optical weight grows with size (handoff.md §12). That is the right
+   * default and it is why every other display heading on the site is untouched.
+   * The client asked on 2026-08-23 for this headline to match a mockup whose
+   * face is a heavy oblique, and §12 states the scale is "a ceiling per band,
+   * not a mandate" — so this is the one element that exceeds it, on request,
+   * scoped to `.hero__title` rather than to the token.
+   *
+   * It costs nothing in contrast: at 76px this is large text under WCAG either
+   * way, so `SOLUTIONS.` in brand red is judged against 3:1 whatever the
+   * weight. BACKLOG.md carries "sign off the weight scale against the approved
+   * design", and this is evidence for that conversation rather than a
+   * pre-emption of it.
+   *
+   * THE SLANT IS A TRANSFORM, AND `font-style: oblique 9deg` WAS TRIED FIRST.
+   * Archivo ships no italic and no slant axis, so an oblique can only be
+   * synthesised — and Chrome declines to synthesise one for this family.
+   * `getComputedStyle` cheerfully reported `oblique 9deg` while the glyphs
+   * rendered bolt upright, which is the kind of "it says it worked" that a
+   * screenshot catches and an assertion does not.
+   *
+   * `skewX` leans the layout box as well as the glyphs. That is harmless here
+   * and only here: the headline is centred, so the skew is symmetrical about
+   * its own middle, and a transform does not affect the layout of anything
+   * around it. `transform-origin: center` is stated rather than left to the
+   * default so a later `transform-box` change cannot silently move the pivot.
+   */
   .hero__title {
     margin: 22px 0 0;
     font-family: var(--font-display);
     font-size: clamp(38px, 5.6vw, 76px);
-    font-weight: var(--fw-display);
+    font-weight: 800;
     line-height: 0.96;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.025em;
     text-transform: uppercase;
     color: var(--text);
+    transform: skewX(-9deg);
+    transform-origin: center;
     /* 900px is the wrap point, not a container width. At the 76px ceiling
        "HOME AND INDUSTRIAL" measures ~800px and fits; adding " SOLUTIONS."
        exceeds 900 and breaks — which is exactly the two-line desktop headline
@@ -824,7 +969,7 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
        phone. Below ~700px the viewport is narrower than this cap and does the
        wrapping itself, giving the mockup's three mobile lines. */
     max-width: 900px;
-    animation: hero-rise 0.7s var(--ease-out) 0.08s both;
+    animation: hero-rise-lean 0.7s var(--ease-out) 0.08s both;
   }
 
   /* Brand red is correct here — this is display type well over the 24px bar. */
@@ -890,6 +1035,20 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
   @keyframes hero-rise {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  /*
+   * THE HEADLINE'S OWN ENTRANCE, CARRYING ITS SKEW IN BOTH FRAMES.
+   *
+   * `transform` is one property. `hero-rise` above ends at `translateY(0)`,
+   * and with `both` that end state persists — so a `transform: skewX()` on the
+   * element is simply overwritten the moment the animation is applied, and the
+   * headline stands upright with nothing in the CSS looking wrong. The skew has
+   * to be part of every keyframe or it is part of none of them.
+   */
+  @keyframes hero-rise-lean {
+    from { opacity: 0; transform: translateY(16px) skewX(-9deg); }
+    to { opacity: 1; transform: translateY(0) skewX(-9deg); }
   }
 
   /* Below this width the stage and the copy cannot coexist side by side.
@@ -1058,12 +1217,27 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
     .hero__toggle {
       display: none;
     }
-    .hero__badge,
-    .hero__title,
+    /* `.hero__crest` and `.hero__underline` replaced `.hero__badge` here on
+       2026-08-23 when the animation moved onto them. A selector left behind in
+       this list is the failure the dangling-brace note above describes: the
+       element keeps animating for a visitor who asked it not to, and the page
+       still looks correct. tests/e2e/motion.spec.ts is what catches it. */
+    .hero__crest,
+    .hero__underline,
     .hero__actions {
       animation: none;
       opacity: 1;
       transform: none;
+    }
+
+    /* THE HEADLINE KEEPS ITS SKEW HERE. It is separated from the three above
+       because `transform: none` would flatten it — and the slant is the
+       typeface's character, not motion. Reduced motion asks for stillness, not
+       for a different design. */
+    .hero__title {
+      animation: none;
+      opacity: 1;
+      transform: skewX(-9deg);
     }
     .hero__stage {
       transition: none;
