@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { noticeFor, isNoticeCode, ADMIN_NOTICES } from './notices';
+import { noticeFor, isNoticeCode, ADMIN_NOTICES, dimensionsFrom } from './notices';
 
 describe('admin notices', () => {
   it('resolves every code it publishes', () => {
@@ -38,5 +38,29 @@ describe('admin notices', () => {
       expect(isNoticeCode(key)).toBe(false);
       expect(noticeFor(key)).toBeNull();
     }
+  });
+});
+
+/*
+ * The narrow exception to "nothing from the URL reaches the screen", and the
+ * tests that make it narrow. The sentence still comes from the whitelist; only
+ * two integers travel beside it.
+ */
+describe('dimensionsFrom', () => {
+  it('passes a real pair through', () => {
+    expect(dimensionsFrom('1261', '1561')).toEqual({ width: 1261, height: 1561 });
+  });
+
+  it('yields nothing for anything that is not a plain integer in range', () => {
+    const bad = ['<script>alert(1)</script>', '1e9', '12.5', '-4', '0', '99999', '', 'NaN', null];
+    for (const value of bad) {
+      expect(dimensionsFrom(value, '700')).toBeNull();
+      expect(dimensionsFrom('2800', value)).toBeNull();
+    }
+  });
+
+  it('needs both, so a half-supplied pair renders nothing', () => {
+    expect(dimensionsFrom('2800', null)).toBeNull();
+    expect(dimensionsFrom(null, '700')).toBeNull();
   });
 });

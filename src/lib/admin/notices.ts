@@ -75,6 +75,36 @@ export const ADMIN_NOTICES = {
     text: 'The build could not be requested. Nothing was published.',
     tone: 'error',
   },
+  /*
+   * BANNERS. A newly uploaded one is hidden on purpose — see the `enabled`
+   * column's comment — so the success message says so rather than leaving
+   * someone waiting for it to appear.
+   */
+  'banner-uploaded': {
+    text: 'Banner uploaded. It stays hidden until you switch it on, and appears on the site at the next build.',
+    tone: 'success',
+  },
+  'banner-saved': {
+    text: 'Banner updated. The change appears on the site at the next build.',
+    tone: 'success',
+  },
+  'banner-deleted': { text: 'Banner deleted, and its image file with it.', tone: 'success' },
+  'banner-invalid-type': {
+    text: 'That file was not a JPEG or a PNG, so nothing was uploaded.',
+    tone: 'error',
+  },
+  'banner-invalid-shape': {
+    text: 'The hero band is a wide strip, so a banner has to be roughly four times as wide as it is tall — 2800 × 700 is the size to aim for. Nothing was uploaded.',
+    tone: 'error',
+  },
+  'banner-too-small': {
+    text: 'That image is too small to stay sharp across the hero band. It needs to be at least 1400 pixels wide, and 2800 is better. Nothing was uploaded.',
+    tone: 'error',
+  },
+  'banner-too-large': {
+    text: 'That image is over a limit — a file must be under 8 MB and no more than 6000 pixels wide. Nothing was uploaded.',
+    tone: 'error',
+  },
 } as const satisfies Record<string, Notice>;
 
 export type NoticeCode = keyof typeof ADMIN_NOTICES;
@@ -87,4 +117,28 @@ export function isNoticeCode(value: string): value is NoticeCode {
 export function noticeFor(value: string | null): Notice | null {
   if (value === null || !isNoticeCode(value)) return null;
   return ADMIN_NOTICES[value];
+}
+
+/**
+ * The dimensions a rejected upload actually had, if the URL carries them.
+ *
+ * THE WHITELIST IS NOT BEING WIDENED. Every word an admin reads still comes out
+ * of `ADMIN_NOTICES` above; this returns two NUMBERS to sit beside that
+ * sentence. "The shape is wrong" is a poor message when the admin knows the
+ * file was 1261 x 1561 and has no way to say so.
+ *
+ * A number coerced out of a query parameter is not attacker text. Anything that
+ * is not a finite integer in a sane range becomes null and renders nothing —
+ * `Number('<script>alert(1)</script>')` is NaN, and NaN fails every check here.
+ * The upper bound is a rendering sanity limit, not a validation rule; the real
+ * limits live in `BANNER_RULES`.
+ */
+export function dimensionsFrom(
+  width: string | null,
+  height: string | null,
+): { width: number; height: number } | null {
+  const w = Number(width);
+  const h = Number(height);
+  const sane = (n: number): boolean => Number.isInteger(n) && n >= 1 && n <= 20000;
+  return sane(w) && sane(h) ? { width: w, height: h } : null;
 }
