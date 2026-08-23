@@ -1,0 +1,290 @@
+---
+/**
+ * The hero banners an admin can add, order, show, hide and delete.
+ *
+ * NO CLIENT-SIDE JAVASCRIPT, which decides more of this screen's shape than
+ * anything else: ordering is a number and a Save rather than a drag, there is
+ * no upload progress bar, and there is no preview before the file is stored.
+ * Each of those would need a script, and an inline one on an admin page ships
+ * unhashed, is blocked at runtime, and fails nothing — see AdminLayout.astro.
+ *
+ * Every control is its own `<form>` for the same reason: without script, a
+ * button that acts on one row has to post that row's id, and nesting forms is
+ * not allowed. Four small forms per banner is the honest cost of that.
+ */
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import DataState from '../../components/admin/DataState.astro';
+import Notice from '../../components/admin/Notice.astro';
+import { noticeFor, dimensionsFrom } from '../../lib/admin/notices';
+import { listBanners, BANNER_RULES } from '../../lib/admin/banners';
+
+export const prerender = false;
+
+const admin = Astro.locals.admin!;
+const params = Astro.url.searchParams;
+
+const result = await listBanners();
+const notice = noticeFor(params.get('notice'));
+
+/*
+ * The two integers a refused upload carries back, so the message can name the
+ * size it got. Null unless both are plain integers in range — see
+ * `dimensionsFrom`. The sentence itself still comes from the whitelist.
+ */
+const rejected = dimensionsFrom(params.get('w'), params.get('h'));
+
+const banners = result.state === 'ok' ? result.data : [];
+const live = banners.filter((banner) => banner.enabled).length;
+---
+
+<AdminLayout title="Banners" admin={admin}>
+  <div class="ad-head">
+    <div>
+      <p class="ad-eyebrow">Content</p>
+      <h1 class="ad-title">Hero banners</h1>
+      {
+        result.state === 'ok' && (
+          <p class="ad-sub">
+            {banners.length} uploaded · {live} showing on the site
+          </p>
+        )
+      }
+    </div>
+  </div>
+
+  <Notice notice={notice} />
+
+  {
+    rejected && (
+      <p class="ad-alert" role="alert">
+        The file you chose is <strong>{rejected.width} × {rejected.height}</strong> pixels.
+      </p>
+    )
+  }
+
+  <p class="ad-note">
+    Banners appear in the wide band under the headline on the home page. A change here reaches the
+    live site at the next build — press <strong>Publish to live site</strong> on the
+    <a href="/admin/catalogue">Catalogue</a> screen when you are done.
+  </p>
+
+  <section class="ad-card">
+    <h2 class="ad-card__title">Add a banner</h2>
+
+    <form method="post" action="/api/admin/banners/upload" enctype="multipart/form-data">
+      <div class="ad-fields">
+        <p class="ad-field">
+          <label class="ad-label" for="file">Image file</label>
+          <input
+            class="ad-input ad-file"
+            id="file"
+            name="file"
+            type="file"
+            accept="image/jpeg,image/png"
+            required
+          />
+          {/* Read from BANNER_RULES rather than retyped, so the sentence an
+              admin reads and the rule the server enforces cannot drift. */}
+          <span class="ad-hint">
+            JPEG or PNG, up to {Math.round(BANNER_RULES.maxBytes / (1024 * 1024))} MB. The band is a
+            wide strip, so the image must be between {BANNER_RULES.minRatio} and{' '}
+            {BANNER_RULES.maxRatio} times as wide as it is tall, and at least{' '}
+            {BANNER_RULES.minWidth} pixels wide. <strong>2800 × 700 is the size to aim for.</strong>
+          </span>
+        </p>
+
+        <p class="ad-field">
+          <label class="ad-label" for="name">Name</label>
+          <input class="ad-input" id="name" name="name" placeholder="Spring campaign" />
+          <span class="ad-hint">
+            For your reference only — it is never shown on the site. Left empty, the filename is
+            used.
+          </span>
+        </p>
+      </div>
+
+      <div class="ad-actions">
+        <button class="ad-btn" type="submit">Upload</button>
+      </div>
+    </form>
+  </section>
+
+  <h2 class="ad-section">Uploaded banners</h2>
+
+  {
+    result.state !== 'ok' ? (
+      <DataState state={result.state} subject="banners" />
+    ) : banners.length === 0 ? (
+      <div class="ad-card">
+        <p>
+          No banners yet. The database was read successfully; there are none, and the home page
+          shows its empty band.
+        </p>
+      </div>
+    ) : (
+      <ul class="bn-list">
+        {banners.map((banner) => (
+          <li class:list={['bn', { 'is-live': banner.enabled }]}>
+            {/* alt="" because the name beside it is the label, and the image
+                itself is decorative here exactly as it is on the site. */}
+            <img class="bn__shot" src={`/api/admin/banners/${banner.id}/thumb`} alt="" width="200" />
+
+            <div class="bn__body">
+              <p class="bn__meta">
+                {banner.width} × {banner.height}
+                <span class="ad-muted"> · </span>
+                {banner.enabled ? (
+                  <strong>Showing on the site</strong>
+                ) : (
+                  <span class="ad-muted">Hidden</span>
+                )}
+              </p>
+
+              <form class="bn__form" method="post" action={`/api/admin/banners/${banner.id}`}>
+                <label class="ad-sr" for={`name-${banner.id}`}>
+                  Name
+                </label>
+                <input class="ad-input" id={`name-${banner.id}`} name="name" value={banner.name} />
+
+                <label class="ad-sr" for={`order-${banner.id}`}>
+                  Order
+                </label>
+                <input
+                  class="ad-input bn__order"
+                  id={`order-${banner.id}`}
+                  name="order"
+                  type="number"
+                  step="1"
+                  value={banner.order}
+                />
+
+                <button class="ad-btn" type="submit" name="intent" value="save">
+                  Save
+                </button>
+              </form>
+
+              <div class="bn__row">
+                <form method="post" action={`/api/admin/banners/${banner.id}`}>
+                  <button
+                    class="ad-btn-ghost"
+                    type="submit"
+                    name="intent"
+                    value={banner.enabled ? 'hide' : 'show'}
+                  >
+                    {banner.enabled ? 'Hide' : 'Show'}
+                  </button>
+                </form>
+
+                <form method="post" action={`/api/admin/banners/${banner.id}`}>
+                  <button class="ad-btn-ghost bn__delete" type="submit" name="intent" value="delete">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <p class="ad-hint bn__foot">
+    <strong>Hide</strong> takes a banner off the site and keeps the artwork, so you can bring it
+    back for a later campaign. <strong>Delete</strong> removes the image file as well and cannot be
+    undone.
+  </p>
+</AdminLayout>
+
+<style>
+  .ad-section {
+    margin: 34px 0 14px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: var(--fw-subhead);
+    letter-spacing: 0.02em;
+    color: var(--color-paper);
+  }
+
+  /* A file input cannot take .ad-input's fixed height without the button
+     inside it being clipped. */
+  .ad-file {
+    min-height: 0;
+    padding: 11px 13px;
+  }
+
+  .bn-list {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bn {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 18px;
+    padding: 16px;
+    border: 1px solid var(--color-line);
+    border-radius: 4px;
+    background: var(--color-card);
+  }
+
+  /* A banner that is live reads as live at a glance, rather than only in the
+     line of text beside it. */
+  .bn.is-live {
+    border-left: 3px solid var(--color-red-fill);
+  }
+
+  .bn__shot {
+    width: 200px;
+    height: auto;
+    border: 1px solid var(--color-line);
+    background: var(--color-black);
+  }
+
+  .bn__body {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .bn__meta {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-paper);
+  }
+
+  .bn__form,
+  .bn__row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .bn__order {
+    max-width: 8ch;
+  }
+
+  /* Red text on the dark card: --color-red-light is the token measured for
+     small text on dark. --color-red-deep is for light surfaces and would be
+     3.0:1 here. See CLAUDE.md rule 4. */
+  .bn__delete {
+    color: var(--color-red-light);
+  }
+
+  .bn__foot {
+    margin-top: 18px;
+  }
+
+  @media (max-width: 620px) {
+    .bn {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .bn__shot {
+      width: 100%;
+    }
+  }
+</style>
