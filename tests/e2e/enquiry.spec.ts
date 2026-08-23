@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ENQUIRY_OUTCOME, TEST_DB_UP } from './stack';
 
 /**
  * The enquiry basket — the site's only conversion path.
@@ -318,10 +319,21 @@ test.describe('/enquiry', () => {
     await expect(heading).toBeVisible();
     await expect(heading).toBeFocused();
 
-    // No credentials in this environment, so the site says so rather than
-    // implying a mail that was never sent. This is the honest path, not a stub.
-    expect(await response.json()).toEqual({ ok: true, recorded: false, delivered: false });
-    await expect(page.locator('.ef-done__pending')).toBeVisible();
+    /*
+     * The confirmation says what actually happened, and which of the two things
+     * happened depends on whether this run has a database — see
+     * tests/e2e/stack.ts. Without one the site says so rather than implying a
+     * mail nobody sent; with one the enquiry really is held, and the "not
+     * configured" paragraph must NOT appear, because it would send a buyer
+     * chasing an email for an enquiry that was already captured.
+     */
+    expect(await response.json()).toEqual(ENQUIRY_OUTCOME);
+    const pending = page.locator('.ef-done__pending');
+    if (TEST_DB_UP) {
+      await expect(pending).toHaveCount(0);
+    } else {
+      await expect(pending).toBeVisible();
+    }
 
     expect(await readBasket(page)).toEqual([]);
     await page.reload();
@@ -383,7 +395,7 @@ test.describe('/enquiry', () => {
     ]);
 
     expect(response.status()).toBe(200);
-    expect(await response.json()).toEqual({ ok: true, recorded: false, delivered: false });
+    expect(await response.json()).toEqual(ENQUIRY_OUTCOME);
     await expect(page.getByRole('heading', { name: 'Enquiry received.' })).toBeVisible();
   });
 });

@@ -9,7 +9,14 @@
  */
 import { test, expect } from '@playwright/test';
 
-const PAGES = ['/admin', '/admin/demand', '/admin/enquiries/00000000-0000-0000-0000-000000000000'];
+const PAGES = [
+  '/admin',
+  '/admin/demand',
+  '/admin/enquiries/00000000-0000-0000-0000-000000000000',
+  '/admin/catalogue',
+  '/admin/catalogue/products/cut-flex',
+  '/admin/catalogue/categories/hand',
+];
 const ENDPOINTS = ['/api/admin/export.csv'];
 
 test.describe('the admin boundary', () => {

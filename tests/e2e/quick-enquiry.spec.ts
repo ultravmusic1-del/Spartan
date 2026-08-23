@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ENQUIRY_OUTCOME, TEST_DB_UP } from './stack';
 
 /**
  * The two compact enquiry forms — the home page CTA and the general enquiry
@@ -10,11 +11,15 @@ import { expect, test } from '@playwright/test';
  * exist so that cannot come back silently.
  *
  * Nothing is mocked. `/api/enquiry` is the real built endpoint served by
- * tests/preview-server.mjs. With neither `SUPABASE_*` nor `RESEND_*` in the
- * environment both channels report `unconfigured`, so it answers
- * `200 { ok: true, recorded: false, delivered: false }` — so the assertions
- * below check for the *honest* "nothing holds this" wording and never for a
- * claim that the enquiry reached anyone.
+ * tests/preview-server.mjs, and what it answers depends on what this run has:
+ * with no credentials both channels report `unconfigured` and it says nothing
+ * holds the enquiry; with the throwaway Supabase stack up (`npm run
+ * test:db:start`) the row is genuinely written and it says so. `ENQUIRY_OUTCOME`
+ * in tests/e2e/stack.ts derives which, and both branches are asserted in full.
+ * What is never accepted is a claim that does not match what happened.
+ *
+ * Mail is unconfigured either way — playwright.config.ts blanks the Resend
+ * credentials, so no run of this suite can send the client a real notification.
  *
  * `unconfigured` is deliberately not `failed`: a channel with no credentials was
  * never asked to carry the enquiry. Were the endpoint to treat the two alike,
@@ -59,14 +64,21 @@ test.describe('the compact enquiry forms', () => {
     expect(response.status()).toBe(200);
     // Exhaustive on purpose: a field silently appearing in or vanishing from the
     // response contract is exactly what the two clients key their honesty off.
-    expect(await response.json()).toEqual({ ok: true, recorded: false, delivered: false });
+    expect(await response.json()).toEqual(ENQUIRY_OUTCOME);
 
-    // The one assertion this file exists for: with neither channel configured
-    // nothing durable holds the enquiry, and the form has to say so.
+    // The one assertion this file exists for: the form says what actually
+    // happened to the enquiry. Which branch applies depends on whether this run
+    // has a database — see tests/e2e/stack.ts. Neither branch is softer than
+    // the other, and claiming the wrong one either way is the failure.
     await expect(form).toHaveAttribute('data-state', 'sent');
     const status = form.locator('[data-enquiry-status]');
-    await expect(status).toContainText('not configured');
-    await expect(status).toContainText('has not reached the Spartan team');
+    if (TEST_DB_UP) {
+      await expect(status).toContainText('Enquiry received. Our team will come back to you');
+      await expect(status).not.toContainText('not configured');
+    } else {
+      await expect(status).toContainText('not configured');
+      await expect(status).toContainText('has not reached the Spartan team');
+    }
   });
 
   test('the home CTA sends the division the buyer picked', async ({ page }) => {

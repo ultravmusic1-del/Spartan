@@ -30,5 +30,10 @@ brand-sheet-preview/
 # source of truth that will eventually disagree with the first.
 seed.sql
 
+# Written by tools/test-db.mjs while the throwaway Supabase stack is up, and
+# deleted when it comes down. Generated, machine-local, and a stale committed
+# copy would tell a fresh clone a database is running that is not.
+.test-db.json
+
 # Superpowers brainstorming scratch (visual companion mockups)
 .superpowers/

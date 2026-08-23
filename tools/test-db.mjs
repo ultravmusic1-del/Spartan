@@ -37,9 +37,10 @@
  * granting `anon` everything is harmless while RLS carries zero policies.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { seedSql } from './seed-catalogue.mjs';
 
@@ -87,6 +88,27 @@ const DOCKER_BIN = dockerBin();
 const DB_CONTAINER = 'supabase_db_spartan';
 
 export const TEST_ADMIN = { email: 'test-admin@spartan.local', password: 'test-admin-password-1' };
+
+/**
+ * WHERE "IS THE THROWAWAY STACK UP?" IS ANSWERED, for everything that needs to
+ * know.
+ *
+ * Written by `start`, deleted by `stop`, gitignored. `playwright.config.ts`
+ * reads it to point the preview server at this database instead of the live
+ * project, the authenticated spec refuses to run without it, and
+ * `tools/verify.mjs` refuses `--full` without it.
+ *
+ * The alternative was to shell out to `supabase status` from each of them.
+ * That is slow enough to notice on every unrelated Playwright run, and it fails
+ * in a way none of those callers can distinguish from "Docker is not installed".
+ * A file that exists or does not is the whole question.
+ *
+ * The keys in it are the Supabase CLI's fixed local demo keys — the same
+ * strings on every machine, published in Supabase's own documentation, and
+ * valid only against 127.0.0.1. They are not secrets, and the file is
+ * gitignored anyway because its contents are generated, not authored.
+ */
+export const STACK_FILE = fileURLToPath(new URL('../.test-db.json', import.meta.url));
 
 const cliEnv = () => ({
   ...process.env,
@@ -160,10 +182,28 @@ export async function start() {
     .upsert({ user_id: user.id, email: TEST_ADMIN.email }, { onConflict: 'user_id' });
   if (allowError) throw new Error(`could not allow-list the test admin: ${allowError.message}`);
 
+  /*
+   * Last, and only after everything above succeeded. The file is a claim that
+   * this stack is up, migrated, seeded and has an admin who can sign in —
+   * written before any of that would let Playwright build a site against a
+   * half-ready database and blame the test.
+   */
+  writeFileSync(
+    STACK_FILE,
+    JSON.stringify({ url, anonKey: status.ANON_KEY, serviceKey }, null, 2) + '\n',
+  );
+
+  console.log(`Test database ready at ${url} — ${STACK_FILE} written.`);
   return { url, serviceKey };
 }
 
 export function stop() {
+  /*
+   * The marker goes FIRST. If `supabase stop` fails half way, a run that then
+   * believed the stack was up would point a build at a database that is going
+   * away; a run that believes it is down merely refuses to start.
+   */
+  rmSync(STACK_FILE, { force: true });
   run(['stop', '--no-backup']);
 }
 
