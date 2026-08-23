@@ -43,6 +43,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { seedSql } from './seed-catalogue.mjs';
+import { ensureBuckets } from './storage-setup.mjs';
 
 /**
  * Where Docker's CLI lives, resolved rather than assumed.
@@ -183,9 +184,15 @@ export async function start() {
   if (allowError) throw new Error(`could not allow-list the test admin: ${allowError.message}`);
 
   /*
+   * The banner upload path writes image files, so the bucket has to exist
+   * before any test touches it. Idempotent — see tools/storage-setup.mjs.
+   */
+  await ensureBuckets(url, serviceKey);
+
+  /*
    * Last, and only after everything above succeeded. The file is a claim that
-   * this stack is up, migrated, seeded and has an admin who can sign in —
-   * written before any of that would let Playwright build a site against a
+   * this stack is up, migrated, seeded, bucketed and has an admin who can sign
+   * in — written before any of that would let Playwright build a site against a
    * half-ready database and blame the test.
    */
   writeFileSync(

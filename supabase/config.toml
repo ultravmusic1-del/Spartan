@@ -10,6 +10,12 @@
 #
 # Re-enabling a service is fine if something needs it. Re-enabling all of them
 # because the defaults looked wrong is not.
+#
+# STORAGE WAS RE-ENABLED ON 2026-08-23, and it is the worked example of that
+# rule. The hero banner upload path writes image files to a bucket, and upload
+# code that no test exercises is a worse trade than one more container. Its
+# sub-services — the S3 protocol shim and the vector/image proxy — stay off,
+# because nothing here uses them.
 
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
@@ -126,7 +132,7 @@ port = 54324
 # sender_name = "Admin"
 
 [storage]
-enabled = false
+enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
 

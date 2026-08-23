@@ -17,6 +17,7 @@
     "counts": "node tools/counts.mjs --write",
     "catalogue:parity": "node tools/catalogue-parity.mjs",
     "catalogue:seed": "node tools/seed-catalogue.mjs",
+    "storage:setup": "node --env-file=.env tools/storage-setup.mjs run",
     "test:db:start": "node tools/test-db.mjs start",
     "test:db:stop": "node tools/test-db.mjs stop",
     "normalise": "node tools/normalise-products.mjs",
