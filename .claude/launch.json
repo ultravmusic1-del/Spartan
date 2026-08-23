@@ -8,6 +8,12 @@
       "port": 4321
     },
     {
+      "name": "spartan-admin-testdb",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:test"],
+      "port": 4321
+    },
+    {
       "name": "spartan-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview"],

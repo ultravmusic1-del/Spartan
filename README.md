@@ -36,12 +36,14 @@ npm run dev
 | Script | What it does |
 |---|---|
 | `npm run dev` | Astro dev server. Astro 7 supports `astro dev --background`, then `astro dev stop` / `status` / `logs`. |
+| `npm run dev:test` | Dev server against the **throwaway** database, with the deploy hook and mail blanked. **Use this for /admin**, never `npm run dev` — see below. |
 | `npm run build` | Production build. Output is **`dist/client/`**, not `dist/` — see below. |
 | `npm run preview` | **A custom server** (`tests/preview-server.mjs`), *not* `astro preview`. See below. |
 | `npm run test` | Vitest unit tests. |
 | `npm run test:e2e` | Playwright + axe, across desktop and mobile projects. Stop the dev server first. |
 | `npm run verify` | **The gate.** Typecheck, unit tests, invariants, build, output sweeps. `-- --full` adds Playwright. |
 | `npm run csp` | Regenerate `vercel.json`'s CSP hashes from `dist/client` after a build. |
+| `npm run test:db:start` / `stop` | Throwaway Supabase stack in Docker. `npm run verify -- --full` **fails without it**. |
 | `npm run counts` | Regenerate `CLAUDE.md`'s counts block from the repo. `npm run verify` fails when it is stale. |
 | `npx astro check` | Type/template check — 0 errors, 0 warnings, 7 hints (unused params in `tools/*.mjs`). |
 | `npm run extract:catalog -- "path/to/brochure.pdf"` | Regenerate products and product PNGs from the brochure. |
@@ -121,6 +123,25 @@ The endpoint also carries a honeypot field and an in-memory rate limit of 5 subm
 | `/admin/enquiries/[id]` | One enquiry in full, with the `new → contacted → quoted → closed` status control. |
 | `/admin/demand` | Which products are actually being asked about, ordered by how many separate enquiries name them. |
 | `/api/admin/export.csv` | Every enquiry as CSV, with a formula-injection guard. |
+| `/admin/catalogue` | Every product and category, drafts included, searchable by name or slug. |
+| `/admin/catalogue/products/[slug]` | Edit a product. Slug, EN 388 rating, source and status are read-only. |
+| `/admin/catalogue/categories/[id]` | Edit a category. Id, slug, division and status are read-only. |
+| `/api/admin/catalogue/publish` | Fires the Vercel deploy hook. Reports "Build requested", never "Published". |
+
+### Trying the admin locally
+
+```bash
+npm run dev:test        # throwaway database, deploy hook and mail blanked
+npm run test:db:stop    # when finished — the edits go with it
+```
+
+**Do not use `npm run dev` for this.** `.env` holds the live project's credentials and `astro dev` loads `.env` into `import.meta.env`, which `src/lib/env.ts` reads as its fallback — so an edit made at `/admin/catalogue` in that session changes the client's real catalogue, and **the Publish button on that screen deploys the production site**. Neither asks for confirmation, because in production both are exactly what an admin means.
+
+`npm run dev:test` starts the throwaway Supabase stack (Docker required), points the dev server at it, sets `CATALOGUE_SOURCE=postgres` so the public pages render from the same data, and blanks `VERCEL_DEPLOY_HOOK_URL`, `RESEND_API_KEY` and `ENQUIRY_TO_EMAIL`. It prints the test admin's sign-in. Publish will say it is not configured, which is the correct and safe answer locally.
+
+`npm run test:db:start` reseeds the catalogue from `src/data/*.json` at any time, so a local session cannot be got into a state that needs repairing.
+
+**For Publish to work in production, `VERCEL_DEPLOY_HOOK_URL` must be set as a Vercel environment variable.** Without it the button refuses there too — honestly, but uselessly.
 
 **Accounts are created by hand.** Public signup is disabled in the Supabase dashboard, and that is deliberately not the only control: a user must *also* have a row in `public.admins`. Identity (the session cookie) and authority (the allow-list) are separate facts established separately, so a valid Supabase account is not by itself an admin. To add someone, create the user in Supabase Auth and insert their `user_id` and `email` into `public.admins`.
 

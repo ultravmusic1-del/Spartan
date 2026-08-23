@@ -203,9 +203,20 @@ upstream fix; npm's offered fix reintroduces 8 XSS advisories.
 
 ```bash
 npm run dev       # astro dev
+npm run dev:test  # ... but against the throwaway database — USE THIS FOR /admin
 npm run build     # -> dist/client/ + .vercel/output/
 npm run preview   # tests/preview-server.mjs, NOT astro preview
 ```
+
+**`npm run dev` is the wrong command for trying the admin out.** `.env` holds
+the live project's credentials and `astro dev` loads `.env` into
+`import.meta.env`, which `src/lib/env.ts` reads as its fallback — so an edit
+made at `/admin/catalogue` in that session changes the client's real catalogue,
+and the Publish button on that screen deploys the production site. Neither
+asks, because in production both are what an admin means. `npm run dev:test`
+starts the throwaway stack, points the dev server at it, and blanks the deploy
+hook and the mail credentials; it prints the test admin's sign-in. Stop it with
+`npm run test:db:stop`.
 
 Static pages build to `dist/client/`, not `dist/` — the server-rendered routes
 put the Vercel adapter into hybrid mode.
