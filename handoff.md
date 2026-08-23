@@ -2675,68 +2675,101 @@ single cell of 583px and one was 221px + 361px. **A vertical rule and a grey
 block existed on exactly one row in five.** 49 of the 94 products mix the two
 kinds, so this was over half the catalogue.
 
-### What was rejected, and why it matters
+### What was rejected first, and why that was wrong
 
-The tidy fix is to group the labelled rows into a table and the sentences into a
-feature list beneath. **It was rejected because 16 products interleave them
-meaningfully.** On `low-cut-safety-shoes-kpu` the line "Quarter | Tongue lining:
-Black mesh" sits directly under `[Upper] KPU (Knitted Polyurethane)` because it
-describes the upper; `winter-jacket` and `fire-retardant-pants` have the same
-shape. Moving those to a list at the bottom changes which attribute a statement
-appears to qualify. That is not a fabricated fact, but it is an altered one, and
-on protective equipment the distinction is not worth relying on. **Source order
-is preserved everywhere.**
+Grouping the named rows and putting the unnamed lines beneath them was the
+obvious fix, and it was rejected on the first pass. The reasoning: 16 products
+interleave the two shapes in a way that looks deliberate — on
+`low-cut-safety-shoes-kpu` the line "Quarter | Tongue lining: Black mesh" is
+printed under `Upper: KPU (Knitted Polyurethane)` and appears to describe the
+upper; `winter-jacket` and `fire-retardant-pants` have the same shape. Reordering
+does not fabricate a fact, but it does change which attribute a statement appears
+to qualify, and that seemed worth protecting on protective equipment.
 
-What changed instead: the vertical rules and the fill are gone, rows are
-separated by a single horizontal rule, and an unlabelled row indents into the
-value column so that every piece of *content* shares one left edge with the
-labels in a margin beside it.
+**It was the wrong call, and it cost two rounds of work.** The lines are
+self-contained statements — "Quarter | Tongue lining: Black mesh" says what those
+parts are made of whether or not `Upper` is directly above it — and rendered as a
+group they read perfectly well. The client asked for the reordering twice before
+it was done. What should have happened: raise the concern once, and treat the
+answer as the decision.
 
-The indent is an empty `<td>`, not a percentage padding on a spanning cell,
-because a percentage on that cell resolves against a different box than the
-`th`'s `width: 38%` does and lands a few pixels out — on the one alignment the
-layout is built around, approximately aligned is worse than not aligned.
+Two passes were spent styling around the interleaving before removing it. Both
+are recorded below, because the shape of that mistake is more useful than the
+CSS was.
 
-### That fixed the noise and not the structure — the second pass
+### Two passes that solved around the problem, and the third that solved it
 
-**The first pass above was half an answer, and the client said so.** Removing
-the borders and the fill stopped the grid flickering, but the *column* was still
-there: 38% of the table reserved on `safety-helmets` for one row in five, so the
-page went from a broken grid to a wide empty channel with the single word
-`COLORS` in it. Making the emptiness tidier made it easier to see.
+**Two attempts missed, and both missed the same way — by treating the
+interleaving as something to style rather than something to remove.**
 
-**A column exists to align things, and it should only be drawn when it has
-things to align.** That is now a decision the component makes per product:
+*First pass:* dropped the vertical rules and the `--surface-alt` fill and
+indented unnamed lines into the value column. That stopped the grid flickering
+and left the column: 38% of the table reserved on `safety-helmets` for one row
+in five, so the page went from a broken grid to a wide empty channel with the
+single word `COLORS` in it. Tidier emptiness is still emptiness.
 
-```
-useColumn = labelled >= 2 && labelled * 2 >= specs.length
-```
+*Second pass:* made the column conditional — drawn only where at least half the
+rows carried a label. That removed the empty channel on the ten products where
+it was worst, and it still left a named row sitting between unnamed ones, which
+was the thing being complained about the whole time.
 
-Two columns when at least half the rows carry a label and there are at least two
-labels to line up — 75 products, including every all-labelled one and the fans,
-where eleven values reading down a column is the whole point. Otherwise the
-label sits inline in front of its value and every row starts at the same edge —
-10 products. Nine have no labels at all and never had a column.
+*Third pass, and the actual fix:* **named rows are rendered first, unnamed lines
+follow.** There is then exactly one transition instead of an alternation, the
+column is used by every row that has it, and the lines below use the full width.
+No conditional layout, no gutter cells, no `useColumn` — all of that existed
+only to cope with the interleaving.
 
-The `>= 2` earns its place on its own: one labelled row has nothing to align
-against, so a column for it is overhead no matter how few sentences sit beside
-it. `bracket` has exactly one spec row and would otherwise have had a column
-built for it.
+**The client asked for this directly, twice, before it was done.** The cost was
+raised with them first and is recorded here: on `low-cut-safety-shoes-kpu` the
+line "Quarter | Tongue lining: Black mesh" is printed under `Upper: KPU` and now
+sits below the named block, which loosens the visual tie to the row it
+elaborates. 16 products have that shape. Rendered, it reads fine — the concern
+was overstated, and the earlier refusal to reorder cost two rounds.
 
-Inline mode keeps the `th` and its `scope="row"` — only the box moved, so what a
-screen reader announces is unchanged. It is `display: inline` on the cells
-inside a `display: block` row, which is the same semantics-stripping trick the
-mobile rule uses and needs the same explicit roles to survive. Verified in the
-accessibility tree: `table → rowgroup → row → rowheader "Colors" → cell`, and
-the empty gutter cells are gone from the tree entirely rather than announcing as
-blank.
+**It is a RENDER order, not a data order, and that distinction is load-bearing.**
+`specs` is filtered twice and never sorted, so the stored order is untouched.
+`acceptProductEdit` in `src/lib/admin/catalogue.ts` carries a spec row's per-row
+`source` across a save **by index**, matched against the order the admin form
+renders — sorting the array here would be invisible on this page and would
+re-attribute citations the next time anyone saved that product. The admin form
+therefore still lists rows as stored, and now says on the fieldset that the
+product page groups them.
 
-Measured on the helmet page: every row starts at x=637, the label runs 637→690
-and its value 702→1059. On `fire-retardant-pants` — 8 labelled rows and one
-sentence — the column stays, labels at 637, every value and the sentence at 859.
+### The label column is its content wide, not a fraction of the table
 
-Products whose specs are *all* unlabelled (9 of them) get no gutter at all;
-`hasLabels` decides. A 38% margin held open for nothing is not a margin.
+`width: 1%` with `white-space: nowrap` is shrink-to-fit: column one gets the
+width of the widest label and nothing more. `width: 38%` was 222px held open for
+the word COLORS.
+
+The nowrap is not decoration. Without it the column collapses to min-content and
+multi-word labels break onto two lines — "ARC RATING" and "TEST METHODS" both
+did on `fire-retardant-pants`, which makes the rows ragged and taller for
+nothing. The worst case is `premium-network-cable`, whose "Full Electrical
+Characteristics" is 31 characters and takes about 250px of the 584px table: wide,
+and honest, because the column is exactly its content. Below the breakpoint the
+label stacks full width and the nowrap is dropped, so a long label can never
+force a horizontal scroll on a phone.
+
+### Baseline, not top
+
+The label was `vertical-align: top` while its value took the initial `baseline`,
+so a 10.5px uppercase label and a 13.5px mono value were positioned by two
+different rules and sat visibly off each other — which is what the client meant
+by the alignment being "completely off". Both cells are `baseline` now. On a
+value that wraps, the label still lines up with its first line, which is what
+`top` was reaching for and getting wrong.
+
+### Verified by looking, not by measuring alone
+
+The Browser pane would not composite frames for a screenshot, so verification
+went through Playwright directly — a script that loads a page, crops around the
+table and writes a PNG. That is what caught the wrapping labels, which no
+geometry assertion had flagged.
+
+A sweep then loaded **all 94 products at 1280px and at 390px** and checked four
+things per page: no document overflow, no table overflow, no cell whose content
+is wider than the cell, and every row header ordered before every full-width
+line. Clean on all 188.
 
 ### The approved mockup does not cover this
 

@@ -190,6 +190,18 @@ const specRows = [
             bullet, which the brochure prints and which is valid. Type into a blank row to add a
             specification; saving gives you three more.
           </p>
+          {/*
+            The one place the admin and the public page disagree, said out loud
+            rather than left to be discovered. The rows are stored and edited in
+            this order; SpecTable groups them for display. The stored order is
+            what acceptProductEdit matches a row's per-row source against, which
+            is why it is not sorted here to match the site.
+          */}
+          <p class="ad-hint ad-specs__note">
+            <strong>On the product page, rows with a label are listed first and rows without one
+            follow.</strong> The order you set here is kept within each of those two groups, and is
+            the order this form will show you next time.
+          </p>
         </section>
 
         <section class="ad-card">

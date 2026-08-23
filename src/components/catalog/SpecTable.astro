@@ -2,21 +2,49 @@
 import type { Product } from '../../lib/catalog';
 
 /**
- * SpecTable — a product's specifications as a real data table.
+ * SpecTable — a product's specifications.
  *
  * Two row shapes, because the brochure prints two kinds of line and both are
  * real data:
  *
- *   { label: 'Power', value: '20W | 30W | 40W' }   labelled -> th + td
- *   { label: null,    value: '100% Copper motor' } feature  -> full-width td
+ *   { label: 'Power', value: '20W | 30W | 40W' }   named  -> th + td
+ *   { label: null,    value: '100% Copper motor' } unnamed -> full-width td
  *
- * Roughly a third of all spec rows are unlabelled. They are rendered as a cell
+ * Roughly a third of all spec rows are unnamed. They are rendered as a cell
  * spanning both columns rather than given an invented label or dropped — the
  * first would fabricate data, the second would lose it.
  *
+ * ---------------------------------------------------------------------------
+ * NAMED ROWS ARE GROUPED FIRST, UNNAMED LINES FOLLOW. THIS IS A RENDER ORDER,
+ * NOT A DATA ORDER.
+ *
+ * Interleaving the two shapes is what made this table unreadable: the label
+ * column appeared and vanished down the page, so a single named row sat in a
+ * channel that four rows in five left empty. Two earlier attempts treated that
+ * as a styling problem — first removing the borders, then dropping the column
+ * on products that barely used it — and neither fixed it, because the problem
+ * was the interleaving itself. Grouping removes it outright: the column is used
+ * by every row that has it, and the lines beneath it use the full width.
+ *
+ * `specs` IS NOT MUTATED AND THE STORED ORDER IS UNTOUCHED. That matters for
+ * more than tidiness — `acceptProductEdit` in src/lib/admin/catalogue.ts carries
+ * a spec row's per-row `source` across a save BY INDEX, matching the order the
+ * admin form renders. Sorting the array here would be invisible on this page and
+ * would re-attribute citations the next time somebody saved that product. The
+ * admin form therefore still lists rows in stored order, and says so on the
+ * fieldset.
+ *
+ * The reordering was requested directly by the client on 2026-08-23, after
+ * seeing the interleaved layout twice. The cost was raised with them first: on
+ * `low-cut-safety-shoes-kpu` the unnamed line "Quarter | Tongue lining: Black
+ * mesh" is printed under `Upper: KPU`, and moving it below the named block
+ * loosens the visual tie to the row it elaborates. 16 products have that shape.
+ * No value changes, and nothing is dropped.
+ * ---------------------------------------------------------------------------
+ *
  * Labels are `<th scope="row">` so assistive technology pairs each value with
- * its label, and they carry the mockup's `th` treatment (black, Archivo,
- * 10.5px, uppercase, wide tracking — see `design/direction-b-forge.html`).
+ * its label, and they carry the mockup's `th` treatment (Archivo, 10.5px,
+ * uppercase, wide tracking — see `design/direction-b-forge.html`).
  *
  * `caption` is a real `<caption>`, visually hidden: it names the table for
  * screen readers without duplicating the heading that always sits above it.
@@ -38,56 +66,40 @@ interface Props {
 
 const { specs, caption, class: cls = '' } = Astro.props;
 
-/*
- * DOES A LABEL COLUMN EARN ITS WIDTH ON THIS PRODUCT?
- *
- * A column exists to align things. That is worth 38% of the table on
- * `slim-led-panels`, where eleven labelled rows line their values up under each
- * other — and it is worth nothing on `safety-helmets`, where one row is
- * labelled `Colors` and four are sentences, so the column is a wide empty
- * channel with a single word in it. Reserving a column that four rows in five
- * leave blank is the clunkiness; removing the borders around it only made the
- * emptiness easier to see.
- *
- * So the structure follows the content. Two columns when at least half the rows
- * carry a label and there are at least two labels to align (75 products);
- * otherwise the label sits inline in front of its value and every row starts at
- * the same edge (10 products). Nine have no labels at all.
- *
- * The `>= 2` matters on its own: one labelled row has nothing to align against,
- * so a column for it is overhead however few sentences sit beside it.
- */
-const labelled = specs.filter((spec) => spec.label !== null && spec.label !== '').length;
-const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
+/* Two passes over the same array, so neither group's internal order moves. */
+const named = specs.filter((spec) => spec.label !== null && spec.label !== '');
+const unnamed = specs.filter((spec) => spec.label === null || spec.label === '');
 ---
 
 {
   specs.length > 0 && (
-    <table class:list={['spec', { 'spec--inline': !useColumn }, cls]} role="table">
+    <table class:list={['spec', cls]} role="table">
       <caption class="vh">{caption}</caption>
       <tbody role="rowgroup">
-        {specs.map((spec) =>
-          spec.label === null ? (
-            <tr role="row">
-              {/* The empty cell is what makes the indent EXACT. Padding the
-                  spanning cell by 38% instead would resolve that percentage
-                  against a different box than the `th`'s width does, and land
-                  a few pixels off — which on the one alignment this table is
-                  built around is worse than not indenting at all. */}
-              {useColumn && <td class="spec__gutter" role="cell" />}
-              <td class="spec__feature" role="cell" colspan={useColumn ? undefined : '2'}>
-                {spec.value}
-              </td>
-            </tr>
-          ) : (
-            <tr role="row">
-              <th scope="row" role="rowheader">
-                {spec.label}
-              </th>
-              <td role="cell">{spec.value}</td>
-            </tr>
-          ),
-        )}
+        {named.map((spec) => (
+          <tr role="row">
+            <th scope="row" role="rowheader">
+              {spec.label}
+            </th>
+            <td role="cell">{spec.value}</td>
+          </tr>
+        ))}
+        {unnamed.map((spec, index) => (
+          <tr role="row">
+            <td
+              class:list={[
+                'spec__feature',
+                /* Only the first one, and only when there is a named block
+                   above it to be separated from. */
+                { 'spec__feature--first': index === 0 && named.length > 0 },
+              ]}
+              role="cell"
+              colspan="2"
+            >
+              {spec.value}
+            </td>
+          </tr>
+        ))}
       </tbody>
     </table>
   )
@@ -97,21 +109,16 @@ const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
   /*
    * HORIZONTAL RULES ONLY, AND NO FILL. This was a fully boxed grid — every
    * cell bordered, every `th` filled with --surface-alt — which works when
-   * every row is a label/value pair and falls apart the moment they are mixed.
-   * Measured on /products/safety-helmets: four rows spanned the full 583px and
-   * one was 221px + 361px, so the vertical rule and the grey block existed on
-   * exactly one row in five, appearing and vanishing down the table.
-   *
-   * A rule that only some rows draw is the defect. Removing the verticals and
-   * the fill removes it outright, and costs nothing: the label is already
-   * distinguishable as Archivo caps against a mono value, so the box was
-   * separating two things that were never going to be confused.
+   * every row is a name/value pair and falls apart the moment the two shapes
+   * are mixed. With the shapes grouped, the box is not needed to tell them
+   * apart either: a row of Archivo caps against a mono value is already two
+   * obviously different things, and the rules alone carry the structure.
    *
    * THE APPROVED MOCKUP DOES NOT SETTLE THIS. Its `th` is a full-width black
    * section header ("Construction") over `td`/`td` data rows — it never drew a
-   * per-row label, and it never drew an unlabelled line at all. The two-column
-   * labelled row is this implementation's own extrapolation, so this is filling
-   * a gap the design left rather than departing from it. See
+   * per-row label, and it never drew an unnamed line at all. The two-column
+   * named row is this implementation's own extrapolation, so this is filling a
+   * gap the design left rather than departing from it. See
    * design/direction-b-forge.html line 303.
    */
   .spec {
@@ -121,9 +128,43 @@ const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
     font-size: 13.5px;
   }
 
+  /*
+   * BASELINE, NOT TOP. The label was `vertical-align: top` while its value took
+   * the initial `baseline`, so a 10.5px uppercase label and a 13.5px mono value
+   * were aligned by two different rules and sat visibly off each other. They are
+   * one line of reading, so they belong on one baseline — and on a value that
+   * wraps, the label still lines up with its FIRST line, which is what `top`
+   * was reaching for and getting wrong.
+   */
+  .spec th,
+  .spec td {
+    vertical-align: baseline;
+    border-bottom: 1px solid var(--line);
+  }
+
   /* Row headers, not a header row: the brochure labels each line individually. */
+  /*
+   * `width: 1%` with `white-space: nowrap` is shrink-to-fit: the browser gives
+   * column one the width of the widest label and nothing more, so the values
+   * start immediately after the longest name rather than at an arbitrary
+   * fraction of the table.
+   *
+   * It replaced `width: 38%`, which was 222px held open for the word COLORS on
+   * a product with one named row. Without the nowrap the column collapses to
+   * min-content instead and multi-word labels wrap — "ARC RATING" and "TEST
+   * METHODS" each broke onto two lines on fire-retardant-pants, which makes the
+   * rows ragged and taller for no gain.
+   *
+   * The worst case is `premium-network-cable`, whose "Full Electrical
+   * Characteristics" is 31 characters and takes about 250px of the 584px table.
+   * That is wide, and it is honest: the column is exactly its content. Below the
+   * breakpoint the label stacks full-width and the nowrap is dropped, so a long
+   * label never forces a horizontal scroll on a phone.
+   */
   .spec th {
-    width: 38%;
+    width: 1%;
+    white-space: nowrap;
+    padding: 13px 28px 13px 0;
     color: var(--text);
     font-family: var(--font-display);
     font-size: 10.5px;
@@ -131,16 +172,6 @@ const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     text-align: left;
-    padding: 12px 12px 12px 0;
-    border-bottom: 1px solid var(--line);
-    vertical-align: top;
-  }
-
-  /* The empty half of a feature row. It draws nothing and exists only so the
-     table's own column algorithm — not a percentage that resolves against a
-     different box — puts the sentence beside it on the value column's edge. */
-  .spec__gutter {
-    border-bottom: 1px solid var(--line);
   }
 
   /* Value cells are mono: these are the figures a buyer transcribes into an
@@ -150,8 +181,7 @@ const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
      approximate. The label column stays Archivo uppercase, so the two halves
      of the pair finally read as two different kinds of thing. */
   .spec td {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--line);
+    padding: 13px 0;
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
@@ -161,17 +191,9 @@ const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
     font-weight: 400;
   }
 
-  /* Unlabelled feature lines span both columns. Slightly brighter than a value
-     cell because they read as statements rather than as the right half of a
-     pair.
-
-     AND THEY GO BACK TO THE BODY FACE. Roughly a third of all spec rows are
-     these, and they are sentences — `100% Copper motor`, not a value. Setting
-     prose in mono because it happens to sit in a table is the font doing
-     decoration, which is the one thing --font-mono exists to avoid. */
   /* `.spec td.spec__feature`, NOT `.spec__feature`. THIS BLOCK DID NOTHING FOR
      ITS ENTIRE LIFE: `.spec td` is specificity (0,1,1) and a lone class is
-     (0,1,0), so every declaration below lost and every feature line rendered as
+     (0,1,0), so every declaration below lost and every unnamed line rendered as
      mono at --text-muted — indistinguishable from the value cells beside it,
      which is precisely what the comment above says must not happen. Confirmed
      in the browser before it was changed: computed font-family came back
@@ -186,56 +208,22 @@ const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
     font-variant-numeric: normal;
   }
 
-  /*
-   * NO COLUMN — the label rides in front of its value and every row starts at
-   * the same edge. Used on the 10 products where fewer than half the rows carry
-   * a label, so a column would be mostly empty. See `useColumn` above.
-   *
-   * The label is still a `th` and still carries `scope="row"`, so the pairing a
-   * screen reader announces is unchanged; only the box it is drawn in moved.
-   * `display: inline` is what lets the label and the value share a line and wrap
-   * as one flow, and the explicit roles in the markup are what keep the table a
-   * table while it does — the same reason the mobile rule below needs them.
-   */
-  .spec--inline,
-  .spec--inline tbody,
-  .spec--inline tr {
-    display: block;
-  }
-
-  .spec--inline tr {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .spec--inline th,
-  .spec--inline td {
-    display: inline;
-    width: auto;
-    padding: 0;
-    border: 0;
-  }
-
-  /* Enough of a gap that the label reads as a label and not as the first word
-     of the value. */
-  .spec--inline th {
-    margin-right: 12px;
+  /* One deliberate breath where the pairs end and the lines begin, so the
+     change of shape reads as a change of section rather than as a row that
+     forgot its label. */
+  .spec td.spec__feature--first {
+    padding-top: 22px;
   }
 
   /*
-   * BELOW 620px THE GUTTER STOPS PAYING FOR ITSELF, so the pair stacks.
+   * BELOW 620px THE LABEL COLUMN STOPS PAYING FOR ITSELF, so the pair stacks.
    *
-   * Measured at 375px before this rule existed: the table is 335px wide, the
-   * 38% gutter takes 127px of it, and a sentence like "6-Point adjustment -
-   * perfect load distribution" wrapped to three lines in the 208px left over —
-   * beside 127px of nothing. The longest label in the catalogue is 31
-   * characters ("Full Electrical Characteristics"), so no fixed narrow gutter
-   * rescues it either.
-   *
-   * Stacked, the label reads as a heading over its value, every row uses the
-   * full width, and the empty gutter cell is dropped outright. The alignment
-   * the desktop layout is built around is not lost here — at this width there
-   * is only ever one column, so there is nothing to align to.
+   * Measured at 375px: the table is 335px wide and a 38% column takes 127px of
+   * it, leaving 208px for values like "Red | White | Blue | Orange | Yellow |
+   * Green". The longest label in the catalogue is 31 characters ("Full
+   * Electrical Characteristics"), so no narrower fixed column rescues it
+   * either. Stacked, the label reads as a heading over its value and every row
+   * uses the full width.
    */
   @media (max-width: 620px) {
     .spec,
@@ -258,18 +246,20 @@ const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
       border: 0;
     }
 
-    /* margin-right is the inline mode's label/value gap and means nothing once
-       the label is a full-width block above its value. */
+    /* The label is its own full-width block here, so shrink-to-fit has nothing
+       to do and nowrap could only push a long one off the side of a phone. */
     .spec th {
-      margin-right: 0;
+      white-space: normal;
       margin-bottom: 5px;
     }
 
-    /* Nothing to indent past any more. Qualified as `.spec td.spec__gutter`
-       for the same reason `.spec td.spec__feature` is: the `display: block`
-       rule above is `.spec td`, and a lone class loses to it. */
-    .spec td.spec__gutter {
-      display: none;
+    /* The breath above still applies, on the row rather than the cell. */
+    .spec td.spec__feature--first {
+      padding-top: 0;
+    }
+
+    .spec tr:has(.spec__feature--first) {
+      margin-top: 10px;
     }
   }
 
