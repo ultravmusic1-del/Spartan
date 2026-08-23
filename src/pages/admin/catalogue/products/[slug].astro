@@ -130,9 +130,11 @@ const specRows = [
                 </select>
               ) : (
                 /* The categories could not be read, so the only safe control is
-                   none: a select rendered empty would post an empty category and
-                   fail the build's referential invariant. The rest of the form
-                   still saves, and the category is carried over untouched. */
+                   none: a select rendered empty would post an empty category id
+                   and fail the build's referential invariant. A disabled input
+                   posts nothing, and acceptProductEdit reads a field the form
+                   did not offer as unchanged — so the rest of the form saves
+                   and the category survives. */
                 <>
                   <input class="ad-input" value={product.categoryId} disabled />
                   <span class="ad-hint">

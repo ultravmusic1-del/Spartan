@@ -49,12 +49,28 @@ export const divisionSchema = z.object({
   order: z.number().int(),
 });
 
+/*
+ * `.min(1)` ON THE FIELDS AN EDITOR CAN WRITE, added 2026-08-23.
+ *
+ * These were bare `z.string()`, which accepts `''`. That was harmless while the
+ * only writer was a seed script reading a brochure, and stopped being harmless
+ * when /admin gained a form: the admin's whole promise is that a save the build
+ * would reject is refused at the form, and a blanked name or category sailed
+ * through both. `categoryId` is the sharp one — an empty one still parses, and
+ * then `npm run verify`'s referential invariant fails a build hours later, on
+ * somebody else's push.
+ *
+ * Only the fields a form can post are tightened, and only where empty is not a
+ * legitimate value. `variantLabel` and `heroProductSlug` are nullable and blank
+ * means null there, which is different from blank meaning nothing. Verified
+ * against all 94 products and all 15 categories before it landed: zero empties.
+ */
 export const categorySchema = z.object({
   id: z.string(),
   slug: z.string(),
-  name: z.string(),
+  name: z.string().min(1, 'name must not be empty'),
   divisionId: z.string(),
-  description: z.string(),
+  description: z.string().min(1, 'description must not be empty'),
   heroProductSlug: z.string().nullable(),
   status: z.enum(['active', 'expanding']),
   order: z.number().int(),
@@ -62,9 +78,10 @@ export const categorySchema = z.object({
 
 export const productSchema = z.object({
   slug: z.string(),
-  name: z.string(),
+  // `.min(1)` on both: see the note above categorySchema.
+  name: z.string().min(1, 'name must not be empty'),
   variantLabel: z.string().nullable(),
-  categoryId: z.string(),
+  categoryId: z.string().min(1, 'categoryId must not be empty'),
   images: z.array(z.string()).min(1),
   /*
    * `source` is per-row provenance and is OPTIONAL: a row without one is

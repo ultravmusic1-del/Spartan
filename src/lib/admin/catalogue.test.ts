@@ -335,3 +335,108 @@ describe('acceptCategoryEdit', () => {
     expect(result.ok).toBe(false);
   });
 });
+
+/**
+ * ABSENT IS NOT BLANK.
+ *
+ * A key missing from the form means that field was never offered, so it is
+ * unchanged; a key present and empty means the editor cleared the box. Reading
+ * both as '' makes every partial POST destructive, and the partial POST is not
+ * hypothetical: the product form falls back to a disabled category display when
+ * the category list cannot be read, and so posts no `category-id` at all.
+ */
+describe('acceptProductEdit and a form that did not offer every field', () => {
+  const current: ProductRecord = {
+    slug: 'cut-flex',
+    name: 'Cut Flex',
+    variantLabel: 'Large',
+    categoryId: 'hand',
+    images: ['p17-cut-flex.png'],
+    specs: [
+      { label: 'Liner', value: 'Para Aramid' },
+      { label: 'Coating', value: 'Nitrile' },
+    ],
+    en388: { abrasion: '2', bladeCut: 'X', tear: '4', puncture: '4', tdmCut: 'C' },
+    status: 'published',
+    source: { doc: 'brochure', page: 17 },
+    order: 6,
+    kavalaniUrl: 'https://kavalani.com/cut-flex',
+  };
+
+  it('changes only what was posted, and loses nothing that was not', () => {
+    const form = new FormData();
+    form.set('name', 'Cut Flex II');
+
+    const result = acceptProductEdit(current, form);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.product.name).toBe('Cut Flex II');
+    // Every one of these would have been blanked by reading absent as ''.
+    expect(result.product.specs).toHaveLength(2);
+    expect(result.product.categoryId).toBe('hand');
+    expect(result.product.variantLabel).toBe('Large');
+    expect(result.product.order).toBe(6);
+    expect(result.product.kavalaniUrl).toBe('https://kavalani.com/cut-flex');
+  });
+
+  /*
+   * The one that fails a build rather than looking wrong on a page. An empty
+   * categoryId used to parse, and then verify's referential invariant failed
+   * hours later on somebody else's push.
+   */
+  it('rejects a category that was posted and posted empty', () => {
+    const form = new FormData();
+    form.set('name', 'Cut Flex');
+    form.set('category-id', '');
+
+    const result = acceptProductEdit(current, form);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects a name that was posted and posted empty', () => {
+    const form = new FormData();
+    form.set('name', '');
+
+    const result = acceptProductEdit(current, form);
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe('acceptCategoryEdit and a form that did not offer every field', () => {
+  const current: Category = {
+    id: 'hand',
+    slug: 'hand-protection',
+    name: 'Hand Protection',
+    divisionId: 'safety',
+    description: 'Gloves for cut, heat and chemical hazards.',
+    heroProductSlug: 'cut-flex',
+    status: 'active',
+    order: 3,
+  };
+
+  /*
+   * The hero select is not rendered at all when the product list cannot be
+   * read, because a text box there could name a product that does not exist and
+   * fail the build. Absent therefore has to mean "unchanged" and not "cleared",
+   * or the fallback would quietly unset every hero it was shown for.
+   */
+  it('keeps a hero the form did not offer', () => {
+    const form = new FormData();
+    form.set('name', 'Hand Protection');
+    form.set('description', 'Gloves for cut, heat and chemical hazards.');
+    form.set('order', '3');
+
+    const result = acceptCategoryEdit(current, form);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.category.heroProductSlug).toBe('cut-flex');
+  });
+
+  it('rejects a description that was posted and posted empty', () => {
+    const form = new FormData();
+    form.set('description', '');
+
+    const result = acceptCategoryEdit(current, form);
+    expect(result.ok).toBe(false);
+  });
+});

@@ -13,7 +13,7 @@ Supabase Postgres · Vercel.
 
 **94 products** across **15 categories**, in **2 divisions**.
 
-**119 built pages** · **19 server-rendered routes** · **8 inline-script CSP hashes** · **305 unit tests**.
+**119 built pages** · **19 server-rendered routes** · **8 inline-script CSP hashes** · **310 unit tests**.
 
 <!-- counts:end -->
 

@@ -348,14 +348,38 @@ export type CategoryEditResult =
 const text = (form: FormData, key: string): string => form.get(key)?.toString().trim() ?? '';
 
 /**
+ * ABSENT IS NOT BLANK, and conflating them loses data.
+ *
+ * A key missing from the form means the form did not OFFER that field, so it
+ * was not edited and must be carried over. A key present and empty means the
+ * editor cleared the box, which is how a link is removed. Reading both as ''
+ * makes every partial POST destructive: the category form posts no
+ * `datasheet-url`, the product form falls back to a disabled category display
+ * when the category list cannot be read and so posts no `category-id`, and a
+ * hand-written request carrying two fields would blank the other six.
+ *
+ * `null` for absent, `''` for cleared. Every caller below distinguishes them.
+ */
+const given = (form: FormData, key: string): string | null =>
+  form.has(key) ? text(form, key) : null;
+
+/**
  * Blank is NOT zero. `Number('')` is 0, which `z.number().int()` accepts, so an
  * emptied order box would silently move a product to the front of its category
  * instead of being refused. NaN is the only value that reaches the schema as an
- * error the editor can see.
+ * error the editor can see. Absent, as ever, is unchanged.
  */
-const number = (form: FormData, key: string): number => {
-  const raw = text(form, key);
+const number = (form: FormData, key: string, current: number): number => {
+  const raw = given(form, key);
+  if (raw === null) return current;
   return raw === '' ? Number.NaN : Number(raw);
+};
+
+/** Absent: unchanged. Present and blank: removed. Present: set. */
+const optional = (form: FormData, key: string, current?: string): string | undefined => {
+  const posted = given(form, key);
+  if (posted === null) return current;
+  return posted === '' ? undefined : posted;
 };
 
 /**
@@ -411,8 +435,18 @@ function specsFromForm(form: FormData, current: Product['specs']): Product['spec
  * admin-created products land, that is the decision to make deliberately.
  */
 export function acceptProductEdit(current: ProductRecord, form: FormData): ProductEditResult {
-  const datasheetUrl = text(form, 'datasheet-url');
-  const kavalaniUrl = text(form, 'kavalani-url');
+  const datasheetUrl = optional(form, 'datasheet-url', current.datasheetUrl);
+  const kavalaniUrl = optional(form, 'kavalani-url', current.kavalaniUrl);
+  const variantLabel = given(form, 'variant-label');
+
+  /*
+   * A form with no `spec-value-*` key at all did not offer the specifications,
+   * so they are unchanged. The edit form always renders three blank rows, so a
+   * real submission always carries the keys — which means this branch is only
+   * ever a partial or hand-written POST, and treating that as "delete every
+   * specification" would be silent data loss on the record's whole substance.
+   */
+  const specsOffered = [...form.keys()].some((key) => /^spec-value-\d+$/.test(key));
 
   const candidate = {
     // Carried over, never accepted from the form. See the note above.
@@ -423,13 +457,13 @@ export function acceptProductEdit(current: ProductRecord, form: FormData): Produ
     ...(current.source !== undefined ? { source: current.source } : {}),
 
     // Editable.
-    name: text(form, 'name'),
-    variantLabel: text(form, 'variant-label') || null,
-    categoryId: text(form, 'category-id'),
-    specs: specsFromForm(form, current.specs),
-    order: number(form, 'order'),
-    ...(datasheetUrl !== '' ? { datasheetUrl } : {}),
-    ...(kavalaniUrl !== '' ? { kavalaniUrl } : {}),
+    name: given(form, 'name') ?? current.name,
+    variantLabel: variantLabel === null ? current.variantLabel : variantLabel || null,
+    categoryId: given(form, 'category-id') ?? current.categoryId,
+    specs: specsOffered ? specsFromForm(form, current.specs) : current.specs,
+    order: number(form, 'order', current.order),
+    ...(datasheetUrl !== undefined ? { datasheetUrl } : {}),
+    ...(kavalaniUrl !== undefined ? { kavalaniUrl } : {}),
   };
 
   const parsed = productSchema.safeParse(candidate);
@@ -438,6 +472,8 @@ export function acceptProductEdit(current: ProductRecord, form: FormData): Produ
 }
 
 export function acceptCategoryEdit(current: Category, form: FormData): CategoryEditResult {
+  const hero = given(form, 'hero-product-slug');
+
   const candidate = {
     // Carried over. An id and a slug are permanent for the same reason a
     // product slug is, a division is not a thing a category edit moves, and
@@ -447,11 +483,11 @@ export function acceptCategoryEdit(current: Category, form: FormData): CategoryE
     divisionId: current.divisionId,
     status: current.status,
 
-    // Editable.
-    name: text(form, 'name'),
-    description: text(form, 'description'),
-    heroProductSlug: text(form, 'hero-product-slug') || null,
-    order: number(form, 'order'),
+    // Editable. Absent means the form did not offer it — see `given`.
+    name: given(form, 'name') ?? current.name,
+    description: given(form, 'description') ?? current.description,
+    heroProductSlug: hero === null ? current.heroProductSlug : hero || null,
+    order: number(form, 'order', current.order),
   };
 
   const parsed = categorySchema.safeParse(candidate);
