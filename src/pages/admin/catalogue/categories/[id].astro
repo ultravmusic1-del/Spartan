@@ -1,0 +1,231 @@
+---
+/**
+ * Edit one category.
+ *
+ * Same shape as the product form and the same rule: what is editable is decided
+ * in src/lib/admin/catalogue.ts, and the disabled inputs below are a courtesy to
+ * the reader rather than the control. `acceptCategoryEdit` never looks at `id`,
+ * `slug`, `divisionId` or `status`.
+ */
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import DataState from '../../../../components/admin/DataState.astro';
+import Notice from '../../../../components/admin/Notice.astro';
+import { noticeFor } from '../../../../lib/admin/notices';
+import { getCategory, listProducts } from '../../../../lib/admin/catalogue';
+
+export const prerender = false;
+
+const admin = Astro.locals.admin!;
+const id = Astro.params.id ?? '';
+const result = await getCategory(id);
+
+// Only a successful read that found nothing is a redirect — see the product page.
+if (result.state === 'ok' && result.data === null) {
+  return Astro.redirect('/admin/catalogue?notice=not-found', 302);
+}
+
+const category = result.state === 'ok' ? result.data : null;
+const products = await listProducts();
+const notice = noticeFor(Astro.url.searchParams.get('notice'));
+
+/*
+ * Every product, not just this category's. A hero is usually one of its own,
+ * but nothing in the schema or the site requires it, and a select that hid the
+ * others would quietly make a legal arrangement unreachable.
+ */
+const choices = products.state === 'ok' ? products.data : [];
+
+/*
+ * A hero that is set to a product which no longer exists is still shown, as an
+ * option that says so. Dropping it would make the select silently disagree with
+ * the record and turn "the hero is broken" into "the hero is unset" — and
+ * `npm run verify` fails the build on exactly this, so it has to be visible.
+ */
+const heroMissing =
+  category !== null &&
+  category.heroProductSlug !== null &&
+  products.state === 'ok' &&
+  !choices.some((p) => p.slug === category.heroProductSlug);
+---
+
+<AdminLayout title={category ? category.name : 'Category'} admin={admin}>
+  <div class="ad-head">
+    <div>
+      <p class="ad-eyebrow"><a class="ad-back" href="/admin/catalogue">← Catalogue</a></p>
+      <h1 class="ad-title">{category ? category.name : 'Category'}</h1>
+      {category && <p class="ad-sub">{category.slug}</p>}
+    </div>
+  </div>
+
+  <Notice notice={notice} />
+
+  {
+    category === null ? (
+      <DataState state={result.state === 'failed' ? 'failed' : 'unconfigured'} subject="category" />
+    ) : (
+      <form method="post" action={`/api/admin/catalogue/categories/${category.id}`}>
+        <section class="ad-card">
+          <h2 class="ad-card__title">Identity</h2>
+          <div class="ad-fields">
+            <p class="ad-field">
+              <label class="ad-label" for="name">
+                Name
+              </label>
+              <input class="ad-input" id="name" name="name" value={category.name} required />
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="description">
+                Description
+              </label>
+              {/* On ONE LINE deliberately. A textarea's value is its children,
+                  whitespace included, so breaking this across lines would save
+                  the description with the template's indentation baked in. */}
+              <textarea class="ad-input ad-textarea" id="description" name="description" rows="4" required>{category.description}</textarea>
+              <span class="ad-hint">Shown at the top of the category page on the public site.</span>
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="id-display">
+                Id
+              </label>
+              <input class="ad-input" id="id-display" value={category.id} disabled />
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="slug-display">
+                Slug
+              </label>
+              <input class="ad-input" id="slug-display" value={category.slug} disabled />
+              <span class="ad-hint">
+                Read only. Changing a category id or slug breaks every link into that range, and
+                every product in it refers to the id.
+              </span>
+            </p>
+          </div>
+        </section>
+
+        <section class="ad-card">
+          <h2 class="ad-card__title">Presentation</h2>
+          <div class="ad-fields">
+            <p class="ad-field">
+              <label class="ad-label" for="hero-product-slug">
+                Hero product
+              </label>
+              {products.state === 'ok' ? (
+                <select class="ad-select" id="hero-product-slug" name="hero-product-slug">
+                  <option value="" selected={category.heroProductSlug === null}>
+                    — none —
+                  </option>
+                  {heroMissing && (
+                    <option value={category.heroProductSlug ?? ''} selected>
+                      {category.heroProductSlug} — no longer in the catalogue
+                    </option>
+                  )}
+                  {choices.map((p) => (
+                    <option value={p.slug} selected={p.slug === category.heroProductSlug}>
+                      {p.name} ({p.slug})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                /* A text field here could name a product that does not exist,
+                   which fails the build's referential invariant hours later on
+                   somebody else's build. With no product list to offer, the
+                   honest control is none. */
+                <>
+                  <input class="ad-input" value={category.heroProductSlug ?? ''} disabled />
+                  <span class="ad-hint">
+                    The product list could not be read, so the hero cannot be changed right now.
+                    Everything else on this form still saves.
+                  </span>
+                </>
+              )}
+              <span class="ad-hint">
+                A list rather than a box on purpose: a hero naming a product that does not exist
+                fails the build, and a list cannot produce one.
+              </span>
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="order">
+                Order
+              </label>
+              <input
+                class="ad-input ad-input--short"
+                id="order"
+                name="order"
+                type="number"
+                step="1"
+                value={category.order}
+                required
+              />
+              <span class="ad-hint">Position within the division. Lower comes first.</span>
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="division-display">
+                Division
+              </label>
+              <input class="ad-input" id="division-display" value={category.divisionId} disabled />
+            </p>
+
+            <p class="ad-field">
+              <label class="ad-label" for="status-display">
+                Status
+              </label>
+              <input class="ad-input" id="status-display" value={category.status} disabled />
+              <span class="ad-hint">
+                Read only. <code>expanding</code> is the public “this range is still growing”
+                state, which changes what the category page says about itself — not presentation.
+              </span>
+            </p>
+          </div>
+        </section>
+
+        <div class="ad-actions">
+          <button class="ad-btn" type="submit">Save changes</button>
+          <a class="ad-link" href={`/catalogue/${category.slug}`}>View on the site</a>
+        </div>
+      </form>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .ad-back {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ad-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .ad-input:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+
+  .ad-input--short {
+    max-width: 10ch;
+  }
+
+  /* .ad-input fixes a 46px height for single-line fields; a textarea has to
+     grow with its rows instead. */
+  .ad-textarea {
+    min-height: 0;
+    padding: 11px 13px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 2px;
+    background: var(--color-black);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+</style>
