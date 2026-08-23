@@ -153,33 +153,31 @@ ${clock!.pipDelays
 /*
  * THE BYTE BUDGET, WHICH IS THE REAL COST OF THIS CHANGE.
  *
- * The helmet was one 18 KB AVIF. Six posters are not, and pretending otherwise
- * would be the kind of unmeasured claim §12 of handoff.md exists to warn about —
- * a 23 KB font cost this page a Lighthouse point once. Measured against the
- * built output, transferred bytes for the whole hero:
+ * The helmet was one 18 KB AVIF. A full-width banner is not, and pretending
+ * otherwise would be the kind of unmeasured claim handoff.md §12 exists to warn
+ * about — a 23 KB font cost this page a Lighthouse point once.
  *
- *                        default q, w<=872     q42, w<=600
- *   desktop 1440 @1x            147 KB            121 KB
- *   desktop 1440 @2x            351 KB            199 KB
- *   phone 390 @3x               381 KB            200 KB
+ * THESE NUMBERS WERE RE-DERIVED ON 2026-08-23 AND THE OLD ONES WERE WRONG.
+ * `widths` stopped at 600 and `sizes` claimed 436px, both correct for the
+ * portrait card this hero used to carry beside its copy. The redesigned hero
+ * puts the band across the full column, and measured in a browser it renders
+ * 1176px wide on a desktop and 350px on a 390px phone. The old numbers handed a
+ * 436px source to a 1174px box — a 2.7x upscale, on the largest image on the
+ * site, and nothing failed because an upscaled image is still an image.
  *
- * Two levers got it there and both are deliberate.
+ * So `sizes` states the measured layout: capped at 1176px once the column stops
+ * growing at 1216px, and `calc(100vw - 40px)` below that, which is the 40px of
+ * gutter measured at 390px. `widths` runs to 2352 — 1176 at DPR 2 — and Astro
+ * clamps to the source, so an upload at the 1400px floor simply gets fewer
+ * variants rather than an upscaled one.
  *
- * `quality={42}`. Astro's default sits ABOVE this — asking for 58 made the
- * files BIGGER, which is worth knowing before someone "optimises" by raising it.
- * 42 was checked at 2x against the artwork's finest detail, which is the QR
- * code: it still resolves cleanly, and a QR that will not scan is the failure
- * mode that matters on these.
- *
- * `widths` stops at 600, not the 872 a DPR-2 desktop would ask for. A 3x phone
- * renders the card at 226px and was pulling the 872 variant — 678px of source
- * for a 226px box. Capping at 600 gives a DPR-2 desktop 1.38x rather than 2x on
- * a decorative poster, which is invisible at this size and halves the transfer.
- * The sources are 1261px wide so nothing can upscale; Astro clamps in any case.
+ * `quality={42}` is kept. Astro default sits ABOVE it — asking for 58 made the
+ * files BIGGER, which is worth knowing before someone "optimises" by raising
+ * it. It was checked at 2x against the old artwork's QR code and re-checked
+ * against a 2000x486 banner at DPR 2 on 2026-08-23.
  */
-const WIDTHS = [137, 226, 300, 436, 600];
-const SIZES =
-  '(max-width: 1180px) and (max-height: 700px) min(38vw, 300px), (max-width: 1180px) min(58vw, 300px), 436px';
+const WIDTHS = [390, 700, 1176, 1600, 2352];
+const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
 ---
 
 <section class="hero">
@@ -521,9 +519,9 @@ const SIZES =
      90px tall on a phone — too short to read as a banner and too short to hold
      its own label — so it opens out to 3:2, which is the proportion the mobile
      mockup draws. That is a real tension worth stating rather than hiding: a
-     single 2800 x 700 artwork cannot fill both, so when real banners arrive
-     either the phone letterboxes them or a second crop is supplied. The slot is
-     empty today, so nothing is being cropped yet. */
+     single 2800 x 700 artwork cannot fill both — which is why only the EMPTY
+     slot opens out. See the media query below: `.hero__frame` holds 4:1 at
+     every width so a real banner is never cropped. */
   .hero__slot {
     display: flex;
     flex-direction: column;
@@ -561,13 +559,22 @@ const SIZES =
      a control row underneath and centring on the whole thing would push the halo
      low. `bottom: 44px` is that row's height plus its gap. */
 
-  /* The card. `aspect-ratio` rather than a height, so the banners' native 0.808
-     drives the box and the image never letterboxes inside its own frame. In
-     normal flow inside the stage, so the control row can simply follow it. */
+  /* The card. `aspect-ratio` rather than a height, so the box is the slot's
+     shape and the control row can simply follow it in normal flow.
+
+     4 / 1, AND IT MUST MATCH `.hero__slot` ABOVE. It was `1261 / 1561` until
+     2026-08-23 — the native ratio of the six portrait posters, correct when
+     they were the artwork and left behind when the hero was redesigned around a
+     4:1 band. The empty slot was rebuilt to 4:1 and this was not, and because
+     no banner existed to render, nothing showed it: the first real upload came
+     back cropped to a tall centre slice of itself.
+
+     The two ratios are one decision. If the slot's shape ever changes, change
+     it here in the same commit. */
   .hero__frame {
     position: relative;
     width: 100%;
-    aspect-ratio: 1261 / 1561;
+    aspect-ratio: 4 / 1;
     margin: 0;
     overflow: hidden;
     border: 1px solid var(--line);
@@ -927,13 +934,21 @@ const SIZES =
     }
   }
 
-  /* THE SLOT OPENS OUT ON A PHONE. At 375px a 4:1 band is 84px tall — too short
-     to read as a banner and too short to hold its own label. 3:2 is what the
-     mobile mockup draws, and it is the honest shape for the empty state.
+  /* THE EMPTY SLOT OPENS OUT ON A PHONE, AND A FILLED ONE DOES NOT.
+     `.hero__slot` only — `.hero__frame` keeps 4:1 at every width.
 
-     When real 2800 x 700 artwork arrives this becomes a decision rather than a
-     detail: either the phone letterboxes it or a second crop is supplied.
-     Nothing is cropped today because the slot is empty. */
+     The empty slot holds an icon and a line of label, and 84px is too short for
+     either, so it takes the 3:2 the mobile mockup draws. A real banner has no
+     such need and a great deal to lose: cropping 4:1 artwork into 3:2 discards
+     about 60% of its width, which on the eye-protection banner means losing
+     either the logo and headline or most of the products. Measured at 390px the
+     band is 350 x 88 and the whole artwork is visible.
+
+     DECIDED 2026-08-23, when the first real banner arrived and the comment that
+     used to sit here said this would become a decision rather than a detail. It
+     did. A short but complete band beats a tall crop of one sixth of the
+     artwork. If a phone-shaped banner is ever wanted, it is a second upload and
+     a second slot, not a crop of this one. */
   @media (max-width: 720px) {
     .hero__slot {
       aspect-ratio: 3 / 2;
