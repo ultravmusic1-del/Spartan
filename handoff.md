@@ -2381,7 +2381,7 @@ live.
 
 ---
 
-## 23. Where to pick up — state as of 2026-08-19
+## 23. Where to pick up — state as of 2026-08-19 (SUPERSEDED by §28)
 
 Written so a new session can continue without re-deriving any of it. §22 is the
 reasoning; this is the state and the next action.
@@ -2976,3 +2976,138 @@ Production was never affected and was checked rather than assumed: the live
 home page carries zero storage references and serves `/_astro` assets.
 `npm run verify` gained an eighteenth gate sweeping the built HTML for a signed
 storage URL, because every other check stayed green through it.
+
+## 28. Where to pick up — state as of 2026-08-23
+
+Written so work can continue on a different computer without re-deriving any of
+it. §23 is the equivalent for 2026-08-19 and is superseded by this. §22 and
+§24–§27 are the reasoning; this is the state and the next action.
+
+### What is true right now
+
+| | |
+|---|---|
+| Branch | `main`, pushed, at `bf29ed2`. Nothing uncommitted. |
+| Gates | **`npm run verify -- --full` = 18/18**, 323 unit tests, 295 end-to-end |
+| Build | 119 pages · 23 server-rendered routes · 8 inline-script CSP hashes |
+| Catalogue | 94 products / 15 categories / 2 divisions, in Postgres |
+| Production | Rendering from Postgres. Catalogue editing, banner management and Publish are all live and have been used by the client. |
+| Supabase | Project `spartan`, ref `wslylysakixrirxkozih`, ACTIVE_HEALTHY |
+| Storage | Private bucket `banners` exists on production, holding the client's uploads |
+| Vercel | `VERCEL_DEPLOY_HOOK_URL` is set on Production, and the Publish button works |
+| Host | Still the temporary `spartan-ebon.vercel.app`. Buying the real domain is a launch blocker in `BACKLOG.md`. |
+
+**Everything the admin needs is already applied to production.** The
+`hero_banners` migration was applied on 2026-08-23 through the Supabase
+connector, and `npm run storage:setup` created the bucket. Neither needs doing
+again, and a fresh clone does not repeat them.
+
+### Setting up the second machine
+
+Everything is in the repository except **one file**.
+
+1. **Clone, then `npm ci`.** Node must be **22.12 or newer**; the work was done
+   on 24.
+2. **Recreate `.env` at the repository root.** It is correctly gitignored and
+   does not travel with the clone. Eight keys, and the first is the one people
+   forget:
+
+   ```
+   CATALOGUE_SOURCE=postgres
+   SUPABASE_URL=
+   SUPABASE_SERVICE_ROLE_KEY=
+   SUPABASE_ANON_KEY=
+   RESEND_API_KEY=
+   ENQUIRY_TO_EMAIL=
+   ENQUIRY_FROM_EMAIL=
+   VERCEL_DEPLOY_HOOK_URL=
+   ```
+
+   **`SUPABASE_SERVICE_ROLE_KEY` bypasses row-level security completely.** The
+   enquiries table has RLS with zero policies, so that key is the only thing
+   between the public internet and every name, email address and phone number
+   the site has collected. Move it the way you would move a password — a
+   password manager or the Supabase dashboard, never email or chat. Both it and
+   the anon key can be re-read from Supabase → Project Settings → API Keys, so
+   copying them is never necessary.
+
+   **`VERCEL_DEPLOY_HOOK_URL` is also a credential**: anyone holding it can
+   trigger production builds. Vercel → Settings → Git → Deploy Hooks.
+
+3. **Install Docker Desktop and start it.** On Windows it needs WSL 2:
+   `wsl --install` in an Administrator PowerShell, reboot, then install Docker
+   and choose the WSL 2 backend. Docker is required for `npm run dev:test` and
+   for `npm run verify -- --full`; ordinary public-site work does not need it.
+4. **`npx playwright install`** for the browser binaries.
+5. **Verify before writing anything:**
+
+   ```bash
+   npm run verify            # expect 17/17 (playwright skipped)
+   npm run test:db:start     # expect 94 products, 15 categories, bucket created
+   npm run verify -- --full  # expect 18/18
+   npm run test:db:stop
+   ```
+
+Two generated files are gitignored and will be absent on a fresh clone, which is
+correct: `seed.sql` (written by `tools/seed-catalogue.mjs`) and `.test-db.json`
+(written by `npm run test:db:start` while the throwaway stack is up).
+
+### The one thing to get right on day one
+
+**`npm run dev` is the wrong command for `/admin`.**
+
+`.env` holds the live project's credentials, and `astro dev` loads `.env`, so a
+plain `npm run dev` session at `/admin/catalogue` edits the client's real
+catalogue and the Publish button deploys the production site. Neither asks.
+
+```bash
+npm run dev        # public pages only
+npm run dev:test   # the admin: throwaway database, deploy hook and mail blanked
+npm run test:db:stop
+```
+
+`npm run dev:test` starts the stack itself, points the dev server at it and
+prints the test admin's sign-in. See §26 and `README.md`.
+
+### What is finished, and where the reasoning lives
+
+- **§24** — catalogue editing at `/admin/catalogue`. Shared-schema validation,
+  read-only fields enforced by absence, Publish reports "Build requested".
+- **§25** — the specification table stopped being two layouts at once.
+- **§26** — hero banners uploaded from `/admin/banners` into a private bucket,
+  optimised at build time.
+- **§27** — the hero header's crest, oblique headline and closing rule, plus the
+  three silent failures that work turned up.
+
+`docs/TRAPS.md` grew by twelve entries over 2026-08-23. Read it before touching the
+hero, the admin or anything that resolves an image — several of them are things
+that leave a working-looking page.
+
+### What to pick up next
+
+`BACKLOG.md` is the list; these are the ones this work created or sharpened.
+
+1. **Nothing in code stops the two wrong-fact posters returning.** The test that
+   asserted the Grip Guard GP1 and Orbit Fan artworks were not enabled matched
+   on filename, and uploaded banners have generated paths. GP1 advertises cut
+   resistance the glove does not have. The suggested replacement is a per-banner
+   "checked against source" flag the admin must set before Show will work.
+2. **Sign off the weight scale against the approved design.** Already open, and
+   §27 made it concrete: the hero headline is now the one element exceeding the
+   scale's ceiling, scoped to `.hero__title` rather than the token.
+3. **Re-measure the home page's Lighthouse score.** The hero gained a heavy
+   headline and a full-width banner since the last measurement, and the banner
+   is now the largest image on the site.
+4. **Make `status: 'draft'` actually hide a product**, and the same for a
+   category's `expanding`. Both switches exist in the data and filter nothing.
+5. **Buy the real domain.** Still the largest launch blocker, and it is one
+   value in `astro.config.mjs` plus a redirect.
+
+### One flaky test, named rather than re-rolled
+
+`[mobile] /enquiry › lists the basket and persists quantity edits to the store`
+fails roughly twice in six full-suite runs locally under eight workers and
+passes in isolation. It went red once during this work and passed on every run
+after. It is in `BACKLOG.md` with the reproduction advice. **Do not treat a
+single green run as proof it is gone**, and do not re-roll it into a retry
+without reading that entry first.
