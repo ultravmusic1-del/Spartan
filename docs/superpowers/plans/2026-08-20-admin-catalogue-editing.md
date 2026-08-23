@@ -50,7 +50,12 @@ Node must be 22.12 or newer; the work was done on 24.
 - **Tasks 1, 2, 3: done and committed.** The schema is captured as migrations, `npm run test:db:start` gives a seeded throwaway database with a working test admin, and `src/lib/admin/catalogue.ts` has its read side with the mapping tested both ways.
 - **An unplanned fix landed between 2 and 3:** `supabase/migrations/20260820120000_table_grants.sql`. The captured DDL rebuilt a database the application could not write to, because Supabase issues GRANTs itself for anything made through Studio. Read that file's comment before touching permissions.
 - **Task 3 moved the Zod schemas** out of `src/content.config.ts` into `src/lib/catalogue-schema.ts`, which re-exports them so every existing import still works. There is still exactly one `productSchema`. This was done because importing `content.config.ts` from admin code dragged the whole Content Layer graph — and a module-scope `throw` — into the server bundle.
-- **Task 4 is next and has not been started.** An earlier attempt died mid-edit and was reverted; the branch is clean and green at 16/16.
+- **Task 4: done and committed.** `acceptProductEdit`, `acceptCategoryEdit`, `saveProduct` and `saveCategory` are in, 13 new unit tests, 305 passing.
+- **Task 4 deviated from the code printed below in three places, and the printed code is wrong in all three.** It was written before Task 3 landed, so it calls `db()` and `configured(...)` where the module actually has `client()` and `ready()`; that part is mechanical. The other two are not:
+  1. **`specsFromForm` dropped every per-row `source`.** 67 spec rows across the 94 products carry one, including the FR certification rows the schema singles out as the ones most worth auditing, and the form has nowhere to show or post it. Saving any such product through the printed code would have deleted its provenance silently. It is now carried over by index and **only while the value is byte-identical** — carrying it across an edit would claim the new value came off that page. Tested both ways.
+  2. **Spreading `...current` made clearing a field impossible.** An emptied Kavalani or datasheet box posts an empty string, the conditional spread declines to set the key, and the old link survives underneath. The candidate is now built field by field, so a blank box means blank. Tested.
+  Two smaller ones: blank numbers reach the schema as `NaN` rather than `Number('') === 0`, so an emptied order box is refused instead of moving the product to the front of its category; and `acceptProductEdit` takes `ProductRecord`, not `Product`, because that is what `getProduct` returns.
+- **Task 5 is next.**
 
 ### One decision Task 4 must respect
 
