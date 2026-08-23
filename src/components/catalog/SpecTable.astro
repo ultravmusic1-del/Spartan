@@ -39,20 +39,31 @@ interface Props {
 const { specs, caption, class: cls = '' } = Astro.props;
 
 /*
- * Does this table have a label column at all?
+ * DOES A LABEL COLUMN EARN ITS WIDTH ON THIS PRODUCT?
  *
- * 49 of the 94 products mix labelled rows with unlabelled ones, 36 are all
- * labelled and 9 are all sentences. A feature row indents into the value column
- * so that every piece of CONTENT shares one left edge and the labels sit in a
- * margin — but on a product with no labels there is no margin to sit in, and
- * indenting into an empty one would be 38% of the width given to nothing.
+ * A column exists to align things. That is worth 38% of the table on
+ * `slim-led-panels`, where eleven labelled rows line their values up under each
+ * other — and it is worth nothing on `safety-helmets`, where one row is
+ * labelled `Colors` and four are sentences, so the column is a wide empty
+ * channel with a single word in it. Reserving a column that four rows in five
+ * leave blank is the clunkiness; removing the borders around it only made the
+ * emptiness easier to see.
+ *
+ * So the structure follows the content. Two columns when at least half the rows
+ * carry a label and there are at least two labels to align (75 products);
+ * otherwise the label sits inline in front of its value and every row starts at
+ * the same edge (10 products). Nine have no labels at all.
+ *
+ * The `>= 2` matters on its own: one labelled row has nothing to align against,
+ * so a column for it is overhead however few sentences sit beside it.
  */
-const hasLabels = specs.some((spec) => spec.label !== null && spec.label !== '');
+const labelled = specs.filter((spec) => spec.label !== null && spec.label !== '').length;
+const useColumn = labelled >= 2 && labelled * 2 >= specs.length;
 ---
 
 {
   specs.length > 0 && (
-    <table class:list={['spec', cls]} role="table">
+    <table class:list={['spec', { 'spec--inline': !useColumn }, cls]} role="table">
       <caption class="vh">{caption}</caption>
       <tbody role="rowgroup">
         {specs.map((spec) =>
@@ -63,8 +74,8 @@ const hasLabels = specs.some((spec) => spec.label !== null && spec.label !== '')
                   against a different box than the `th`'s width does, and land
                   a few pixels off — which on the one alignment this table is
                   built around is worse than not indenting at all. */}
-              {hasLabels && <td class="spec__gutter" role="cell" />}
-              <td class="spec__feature" role="cell" colspan={hasLabels ? undefined : '2'}>
+              {useColumn && <td class="spec__gutter" role="cell" />}
+              <td class="spec__feature" role="cell" colspan={useColumn ? undefined : '2'}>
                 {spec.value}
               </td>
             </tr>
@@ -176,6 +187,42 @@ const hasLabels = specs.some((spec) => spec.label !== null && spec.label !== '')
   }
 
   /*
+   * NO COLUMN — the label rides in front of its value and every row starts at
+   * the same edge. Used on the 10 products where fewer than half the rows carry
+   * a label, so a column would be mostly empty. See `useColumn` above.
+   *
+   * The label is still a `th` and still carries `scope="row"`, so the pairing a
+   * screen reader announces is unchanged; only the box it is drawn in moved.
+   * `display: inline` is what lets the label and the value share a line and wrap
+   * as one flow, and the explicit roles in the markup are what keep the table a
+   * table while it does — the same reason the mobile rule below needs them.
+   */
+  .spec--inline,
+  .spec--inline tbody,
+  .spec--inline tr {
+    display: block;
+  }
+
+  .spec--inline tr {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .spec--inline th,
+  .spec--inline td {
+    display: inline;
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  /* Enough of a gap that the label reads as a label and not as the first word
+     of the value. */
+  .spec--inline th {
+    margin-right: 12px;
+  }
+
+  /*
    * BELOW 620px THE GUTTER STOPS PAYING FOR ITSELF, so the pair stacks.
    *
    * Measured at 375px before this rule existed: the table is 335px wide, the
@@ -211,7 +258,10 @@ const hasLabels = specs.some((spec) => spec.label !== null && spec.label !== '')
       border: 0;
     }
 
+    /* margin-right is the inline mode's label/value gap and means nothing once
+       the label is a full-width block above its value. */
     .spec th {
+      margin-right: 0;
       margin-bottom: 5px;
     }
 

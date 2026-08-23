@@ -2690,13 +2690,50 @@ is preserved everywhere.**
 What changed instead: the vertical rules and the fill are gone, rows are
 separated by a single horizontal rule, and an unlabelled row indents into the
 value column so that every piece of *content* shares one left edge with the
-labels in a margin beside it. All five rows on the helmet page now measure
-222@637 + 362@859.
+labels in a margin beside it.
 
 The indent is an empty `<td>`, not a percentage padding on a spanning cell,
 because a percentage on that cell resolves against a different box than the
 `th`'s `width: 38%` does and lands a few pixels out — on the one alignment the
 layout is built around, approximately aligned is worse than not aligned.
+
+### That fixed the noise and not the structure — the second pass
+
+**The first pass above was half an answer, and the client said so.** Removing
+the borders and the fill stopped the grid flickering, but the *column* was still
+there: 38% of the table reserved on `safety-helmets` for one row in five, so the
+page went from a broken grid to a wide empty channel with the single word
+`COLORS` in it. Making the emptiness tidier made it easier to see.
+
+**A column exists to align things, and it should only be drawn when it has
+things to align.** That is now a decision the component makes per product:
+
+```
+useColumn = labelled >= 2 && labelled * 2 >= specs.length
+```
+
+Two columns when at least half the rows carry a label and there are at least two
+labels to line up — 75 products, including every all-labelled one and the fans,
+where eleven values reading down a column is the whole point. Otherwise the
+label sits inline in front of its value and every row starts at the same edge —
+10 products. Nine have no labels at all and never had a column.
+
+The `>= 2` earns its place on its own: one labelled row has nothing to align
+against, so a column for it is overhead no matter how few sentences sit beside
+it. `bracket` has exactly one spec row and would otherwise have had a column
+built for it.
+
+Inline mode keeps the `th` and its `scope="row"` — only the box moved, so what a
+screen reader announces is unchanged. It is `display: inline` on the cells
+inside a `display: block` row, which is the same semantics-stripping trick the
+mobile rule uses and needs the same explicit roles to survive. Verified in the
+accessibility tree: `table → rowgroup → row → rowheader "Colors" → cell`, and
+the empty gutter cells are gone from the tree entirely rather than announcing as
+blank.
+
+Measured on the helmet page: every row starts at x=637, the label runs 637→690
+and its value 702→1059. On `fire-retardant-pants` — 8 labelled rows and one
+sentence — the column stays, labels at 637, every value and the sentence at 859.
 
 Products whose specs are *all* unlabelled (9 of them) get no gutter at all;
 `hasLabels` decides. A 38% margin held open for nothing is not a margin.
