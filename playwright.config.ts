@@ -122,7 +122,7 @@ export default defineConfig({
        * screen whose job is to be trusted about the data. The admin's layout
        * is covered on mobile by a11y.spec.ts and contrast.spec.ts.
        */
-      testIgnore: /admin-catalogue\.spec\.ts/,
+      testIgnore: /admin-(catalogue|banners)\.spec\.ts/,
     },
   ],
 
