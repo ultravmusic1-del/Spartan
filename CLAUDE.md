@@ -97,6 +97,27 @@ at `/admin`, the detail and status workflow, the demand report and the CSV
 export all read through `src/lib/admin/enquiries.ts`, which is the admin's
 equivalent of the catalogue seam (`handoff.md` §13).
 
+**Catalogue editing is live at `/admin/catalogue` (`handoff.md` §24).**
+`src/lib/admin/catalogue.ts` is the only thing in the running site that writes a
+product, and it validates against the **same** `productSchema` and
+`categorySchema` the Content Layer uses at build time — one definition, in
+`src/lib/catalogue-schema.ts`. An admin-side copy is the trap: the two drift and
+a build fails hours later, on somebody else's push, on a record they have never
+heard of. **Read-only fields are enforced by ABSENCE from the accepted-field
+list, never by a `readonly` attribute**, which is a hint to a browser and not a
+control: `slug`, `en388`, `source` and `status` are carried over from the stored
+record and never read from the form. `en388` is the one that matters — **X means
+not submitted for that test, not failed**, so promoting one advertises
+protection the glove was never tested for. Publish reports "Build requested",
+never "Published", and refuses outright when unconfigured, which is deliberately
+the opposite of the enquiry rule: an unconfigured enquiry was still recorded, an
+unconfigured publish records nothing.
+
+The authenticated end-to-end tests need a throwaway database: `npm run
+test:db:start` before `npm run verify -- --full`, which **fails without it
+rather than skipping them**. They save products and press Publish, so pointing
+them at the live project would edit the client's catalogue and deploy the site.
+
 **No inline scripts on any `/admin` page — they cannot be hashed and will be
 blocked.** `npm run csp` derives its hashes from `dist/client`, and admin routes
 are server-rendered so they are never in it. An inline script there ships
@@ -129,7 +150,9 @@ before `import.meta.env` and the order is the whole point; its header says why.
 
 ```bash
 npm run verify            # typecheck, unit tests, invariants, build, output sweeps
+npm run test:db:start     # throwaway Supabase stack — --full REFUSES to run without it
 npm run verify -- --full  # ... and Playwright (stop the dev server first)
+npm run test:db:stop
 npm run csp               # regenerate vercel.json's CSP hashes after a build
 npm run counts            # regenerate the counts block above after a build
 ```

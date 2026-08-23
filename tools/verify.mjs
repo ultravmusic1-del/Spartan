@@ -740,6 +740,32 @@ let unitTests = null;
 
 if (full) {
   /*
+   * THE THROWAWAY DATABASE IS A PRECONDITION, NOT AN OPTION.
+   *
+   * tests/e2e/admin-catalogue.spec.ts signs in and saves products. Without the
+   * local stack it has nowhere safe to do that, and the only alternative to
+   * stopping here is running it against whatever SUPABASE_URL happens to hold —
+   * which, on the machine of anyone who can deploy this site, is the client's
+   * live catalogue.
+   *
+   * It stops rather than skipping the spec. A suite that quietly dropped its
+   * only authenticated tests and still printed green would be a worse outcome
+   * than a red run with an instruction in it.
+   */
+  if (!fs.existsSync(path.join(root, '.test-db.json'))) {
+    record(
+      'playwright',
+      false,
+      'the authenticated admin tests need the local test database — run `npm run test:db:start` ' +
+        'first. They must not run against the live project.',
+    );
+    console.log(
+      `\n${'VERIFY FAILED'} — ${results.filter((r) => r.ok).length}/${results.length} gates\n`,
+    );
+    process.exit(1);
+  }
+
+  /*
    * Playwright attaches to whatever is already listening on 4321 rather than
    * building — handoff.md §7. With `astro dev` running this produces confident
    * failures that have nothing to do with the change under test, so say so

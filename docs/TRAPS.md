@@ -306,6 +306,49 @@ in `handoff.md`; this file states the trap and moves on.
   view was fine — an insert's rows in a CTE are not visible to a `SELECT`
   elsewhere in that same statement, only to statements that run after it.
 
+- **An admin-side copy of the catalogue schema.** `src/lib/admin/catalogue.ts`
+  validates a save against `productSchema` and `categorySchema` imported from
+  `src/lib/catalogue-schema.ts`, which is the same object the Content Layer
+  validates with at build time. Copy them "to decouple the admin" and the two
+  drift, and the failure is both delayed and misattributed: a save passes, the
+  row looks fine, the admin screen renders it, and a build fails hours later —
+  possibly one somebody else triggered for an unrelated reason, on a record they
+  have never heard of.
+  *Caught by:* nothing. Keep the import. The schemas live in their own file, and
+  not in `src/content.config.ts`, only because importing that at runtime drags
+  the whole Content Layer graph into an admin route — that file re-exports them,
+  so there is still exactly one of each.
+
+- **Reading a form field that is absent as if it were blank.** `FormData.get`
+  returns null for a key the form never sent, and `?? ''` turns that into "the
+  editor cleared this". They are not the same thing, and conflating them makes
+  every partial POST destructive: the product form drops its category `select`
+  when the category list cannot be read, so it posts no `category-id` at all,
+  and an end-to-end test that posts three fields would delete every
+  specification on the product it is checking. `given()` in
+  `src/lib/admin/catalogue.ts` returns null for absent and `''` for cleared, and
+  every caller distinguishes them.
+  *Caught by:* `src/lib/admin/catalogue.test.ts` — "changes only what was
+  posted, and loses nothing that was not". Nothing else would have.
+
+- **`Number('')` is 0, not NaN.** An emptied number box therefore satisfies
+  `z.number().int()` and saves — an order of 0 moves a product silently to the
+  front of its category rather than being refused. Blank has to reach the schema
+  as something it rejects.
+  *Caught by:* `src/lib/admin/catalogue.test.ts` — "rejects a blank order rather
+  than reading it as zero".
+
+- **A test that forges a POST and passes because the POST was refused.** Astro's
+  `security.checkOrigin` defaults to on and answers 403 to any on-demand POST
+  whose `Origin` header does not match the site. Playwright's `request` fixture
+  sends none, so `tests/e2e/admin-catalogue.spec.ts`'s "the slug cannot be
+  changed by posting one" and its EN 388 twin both passed green against a
+  request the server never processed — proving nothing about read-only fields.
+  Any test whose claim is "the write went through and this field still did not
+  move" has to assert that the write went through.
+  *Caught by:* `forge()` in that file, which requires a 302 to
+  `notice=catalogue-saved` before it will check anything.
+
 ## Looks like a defect, is not
 
 Several of these have already been reported as regressions by someone who

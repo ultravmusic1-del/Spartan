@@ -1,11 +1,16 @@
 /**
  * The admin boundary, tested against the real built app.
  *
- * CI holds no Supabase credentials, so `authConfigured()` is false and
- * `currentAdmin()` returns null for every request. That is exactly the state
- * these tests need: an unauthenticated visitor. What is asserted here is that
- * such a visitor gets NOTHING — which is the property that matters most and the
- * one that must hold whether or not the deployment is configured.
+ * Every test here is an UNAUTHENTICATED visitor, and what is asserted is that
+ * such a visitor gets NOTHING. That property must hold whether or not the
+ * deployment is configured, which is why nothing below depends on either.
+ *
+ * It used to depend on it by accident: the file said CI holds no Supabase
+ * credentials, so `authConfigured()` is false and `currentAdmin()` returns null
+ * for every request. Since 2026-08-23 CI runs a throwaway Supabase stack for
+ * the authenticated tests, so auth IS configured and these pass for the reason
+ * they always claimed to — no session, no admin. tests/e2e/admin-catalogue.spec.ts
+ * is the other half: what happens once someone is in.
  */
 import { test, expect } from '@playwright/test';
 

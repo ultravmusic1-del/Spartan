@@ -1,12 +1,31 @@
 # Editing the Spartan catalogue
 
-This guide is for whoever maintains the product catalogue **before the admin dashboard exists**. You do not need to be a developer, but you do need to edit JSON files carefully.
+> **Since 2026-08-23 there is a screen for this: sign in and go to `/admin/catalogue`.**
+>
+> It lists every product and category, validates a change against the same rules
+> the build uses, and records who changed what. **Use it in preference to this
+> guide.** It cannot do everything — images, slugs and EN 388 ratings are not
+> editable there, and creating a new product is not built yet — so the file
+> route below is still the answer for those.
+>
+> **Read the rules in this guide either way.** They are about the data, not about
+> the format, and every one of them applies to the admin screen too.
+>
+> **And know which source the site is actually reading.** Production has rendered
+> the catalogue from **Postgres** since 2026-08-19, so an edit to the JSON files
+> below changes nothing on the live site on its own — the JSON is the offline
+> fallback (`CATALOGUE_SOURCE=json`) and the seed the database was built from.
+> Getting a file edit into production means reseeding the database from it, which
+> is a developer's job. An edit made at `/admin/catalogue` needs only a build,
+> which the Publish button requests.
 
-Everything the site shows comes from four files in `src/data/`:
+This guide is for whoever maintains the product catalogue in the files. You do not need to be a developer, but you do need to edit JSON files carefully.
+
+Four files in `src/data/`:
 
 | File | What is in it |
 |---|---|
-| `products.json` | All 72 products |
+| `products.json` | All 94 products |
 | `categories.json` | All 15 categories |
 | `divisions.json` | The two divisions (Electricals, Safety). You will almost never touch this. |
 | `site.json` | Phone, email, address, industries. Not catalogue content. |

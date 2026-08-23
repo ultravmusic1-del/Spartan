@@ -2487,3 +2487,177 @@ into a chat transcript on 2026-08-19. All three rotate in minutes. The
 service-role key is the one that matters: it bypasses row-level security on
 every table, including the one holding every name, email address and phone
 number the site has collected.
+
+## 24. The catalogue is editable from /admin — 2026-08-23
+
+Plan: `docs/superpowers/plans/2026-08-20-admin-catalogue-editing.md`.
+Spec: `docs/superpowers/specs/2026-08-20-admin-catalogue-editing-design.md`.
+
+A signed-in admin can now browse every product and category, correct any field
+except the slug and the EN 388 rating, and press Publish to request a build.
+Six new server-rendered routes, no client-side JavaScript, one repository
+module that is the only thing in the running site that writes a product.
+
+### The three decisions that carry the weight
+
+**Validation uses the schemas the build uses. There is no admin-side copy.**
+`productSchema` and `categorySchema` now live in `src/lib/catalogue-schema.ts`
+and `src/content.config.ts` re-exports them, so every existing import still
+works and there is still exactly one of each. A save is validated against the
+same object the Content Layer validates against at build time, which turns "this
+edit would break the next build" into a form error at the moment somebody can
+act on it. A copy is the obvious implementation and is a trap — the two drift,
+and the failure lands hours later on a build somebody else triggered, on a
+record they have never heard of.
+
+They moved out of `content.config.ts` rather than being imported from it, and
+that was measured before it was chosen: a server route that used the schema at
+runtime came back with `node:fs`, `js-yaml`, `smol-toml`, `picomatch`,
+`xxhash-wasm` and the loader's build-time error strings in its chunk, plus
+`content.config.ts`'s module-scope `CATALOGUE_SOURCE` throw newly able to fail an
+admin cold start.
+
+**Read-only fields are enforced by ABSENCE from the accepted-field list.**
+`slug`, `en388`, `source` and `status` are never read from the form. They are
+carried over from the record already in the database, so a hand-crafted POST
+that sets them changes nothing. The forms render them disabled, and that is a
+courtesy to whoever is reading rather than the control — a `readonly` attribute
+is a hint to a browser and a hand-written request ignores it. Both the unit
+tests and the end-to-end tests post a forged slug, a forged EN 388 grade and a
+forged source to prove it.
+
+`en388` is the one that matters most. **X means the glove was not submitted for
+that test, not that it failed**, so promoting an X to a D would advertise cut
+resistance the glove has never been tested for. That is rule 1 on a piece of
+protective equipment, not a cosmetic defect, which is why the grade is set from
+the brochure by a developer and the form only displays it.
+
+**Publish reports "Build requested", never "Published", and refuses outright
+when unconfigured.** The deploy hook returns a job id the moment it accepts and
+knows nothing about whether the build succeeds. Refusing when there is no hook
+is deliberately the opposite of the enquiry rule: an unconfigured enquiry was
+still written to Postgres and so was not lost, while an unconfigured publish
+records nothing at all.
+
+### What the plan got wrong, and why it matters
+
+The plan was written before Task 3 landed and its Task 4 code was wrong in ways
+worth keeping a record of, because two of them would have destroyed data
+silently.
+
+**`specsFromForm` dropped every per-row `source`.** 67 spec rows across the 94
+products carry one, including the FR certification rows the schema singles out
+as the ones most worth auditing — they were read off a marketing banner that
+prints an EN 388 rating contradicting the glove's own label, which is precisely
+why "audit a spec back to the page it came from" exists as a field. The form
+has nowhere to show it and nowhere to post it, so saving any such product would
+have deleted its provenance with nothing to show for it. It is now carried over
+by index and **only while the value is byte-identical**: carrying it across an
+edit would be worse than dropping it, because it would claim the new value came
+off that page. The edit form therefore has to render existing spec rows first
+and in order — that coupling is load-bearing and is commented at both ends.
+
+**Spreading `...current` made clearing a field impossible.** An emptied Kavalani
+box posts an empty string, a conditional spread declines to set the key, and the
+old link survives underneath forever. Worse, the same conflation of *absent* and
+*blank* made every partial POST destructive. The rule is now uniform and stated
+in one place: a key missing from the form means the form did not offer that
+field, so it is unchanged; a key present and empty means the editor cleared the
+box.
+
+That is not hypothetical. The product form drops its category `select` when the
+category list cannot be read, so it posts no `category-id` at all — and the
+plan's own end-to-end test posts three fields, which under the old reading would
+have deleted every specification on the product it was proving could not be
+hijacked.
+
+**Two fields could still be blanked by a forged POST in a way the schema
+accepted, so the shared schema was tightened rather than a second set of rules
+added.** `productSchema.name`, `productSchema.categoryId`,
+`categorySchema.name` and `categorySchema.description` are `.min(1)` as of
+2026-08-23. `categoryId` is the sharp one: an empty one parsed fine and then
+failed `npm run verify`'s referential invariant hours later, which is exactly
+the delayed misattributed failure the shared-schema decision exists to prevent.
+Verified against all 94 products and all 15 categories first — zero empties.
+`slug`, `id` and `divisionId` were deliberately left alone and are in
+`BACKLOG.md`; nothing can write them today.
+
+### The Status control was dropped on purpose
+
+The spec sketched a Published/Hidden control. `productSchema` declares
+`status: 'published' | 'draft'` and **nothing filters on it** — neither
+`src/lib/catalog.ts` nor `src/loaders/supabase-catalogue.ts` excludes drafts, so
+a product set to draft still renders publicly. Shipping the control would be a
+switch that does nothing, which this repository has already removed twice.
+
+Making it real is not the three-line filter it looks like: hiding a product
+moves the built page count that `tools/counts.test.ts` pins and the totals in
+`tools/catalogue-snapshot.json`, so both gates need to express "94 products, 91
+of them visible" rather than one number. It is filed in `BACKLOG.md` under P1,
+and the form shows Status as read-only meanwhile.
+
+"Add a specification" went the same way. As the plan drafted it, the button
+submitted the form exactly as Save did and the page appended one blank row
+either way. Making it real needs either JavaScript, which no admin page may
+have, or a blank-row counter in the query string. Three blank rows do the same
+job with neither, and saving yields three more.
+
+### The first authenticated tests, and the throwaway database
+
+Everything in `tests/e2e/admin.spec.ts` proves the guard turns people away.
+Nothing had ever proved what happens after someone gets in, which was fine while
+the admin only read data.
+
+`npm run test:db:start` brings up a four-container Supabase stack, applies
+`supabase/migrations`, seeds the catalogue and creates a test admin, and now
+also writes `.test-db.json`. That file is the answer to "is the throwaway stack
+up?" for everything that needs to know: `playwright.config.ts` feeds its
+credentials to the preview server, `tests/e2e/admin-catalogue.spec.ts` throws
+without it, and `npm run verify -- --full` fails without it. CI runs
+`npm run test:db:start` before verify and its timeout went from 20 to 30.
+
+**It fails rather than skipping**, and that is the whole point. A suite that
+quietly dropped its only authenticated tests and still printed green is a worse
+outcome than a red run with an instruction in it. The alternative to stopping is
+running tests that save products against whatever `SUPABASE_URL` holds, which on
+the machine of anyone who can deploy this site is the client's live catalogue —
+and the publish test would deploy the production site. Playwright also stops
+reusing an existing preview server in that mode, because one left running from
+ordinary work holds the live credentials, and it blanks the deploy hook and the
+Resend credentials so no run can trigger a deployment or post a test enquiry to
+the client's real inbox.
+
+**Two of those tests passed against a 403 before they asserted anything.**
+Astro's `security.checkOrigin` defaults to on and refuses an on-demand POST
+whose `Origin` header does not match the site — a genuine cross-site-request
+defence nobody here had written down or tested. The forged-slug and forged-EN
+388 tests were checking "the field did not change" about a request the server
+had never processed. They now send the header a browser would, `forge()`
+requires a 302 to `notice=catalogue-saved` before it checks anything, and a
+separate test pins the origin defence itself.
+
+### One thing this changed elsewhere
+
+Three enquiry tests hard-coded `recorded: false`, which was correct only because
+no local or CI run had ever had a database behind the preview server. With the
+throwaway stack up, an enquiry genuinely is recorded, and `recorded: false`
+became a false statement rather than a strict one. `tests/e2e/stack.ts` derives
+the expected outcome from the run's configuration and both branches are asserted
+in full — including that the "not configured, this has not reached the Spartan
+team" copy is **absent** when the row was written, which would otherwise send a
+buyer chasing an email for an enquiry that was already captured. Relaxing them
+to accept either answer would have deleted the property they exist for. The nine
+channel combinations stay unit-tested in `src/lib/enquiry-outcome.test.ts`,
+without a database.
+
+### There is no locking
+
+Two admins editing the same product means the second save wins and the first is
+lost. For a team of two to five that is the right trade — but *silently* is the
+operative word, which is why every save writes a `catalogue_audit` row carrying
+`before`. The overwritten values are recoverable from it.
+
+A failed audit insert does not fail the save. The row is already written by
+then, so returning `failed` would tell an editor their change was lost when it
+was kept — rule 2's principle in a third place. It logs loudly instead, naming
+the record that was saved but not audited.

@@ -539,6 +539,33 @@ see `handoff.md`). Priorities are P0 highest.
       `CATALOGUE_SOURCE=json|postgres` escape hatch rather than pretending
       otherwise.
 
+- [ ] **Make `status: 'draft'` actually hide a product.** `productSchema`
+      declares it and **nothing filters on it**: neither `src/lib/catalog.ts`
+      nor `src/loaders/supabase-catalogue.ts` excludes drafts, so a product set
+      to draft still renders publicly. The admin edit form deliberately does not
+      offer the control, and shows Status as read-only instead, because a switch
+      that does nothing is the defect this repo has already removed twice.
+
+      It is not the three-line filter it looks like. Hiding a product changes
+      the built page count that `tools/counts.test.ts` pins and the totals in
+      `tools/catalogue-snapshot.json`, and both gates need reworking to express
+      "94 products, 91 of them visible" rather than one number. The category
+      form has the same shape of gap for `status: expanding`, which DOES change
+      what the public page says and so is a smaller job.
+
+- [ ] **Three identifier fields can still be empty as far as the schema is
+      concerned.** `name`, `categoryId` and a category's `description` were
+      tightened to `.min(1)` on 2026-08-23, when the admin form made a blank one
+      reachable. `slug`, `id` and `divisionId` were left as bare `z.string()`
+      because nothing can write them — they are carried over from the existing
+      record on every save, so today the only way to get an empty one is to
+      insert it into Postgres by hand.
+
+      It becomes real the day admin-*created* records land, and it arrives
+      alongside the other decision that stage forces: `productSchema` requires
+      `source` while `products.source` is nullable, deliberately, because a
+      record typed into the admin has no brochure page to cite. Both belong in
+      that piece of work rather than being guessed at now.
 - [x] **Add `/catalogue` to the primary navigation.** Done — see Done below.
 
 - [x] **Build the search UI.** Done — see Done below.

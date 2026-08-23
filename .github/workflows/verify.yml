@@ -22,8 +22,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     # Generous, but a hung Playwright run should not burn 6 hours of the
-    # default before anyone notices.
-    timeout-minutes: 20
+    # default before anyone notices. Raised from 20 when the throwaway Supabase
+    # stack joined the run: `supabase start` pulls and boots four containers.
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +45,17 @@ jobs:
       # Chromium only: both Playwright projects use it (Desktop Chrome and
       # Pixel 5). `--with-deps` installs the system libraries the runner lacks.
       - run: npx playwright install --with-deps chromium
+
+      # The authenticated admin tests sign in and save products, so they need a
+      # database they are allowed to break. This brings up a throwaway Supabase
+      # stack, applies supabase/migrations, seeds the catalogue and creates a
+      # test admin. Ubuntu runners ship Docker, so no setup action is needed.
+      #
+      # `npm run verify -- --full` FAILS without it rather than skipping the
+      # spec — see tools/verify.mjs. A run that quietly dropped its only
+      # authenticated tests and still printed green is the outcome worth
+      # preventing, so this step is a precondition and not a convenience.
+      - run: npm run test:db:start
 
       # typecheck, unit tests, the admin seam, catalogue shape, build, the
       # output sweeps, the CSP hashes, robots.txt, and the e2e suite.
