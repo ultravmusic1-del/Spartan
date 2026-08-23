@@ -566,6 +566,22 @@ see `handoff.md`). Priorities are P0 highest.
       `source` while `products.source` is nullable, deliberately, because a
       record typed into the admin has no brochure page to cite. Both belong in
       that piece of work rather than being guessed at now.
+- [ ] **Apply the hero banner migration to the live project.** `hero_banners`
+      exists only in the throwaway stack. Until
+      `supabase/migrations/20260823120000_hero_banners.sql` is applied to
+      production and `npm run storage:setup` has created the bucket, **the
+      production build fails** — loudly and on purpose, rather than rendering a
+      hero with no band. Nothing else in the deploy performs this step.
+
+- [ ] **Nothing in code stops the two wrong-fact posters returning.**
+      `site-content.test.ts` used to assert that the Grip Guard GP1 and Orbit
+      Fan artworks were not enabled, matching on filename. Uploaded banners have
+      generated paths and admin-chosen names, so that test could not survive and
+      was removed rather than weakened. GP1 prints an EN 388 icon reading 4X43D
+      against the glove's own label of 4131X — cut resistance advertised where
+      the glove says NOT TESTED. If a reissue is ever uploaded, the artwork must
+      be corrected first. Worth considering a per-banner "checked against
+      source" flag the admin has to set before Show will work.
 - [x] **Add `/catalogue` to the primary navigation.** Done — see Done below.
 
 - [x] **Build the search UI.** Done — see Done below.

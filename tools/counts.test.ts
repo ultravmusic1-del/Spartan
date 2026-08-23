@@ -94,7 +94,9 @@ describe('computeCounts', () => {
     // five the enquiry inbox added (/admin, /admin/demand,
     // /admin/enquiries/[id], /api/admin/enquiries/[id], /api/admin/export.csv)
     // the four the password reset added: /admin/forgot, /admin/reset,
-    // /api/admin/forgot, /api/admin/reset, and the six catalogue editing
+    // /api/admin/forgot, /api/admin/reset, the four hero banner routes added
+    // 2026-08-23 (/admin/banners plus upload, [id] and [id]/thumb under
+    // /api/admin/banners), and the six catalogue editing
     // added: /admin/catalogue, /admin/catalogue/products/[slug],
     // /admin/catalogue/categories/[id] and their three POST endpoints under
     // /api/admin/catalogue, publish.ts included.
@@ -105,7 +107,7 @@ describe('computeCounts', () => {
     // static file with build-time data baked into it — so this number moving
     // downwards is exactly the failure `npm run verify`'s "admin area stays
     // private" gate exists for, and two independent alarms are worth it.
-    expect(computeCounts({ unitTests: 0 }).ssrRoutes).toBe(19);
+    expect(computeCounts({ unitTests: 0 }).ssrRoutes).toBe(23);
   });
 
   it('takes the unit-test count from the caller', () => {

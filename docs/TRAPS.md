@@ -377,6 +377,34 @@ in `handoff.md`; this file states the trap and moves on.
   *Caught by:* reading the accessibility tree at a mobile width, which is the
   only place the loss is visible. Do not delete those roles as redundant.
 
+- **`image.domains` in `astro.config.mjs` is not a CSP, and `img-src` is not a
+  download allowlist.** They look interchangeable and are opposites.
+  `image.domains` says which hosts the BUILD may fetch an image from; `img-src`
+  in `vercel.json` says which hosts a VISITOR'S BROWSER may load one from. Hero
+  banners are fetched from Supabase at build time and re-emitted under
+  `/_astro/`, so `image.domains` names the Supabase host and `img-src` stays
+  `'self'`. Widening `img-src` because a banner failed to build would change
+  nothing and weaken the site; widening `image.domains` because a browser
+  blocked an image would change nothing at all.
+  *Caught by:* nothing — both mistakes leave a working page.
+
+- **A "public" storage bucket is a second publishing channel.** Every table here
+  runs RLS with zero policies on the stated grounds that the catalogue is
+  published by the *build*, not by the database. A public bucket quietly undoes
+  that for the artwork: an unmaintained, ungated URL that serves the client's
+  files whatever the site is doing. The `banners` bucket is private and
+  `src/lib/site-content.ts` signs a one-hour URL at build time.
+  *Caught by:* nothing. `tools/storage-setup.mjs` creates it private; do not
+  "fix" a signing error by flipping the bucket.
+
+- **Playwright's `hasText` matches text content, and an input's value is not
+  text content.** A row located by `hasText: 'spring-campaign'` finds nothing
+  while the screen is plainly showing that name in an `<input value="...">`,
+  which reads as a broken feature rather than a broken selector. Filter on the
+  input instead: `.filter({ has: page.locator('input[name="name"][value="..."]') })`.
+  *Caught by:* the failure screenshot, which showed a correct page. Look at it
+  before changing application code.
+
 ## Looks like a defect, is not
 
 Several of these have already been reported as regressions by someone who

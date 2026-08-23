@@ -2813,3 +2813,116 @@ and nothing in the build, `astro check` or axe would have said so.
 
 Table height on the helmet page went from 5 rows at up to 68px each to 277px
 total, with no horizontal overflow.
+
+## 26. Hero banners are uploaded from /admin — 2026-08-23
+
+Spec: `docs/superpowers/specs/2026-08-23-admin-hero-banners-design.md`.
+Plan: `docs/superpowers/plans/2026-08-23-admin-hero-banners.md`.
+
+An admin uploads a banner at `/admin/banners`, names it, orders it, shows or
+hides it and deletes it. No developer, no commit.
+
+### Why this needed an architecture and not a screen
+
+`Hero.astro` resolved banners through `import.meta.glob('/src/assets/banners/*.jpg')`
+— a build-time read of the repository working tree. **A serverless function
+cannot write into `src/assets/`**, so no admin UI could have put a file where
+the hero would see it. The images had to move somewhere the running site can
+write and the build can read, and everything else followed from that.
+
+### The four decisions
+
+**A private Supabase Storage bucket.** Public was the obvious choice and is the
+one this repository has already rejected for its tables: RLS with zero policies
+exists because *the site is published by the BUILD, not by the database*. A
+public bucket is the same defect for the artwork — an ungated URL that serves
+the client's files whatever the site is doing. `site-content.ts` signs a
+one-hour URL per enabled banner instead.
+
+**Optimised at build time, not served remotely.** `<Picture>` downloads each
+signed URL during the build and re-emits local assets. Verified rather than
+assumed: with one banner enabled, `dist/client/index.html` carries
+`/_astro/verify-*.jpg` plus a responsive avif/webp set, and **contains no
+reference to the Supabase host at all**. So `img-src 'self'` never widened, the
+landing page keeps its image budget, and the band has known dimensions and
+cannot jump.
+
+The cost is that a banner is not live until the next build. That is the same
+rhythm and the same Publish button as a catalogue edit, and it was the trade the
+client chose knowingly over instant-but-unoptimised.
+
+**Dimensions read from the file header.** `src/lib/admin/image-size.ts` parses
+the JPEG `SOFn` marker and the PNG `IHDR` chunk in about thirty lines. `sharp`
+is installed and would do it, but this would have been its first use **inside a
+request handler** rather than at build time — a native binary in a serverless
+bundle, in exchange for two numbers in the first two dozen bytes. It returns
+null rather than guessing, and a null is a refused upload.
+
+0xc0–0xcf is not a clean range of frame headers: 0xc4 is DHT, 0xc8 is JPG,
+0xcc is DAC. Treating one as a frame header reads two bytes of a Huffman table
+as the image's height — a plausible number, which is the worst possible answer.
+There is a test for exactly that.
+
+**The notice whitelist stays closed, and two integers ride beside it.** "The
+shape is wrong" is a poor message when the admin knows the file was 1261 × 1561.
+`dimensionsFrom` coerces `w` and `h` with `Number()` and drops anything that is
+not a finite integer in range, so `?w=<script>` yields nothing. A number coerced
+from a query parameter is not attacker text; the sentence still comes from
+`ADMIN_NOTICES`.
+
+### What the client decided
+
+- **New banners arrive hidden.** Upload, check the thumbnail, set the order,
+  then switch it on — so a half-finished banner cannot ride out on somebody
+  else's Publish.
+- **Wrong-shaped uploads are refused**, not cropped and not letterboxed.
+  Between 3.8:1 and 4.2:1, at least 1400px wide, under 8 MB.
+- **Hide and Delete are separate.** Hide keeps the artwork for a later campaign.
+
+### The ordering decisions inside the module
+
+`createBanner` stores the file, then the row, and takes the file back out if the
+insert fails. `deleteBanner` removes **the row first**, then the object. The
+reasoning is not symmetry: a row pointing at a missing file is an enabled banner
+that **fails the next build**, so deleting the object first would let one
+destructive click make the site unbuildable. The other order's worst case is an
+orphaned file — invisible, harmless, logged.
+
+### A protection that was lost, said plainly
+
+`site-content.test.ts` used to assert that the Grip Guard GP1 and Orbit Fan
+posters were not enabled. Both artworks state a wrong product fact — GP1's EN
+388 icon reads 4X43D against the glove's own label of 4131X, advertising cut
+resistance where the glove says NOT TESTED.
+
+That test worked **by filename**. An uploaded banner has a generated path and an
+admin-chosen name, so nothing in code can recognise those two artworks any more.
+The protection is now Hero.astro's standing warning, the two BACKLOG.md items,
+and a person not uploading them. The file comment says so rather than continuing
+to claim a test covers it.
+
+### Storage went back on in the local stack
+
+`supabase/config.toml` was trimmed to four containers for a 7.7GB machine. It is
+five now, and that file's own rule — *"re-enabling a service is fine if
+something needs it"* — is what permits it. Upload code no test exercises was the
+worse trade. `npm run test:db:start` creates the bucket; `npm run storage:setup`
+does the same against production.
+
+### The production database needs the migration
+
+**This is the one step a deploy does not perform.** `hero_banners` exists in the
+local stack and not in the live project, and the build proved it by failing
+loudly the first time it ran against production — which is the designed
+behaviour, not a defect. Before this ships:
+
+1. apply `supabase/migrations/20260823120000_hero_banners.sql` to the live
+   project, and
+2. run `npm run storage:setup` once to create the bucket.
+
+Until both are done the site cannot build, which is the correct way round: a
+missing table stops a deploy rather than silently rendering a hero with no band.
+
+### Counts
+
+Four new server-rendered routes — 19 to 23.

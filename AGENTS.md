@@ -13,7 +13,7 @@ Supabase Postgres · Vercel.
 
 **94 products** across **15 categories**, in **2 divisions**.
 
-**119 built pages** · **19 server-rendered routes** · **8 inline-script CSP hashes** · **310 unit tests**.
+**119 built pages** · **23 server-rendered routes** · **8 inline-script CSP hashes** · **323 unit tests**.
 
 <!-- counts:end -->
 
@@ -113,10 +113,23 @@ never "Published", and refuses outright when unconfigured, which is deliberately
 the opposite of the enquiry rule: an unconfigured enquiry was still recorded, an
 unconfigured publish records nothing.
 
+**Hero banners are uploaded at `/admin/banners` (`handoff.md` §26).** The image
+files live in a **private** Supabase Storage bucket — public would be a second
+publishing channel nobody maintains, the same reason every table has RLS with
+zero policies. `src/lib/site-content.ts` signs a short-lived URL per enabled
+banner and `<Picture>` spends it **at build time**, emitting local assets, so
+`img-src 'self'` never widens and the landing page keeps its image budget.
+`astro.config.mjs`'s `image.domains` is a build-time download allowlist and
+**not** a CSP; widening one because the other looked narrow fixes nothing.
+Uploads are refused unless they are a JPEG or PNG between 3.8:1 and 4.2:1 and at
+least 1400px wide, and a new banner arrives hidden.
+
 The authenticated end-to-end tests need a throwaway database: `npm run
 test:db:start` before `npm run verify -- --full`, which **fails without it
-rather than skipping them**. They save products and press Publish, so pointing
-them at the live project would edit the client's catalogue and deploy the site.
+rather than skipping them**. They save products, upload files and press Publish,
+so pointing them at the live project would edit the client's catalogue, write
+into its storage and deploy the site. `test:db:start` also creates the bucket;
+`npm run storage:setup` does the same against production, once.
 
 **No inline scripts on any `/admin` page — they cannot be hashed and will be
 blocked.** `npm run csp` derives its hashes from `dist/client`, and admin routes
