@@ -48,6 +48,11 @@ const NAV = [
     label: 'Enquiries',
     owns: (p: string) => p === '/admin' || p.startsWith('/admin/enquiries'),
   },
+  {
+    href: '/admin/catalogue',
+    label: 'Catalogue',
+    owns: (p: string) => p.startsWith('/admin/catalogue'),
+  },
   { href: '/admin/demand', label: 'Demand', owns: (p: string) => p === '/admin/demand' },
 ] as const;
 
