@@ -116,11 +116,14 @@ unconfigured publish records nothing.
 **Hero banners are uploaded at `/admin/banners` (`handoff.md` §26).** The image
 files live in a **private** Supabase Storage bucket — public would be a second
 publishing channel nobody maintains, the same reason every table has RLS with
-zero policies. `src/lib/site-content.ts` signs a short-lived URL per enabled
-banner and `<Picture>` spends it **at build time**, emitting local assets, so
-`img-src 'self'` never widens and the landing page keeps its image budget.
-`astro.config.mjs`'s `image.domains` is a build-time download allowlist and
-**not** a CSP; widening one because the other looked narrow fixes nothing.
+zero policies. `tools/fetch-banners.mjs` downloads the enabled banners into
+`src/assets/banners/` **before every build** — `npm run build` chains it ahead
+of `astro build` — and from there they are ordinary local assets. That is a
+cache decision, not plumbing: `<Picture>` used to fetch a signed URL directly,
+and because Astro names an asset from a hash of its source, a token minted
+fresh each build produced 48 new banner filenames per Publish for artwork that
+had not changed. A local file hashes from its **content**, so a returning
+visitor keeps what it cached. `src/assets/banners/` is generated and gitignored.
 Uploads are refused unless they are a JPEG or PNG between 3.8:1 and 4.2:1 and at
 least 1400px wide, and a new banner arrives hidden.
 

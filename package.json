@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "astro dev",
     "dev:test": "node tools/dev-test.mjs",
-    "build": "astro build",
+    "build": "node --env-file-if-exists=.env tools/fetch-banners.mjs run && astro build",
     "preview": "node tests/preview-server.mjs",
     "astro": "astro",
     "test": "vitest run",

@@ -377,15 +377,24 @@ in `handoff.md`; this file states the trap and moves on.
   *Caught by:* reading the accessibility tree at a mobile width, which is the
   only place the loss is visible. Do not delete those roles as redundant.
 
-- **`image.domains` in `astro.config.mjs` is not a CSP, and `img-src` is not a
-  download allowlist.** They look interchangeable and are opposites.
-  `image.domains` says which hosts the BUILD may fetch an image from; `img-src`
-  in `vercel.json` says which hosts a VISITOR'S BROWSER may load one from. Hero
-  banners are fetched from Supabase at build time and re-emitted under
-  `/_astro/`, so `image.domains` names the Supabase host and `img-src` stays
-  `'self'`. Widening `img-src` because a banner failed to build would change
-  nothing and weaken the site; widening `image.domains` because a browser
-  blocked an image would change nothing at all.
+- **A remote image Astro is not allowed to optimise is passed straight
+  through, not rejected.** This site no longer uses remote images at all —
+  hero banners are downloaded into `src/assets/banners/` by
+  `tools/fetch-banners.mjs` before the build and treated as local files — and
+  the reason is worth keeping. While `<Picture>` fetched a signed Supabase URL
+  directly, an empty `image.domains` did not fail the build: it emitted the raw
+  URL into the HTML. Signed, expiring, and blocked by `img-src 'self'`, on a
+  page that still looked plausible. **If anyone reintroduces a remote image
+  source, `image.domains` becomes load-bearing again and its failure mode is
+  silent.**
+  *Caught by:* the "no signed storage URL in the built output" gate.
+
+- **`image.domains` is not a CSP, and `img-src` is not a download allowlist.**
+  They look interchangeable and are opposites: `image.domains` says which hosts
+  the BUILD may fetch an image from, `img-src` in `vercel.json` says which
+  hosts a VISITOR'S BROWSER may load one from. Widening either because the
+  other blocked something changes nothing and, in `img-src`'s case, weakens the
+  site.
   *Caught by:* nothing — both mistakes leave a working page.
 
 - **A "public" storage bucket is a second publishing channel.** Every table here
@@ -405,19 +414,18 @@ in `handoff.md`; this file states the trap and moves on.
   *Caught by:* the failure screenshot, which showed a correct page. Look at it
   before changing application code.
 
-- **`.env` does not populate `process.env`, and `astro.config.mjs` runs before
-  anything that would.** Vercel sets platform variables in `process.env`, so a
-  config that reads `process.env.SUPABASE_URL` works in production and silently
-  reads `undefined` on a developer machine. That emptied `image.domains`, and
-  **Astro's response to a remote image it is not allowed to optimise is to pass
-  the URL straight through** rather than to fail — so a local build wrote a
-  signed, one-hour storage URL into the HTML for every hero banner. Dead an hour
-  later, blocked by `img-src 'self'` before that, and green in the build,
-  `astro check` and every test. Use `loadEnv(mode, cwd, '')` from Vite in the
-  config; the empty prefix is required, since the default only exposes `VITE_`.
-  *Caught by:* `npm run verify`'s "no signed storage URL in the built output"
-  gate, added the day it happened. Before that, a broken image icon in a
-  screenshot.
+- **`.env` does not populate `process.env`, and a config file runs before
+  anything that would.** Vercel sets platform variables in `process.env`, so
+  config that reads `process.env.SUPABASE_URL` works in production and reads
+  `undefined` on a developer machine — with no error, because a missing value
+  usually just disables a feature. It cost a local build that wrote expiring
+  storage URLs into the HTML while the build, `astro check` and every test
+  stayed green. `astro.config.mjs` no longer reads any environment variable,
+  but anything that does must read `.env` the way Vite does:
+  `loadEnv(mode, cwd, '')`, where the empty prefix is required because the
+  default exposes only `VITE_`-prefixed names.
+  *Caught by:* a broken image icon in a screenshot. Now also by the signed-URL
+  sweep in `npm run verify`.
 
 - **A `transform` declared on an element loses to any animation that also sets
   `transform`.** `.hero__title` carries `hero-rise`, whose last keyframe is

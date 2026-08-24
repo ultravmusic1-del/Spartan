@@ -1,35 +1,5 @@
 import { defineConfig } from 'astro/config';
-import { loadEnv } from 'vite';
 
-/**
- * The Supabase host, read from BOTH `.env` and the real environment.
- *
- * `process.env.SUPABASE_URL` alone was wrong and failed silently, which is the
- * trap `src/lib/env.ts` documents from the other direction. On Vercel the
- * platform puts variables in `process.env`, so it worked there. Locally `.env`
- * is loaded by Vite into `import.meta.env` and NEVER into `process.env`, so
- * this config saw nothing, `image.domains` came back empty, and Astro then did
- * the worst possible thing with a remote image it is not allowed to optimise:
- * it passed the URL straight through into the markup.
- *
- * The page still built and still looked plausible. What it actually contained
- * was a SIGNED, EXPIRING storage URL per banner — dead an hour later, and
- * blocked by `img-src 'self'` before that. `npm run verify` now has a gate that
- * fails on exactly that output, because nothing else noticed.
- *
- * `loadEnv(mode, root, '')` reads `.env` the way Vite does, and the empty
- * prefix is required: the default only exposes `VITE_`-prefixed names.
- */
-const SUPABASE_HOST = (() => {
-  const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
-  const url = process.env.SUPABASE_URL ?? env.SUPABASE_URL;
-  if (!url) return '';
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return '';
-  }
-})();
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
 import vercel from '@astrojs/vercel';
@@ -54,23 +24,7 @@ export default defineConfig({
   output: 'static',
   adapter: vercel(),
 
-  /*
-   * Hosts the BUILD may download an image from. Hero banners are uploaded to
-   * Supabase Storage, and `<Picture>` fetches each one during the build and
-   * re-emits it as a local asset.
-   *
-   * THIS IS NOT A CSP, AND CONFUSING THE TWO WOULD BE EXPENSIVE. It grants
-   * nothing to a visitor's browser: the shipped page references `/_astro/*`
-   * only, and `img-src 'self'` in vercel.json is unchanged and still the thing
-   * that decides what a browser may load. Widening one because the other looked
-   * too narrow would fix nothing and weaken the site.
-   *
-   * Derived from SUPABASE_URL so it follows the project rather than pinning one
-   * reference, and empty when that is unset — which is the state with no
-   * database, where there are no banners to fetch anyway.
-   */
   image: {
-    domains: SUPABASE_HOST ? [SUPABASE_HOST] : [],
     /*
      * The runtime /_image endpoint is replaced with an inert 404, which keeps
      * sharp (19.1 MB, 75% of the serverless function on 2026-08-23) out of the

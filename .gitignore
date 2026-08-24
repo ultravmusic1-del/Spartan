@@ -35,5 +35,10 @@ seed.sql
 # copy would tell a fresh clone a database is running that is not.
 .test-db.json
 
+# Downloaded from Supabase Storage by tools/fetch-banners.mjs before every
+# build. Generated, machine-local, and a committed copy would be a second
+# source of truth for artwork the admin owns.
+src/assets/banners/
+
 # Superpowers brainstorming scratch (visual companion mockups)
 .superpowers/

@@ -511,14 +511,26 @@ ship as avif/webp with lazy loading, and /_astro is cached immutable.
       so eager-loading the first ~6 cards is cosmetic polish, not a metric fix.
 
 
-- [ ] **Restore the hero carousel's test coverage with the first real banner.**
-      The client had all six posters deleted on 2026-08-20 — they are portrait
-      (1261:1561) and the slot is specified at 2800 × 700 — so the hero ships an
-      empty 4:1 band. **The carousel rendering path is still in `Hero.astro` and
-      is currently exercised by nothing.** Drop a file into
-      `src/assets/banners/` and add a line to `src/data/hero-banners.json` and
-      it renders, clock and pips and pause included; nothing checks that it
-      does.
+- [ ] **Restore the hero carousel's test coverage — NOW OVERDUE, and the tests
+      that remain assert a state the site is no longer in.** The client uploaded
+      three real banners on 2026-08-23, so the live hero shows a carousel while
+      `home.spec.ts` and `hero-mobile.spec.ts` still assert an *empty* slot.
+
+      **They pass only because `npm run verify -- --full` builds against the
+      throwaway stack, whose `hero_banners` table is empty.** Verified
+      2026-08-23: against a build made from the live database those six tests
+      fail, and against a build with no Supabase credentials all 34 pass. So the
+      gate is green on a state production is not in, which is the shape of
+      coverage this repo treats as worse than none.
+
+      Fixing it means deciding what the fixture is. Seeding a banner into the
+      test stack makes the carousel testable and turns the *empty-slot* tests
+      into the ones that cannot run; both states are real and both deserve
+      cover, so this probably wants a seeded banner plus a way to build the
+      empty case deliberately.
+
+      The original note follows. The carousel path itself is still exercised by
+      nothing.
 
       What was removed, and must come back with the artwork:
 

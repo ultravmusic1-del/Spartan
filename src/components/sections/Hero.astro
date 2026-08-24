@@ -282,15 +282,9 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
               <div class="hero__track" aria-hidden="true">
                 {SLIDES.map((banner, i) => (
                   <div class="hero__slide">
-                    {/* width/height are required for a remote source: Astro
-                        cannot measure a file it has not fetched, and without
-                        them the band reserves no height and jumps as slides
-                        load. They come from the row, recorded at upload. */}
-                    <Picture
-                      src={banner.url}
+                                        <Picture
+                      src={banner.src}
                       alt=""
-                      width={banner.width}
-                      height={banner.height}
                       widths={WIDTHS}
                       sizes={SIZES}
                       formats={['avif', 'webp']}
