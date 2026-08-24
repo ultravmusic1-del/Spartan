@@ -466,7 +466,13 @@ see `handoff.md`). Priorities are P0 highest.
 What is already healthy, so nobody "fixes" it: gzipped HTML is 15/30/11 KB
 for home/catalogue/product, the largest JS bundle is 52 KB, hydration is
 visible/idle/media-gated, CLS measured 0.000 on all three page types, images
-ship as avif/webp with lazy loading, and /_astro is cached immutable.
+ship as avif/webp with lazy loading.
+
+**One line of that paragraph was wrong when first written and is corrected
+here:** it claimed `/_astro` was cached immutable. It was not — only
+`/fonts/` had that rule, and `/_astro` inherited Vercel's default of
+`public, max-age=0, must-revalidate`, confirmed against the live response.
+The header was added on 2026-08-23.
 
 - [ ] **75% of the serverless function is an image library nothing uses at
       runtime.** Measured 2026-08-23: `_render.func` is 25.6 MB, of which

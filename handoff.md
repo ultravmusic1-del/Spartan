@@ -3122,8 +3122,19 @@ Scanned, measured, then fixed in order of blast radius. The scan is §BACKLOG's
 Gzipped HTML is 15/30/11 KB for home, catalogue and product. The largest client
 bundle is 52 KB. Hydration is already gated — `client:visible` per product card,
 `client:idle` for the drawer and filters, `client:media` for the mobile nav.
-Measured CLS is **0.000** on all three page types. `/_astro` is cached
-immutable. None of that needed touching and none of it was touched.
+Measured CLS is **0.000** on all three page types. None of that needed
+touching and none of it was touched.
+
+**One claim in that scan was wrong, and the live site is what caught it.**
+It said `/_astro` was cached immutable. Only `/fonts/` had that rule;
+`/_astro` inherited Vercel's `public, max-age=0, must-revalidate`, so every
+hashed asset was revalidated on every navigation. That makes fix 2 below
+necessary but not sufficient — stable filenames turn a re-download into a
+304, and the missing header turns the 304 into no request at all. Added
+the same day, once the deployed response was read rather than the config
+skimmed. Astro content-hashes everything under `/_astro`, which is exactly
+the precondition `immutable` requires; HTML is untouched and must stay so.
+
 
 ### 1. The serverless function was 75% an image library nothing called
 
@@ -3153,8 +3164,9 @@ untested.
 
 A signed storage URL carries a JWT whose issued-at is minted fresh each build,
 and Astro names an emitted asset from a hash of its source. So **48 banner
-filenames changed on every Publish for artwork that had not changed** — the
-`immutable` header defeated for the largest images on the highest-traffic page.
+filenames changed on every Publish for artwork that had not changed**, on the
+largest images on the highest-traffic page — so even a correctly cached browser
+had nothing it could reuse.
 Diffing two consecutive builds gave two disjoint filename sets.
 
 The obvious fix — store a long-lived signed URL on the row — trades away the
