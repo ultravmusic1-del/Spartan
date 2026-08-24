@@ -71,6 +71,14 @@ export default defineConfig({
    */
   image: {
     domains: SUPABASE_HOST ? [SUPABASE_HOST] : [],
+    /*
+     * The runtime /_image endpoint is replaced with an inert 404, which keeps
+     * sharp (19.1 MB, 75% of the serverless function on 2026-08-23) out of the
+     * cold-start path of /api/enquiry and every admin route. Build-time image
+     * optimisation is unaffected — see the entrypoint's header for the full
+     * reasoning and for what to do if runtime optimisation is ever needed.
+     */
+    endpoint: { route: '/_image', entrypoint: './src/lib/image-endpoint-disabled.ts' },
   },
   integrations: [
     preact({ compat: false }),

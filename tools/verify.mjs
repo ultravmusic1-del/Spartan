@@ -274,6 +274,76 @@ let unitTests = null;
   );
 }
 
+/* -------------------------------- 6c. no runtime image optimisation needed -- */
+
+/*
+ * NO SERVER-RENDERED PAGE MAY USE `astro:assets`, AND THIS GATE IS THE OTHER
+ * HALF OF A PERFORMANCE DECISION.
+ *
+ * `astro.config.mjs` points `image.endpoint` at an inert 404 so that sharp —
+ * 19.1 MB of a 25.6 MB serverless function, measured 2026-08-23 — stays out of
+ * the cold-start path of `/api/enquiry` and every admin route. That is safe
+ * only while nothing needs image optimisation AT REQUEST TIME.
+ *
+ * A prerendered page using <Image> is fine: it is optimised during the build
+ * and emitted under /_astro/. A page with `prerender = false` using <Image>
+ * would call /_image at runtime and get the 404 — a broken image on a live
+ * page, with the build, `astro check` and every unit test still green.
+ *
+ * So the rule is checked where it can be decided: any file under src/pages
+ * that opts out of prerendering must not import `astro:assets`, and neither
+ * may anything it could plausibly render. Components are swept too, because a
+ * shared component using <Image> is one import away from an admin page.
+ */
+{
+  const offenders = [];
+
+  const ssrPages = [];
+  const walk = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(astro|ts)$/.test(entry.name) && !entry.name.includes('.test.')) {
+        const text = fs.readFileSync(full, 'utf8');
+        if (/export\s+const\s+prerender\s*=\s*false/.test(text)) ssrPages.push([full, text]);
+      }
+    }
+  };
+  walk(path.join(root, 'src/pages'));
+
+  for (const [file, text] of ssrPages) {
+    const rel = path.relative(root, file).replace(/\\/g, '/');
+    if (/from\s+['"]astro:assets['"]/.test(text)) {
+      offenders.push(
+        `${rel} is server-rendered and imports astro:assets — /_image is disabled, so that ` +
+          'image would 404 at runtime. See astro.config.mjs image.endpoint.',
+      );
+    }
+  }
+
+  /*
+   * The inert endpoint itself must stay wired up. Losing the config line would
+   * put sharp back in the function silently: nothing renders differently, the
+   * function just grows by 19 MB and every cold start pays for it.
+   */
+  const config = fs.readFileSync(path.join(root, 'astro.config.mjs'), 'utf8');
+  if (!config.includes('image-endpoint-disabled')) {
+    offenders.push(
+      'astro.config.mjs no longer points image.endpoint at src/lib/image-endpoint-disabled.ts — ' +
+        'sharp is back in the serverless function.',
+    );
+  }
+
+  record(
+    'runtime image optimisation stays out of the function',
+    offenders.length === 0,
+    offenders.length
+      ? offenders.slice(0, 3).join('; ')
+      : `${ssrPages.length} server-rendered files clean, endpoint still inert`,
+  );
+}
+
 /* ------------------------------------------------- 7. one title, one canonical -- */
 
 /*
