@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { enquiryPayloadSchema, toFieldErrors, type EnquiryPayload } from '../../lib/enquiry-schema';
 import { decideOutcome, type ChannelState } from '../../lib/enquiry-outcome';
 import { markNotified, recordEnquiry } from '../../lib/enquiry-store';
+import { sendEnquiryMail } from '../../lib/enquiry-mail';
 import { configured, env } from '../../lib/env';
 
 /**
@@ -15,16 +16,6 @@ import { configured, env } from '../../lib/env';
  * nothing else may set this flag without one as good.
  */
 export const prerender = false;
-
-/* ------------------------------------------------------------------ config -- */
-
-/**
- * Resend refuses any `from` that is not on a verified domain, so this cannot be
- * hard-coded to the client's eventual address before that domain exists.
- * `onboarding@resend.dev` is Resend's own always-verified sender and works with
- * any key, which keeps the very first credentialed test a one-variable change.
- */
-const FALLBACK_FROM = 'Spartan Enquiries <onboarding@resend.dev>';
 
 /* -------------------------------------------------------------- rate limit -- */
 
@@ -130,32 +121,24 @@ function bodyFor(payload: EnquiryPayload): string {
 }
 
 /**
- * Send the notification. Returns a state rather than throwing: the enquiry has
- * already been written to the database by the time this runs, so a mail failure
- * is one channel's result to be weighed against the other's, not an error that
- * should abort the request.
+ * Send the notification.
+ *
+ * The sending itself lives in src/lib/enquiry-mail.ts, which is where its unit
+ * tests can reach it — this path had none while it used the Resend SDK. What
+ * stays here is the message, because subject and body are this route's
+ * business and the transport is not.
+ *
+ * It returns a state rather than throwing: the enquiry is already written to
+ * the database by the time this runs, so a mail failure is one channel's
+ * result to be weighed against the other's, not an error that should abort
+ * the request.
  */
 async function sendNotification(payload: EnquiryPayload): Promise<ChannelState> {
-  if (!configured('RESEND_API_KEY', 'ENQUIRY_TO_EMAIL')) return 'unconfigured';
-
-  try {
-    const { Resend } = await import('resend');
-    const resend = new Resend(env('RESEND_API_KEY'));
-
-    const { error } = await resend.emails.send({
-      from: env('ENQUIRY_FROM_EMAIL') || FALLBACK_FROM,
-      to: env('ENQUIRY_TO_EMAIL'),
-      replyTo: payload.email,
-      subject: subjectFor(payload),
-      text: bodyFor(payload),
-    });
-
-    if (error) throw new Error(`${error.name}: ${error.message}`);
-    return 'ok';
-  } catch (cause) {
-    console.error('[enquiry] send failed', cause);
-    return 'failed';
-  }
+  return sendEnquiryMail({
+    subject: subjectFor(payload),
+    text: bodyFor(payload),
+    replyTo: payload.email,
+  });
 }
 
 /* ------------------------------------------------------------------ route -- */
