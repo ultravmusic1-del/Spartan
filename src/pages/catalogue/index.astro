@@ -123,14 +123,16 @@ const rows = products.map((product) => {
         <h2 class="cat__h2">All products</h2>
         <ul class="cat__grid" data-product-grid>
           {
-            rows.map(({ product, categorySlug, division }) => (
+            rows.map(({ product, categorySlug, division }, index) => (
               <li
                 data-product
                 data-division={division}
                 data-category={categorySlug}
                 data-search={productSearchText(product)}
               >
-                <ProductCard product={product} />
+                {/* Six: two rows of the three-column desktop grid, and three
+                    rows of the phone's two columns — above the fold either way. */}
+                <ProductCard product={product} eager={index < 6} />
               </li>
             ))
           }

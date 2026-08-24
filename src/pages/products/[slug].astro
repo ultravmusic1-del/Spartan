@@ -161,7 +161,13 @@ const pageTitle = category
 
         <div class="pd__inner">
           <div class="pd__vis">
-            {image && <Image src={image} alt={fullName} loading="eager" decoding="async" />}
+            {/* fetchpriority, not just eager: eager stops lazy-loading but the
+                browser still queues this behind CSS and fonts at default
+                priority. This is the page's LCP element on all 94 product
+                pages, so it gets the same treatment the home hero banner has. */}
+            {image && (
+              <Image src={image} alt={fullName} loading="eager" fetchpriority="high" decoding="async" />
+            )}
           </div>
 
           <div class="pd__meta">

@@ -28,9 +28,16 @@ import EnquiryButton from '../enquiry/EnquiryButton.tsx';
 interface Props {
   product: Product;
   class?: string;
+  /**
+   * Above-the-fold cards load eagerly. Only /catalogue passes this, for its
+   * first row: with every card lazy the grid popped in visibly late, and while
+   * the H1 is the measured LCP element so no metric moved, a grid of empty
+   * frames on the highest-intent page is polish worth two attributes.
+   */
+  eager?: boolean;
 }
 
-const { product, class: cls = '' } = Astro.props;
+const { product, class: cls = '', eager = false } = Astro.props;
 
 // The filename is only known at runtime, and `astro:assets` cannot resolve a
 // runtime string path — it needs a real module reference. `import.meta.glob`
@@ -82,7 +89,7 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
             sizes="(min-width: 1081px) 250px, (min-width: 821px) 300px, (min-width: 641px) 270px, 45vw"
             width={Math.round(image.width * scale)}
             height={Math.round(image.height * scale)}
-            loading="lazy"
+            loading={eager ? 'eager' : 'lazy'}
             decoding="async"
           />
         )
