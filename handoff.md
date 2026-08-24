@@ -3111,3 +3111,103 @@ passes in isolation. It went red once during this work and passed on every run
 after. It is in `BACKLOG.md` with the reproduction advice. **Do not treat a
 single green run as proof it is gone**, and do not re-roll it into a retry
 without reading that entry first.
+
+## 29. The speed pass — four findings, four fixes — 2026-08-23
+
+Scanned, measured, then fixed in order of blast radius. The scan is §BACKLOG's
+"Speed" block; this is what changed and what it cost.
+
+### What was already healthy, and must not be "optimised"
+
+Gzipped HTML is 15/30/11 KB for home, catalogue and product. The largest client
+bundle is 52 KB. Hydration is already gated — `client:visible` per product card,
+`client:idle` for the drawer and filters, `client:media` for the mobile nav.
+Measured CLS is **0.000** on all three page types. `/_astro` is cached
+immutable. None of that needed touching and none of it was touched.
+
+### 1. The serverless function was 75% an image library nothing called
+
+`_render.func` measured **25.6 MB, of which 19.1 MB was sharp**, bundled
+because Astro routes an `/_image` endpoint into the function whenever a project
+uses `astro:assets`. Nothing called it: public images are optimised at build
+time, no server-rendered page imports `astro:assets`, and the admin's banner
+thumbnails stream raw bytes through their own route. It was pure cold-start
+weight on every route the function serves — including `/api/enquiry`, the most
+latency-sensitive thing a buyer touches.
+
+`image.endpoint` now points at an inert 404 (`src/lib/image-endpoint-disabled.ts`),
+which keeps sharp out of the server graph so the bundler never traces it in.
+Build-time optimisation is untouched and was checked rather than assumed: the
+build still emits 15 avif and 316 webp variants.
+
+**The gate is half of this fix.** A prerendered page using `<Image>` is fine; a
+server-rendered one would call `/_image` at runtime and get the 404 — a broken
+image on a live page with the build, `astro check` and every test green. Gate 18
+refuses `astro:assets` in any file that opts out of prerendering, and refuses
+the config line going missing. **Proved against a planted violation** — and the
+first attempt to plant one silently did not land, because the file is CRLF and
+the patch assumed LF. The gate reported clean and would have been committed
+untested.
+
+### 2. Every Publish invalidated every visitor's cached banners
+
+A signed storage URL carries a JWT whose issued-at is minted fresh each build,
+and Astro names an emitted asset from a hash of its source. So **48 banner
+filenames changed on every Publish for artwork that had not changed** — the
+`immutable` header defeated for the largest images on the highest-traffic page.
+Diffing two consecutive builds gave two disjoint filename sets.
+
+The obvious fix — store a long-lived signed URL on the row — trades away the
+short-lived-credential half of §26. This does not: `tools/fetch-banners.mjs`
+downloads the enabled banners into `src/assets/banners/` before `astro build`,
+and Astro treats them as ordinary local assets, hashed from **content**. Two
+consecutive builds now emit identical filenames for all 48.
+
+It also deleted a class of failure: no remote image source means `image.domains`
+is gone, and with it the trap where Astro passes a remote URL it may not
+optimise straight through into the markup (§27).
+
+### 3. The Resend SDK, and the parity detail that would have failed silently
+
+`resend` pulls `@react-email/render`, which pulls react-dom and prettier, for
+one JSON POST made in six lines. None of the SDK's surface was used.
+
+**Rule 2 made this a test job rather than a swap.** The three `ChannelState`s
+are not interchangeable and a 502 to the buyer turns on the difference — and
+that mapping had *no* tests while it used the SDK. It has eleven now, covering
+both halves of the credential check, 200, a JSON error body, a non-JSON error
+body, a throwing network, and that it never throws.
+
+Parity was read off the SDK's source rather than the docs, and one detail
+mattered: resend maps `replyTo` to **`reply_to`** on the wire. Sending camelCase
+is accepted, returns 200, and is dropped — every reply to a lead would go to the
+from-address instead of the buyer, with nothing in any log. There is a test
+naming that.
+
+With sharp and the SDK both gone the function is **3.3 MB, down from 25.6 MB.**
+
+### 4. The LCP image was eager but not prioritised
+
+`fetchpriority="high"` on the product page's main image — eager stops
+lazy-loading but the browser still queues the fetch behind CSS and fonts at
+default priority, and this is the measured LCP element on all 94 product pages.
+The catalogue's first six cards load eagerly too; the H1 is that page's LCP
+element so no metric moves, this is the grid not popping in late.
+
+### The coverage gap this surfaced
+
+Six hero tests assert an **empty** banner slot and pass only because
+`--full` builds against the throwaway stack, whose banner table is empty.
+Against a build from the live database they fail; with no credentials all 34
+pass. **The gate is green on a state production is not in.** Pre-existing since
+the client enabled banners rather than caused by this work, and `BACKLOG.md` now
+says so and describes what a fixture would have to look like.
+
+### What was not verified
+
+**The authenticated admin end-to-end suite did not run.** Docker Desktop stopped
+partway through the session and would not restart, so `npm run verify -- --full`
+was unavailable for the last three commits. `npm run verify` is 18/18, 334 unit
+tests pass, and 272 of the database-independent browser tests pass. The admin
+suite touches none of these changes, but it was not run and none of those
+commits claims it was. **Run it before the next deploy.**
