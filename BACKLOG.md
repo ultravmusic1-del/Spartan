@@ -461,6 +461,56 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P1 — discoverability and hardening
 
+### Speed — scanned and measured 2026-08-23
+
+What is already healthy, so nobody "fixes" it: gzipped HTML is 15/30/11 KB
+for home/catalogue/product, the largest JS bundle is 52 KB, hydration is
+visible/idle/media-gated, CLS measured 0.000 on all three page types, images
+ship as avif/webp with lazy loading, and /_astro is cached immutable.
+
+- [ ] **75% of the serverless function is an image library nothing uses at
+      runtime.** Measured 2026-08-23: `_render.func` is 25.6 MB, of which
+      19.1 MB is sharp — bundled because Astro routes a `/_image` endpoint into
+      the function. Nothing legitimate hits it: every public image is optimised
+      at BUILD time into `/_astro/*`, no server-rendered page imports
+      `astro:assets` (verified by grep), and the admin thumbnail route streams
+      raw bytes. The cost is cold-start weight on every route the function
+      serves — including `/api/enquiry`, the most latency-sensitive thing a
+      buyer touches. Two candidate fixes, neither to be done casually:
+      the Vercel adapter's `imageService: true` (moves the endpoint to Vercel's
+      optimizer; verify build-time behaviour is untouched first), or the
+      adapter's `excludeFiles` (leaves `/_image` a landmine — MUST ship with a
+      verify gate banning `astro:assets` from server-rendered pages).
+
+- [ ] **Every Publish invalidates every visitor's cached banners and re-encodes
+      all 48 variants.** Verified 2026-08-23 by diffing two consecutive builds:
+      the banner asset filenames are disjoint across builds, because the signed
+      storage URL's token changes per build and Astro keys both its image cache
+      and the emitted hash on the full URL. Cost: ~10s of re-encoding per
+      Publish that the Vercel build cache cannot absorb, plus each returning
+      visitor re-downloads ~60 KB of banners that did not change, despite the
+      `immutable` cache header. The fix is a DESIGN DECISION, not a patch: sign
+      once at upload with a long expiry and store the URL on the row (stable
+      cache key, but weakens "short-lived" from the spec §26), or accept the
+      churn. Client should choose.
+
+- [ ] **The Resend SDK drags ~3 MB into the enquiry function for one HTTPS
+      POST.** `resend`'s dependency tree (@react-email/render → react-dom +
+      prettier) is bundled into `_render.func` while `src/pages/api/enquiry.ts`
+      uses none of it — the send is one JSON POST to `api.resend.com`. A raw
+      `fetch` removes it. **Rule-2 territory**: the enquiry email is a delivery
+      channel, so this change needs its error-mapping preserved exactly
+      (`unconfigured` vs `failed`) and the outcome tests run before and after.
+
+- [ ] **The product page's LCP image is `loading="eager"` but not
+      `fetchpriority="high"`.** One attribute in `ProductImage`/the product
+      page template, across all 94 pages. The hero banner already has it; this
+      is the same reasoning applied to the second page type. While there: the
+      catalogue grid lazy-loads all 110 images including row one, so the grid
+      pops in late — LCP is unaffected (the H1 is the LCP element, measured),
+      so eager-loading the first ~6 cards is cosmetic polish, not a metric fix.
+
+
 - [ ] **Restore the hero carousel's test coverage with the first real banner.**
       The client had all six posters deleted on 2026-08-20 — they are portrait
       (1261:1561) and the slot is specified at 2800 × 700 — so the hero ships an
