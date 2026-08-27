@@ -208,29 +208,36 @@ test.describe('with prefers-reduced-motion', () => {
 
 test.describe('what a phone does with a 4:1 banner', () => {
   /**
-   * THIS PINS A KNOWN PROBLEM RATHER THAN A DESIRED BEHAVIOUR. Read the comment
+   * ACCEPTED FAILURE — THIS PINS A DECISION, NOT A DESIRED OUTCOME. Read this
    * before "fixing" the number.
    *
    * The empty slot opens out from 4:1 to 3:2 below 720px, because at 375px a
    * 4:1 band is 84px tall — too short to read as a banner. That rule was written
-   * on `.hero__slot` and **was never extended to `.hero__frame`**, so now that
-   * real banners are enabled the live band is 84px tall on a phone. Measured
-   * 2026-08-27 against a build from the client's own database: 335 x 84 at
-   * 375px wide.
+   * on `.hero__slot` and **was never extended to `.hero__frame`**, so the moment
+   * real banners were enabled the live band went back to 84px on a phone.
+   * Measured 2026-08-27 against a build from the client's own database:
+   * **335 x 84 at 375px wide**, with the posters' headline, phone number and QR
+   * code unreadable at that size.
    *
-   * It is not fixed here because the fix is a content decision the client owns
-   * and BACKLOG.md has been carrying since the slot was built: one 2800 x 700
-   * artwork cannot fill both shapes, so either the phone letterboxes it as it
-   * does now, or the frame crops to 3:2 and cuts the sides off marketing
-   * artwork that carries a headline and a QR code, or a second crop is
-   * supplied. Choosing quietly in CSS is the one option that is not available.
+   * **The client was shown that cost on 2026-08-27 and chose to leave it.** So
+   * the band is decorative on a phone by decision: every product on it is
+   * reachable in the catalogue below, and the <h1> and the two CTAs carry the
+   * hero's meaning, which is why this costs presentation rather than a lead.
    *
-   * So this asserts what ships, and it exists so that the decision, when it is
-   * taken, breaks a test and gets read — which is what the ORIGINAL pin was
-   * supposed to do and could not, because it was written against the empty slot
-   * that production had already stopped rendering.
+   * DO NOT SILENTLY REVERSE IT, AND DO NOT DELETE THIS TEST. Reversing is the
+   * client's call and there are exactly two honest ways: crop the frame to 3:2
+   * with `object-fit: cover`, which fills the space and cuts the sides off the
+   * artwork; or supply a second, phone-shaped crop per banner. One 2800 x 700
+   * artwork cannot fill both shapes, so there is no third option that merely
+   * makes the band taller.
+   *
+   * This asserts what ships so that a reversal breaks a test and gets read —
+   * which is what the ORIGINAL pin was supposed to do and could not, because it
+   * measured the empty slot production had already stopped rendering.
    */
-  test('is still 4:1, which is 84px tall and is the open question', async ({ page }) => {
+  test('is still 4:1 on a phone, which is 84px tall and is the accepted trade', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await requireCarousel(page);
 

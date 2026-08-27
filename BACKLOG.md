@@ -610,26 +610,34 @@ The header was added on 2026-08-23.
       wrong-product-fact items below. `site-content.test.ts` still names both
       filenames.
 
-- [ ] **Decide what a phone does with a 4:1 banner — THIS IS LIVE NOW, NOT
-      HYPOTHETICAL.** Measured 2026-08-27 against a build from the client's own
-      database: the banner band on a 375px phone is **335 × 84**. The 3:2 rule
-      that exists to prevent exactly that was written on `.hero__slot` and never
-      extended to `.hero__frame`, so it stopped applying the moment real banners
-      arrived (`handoff.md` §35).
+- [x] **ACCEPTED: the hero banner is 84px tall on a phone.** **Decided by the
+      client on 2026-08-27**, with the cost put to them: **leave it.**
 
-      **Three honest options, and picking one in CSS without asking is not among
-      them:**
-      1. Leave it. The whole poster is visible and it is 84px tall, so its text
-         is unreadable on a phone — decorative at best.
-      2. Crop the frame to 3:2 with `object-fit: cover`. Fills the space, and
-         **cuts the sides off artwork carrying a headline, a phone number and a
-         QR code.**
-      3. A second, phone-shaped crop per banner. Correct, and the most work:
+      Measured against a build from the client's own database — the banner band
+      on a 375px phone is **335 × 84**. The posters carry a headline, a phone
+      number and a QR code at a size that is not readable at 84px, so on a phone
+      the band is decorative and nothing more. Every product on it is reachable
+      in the catalogue below, and the `<h1>` and the two CTAs carry the hero's
+      meaning, which is why this costs presentation rather than a lead.
+
+      The 3:2 rule that would have prevented it was written on `.hero__slot` and
+      never extended to `.hero__frame`, so it stopped applying the moment real
+      banners arrived (`handoff.md` §35). **That was a defect; keeping the 4:1
+      is now a decision.** The two are not the same thing and the record should
+      not blur them.
+
+      **This is a decision, not an oversight — do not silently "fix" it, and do
+      not remove the test that pins it.** `tests/e2e/hero-carousel.spec.ts`
+      asserts the 4:1 that ships, so a reversal breaks a test rather than
+      passing unnoticed. Reversing it is the client's call, and there are
+      exactly two honest ways:
+      1. Crop the frame to 3:2 with `object-fit: cover` — fills the space, and
+         **cuts the sides off the artwork**, QR code included.
+      2. A second, phone-shaped crop per banner — correct, and the most work:
          another upload, another column, another admin control.
 
-      Now pinned where it can actually fire — `tests/e2e/hero-carousel.spec.ts`
-      asserts the 4:1 that ships, so whichever way this goes it breaks a test
-      and gets read. The old pin measured the empty slot and could not.
+      Making the band taller by some other means is not a third option: one
+      2800 × 700 artwork cannot fill both shapes.
 
       Original note follows. The slot holds 4:1 above
       720px and opens out to 3:2 below it, because at 375px a 4:1 band is 84px

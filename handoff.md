@@ -3730,6 +3730,14 @@ the open question, so the decision breaks a test and gets read — which is what
 the original pin was for and could not do, because it measured the empty slot
 production had already stopped rendering.
 
+**Decided the same day: the client chose to leave it**, with the cost stated.
+So the 84px band is now an accepted trade rather than an open defect, and
+BACKLOG.md carries it in the same form as the ticker's touch-screen pause
+control — a decision with its cost written down and a test holding it in place.
+**The distinction that matters: the missing `.hero__frame` rule was a defect,
+and keeping 4:1 is a decision.** The record should not let the second launder
+the first.
+
 **2. A pin that measures the state you are not in is not a weaker pin.** It is
 the absence of one wearing its clothes. Three separate markers had been left
 around this hero — the deleted carousel tests in `home.spec.ts`, the

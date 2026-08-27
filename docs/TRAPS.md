@@ -652,8 +652,11 @@ did not check. Changing one is a regression *you* would be introducing.
   compare tokens instead. The same trap applies to any `hero__x` / `hero__x-y`
   pair, which is most of this codebase's markup.
 
-- **The 3:2 phone rule is on `.hero__slot` and NOT on `.hero__frame`.** So the
-  empty band opens out on a phone and the real carousel does not: the live band
-  is 335 × 84 at 375px wide. That is a live, measured defect and the fix is a
-  content decision in `BACKLOG.md`, not a CSS tweak — cropping to 3:2 cuts the
-  sides off artwork carrying a headline and a QR code.
+- **The 3:2 phone rule is on `.hero__slot` and NOT on `.hero__frame`, and the
+  4:1 that leaves on a phone is now DELIBERATE.** The empty band opens out on a
+  phone and the real carousel does not, so the live band is 335 × 84 at 375px.
+  That asymmetry started as a defect; the client was shown the cost on
+  2026-08-27 and chose to keep it, so **do not "fix" it and do not delete the
+  test in `tests/e2e/hero-carousel.spec.ts` that pins it.** Cropping to 3:2 cuts
+  the sides off artwork carrying a headline and a QR code, which is why
+  reversing it needs the client rather than a CSS edit.
