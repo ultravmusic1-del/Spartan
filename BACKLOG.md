@@ -69,15 +69,18 @@ see `handoff.md`). Priorities are P0 highest.
       want it back. Nothing imports it. If the client confirms they never want
       it, that is the moment to delete the file.
 
-- [ ] **Two campaign banners are excluded from the hero until reissued.** The
-      carousel shows six of nineteen; two are held out on accuracy rather than
-      taste, and both return by adding one line to `BANNERS` in `Hero.astro`.
-      - **Grip Guard GP1** — its EN 388 icon reads `4X43D` against the glove's
-        own label reading `4131X`. Already queued above as an artwork fix; this
-        is the second place it costs something.
-      - **Orbit Fan** — labelled `FW-40W`, a code belonging to no product.
-      The other eleven are out for page weight, not accuracy, and can be rotated
-      in by swapping entries rather than appending them.
+- [x] **Two campaign banners are excluded from the hero until reissued.**
+      **Moot 2026-08-27 (`handoff.md` §30) — the whole nineteen-poster family
+      has been replaced.** The hero now shows three landscape banners uploaded
+      through `/admin/banners`, and the bucket holds those three and nothing
+      else: neither excluded poster is in the bucket, the table or the
+      repository. This item described an exclusion from a `BANNERS` array in
+      `Hero.astro` that no longer exists.
+
+      **The two artwork faults themselves are NOT withdrawn.** They are still
+      open above as the GP1 EN 388 item and the `FW-40W` model-code item,
+      because both are wrong on artwork the client may still hold and reissue.
+      Closing this entry closes the hero exclusion, not the facts.
 
 - [ ] **Re-measure the home page's Lighthouse score.** The hero went from one
       18 KB AVIF to 121-200 KB of banner imagery (`handoff.md` §18 has the
@@ -641,15 +644,26 @@ The header was added on 2026-08-23.
       production build fails** — loudly and on purpose, rather than rendering a
       hero with no band. Nothing else in the deploy performs this step.
 
-- [ ] **Nothing in code stops the two wrong-fact posters returning.**
+- [ ] **Nothing checks a banner's facts before it publishes.** Retitled and
+      narrowed 2026-08-27 (`handoff.md` §30); **not closed.**
+
       `site-content.test.ts` used to assert that the Grip Guard GP1 and Orbit
       Fan artworks were not enabled, matching on filename. Uploaded banners have
       generated paths and admin-chosen names, so that test could not survive and
-      was removed rather than weakened. GP1 prints an EN 388 icon reading 4X43D
+      was removed rather than weakened.
+
+      **What changed:** both posters have since left the system entirely, so the
+      specific risk is no longer live. **What did not:** any JPEG an admin
+      uploads reaches the most prominent position on the site with nothing
+      between it and a buyer. The three banners live today were audited against
+      the catalogue after the fact and every model code and figure holds
+      (§30) — after the fact is the problem.
+
+      Still worth a per-banner "checked against source" flag the admin has to
+      set before Show will work. And if a GP1 reissue is ever uploaded, the
+      artwork must be corrected first: it prints an EN 388 icon reading 4X43D
       against the glove's own label of 4131X — cut resistance advertised where
-      the glove says NOT TESTED. If a reissue is ever uploaded, the artwork must
-      be corrected first. Worth considering a per-banner "checked against
-      source" flag the admin has to set before Show will work.
+      the glove says NOT TESTED.
 - [x] **Add `/catalogue` to the primary navigation.** Done — see Done below.
 
 - [x] **Build the search UI.** Done — see Done below.

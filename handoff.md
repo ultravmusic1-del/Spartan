@@ -1597,6 +1597,14 @@ This section is the record, and it is the only thing playing that role.
 **Status: implemented and green.** `verify 16/16 · 207 unit · 214 e2e · 95
 products · 120 pages.`
 
+**Correction, 2026-08-27 — the folder audited below is no longer the site's
+banner artwork, and §30 records what replaced it.** **This section stands
+unchanged as provenance.** Ten products and an FR certification block still
+trace to those JPEGs, so retiring the artwork does not upgrade the evidence
+behind them — it removes the pictures, not the sourcing problem, and it makes
+the BACKLOG item asking for real documents for those ten more important rather
+than less.
+
 A folder of 19 Kavalani campaign banners was audited against the catalogue. All
 19 were opened and read; eight of them named something the site did not have.
 
@@ -1849,6 +1857,15 @@ used at full size — print, or a hero.
 ## 18. The hero is a campaign carousel, and the helmet is gone — 2026-08-17
 
 **Status: implemented and green.** `verify 16/16 · 207 unit · 220 e2e.`
+
+**SUPERSEDED TWICE OVER — see §26 and §30. Nothing in "Six of nineteen" below
+describes the site as it is now.** The six posters were deleted on 2026-08-20 at
+the client's request; the hard-coded `BANNERS` array was replaced on 2026-08-23
+by uploads from `/admin/banners` (§26); and the nineteen-poster family itself
+has since been replaced by new landscape artwork (§30). **The carousel mechanism
+is still what runs** — the seven-slide track, the pips, the CSS-only pause, the
+byte budget — which is why this section is kept rather than cut. Read it for the
+machinery, not for the contents.
 
 Replaced on instruction. The client's nineteen Kavalani campaign banners now
 rotate in the hero stage, and the AI-generated helmet — flagged since
@@ -3087,11 +3104,13 @@ that leave a working-looking page.
 
 `BACKLOG.md` is the list; these are the ones this work created or sharpened.
 
-1. **Nothing in code stops the two wrong-fact posters returning.** The test that
-   asserted the Grip Guard GP1 and Orbit Fan artworks were not enabled matched
-   on filename, and uploaded banners have generated paths. GP1 advertises cut
-   resistance the glove does not have. The suggested replacement is a per-banner
-   "checked against source" flag the admin must set before Show will work.
+1. **A banner can still be published without anyone checking its facts.**
+   **Narrowed on 2026-08-27, not closed (§30).** The two wrong-fact posters are
+   no longer in the bucket, the table or the repository, so the specific risk
+   this item was written about is gone. The general one is untouched: there is
+   still no per-banner "checked against source" flag, and the three banners now
+   live went up on nobody's signature. They were checked after the fact in §30
+   and they hold — which is a competent design team, not a control.
 2. **Sign off the weight scale against the approved design.** Already open, and
    §27 made it concrete: the hero headline is now the one element exceeding the
    scale's ceiling, scoped to `.hero__title` rather than the token.
@@ -3223,3 +3242,84 @@ was unavailable for the last three commits. `npm run verify` is 18/18, 334 unit
 tests pass, and 272 of the database-independent browser tests pass. The admin
 suite touches none of these changes, but it was not run and none of those
 commits claims it was. **Run it before the next deploy.**
+
+## 30. The campaign posters are gone; three landscape banners are what ships — 2026-08-27
+
+**No code changed. This is a record correction**, written because three earlier
+sections describe a hero the site has not had for days, and one of them is the
+first thing a reader meets on the subject.
+
+### What is actually live
+
+Read off the production `hero_banners` table and the storage bucket on
+2026-08-27, not inferred from a commit:
+
+| Order | Name | Size | Enabled |
+|---|---|---|---|
+| 0 | eye protection banner | 2508 × 627 | yes |
+| 0 | pump banner | 2508 × 627 | yes |
+| 0 | pump controller banner | 2508 × 627 | yes |
+
+The bucket holds those three objects and nothing else — no orphans, and **not
+one of the nineteen Kavalani posters**. So the artwork family §16 audited and
+§18 built a carousel from is not merely unused; it is not in the system, and it
+is not on this machine either (`banner images/` was removed from the repository
+in `1d7de3a`).
+
+All three are **4:1 landscape**, which is the shape §26 specified and the shape
+the old posters could never be: those were portrait 1261:1561, which is why all
+six were deleted on 2026-08-20 rather than letterboxed into a band.
+
+**All three sit at `order` 0**, and that resolves deterministically rather than
+arbitrarily — `getHeroBanners` sorts by `order` then `created_at`, so the band
+runs eye protection, pump, pump controller, which is upload order. Worth knowing
+before somebody reports the ordering control as broken.
+
+### What this closes, and what it does not
+
+**Closed: the two wrong-fact posters are not a live risk.** Grip Guard GP1 and
+the Orbit Fan poster are absent from the bucket, the table and the repository.
+The BACKLOG item reading "two campaign banners are excluded from the hero until
+reissued" was describing an exclusion from an array that no longer exists.
+
+**Not closed: nothing checks a banner's facts before it publishes.** That was
+always the larger half of that item and it is untouched. The warning paragraph
+in `Hero.astro` **stays exactly as written** — it is a rule about artwork, not
+about six particular files, and a reissued GP1 poster would be as wrong in
+September as it was in August. Do not read this section as permission to delete
+it.
+
+**Not closed: §16's provenance problem.** Ten products and an FR certification
+block still trace to those JPEGs. Retiring the pictures does not upgrade the
+evidence; it means you can no longer open the source.
+
+### The three were checked against the catalogue, because §16 is why
+
+Every model code on all three banners resolves to a real record — MP-40,
+MP-158, MP-185, PC-10, FS-15, and the eye protection banner's four captions
+(Safety Glasses, Over Glasses, Safety Goggles, Welding Goggles). The figures
+agree too: the pump banner's HP and max-head pairs match the `Pumps` record row
+for row, and the controller banner's voltage, frequency, 10A–1.1 kW, 1.5 bar,
+10 bar, IP65 and one-year warranty match the PC-10 record exactly. **This set is
+not GP1.** The pump banner shows three of the four models and omits MP-203,
+which is a marketing choice rather than a discrepancy.
+
+Two things to raise with the design team rather than fix here:
+
+- **The controller banner captions two visibly different units identically.**
+  The blue horizontal unit and the yellow-topped one with the pressure gauge
+  both read `PC-10 AUTOMATIC PUMP CONTROLLER`. The catalogue holds one PC-10,
+  and its Kavalani listing describes the horizontal blue one. What the second
+  unit is, is a question for the client; the site says nothing about it either
+  way, and nothing here should start.
+- **"Made in India" appears on the artwork and in no record.** An origin claim
+  rather than a protection rating, so it costs nothing today — noted so that it
+  is not later read off the banner into the catalogue, which is exactly the
+  route by which GP1 nearly became a site fact.
+
+### The coverage gap this makes worse
+
+§29 recorded that six hero tests assert an **empty** banner slot and pass only
+because `--full` builds against the throwaway stack. That is now **three enabled
+banners in production against tests that require zero** — unchanged in
+substance, further from reality, and still the top of the testing backlog.
