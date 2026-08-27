@@ -149,12 +149,24 @@ see `handoff.md`). Priorities are P0 highest.
       Kavalani details in the meantime. Those details are not in this repository
       either, so this is still blocked on values — but `npm run verify` now names
       every outstanding one on every run rather than leaving it to this file.
-      Four are outstanding: **phone, email, address and `whatsapp`**.
+      Four were outstanding. **`whatsapp` landed on 2026-08-27 and three
+      remain: phone, email and address.**
 
-      `whatsapp` was added to `site.json` as an empty string. It renders nothing,
-      which is the honest state for a channel with no number, and the gate reports
-      it as unset. **Do not put a plausible-looking number in to make the site
-      feel finished** — that is the specific thing the gate exists to catch.
+      The client supplied **`+973 3800 0458`**, and it is live — the floating
+      button and the product pages' "Enquire on WhatsApp" control both render
+      from it (`handoff.md` §33). `npm run verify` now names three unset
+      details rather than four.
+
+      **The country code is +973, Bahrain**, which agrees with the campaign
+      artwork and with Kavalani. The placeholder phone number in the header is
+      `+971`, a UAE code. **Do not reconcile the two by editing one to match
+      the other** — one is a real number the client gave and the other has never
+      been anything but a placeholder. The phone number is still blocked on the
+      client.
+
+      **Do not put a plausible-looking value into the three that remain to make
+      the site feel finished** — that is the specific thing the gate exists to
+      catch.
 
       Page for page these are worse than the temporary domain: a buyer who taps
       the header phone number or the footer email gets nothing at all, on a site
@@ -544,7 +556,12 @@ The header was added on 2026-08-23.
       **They pass only because `npm run verify -- --full` builds against the
       throwaway stack, whose `hero_banners` table is empty.** Verified
       2026-08-23: against a build made from the live database those six tests
-      fail, and against a build with no Supabase credentials all 34 pass. So the
+      fail, and against a build with no Supabase credentials all 34 pass.
+
+      **Re-measured 2026-08-27 and it is EIGHT, not six** (`handoff.md` §33):
+      the six above plus `motion.spec.ts`'s reduced-motion hero test on both
+      projects. Measured both ways round on the same day — 294 pass with an
+      empty band, 8 fail with the client's three banners. So the
       gate is green on a state production is not in, which is the shape of
       coverage this repo treats as worse than none.
 
@@ -726,6 +743,14 @@ The header was added on 2026-08-23.
       `verify` that skips Playwright is what makes CI the first place anything
       is learned. Worth deciding whether `verify` should say something louder
       than `skip` when the browser suite did not run.
+
+- [ ] **Decide whether the floating WhatsApp button belongs on /contact and
+      /enquiry.** It is sitewide as asked, which means it sits on the two pages
+      whose entire job is the form the buyer is already looking at. Nothing is
+      broken — it overlaps no field and no submit control, checked at 375px —
+      but it is a second conversion path offered next to the first, and the
+      basket is the mechanism the rest of the site is built around. A judgement
+      call for the client rather than a defect. `handoff.md` §33.
 
 - [ ] **Analytics and error monitoring.** Zero references anywhere in `src/`.
       A lead-generation site with no measurement of the funnel it exists to

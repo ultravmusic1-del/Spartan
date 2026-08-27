@@ -1,0 +1,173 @@
+---
+import { getSiteSettings } from '../../lib/site-content';
+import { whatsappLink, generalEnquiryMessage } from '../../lib/whatsapp';
+import { requireSite } from '../../lib/seo';
+
+/**
+ * The floating WhatsApp control, on every public page.
+ *
+ * IT RENDERS NOTHING WHEN THERE IS NO NUMBER, and that is the whole of its
+ * error handling. `site.json`'s `whatsapp` was an empty string until
+ * 2026-08-27; `whatsappLink` returns null for that and this component returns
+ * null in turn, so the button is ABSENT rather than present and broken. Same
+ * honest empty state as the datasheet and Kavalani controls. Turning it back
+ * off is one edit to one value, with no code change anywhere.
+ *
+ * IT IS IN BaseLayout, NOT IN THE PAGES. BaseLayout is the public layout;
+ * `/admin` has its own (`AdminLayout.astro`) and must never carry this — an
+ * admin reading the inbox has no use for a lead-capture button, and putting a
+ * fixed element over a data table is a way to hide a row.
+ *
+ * A PLAIN LINK, NO SCRIPT. There is nothing dynamic about it: the number and
+ * the message are both known at build time. That also keeps it out of
+ * `npm run csp`'s business — an inline script here would need a hash, and a
+ * stale hash ships a page that renders and never hydrates.
+ *
+ * THE MESSAGE NAMES THE SITE AND NOT THE PAGE. See `src/lib/whatsapp.ts` for
+ * why: a floating button that reports which page you were reading feels like
+ * surveillance, and the product page has its own control for the case where
+ * the buyer chose to name one.
+ *
+ * COLOUR IS MEASURED, per rule 4, AND THE FIRST MEASUREMENT WAS WRONG BECAUSE
+ * IT ONLY LOOKED AT ONE SURFACE.
+ *
+ * This is a FIXED element, so unlike everything else on the site it does not
+ * belong to a section — it floats over whatever happens to be behind it, and
+ * this site has both dark and light surfaces. WhatsApp's familiar #25D366
+ * measures 10.09:1 on --surface-page (#08080a) and **1.98:1 on white**, so on
+ * every product page — which are light — the button's own boundary fails the
+ * 3:1 that WCAG 1.4.11 asks of a graphical object. A screenshot on the home
+ * page would have shown a perfectly good button and proved nothing.
+ *
+ * #128C7E is WhatsApp's darker brand green and clears the bar on all three
+ * ratios that matter, which is why the button is this colour and not the more
+ * recognisable one:
+ *
+ *   - against --surface-page (#08080a): **4.84:1**
+ *   - against --color-paper (#f6f6f7), the light sections: **3.83:1**
+ *   - white glyph on the fill: **4.14:1**
+ *
+ * The glyph is WhatsApp's logotype, which 1.4.11 exempts — so that last ratio
+ * was never strictly required. It is met anyway, and cheaply, which is the
+ * better answer than invoking an exemption. Do not "restore the real WhatsApp
+ * green" without re-measuring against a light section: that is the change this
+ * paragraph exists to stop.
+ *
+ * ITS NAME DIFFERS FROM THE PRODUCT PAGE'S BUTTON ON PURPOSE. That one reads
+ * "Enquire on WhatsApp"; this one is "Chat with Spartan on WhatsApp". Two links
+ * with the SAME name and DIFFERENT destinations on one page is a Link Purpose
+ * problem and something axe reports, and a product page carries both.
+ *
+ * THE ACCESSIBLE NAME IS ON THE LINK AND THE GLYPH IS HIDDEN. An `<svg>` with
+ * its own title inside a labelled link is announced twice; `ShareRow.astro`
+ * carries the same note. There is no visible text, so there is no Label in Name
+ * question here — unlike the product page's button, which has both.
+ */
+const site = await getSiteSettings();
+const href = whatsappLink(site.whatsapp, generalEnquiryMessage(requireSite(Astro.site)));
+---
+
+{
+  href && (
+    <a
+      class="wa"
+      href={href}
+      target="_blank"
+      rel="noopener"
+      aria-label="Chat with Spartan on WhatsApp"
+      data-whatsapp-float
+    >
+      <svg class="wa__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.23 8.23 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.83 2.42a8.19 8.19 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.15.16-.29.18-.53.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.44.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.16 0-.43.06-.65.31-.22.25-.86.84-.86 2.05s.88 2.38 1 2.54c.13.17 1.73 2.64 4.19 3.7.59.26 1.04.41 1.4.52.59.19 1.12.16 1.55.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29Z" />
+      </svg>
+    </a>
+  )
+}
+
+<style>
+  .wa {
+    position: fixed;
+    right: 20px;
+    /*
+     * ABOVE THE HEADER (25) AND BELOW THE TWO THINGS THAT COVER THE SCREEN.
+     * The enquiry drawer is 70 and the mobile nav panel is 60; both are modal
+     * surfaces, and a floating button sitting on top of a scrim is a control
+     * the buyer can reach while the thing behind it is inert.
+     */
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    /* Comfortably past WCAG 2.5.5's 44px minimum — this is a thumb target on a
+       phone, reached one-handed, and 44 is a floor rather than a size. */
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    /* WhatsApp's darker brand green: 4.84:1 on the dark surface, 3.83:1 on the
+       light one, 4.14:1 behind the white glyph. See the header — the familiar
+       #25D366 is 1.98:1 on white and this element floats over both. */
+    background: #128c7e;
+    color: #fff;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+  }
+
+  /*
+   * BOTTOM OFFSET CLEARS THE iOS HOME INDICATOR. `env(safe-area-inset-bottom)`
+   * is 0 everywhere it does not apply, so the fallback is the whole rule rather
+   * than a second one. Without it the button sits under the gesture bar on
+   * every recent iPhone, where a tap is taken by the system instead.
+   */
+  .wa {
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .wa__icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .wa:hover,
+  .wa:focus-visible {
+    transform: scale(1.06);
+    box-shadow: 0 8px 26px rgb(0 0 0 / 55%);
+  }
+
+  /* The global focus ring is red on a green circle. Kept, because it is the
+     site's focus style everywhere else and consistency is worth more here than
+     a bespoke colour — but the offset is widened so the ring reads as a ring
+     rather than as a border on the bubble. */
+  .wa:focus-visible {
+    outline-offset: 3px;
+  }
+
+  /* Reduced motion asks for stillness, not for a different design: the button
+     keeps its shadow lift and loses the scale. */
+  @media (prefers-reduced-motion: reduce) {
+    .wa {
+      transition: box-shadow var(--dur-base) var(--ease-out);
+    }
+
+    .wa:hover,
+    .wa:focus-visible {
+      transform: none;
+    }
+  }
+
+  /* Phones are where this button matters most and where screen space is
+     tightest. Slightly smaller, still well over the 44px floor. */
+  @media (max-width: 560px) {
+    .wa {
+      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      width: 52px;
+      height: 52px;
+    }
+
+    .wa__icon {
+      width: 28px;
+      height: 28px;
+    }
+  }
+</style>

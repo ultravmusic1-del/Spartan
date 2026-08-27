@@ -127,6 +127,19 @@ describe('white theme sweep', () => {
     'src/pages/catalogue/index.astro',
     'src/pages/enquiry.astro',
     'src/components/sections/FeaturedLines.astro',
+    /*
+     * THE FIRST ENTRY HERE THAT IS NOT A RED FILL, so the rule this list
+     * encodes is worth restating: the surface has to be a known, dark-enough
+     * fill this file's tokens do not describe — not merely "not white".
+     *
+     * The floating WhatsApp button is a #128C7E circle, and white on it is
+     * 4.14:1. It earns its place the same way SolidButton does, by measurement
+     * rather than by category. It is also the only fixed element on the site,
+     * so it is the one case where the surface behind the ELEMENT is a colour
+     * this component owns entirely — which is exactly why a hardcoded pair is
+     * correct here and would not be inside a section.
+     */
+    'src/components/layout/WhatsAppFloat.astro', // white glyph on #128C7E, 4.14:1
   ];
 
   it('no public file hardcodes white text except on a red fill or the dark footer', () => {

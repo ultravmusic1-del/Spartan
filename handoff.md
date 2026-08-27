@@ -3480,3 +3480,125 @@ fails: the rows are enabled, the files are gone. That is the loud failure §26
 designed, working correctly — but it means a no-credential build leaves the
 working tree in a state where only `npm run build` recovers it. Worth knowing
 before diagnosing it as something else.
+
+## 33. WhatsApp, and the first contact detail the client has actually supplied — 2026-08-27
+
+**Status: implemented and green.** `verify 18/18 · 364 unit · 32 new e2e.`
+
+A floating WhatsApp button on every public page, and an "Enquire on WhatsApp"
+control on all 94 product pages. Both open a chat with Spartan carrying a
+prepared message; the product one names the product.
+
+### The number is real, and that is the headline
+
+**`+973 3800 0458`, supplied by the client on 2026-08-27.** `site.json` held
+`whatsapp: ""` from the day the field was added, and `npm run verify` has been
+naming it as an outstanding launch blocker on every run since. That count is now
+**three, not four** — phone, email and address are still placeholders.
+
+The country code is worth noting: **+973 is Bahrain**, which agrees with the
+campaign artwork (`-Bahrain-01.jpg`) and with Kavalani. The site's other
+placeholder phone number is `+971 ...`, a UAE code. **Nobody should reconcile
+those two by editing one to match the other** — one is a real number the client
+gave and the other is a placeholder that has never been anything else.
+
+### Three WhatsApp links now, and only two of them are leads
+
+This is the part that will confuse the next person, so it is the part with a
+test. `src/lib/share.ts` has built `https://wa.me/?text=…` since §19 — **no
+recipient**, so the buyer picks who to forward a product to. That is a buyer
+sending a page to a colleague. The two new controls address Spartan's own
+number and are leads.
+
+One path segment separates them, and if the implementations ever converge every
+share button on the site starts messaging the company instead. `whatsapp.spec.ts`
+pins the share link as recipient-less for exactly that reason, and
+`src/lib/whatsapp.ts` is a second module rather than an argument to `share.ts`
+so that a wrong default cannot reach across.
+
+### Colour was measured twice, and the first measurement was wrong
+
+Rule 4 says colour is measured. It was — and the first measurement still got it
+wrong, in a way worth recording because the mistake is structural rather than
+arithmetic.
+
+WhatsApp's familiar green `#25D366` is **10.09:1** on `--surface-page`
+(`#08080a`). That number is correct and it is irrelevant on its own: this is
+the site's **only fixed element**, so it does not belong to a section. It floats
+over whatever is behind it, and the product pages — where the second control
+lives — are light. On white the same green is **1.98:1**, so the button's own
+boundary fails the 3:1 WCAG 1.4.11 asks of a graphical object, on 94 pages. A
+screenshot of the home page showed a perfectly good button and proved nothing.
+
+`#128C7E`, WhatsApp's darker brand green, clears every ratio that applies:
+
+| | |
+|---|---|
+| on `--surface-page` `#08080a` | **4.84:1** |
+| on `--color-paper` `#f6f6f7` | **3.83:1** |
+| white glyph on the fill | **4.14:1** |
+
+The glyph is WhatsApp's logotype, which 1.4.11 exempts, so that last ratio was
+never strictly required — it is met anyway, which is a better answer than
+invoking an exemption. **Do not "restore the real WhatsApp green" without
+re-measuring against a light section.**
+
+### A gate caught the white glyph, and it was right to
+
+`theme-sweep.test.ts` failed on `color: #fff` in the new component. That gate
+exists because `ProductCard` once rendered every product name white on a white
+card at 1.00:1 and no token ban noticed. Its allow-list was until now "a red
+fill or the dark footer"; this is **the first entry that is neither**, so the
+rule it encodes has been restated in place: the surface must be a known,
+dark-enough fill this file's tokens do not describe — not merely "not white".
+
+### Two decisions inside the messages
+
+**The floating button names the site, not the page.** A control that reports
+which URL somebody was reading when they tapped it reads as surveillance rather
+than service. The product page's button carries a URL because there the buyer
+chose to name one.
+
+**Both messages are two lines** — the same shape as the /contact and /enquiry
+prefills in §31 — so a lead arriving by any of the four routes reads the same
+way in the sales team's inbox.
+
+### Mechanics worth knowing
+
+- **It renders nothing when there is no number.** `whatsappLink` returns null
+  for an empty or malformed value and both consumers return null in turn.
+  Setting `whatsapp` back to `""` removes both controls sitewide with no code
+  change — the same honest empty state as the datasheet and Kavalani buttons.
+- **It is in `BaseLayout`, so `/admin` never gets it.** The admin has its own
+  layout. A fixed lead-capture button over an enquiry table is a way to hide a
+  row.
+- **Plain links, no script.** Nothing here is dynamic, so nothing needs a CSP
+  hash.
+- **`z-index: 40`** — above the header (25), below the mobile nav panel (60)
+  and the enquiry drawer (70). A floating button reachable on top of a modal
+  scrim is a control that works while the thing behind it is inert.
+- **The bottom offset carries `env(safe-area-inset-bottom)`**, or the button
+  sits under the iOS home indicator where the system takes the tap.
+- **The accessible names differ deliberately** — "Chat with Spartan on
+  WhatsApp" on the float, "Enquire on WhatsApp" on the product button. A
+  product page carries both, and two links with the same name and different
+  destinations is a Link Purpose failure axe reports.
+
+### What was checked by looking, not only by asserting
+
+The float is fixed, so the real question is what it covers. Swept every
+interactive element on the home page at each scroll position and both form
+pages at 375px: **no submit control, no pause control and no form field is
+overlapped**. It clips the corner of large category cards and two FAQ
+disclosures, all of which remain clickable elsewhere — the ordinary cost of a
+floating button, recorded rather than discovered later.
+
+### The banner-state gap is eight tests, not six
+
+§29 recorded six hero tests that assert an empty banner slot and pass only
+because `--full` builds against the throwaway stack. Against a build from the
+live database it is **eight**: the two in §29's list plus
+`motion.spec.ts`'s reduced-motion hero test on both projects. Measured today,
+both ways round — 294 pass with an empty band, 8 fail with the client's three
+banners. Unchanged in substance and still the top of the testing backlog; the
+count is corrected here so the next person does not go looking for six.

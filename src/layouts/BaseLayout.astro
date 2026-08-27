@@ -3,6 +3,7 @@ import '../styles/global.css';
 import Seo from '../components/Seo.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
+import WhatsAppFloat from '../components/layout/WhatsAppFloat.astro';
 
 interface Props {
   title: string;
@@ -104,6 +105,11 @@ const {
     <Header mode={overlayHeader ? 'transparent' : 'solid'} onMedia={headerOnMedia} />
     <slot />
     <Footer />
+    {/* Last in the body on purpose: it is fixed, so its position in the source
+        does not move it, and putting it after the footer keeps it last in the
+        tab order rather than between the header and the page's own content.
+        It renders nothing at all when site.json has no WhatsApp number. */}
+    <WhatsAppFloat />
   </body>
 </html>
 

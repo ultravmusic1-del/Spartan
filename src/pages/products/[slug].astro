@@ -12,6 +12,8 @@ import En388Table from '../../components/catalog/En388Table.astro';
 import ProductGrid from '../../components/catalog/ProductGrid.astro';
 import ShareRow from '../../components/catalog/ShareRow.astro';
 import { getCategories, getProducts, getRelatedProducts } from '../../lib/catalog';
+import { getSiteSettings } from '../../lib/site-content';
+import { whatsappLink, productEnquiryMessage } from '../../lib/whatsapp';
 import {
   absoluteUrl,
   breadcrumbJsonLd,
@@ -136,6 +138,25 @@ const metaDescription = productDescription(product, 160);
 const shareUrl = absoluteUrl(`/products/${product.slug}`, site);
 
 /**
+ * "Enquire on WhatsApp" — a message to SPARTAN about this product.
+ *
+ * NOT THE SAME CONTROL AS THE SHARE ROW'S WHATSAPP BUTTON a few lines down, and
+ * the page now carries both. That one has no recipient: it opens WhatsApp with
+ * the product described and lets the buyer choose who to send it to, which is a
+ * buyer forwarding a page to a colleague. This one is addressed to the company
+ * and is a lead. The labels are what keep them apart — "WhatsApp" in the share
+ * row, "Enquire on WhatsApp" here — so neither may be relabelled to match the
+ * other without the pair becoming ambiguous.
+ *
+ * Null when `site.json` has no number, in which case nothing renders.
+ */
+const siteSettings = await getSiteSettings();
+const whatsappHref = whatsappLink(
+  siteSettings.whatsapp,
+  productEnquiryMessage(fullName, shareUrl),
+);
+
+/**
  * `download` works same-origin only — browsers ignore it cross-origin — so a
  * datasheet committed under `public/` is offered as a download and one hosted
  * elsewhere opens in a tab instead. Claiming a save that will not happen is a
@@ -242,6 +263,14 @@ const pageTitle = category
               <EnquiryButton client:visible slug={product.slug} name={fullName} variant="solid" />
               <PillButton href={`/enquiry${askParams('quote')}`}>Request a quote</PillButton>
               <PillButton href={`/contact${askParams('info')}`}>Ask about this product</PillButton>
+
+              {
+                whatsappHref && (
+                  <PillButton href={whatsappHref} target="_blank" rel="noopener">
+                    Enquire on WhatsApp
+                  </PillButton>
+                )
+              }
 
               {
                 product.datasheetUrl && (

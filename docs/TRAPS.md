@@ -608,3 +608,22 @@ did not check. Changing one is a regression *you* would be introducing.
   `tests/e2e/hero-mobile.spec.ts` waits for the finite animations — and filters
   the infinite ones out, because `finished` on the ticker never resolves and
   awaiting it hangs the test until timeout.
+
+- **There are THREE WhatsApp links on a product page and only two of them
+  message Spartan.** `src/lib/share.ts` builds `https://wa.me/?text=…` with **no
+  recipient**, so the buyer picks who to forward a product to.
+  `src/lib/whatsapp.ts` builds `https://wa.me/<number>?text=…`, which opens a
+  chat with the company. One path segment separates "send this to a colleague"
+  from "message the supplier", and neither control says which it is beyond its
+  label. They are two modules for that reason — do not merge them, and do not
+  relabel one to match the other. `tests/e2e/whatsapp.spec.ts` pins the share
+  link as recipient-less.
+
+- **The floating WhatsApp button is the only `position: fixed` element on the
+  public site, so it has no surface — it floats over both the dark and the light
+  ones.** Contrast for it therefore cannot be measured against one section the
+  way every other colour decision here is. WhatsApp's familiar `#25D366` is
+  10.09:1 on `--surface-page` and **1.98:1 on white**, so it passes on the home
+  page and fails its 3:1 graphical-object boundary on all 94 product pages. The
+  shipped `#128C7E` is 4.84:1 / 3.83:1 / 4.14:1 across dark, light and the white
+  glyph. Re-measure against a LIGHT section before changing it.
