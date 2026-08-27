@@ -126,28 +126,26 @@ test.describe('prefers-reduced-motion', () => {
     await page.goto('/');
 
     /*
-     * THE HERO HAS NOTHING MOVING IN IT TO CANCEL, as of 2026-08-20.
+     * THE CAROUSEL IS BACK AND ITS REDUCED-MOTION BEHAVIOUR MOVED, 2026-08-27.
      *
-     * Three assertions used to sit here — the track and the pips resolving to
-     * `animation-name: none`, the track resting at translateX(0) rather than
-     * mid-slide, and the pause control hiding because a control that pauses
-     * something already stopped is a lie about what it does.
+     * This block used to assert the track, the pips and the pause control
+     * ABSENT — a marker left when the client deleted the six posters on
+     * 2026-08-20, saying plainly that a carousel returning with no
+     * reduced-motion handling would have nothing to notice it.
      *
-     * `.hero__glow` went first, with the white theme: a pulsing red bloom is a
-     * dark-surface device that reads as a pink smudge on white. The track, the
-     * pips and the pause went with the banners, which the client had deleted
-     * because they are portrait and the slot is a 4:1 band.
+     * The marker outlived its usefulness in the worst way. Banners came back on
+     * 2026-08-23 and these three lines went on passing anyway, because the test
+     * database had none in it — so the assertions that existed to guard a
+     * restoration were quietly guarding a state production had already left.
      *
-     * They are asserted ABSENT rather than dropped. A `toHaveCSS` against a
-     * selector matching nothing is not a passing assertion, it is one that
-     * cannot run — and dropping the lines would leave nothing to notice if a
-     * carousel came back with no reduced-motion handling at all. That
-     * restoration is a P1 item in BACKLOG.md, and this is the marker for it.
+     * The restored coverage is in `tests/e2e/hero-carousel.spec.ts`, which
+     * asserts the track and the pips resolving to `animation-name: none` under
+     * reduced motion and the control hiding with them, against a build whose
+     * banners are seeded rather than accidental. `.hero__glow` stays asserted
+     * absent here because that element is genuinely gone: a pulsing red bloom
+     * was a dark-surface device that read as a pink smudge on white.
      */
     await expect(page.locator('.hero__glow')).toHaveCount(0);
-    await expect(page.locator('.hero__track')).toHaveCount(0);
-    await expect(page.locator('.hero__pip')).toHaveCount(0);
-    await expect(page.locator('.hero__pause')).toHaveCount(0);
 
     // The title and actions use an entrance animation with `both` fill mode.
     // Cancelling that animation without also resetting opacity/transform

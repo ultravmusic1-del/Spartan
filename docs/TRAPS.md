@@ -627,3 +627,33 @@ did not check. Changing one is a regression *you* would be introducing.
   page and fails its 3:1 graphical-object boundary on all 94 product pages. The
   shipped `#128C7E` is 4.84:1 / 3.83:1 / 4.14:1 across dark, light and the white
   glyph. Re-measure against a LIGHT section before changing it.
+
+- **The hero has a BUILD-TIME branch, so a browser test can only ever see one of
+  its two states.** No banners renders an empty slot; banners render a carousel.
+  Which one `--full` tests is decided by whether the throwaway stack has banners
+  in it — and for four days it had none while production had three, so six tests
+  asserted an empty band and passed while the carousel had no coverage at all,
+  the WCAG 2.2.2 pause control included. `tools/seed-banners.mjs` now seeds the
+  fixture, `tests/e2e/hero-carousel.spec.ts` REFUSES rather than skips when the
+  band is empty, and `src/components/sections/Hero.test.ts` covers both branches
+  by rendering the component directly. **Do not add a hero assertion to a spec
+  that is silent about which state it needs.**
+
+- **`prefers-reduced-motion` in Playwright needs `contextOptions.reducedMotion`,
+  not `reducedMotion`.** On the pinned version `test.use({ reducedMotion:
+  'reduce' })` compiles, is silently discarded, and the page never enters the
+  branch — so the assertions run against the ordinary page. `motion.spec.ts` has
+  documented this since it was written and `hero-carousel.spec.ts` still walked
+  into it. Assertions specific enough to fail are the only reason it was caught.
+
+- **`\b` is not a token boundary for a BEM class name.** `hero__slot-icon` and
+  `hero__slot-label` both match `/\bhero__slot\b/`, so counting elements that way
+  reported four empty slots where one is rendered. Parse the class list and
+  compare tokens instead. The same trap applies to any `hero__x` / `hero__x-y`
+  pair, which is most of this codebase's markup.
+
+- **The 3:2 phone rule is on `.hero__slot` and NOT on `.hero__frame`.** So the
+  empty band opens out on a phone and the real carousel does not: the live band
+  is 335 × 84 at 375px wide. That is a live, measured defect and the fix is a
+  content decision in `BACKLOG.md`, not a CSS tweak — cropping to 3:2 cuts the
+  sides off artwork carrying a headline and a QR code.

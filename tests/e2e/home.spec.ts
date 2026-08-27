@@ -38,52 +38,70 @@ test.describe('the hero headline', () => {
   });
 });
 
-test.describe('the hero banner slot', () => {
+test.describe('the hero banner band', () => {
   /*
-   * THE CAROUSEL TESTS THAT USED TO LIVE HERE ARE IN THIS COMMIT'S PARENT.
+   * THE COVERAGE THAT USED TO BE HERE HAS MOVED, IN TWO DIRECTIONS.
    *
-   * They asserted seven slides, six pips, one eager image and five lazy ones,
-   * and a pause control that stops the track and the pips together for WCAG
-   * 2.2.2. All of it was real coverage and none of it can run: the client had
-   * the six posters deleted on 2026-08-20 because they are portrait and the
-   * slot is specified at 2800 x 700.
+   * Two tests sat here asserting the band was EMPTY — no slides, no pips, no
+   * pause control. They were honest when written on 2026-08-20, when the client
+   * had just had the six portrait posters deleted. They stopped being honest on
+   * 2026-08-23 when banners were uploaded again, and **nothing noticed for four
+   * days**, because `--full` builds against a test database whose banner table
+   * was empty. Green on a state production had left.
    *
-   * They were removed rather than rewritten to pass against an empty stage,
-   * because a test that asserts nothing is worse than a missing one — it reads
-   * as coverage on the report. BACKLOG.md carries the item to restore them
-   * with the first real banner, and Hero.astro's header says plainly that the
-   * carousel path currently ships untested.
+   * Markup — slide and pip counts, the loop duplicate, the empty alts, the
+   * eager first image, and the empty-band branch itself — is now in
+   * `src/components/sections/Hero.test.ts`, which renders the component with
+   * whatever banner list it is handed and so covers BOTH states in one run,
+   * with no build and no database.
    *
-   * What CAN be checked today is that the empty state is genuinely empty and
-   * genuinely silent, which is what these two do.
+   * Behaviour that needs a browser — the pause control actually stopping the
+   * animation, WCAG 2.2.2 — is in `tests/e2e/hero-carousel.spec.ts`, against a
+   * seeded fixture rather than an accident of configuration.
+   *
+   * What is left here is the home page's own concern: that the band is on the
+   * page, before the shelf, and silent.
    */
-  test('the slot renders with no slides, no pips and no pause control', async ({ page }) => {
+  test('is present in the hero, above the category shelf', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('.hero__slot')).toBeVisible();
-    await expect(page.locator('.hero__slide')).toHaveCount(0);
-    await expect(page.locator('.hero__pip')).toHaveCount(0);
+    const stage = page.locator('.hero__stage');
+    await expect(stage).toBeVisible();
 
-    // A pause button with nothing to pause is a control that cannot do what it
-    // says — the same defect this repo already removed from the footer's
-    // newsletter field and its three href="#" social icons. The mockup draws
-    // the control row beside the slot; it is deliberately not built until
-    // there is motion for it to stop.
-    await expect(page.locator('.hero__pause')).toHaveCount(0);
-    await expect(page.locator('#hero-carousel-pause')).toHaveCount(0);
+    // Either state passes here — this file does not own which one the build is
+    // in, only that the band exists and comes before the shelf.
+    const band = await stage.evaluate((el) => ({
+      hasCarousel: !!el.querySelector('.hero__track'),
+      hasSlot: !!el.querySelector('.hero__slot'),
+    }));
+    expect(band.hasCarousel || band.hasSlot).toBe(true);
+
+    const shelfFollows = await page.evaluate(() => {
+      const s = document.querySelector('.hero__stage');
+      const shelf = document.querySelector('.cg__grid');
+      if (!s || !shelf) return false;
+      return Boolean(s.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+    expect(shelfFollows).toBe(true);
   });
 
-  test('the slot is decorative, so it is not announced', async ({ page }) => {
+  /**
+   * The band carries marketing posters whose content is baked-in text that alt
+   * cannot reproduce, and every product on them is in the catalogue below — so
+   * it is decorative in either state and must not be announced. The <h1> and
+   * the two CTAs carry the hero's meaning.
+   */
+  test('is decorative in whichever state it is in, so it is not announced', async ({ page }) => {
     await page.goto('/');
 
-    // "Drop the horizontal hero banner — 2800 x 700" is a note to whoever
-    // supplies the artwork, not content. The <h1> and the two CTAs carry the
-    // hero's meaning, exactly as they did when this held a carousel.
-    await expect(page.locator('.hero__slot')).toHaveAttribute('aria-hidden', 'true');
+    const hidden = await page.evaluate(() => {
+      const el = document.querySelector('.hero__track') ?? document.querySelector('.hero__slot');
+      return el?.getAttribute('aria-hidden');
+    });
+    expect(hidden).toBe('true');
 
-    // And the mockup's "or browse files" affordance is not rendered at all —
-    // it would be a link that does nothing. Real upload is Stage 6 of the
-    // admin content plan.
+    // The mockup's "or browse files" affordance is never rendered — it would be
+    // a link that does nothing.
     await expect(page.getByText(/browse files/i)).toHaveCount(0);
   });
 });

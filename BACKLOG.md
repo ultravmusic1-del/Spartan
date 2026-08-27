@@ -548,8 +548,20 @@ The header was added on 2026-08-23.
       **Done 2026-08-23** (`1552268`, `handoff.md` §29.4).
 
 
-- [ ] **Restore the hero carousel's test coverage — NOW OVERDUE, and the tests
-      that remain assert a state the site is no longer in.** The client uploaded
+- [x] **Restore the hero carousel's test coverage — NOW OVERDUE, and the tests
+      that remain assert a state the site is no longer in.** **Done 2026-08-27**
+      (`handoff.md` §35). Markup for BOTH states is covered by
+      `src/components/sections/Hero.test.ts`, which renders the component
+      directly and needs no build; the pause control, reduced motion and the
+      no-JavaScript path are covered by `tests/e2e/hero-carousel.spec.ts`
+      against three banners seeded into the throwaway stack by
+      `tools/seed-banners.mjs`. The carousel spec REFUSES rather than skips on a
+      build with no banners.
+
+      **It turned up two things worth reading in §35**: the phone band is 84px
+      tall in production (next item), and all three markers left around this
+      hero to notice a carousel returning went on passing when one did. Original
+      note follows. The client uploaded
       three real banners on 2026-08-23, so the live hero shows a carousel while
       `home.spec.ts` and `hero-mobile.spec.ts` still assert an *empty* slot.
 
@@ -561,7 +573,13 @@ The header was added on 2026-08-23.
       **Re-measured 2026-08-27 and it is EIGHT, not six** (`handoff.md` §33):
       the six above plus `motion.spec.ts`'s reduced-motion hero test on both
       projects. Measured both ways round on the same day — 294 pass with an
-      empty band, 8 fail with the client's three banners. So the
+      empty band, 8 fail with the client's three banners.
+
+      **CLOSED the same day (`handoff.md` §35).** All eight are gone: the
+      empty-band assertions moved into a component test that covers both states,
+      and the browser suite now builds against seeded banners. 314 browser tests
+      pass against a carousel build, axe and the contrast sweep included — the
+      first time either has run over the live hero. So the
       gate is green on a state production is not in, which is the shape of
       coverage this repo treats as worse than none.
 
@@ -592,14 +610,32 @@ The header was added on 2026-08-23.
       wrong-product-fact items below. `site-content.test.ts` still names both
       filenames.
 
-- [ ] **Decide what a phone does with a 4:1 banner.** The slot holds 4:1 above
+- [ ] **Decide what a phone does with a 4:1 banner — THIS IS LIVE NOW, NOT
+      HYPOTHETICAL.** Measured 2026-08-27 against a build from the client's own
+      database: the banner band on a 375px phone is **335 × 84**. The 3:2 rule
+      that exists to prevent exactly that was written on `.hero__slot` and never
+      extended to `.hero__frame`, so it stopped applying the moment real banners
+      arrived (`handoff.md` §35).
+
+      **Three honest options, and picking one in CSS without asking is not among
+      them:**
+      1. Leave it. The whole poster is visible and it is 84px tall, so its text
+         is unreadable on a phone — decorative at best.
+      2. Crop the frame to 3:2 with `object-fit: cover`. Fills the space, and
+         **cuts the sides off artwork carrying a headline, a phone number and a
+         QR code.**
+      3. A second, phone-shaped crop per banner. Correct, and the most work:
+         another upload, another column, another admin control.
+
+      Now pinned where it can actually fire — `tests/e2e/hero-carousel.spec.ts`
+      asserts the 4:1 that ships, so whichever way this goes it breaks a test
+      and gets read. The old pin measured the empty slot and could not.
+
+      Original note follows. The slot holds 4:1 above
       720px and opens out to 3:2 below it, because at 375px a 4:1 band is 84px
       tall — too short to read as a banner or hold its own label. One 2800 × 700
       artwork cannot fill both, so the first real banner forces a choice:
-      letterbox it on the phone, or supply a second crop. Nothing is cropped
-      today because the band is empty. Pinned by
-      `tests/e2e/hero-mobile.spec.ts` so the tension is visible rather than
-      discovered.
+      letterbox it on the phone, or supply a second crop.
 
 - [ ] **Re-run Lighthouse on all three page types.** The table in `README.md`
       was measured on 2026-08-11 and the footer has changed since — the social

@@ -155,34 +155,23 @@ test.describe('short screens buy the primary CTA back by spending card', () => {
     });
   }
 
-  test('the slot opens out to 3:2 on a phone, not the 4:1 it holds on desktop', async ({
-    page,
-  }) => {
-    // 2800 x 700 is a 4:1 band, and the slot reserves exactly the shape it will
-    // receive — but at 375px wide that is 84px tall, too short to read as a
-    // banner or to hold its own label. The mobile mockup draws it near 3:2 and
-    // that is what ships below 720px.
-    //
-    // This is a real tension rather than a detail, which is why it is pinned:
-    // one 4:1 artwork cannot fill both, so when banners arrive either the phone
-    // letterboxes them or a second crop is supplied. Nothing is cropped today
-    // because the slot is empty.
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/');
-
-    const phone = await page.locator('.hero__slot').evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      return r.width / r.height;
-    });
-    expect(phone).toBeCloseTo(1.5, 1);
-
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/');
-
-    const desktop = await page.locator('.hero__slot').evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      return r.width / r.height;
-    });
-    expect(desktop).toBeCloseTo(4, 1);
-  });
+  /*
+   * "THE SLOT OPENS OUT TO 3:2 ON A PHONE" WAS HERE, AND ITS REMOVAL IS THE
+   * MOST INSTRUCTIVE THING IN THIS FILE.
+   *
+   * It measured `.hero__slot` — the EMPTY band — opening from 4:1 to 3:2 below
+   * 720px, and it existed as a pin so that "what does a phone do with a 4:1
+   * banner" stayed visible rather than being discovered later. It could not
+   * do that job. Banners returned on 2026-08-23, `.hero__slot` stopped
+   * rendering, and the rule was never extended to `.hero__frame` — so the live
+   * band has been **84px tall on a phone** ever since, while this test went on
+   * passing against a test database with no banners in it.
+   *
+   * A pin that measures the state you are not in is not a weaker pin, it is the
+   * absence of one wearing its clothes. The replacement is in
+   * `tests/e2e/hero-carousel.spec.ts`: it measures `.hero__frame`, which is what
+   * ships, and asserts the 4:1 that is actually live while naming it as the
+   * client's open decision. Deleted rather than skipped — a permanently skipped
+   * test is another thing that reads as coverage on a report.
+   */
 });

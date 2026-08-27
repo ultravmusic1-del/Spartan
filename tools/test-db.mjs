@@ -44,6 +44,7 @@ import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { seedSql } from './seed-catalogue.mjs';
 import { ensureBuckets } from './storage-setup.mjs';
+import { seedBanners } from './seed-banners.mjs';
 
 /**
  * Where Docker's CLI lives, resolved rather than assumed.
@@ -188,6 +189,17 @@ export async function start() {
    * before any test touches it. Idempotent — see tools/storage-setup.mjs.
    */
   await ensureBuckets(url, serviceKey);
+
+  /*
+   * And then put banners in it, so a test build renders the CAROUSEL rather
+   * than the empty band. Without this the whole browser suite runs against a
+   * hero production has not been in since 2026-08-23 — see tools/seed-banners.mjs
+   * for the six tests that passed on that fiction and the WCAG 2.2.2 control
+   * that had no guard at all.
+   *
+   * After ensureBuckets, because the upload needs the bucket.
+   */
+  await seedBanners(url, serviceKey);
 
   /*
    * Last, and only after everything above succeeded. The file is a claim that

@@ -3668,3 +3668,115 @@ Both held. The CI run that surfaced this one was otherwise clean:
 suite has run since 2026-08-23**, Docker having been unavailable on this machine
 for every local attempt since. §29's "run it before the next deploy" is
 discharged, by CI rather than here.
+
+## 35. The hero carousel gets tested, and two things fall out of it — 2026-08-27
+
+**Status: implemented and green.** `verify 18/18 · 374 unit · 22 new e2e.`
+
+Closing the gap §29 opened and §33 re-measured: the hero's browser tests
+asserted an EMPTY banner band and passed on every CI run, while production had
+shown a carousel since 2026-08-23.
+
+### The shape of the problem, stated once
+
+The hero has a **build-time branch**. No banners renders an empty slot; banners
+render a carousel. Both states are real — a fresh deployment has none,
+production has three — and a Playwright run can only ever be in one of them,
+whichever the build happened to produce. CI built against the throwaway stack,
+whose `hero_banners` table was empty, so it tested the state nobody was in and
+reported green for it. **The carousel path had no coverage of any kind**, and
+that included the WCAG 2.2.2 pause control, which axe does not test for.
+
+### The fix splits by what each kind of test can actually decide
+
+**Markup went to a container test.** `src/components/sections/Hero.test.ts`
+renders `Hero.astro` directly through `experimental_AstroContainer` with a
+mocked banner list, so it covers **both branches in one run** — no build, no
+Docker, no database — on every `npm run verify`. Slide and pip counts, the loop
+duplicate, the empty alts, the eager first image, the derived clock, and the
+empty band's silence are all decidable from what the component emits.
+
+**Behaviour stayed in a browser.** `tests/e2e/hero-carousel.spec.ts` asserts the
+part markup cannot: that the track and the pips **stop together** when Pause is
+pressed, that it toggles back, that it works from the keyboard, that it works
+with JavaScript disabled, and that reduced motion stops the carousel and removes
+the control. It **refuses rather than skips** when the build has no banners, the
+same way the admin specs refuse without a database.
+
+**The fixture is seeded, not hoped for.** `tools/seed-banners.mjs` draws three
+flat 2800×700 panels with sharp and writes them into the throwaway stack's
+bucket and table, so `--full` builds the carousel. Flat colour with no text on
+purpose: a screenshot from a failing test should be unmistakably a fixture and
+nobody should mistake one for artwork needing a source check. **Nothing asserts
+the number three** — the tests read counts from the DOM and check the
+relationships, so the fixture can change size without touching a spec.
+
+### Two real defects the gap had been hiding
+
+**1. On a phone the live banner band is 84px tall.** The empty slot opens out
+from 4:1 to 3:2 below 720px, because at 375px a 4:1 band is too short to read.
+That rule was written on `.hero__slot` and **never extended to
+`.hero__frame`** — so the moment real banners arrived the band went back to 4:1
+on phones. Measured against a build from the client's database: **335 × 84 at
+375px wide.**
+
+It is **not fixed here**, and that is deliberate. The fix is the content
+decision BACKLOG.md has carried since the slot was built: one 2800×700 artwork
+cannot fill both shapes, so either the phone letterboxes it as it does now, or
+the frame crops to 3:2 and cuts the sides off posters carrying a headline and a
+QR code, or a second crop is supplied. **Choosing quietly in CSS is the one
+option that is not available.** The new test asserts what ships and names it as
+the open question, so the decision breaks a test and gets read — which is what
+the original pin was for and could not do, because it measured the empty slot
+production had already stopped rendering.
+
+**2. A pin that measures the state you are not in is not a weaker pin.** It is
+the absence of one wearing its clothes. Three separate markers had been left
+around this hero — the deleted carousel tests in `home.spec.ts`, the
+absence-assertions in `motion.spec.ts`, the aspect-ratio test in
+`hero-mobile.spec.ts` — each written explicitly to notice when banners came
+back. **All three went on passing when banners came back.** That is worth more
+than the bug it hid: a marker is only a marker if the thing it watches can
+change under it.
+
+### Two mistakes made writing this, both caught by the tests failing
+
+**`test.use({ reducedMotion: 'reduce' })` does nothing on this Playwright
+version** — only `contextOptions.reducedMotion` is honoured, which
+`motion.spec.ts` already documented at length and this work walked into anyway.
+It compiles, it is silently discarded, and the page never enters the
+reduced-motion branch. The only reason it was noticed is that the assertions
+failed; had they been weaker they would have measured the ordinary page and
+passed.
+
+**`\b` is not a token boundary for a BEM class.** `hero__slot-icon` and
+`hero__slot-label` both satisfy `\bhero__slot\b`, so the first count returned
+four empty slots where the component renders one. The helper parses class lists
+now rather than pattern-matching them.
+
+Both were caught because the assertions were specific. A test written to a
+rounder number would have absorbed either.
+
+### Proved against planted violations
+
+Two, in the component, following §29's practice:
+
+- a pip per **slide** instead of per **banner** — the realistic bug, since the
+  loop duplicate would light an extra pip — fails `renders one pip per banner`.
+- the pause control's class renamed, standing in for its removal — fails
+  `renders a pause control that a keyboard can reach`.
+
+Both failed by name, and `Hero.astro` was restored byte-identical afterwards.
+
+### What could not be verified here
+
+**`--full` still did not run: Docker's WSL engine will not start on this
+machine**, which is the fourth session in a row (§29, §31, §33). So
+`tools/seed-banners.mjs` and its call in `test-db.mjs` are **exercised by CI
+and not by me** — they are the only part of this change that has never
+executed. Everything else was verified against a build made from the client's
+live database, which is the same carousel state the fixture reproduces: 314
+browser tests pass there, including axe and the contrast sweep, which have now
+run over a hero carousel for the first time.
+
+If CI goes red on `test:db:start`, the seeder is where to look.
