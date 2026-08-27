@@ -3431,6 +3431,11 @@ would point the next reader at the wrong problem; a suite that **passed** while
 its total could not be read is now a **failure**, saying so by name. A gate that
 cannot see its input has to say so rather than step aside quietly.
 
+**The first of those two changes was not the fix, and §34 is the correction.**
+Merging the streams did not make the total readable on CI — the next run failed
+this gate rather than skipping it, which is the split branch working exactly as
+intended. Only the second change earned its place here.
+
 ### 3. Six pixels of the one control the site converts on
 
 `"Browse catalogue" is above the fold on a 360-wide Android` measured 646.125px
@@ -3602,3 +3607,64 @@ live database it is **eight**: the two in §29's list plus
 both ways round — 294 pass with an empty band, 8 fail with the client's three
 banners. Unchanged in substance and still the top of the testing backlog; the
 count is corrected here so the next person does not go looking for six.
+
+## 34. The counts gate stops reading a TUI — 2026-08-27
+
+**Status: implemented and green.** `verify 18/18 · 364 unit.`
+
+The correction to §32's second finding. The diagnosis there was wrong; the
+branch split that came with it is what turned a silent skip into a red line that
+named the problem, and that is what made the third attempt possible.
+
+### Three CI runs to learn one thing
+
+1. The gate reported `skip (vitest reported no count)` on every CI run and `ok`
+   locally. Diagnosed as `run()` discarding stderr on success. Fixed that, and
+   split the branch so a passing suite with an unreadable total FAILS.
+2. Next run: ` FAIL counts match the repo — the unit suite passed but its total
+   could not be read`. So the stream theory was wrong, and the split branch had
+   done its job — the run now said which of the two things was broken instead of
+   stepping aside.
+3. This change.
+
+### What it does now, and why it is not a third theory
+
+`tools/verify.mjs` scraped the total out of whatever vitest printed:
+`out.match(/Tests\s+(\d+) passed/)`. Vitest now runs with
+`--reporter=default --reporter=json --outputFile.json=…` and the total is read
+from `numPassedTests`. The default reporter still prints, so a failing run reads
+exactly as it did. The report goes to the OS temp directory and is deleted after
+reading — a gate that dirties the working tree it is checking is its own kind of
+bug.
+
+**Say plainly what was not achieved: the CI-only difference was never
+reproduced.** Colour codes, which stream, and the reporter CI selects were all
+tested on this machine and all four combinations parsed correctly. At that point
+the useful move is to stop needing the answer rather than to keep guessing at
+it — a number that matters should not be recovered from a display format that is
+free to change, on any platform.
+
+### Proved both ways, because an alarm nobody has heard is not an alarm
+
+The failure path was planted rather than assumed: with the report written
+somewhere unreadable, the run gives
+
+```
+  ok   vitest — passed
+ FAIL  counts match the repo — the unit suite passed but its total could not be
+       read from the output, so the counts block was not checked
+VERIFY FAILED — 17/18 gates
+```
+
+and with it restored, `ok vitest — 364 passed` and `ok counts match the repo`.
+Same technique as the `astro:assets` gate in §29, and for the same reason: that
+one reported clean against a planted violation that had silently failed to land.
+
+### What the other two fixes did
+
+Both held. The CI run that surfaced this one was otherwise clean:
+`instructional docs name real paths — 144 references, all resolve`, and
+`playwright — 347 passed` — which is the first time the **authenticated admin
+suite has run since 2026-08-23**, Docker having been unavailable on this machine
+for every local attempt since. §29's "run it before the next deploy" is
+discharged, by CI rather than here.

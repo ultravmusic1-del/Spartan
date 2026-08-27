@@ -15,6 +15,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,6 +43,15 @@ const record = (name, ok, detail = '') => {
  * passing on every developer's machine. A gate whose result depends on the
  * platform is not a gate. `spawnSync` rather than `execFileSync` because only
  * it hands back both streams.
+ *
+ * **That theory was wrong, and this change was not the fix.** Merging the
+ * streams did not make the total readable on CI either; the counts gate now
+ * takes it from vitest's JSON reporter and does not scrape this string at all.
+ * The change stays because symmetry between the success and failure paths is
+ * right on its own, and because the next parser written against `out` should
+ * not inherit the trap. Recorded rather than quietly reverted: a fix that did
+ * not fix the thing it was aimed at is worth exactly one sentence, and this is
+ * it.
  */
 function run(cmd, args) {
   const result = spawnSync(cmd, args, {
@@ -113,11 +123,46 @@ let unitTests = null;
 let unitSuitePassed = false;
 
 {
-  const r = run('npx', ['vitest', 'run']);
-  const m = r.out.match(/Tests\s+(\d+) passed/);
-  if (m) unitTests = Number(m[1]);
+  /*
+   * THE TOTAL COMES FROM A MACHINE-READABLE REPORT, NOT FROM THE TUI.
+   *
+   * It used to be `out.match(/Tests\s+(\d+) passed/)` against whatever vitest
+   * printed. That worked on every developer's machine and produced nothing on
+   * CI, so the counts gate below reported `skip` on every CI run for weeks —
+   * and when the skip was turned into a failure it simply failed there instead,
+   * still without saying why. Two rounds of guessing at the difference (colour
+   * codes, which stream, the reporter CI selects) reproduced none of it locally,
+   * which is the point at which scraping a human-facing summary stops being
+   * worth debugging.
+   *
+   * `--reporter=json` alongside the default gives `numPassedTests` as a number.
+   * The default reporter still prints, so a failing run reads exactly as it did.
+   * The file goes to the OS temp directory rather than the repo: it is a
+   * by-product of a gate, and a gate that dirties the working tree it is
+   * checking is its own kind of bug.
+   */
+  const report = path.join(os.tmpdir(), `spartan-vitest-${process.pid}.json`);
+  const r = run('npx', [
+    'vitest',
+    'run',
+    '--reporter=default',
+    '--reporter=json',
+    `--outputFile.json=${report}`,
+  ]);
+
+  let summary = null;
+  try {
+    summary = JSON.parse(fs.readFileSync(report, 'utf8'));
+  } catch {
+    // Left null on purpose. The counts gate says so by name rather than
+    // stepping aside — see the note there.
+  } finally {
+    fs.rmSync(report, { force: true });
+  }
+
+  if (typeof summary?.numPassedTests === 'number') unitTests = summary.numPassedTests;
   unitSuitePassed = r.ok;
-  record('vitest', r.ok, m ? `${m[1]} passed` : r.ok ? 'passed' : 'see output above');
+  record('vitest', r.ok, unitTests !== null ? `${unitTests} passed` : r.ok ? 'passed' : 'see output above');
   if (!r.ok) console.log(r.out.slice(-2000));
 }
 
@@ -805,12 +850,18 @@ let unitSuitePassed = false;
  * problem.
  *
  * NOT skipped when the suite passed and the total could not be read. That used
- * to be the same branch, and it hid this gate from CI completely: `run()`
- * dropped stderr on success, vitest's summary was not on stdout there, and the
- * check reported `skip` on every CI run for weeks while every local run said
- * `ok`. `run()` is fixed, and this is the alarm for the next time something
- * changes that output — a gate that cannot see its input has to say so, not
- * step aside quietly.
+ * to be the same branch, and it hid this gate from CI completely: the total was
+ * scraped out of vitest's printed summary, which produced a number locally and
+ * nothing on CI, so the check reported `skip` on every CI run for weeks while
+ * every local run said `ok`.
+ *
+ * Splitting the branch is what made the problem visible — it failed on CI
+ * instead of skipping, and said which of the two things had gone wrong. The
+ * total now comes from vitest's JSON reporter (see the unit-test block above),
+ * so there is nothing left to scrape; this branch stays as the alarm for the
+ * next time that input goes away. **A gate that cannot see its input has to say
+ * so, not step aside quietly** — that is the whole lesson here, and it cost
+ * three CI runs to learn.
  */
 {
   const { computeCounts, renderBlock, replaceBlock, TARGETS } = await import('./counts.mjs');

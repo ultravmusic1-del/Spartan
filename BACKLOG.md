@@ -734,8 +734,19 @@ The header was added on 2026-08-23.
       than found again later. Either gate it or make the scrim's floor
       independent of the image beneath it.
 
-- [ ] **CI is the only place the full suite runs, and that is the actual
-      finding.** Three gates were green locally and red or silently skipped in
+- [x] **CI is the only place the full suite runs, and that is the actual
+      finding.** **The immediate half is closed 2026-08-27** (`handoff.md` §34):
+      all three gates are green on CI, and the run that proved it was the first
+      time the authenticated admin suite has executed since 2026-08-23 —
+      §29's "run it before the next deploy" is discharged, by CI rather than
+      locally. The habit underneath is unchanged and is left open below.
+
+- [ ] **Decide what `npm run verify` should say when the browser suite did
+      not run.** `--full` needs Docker, Docker is not always up, and a `skip`
+      line is easy to push past — which is how a real 6px regression on the
+      primary CTA sat for four commits. A louder signal, or a non-zero exit for
+      a run that claims to be full and was not, is the open question. Original
+      note follows. Three gates were green locally and red or silently skipped in
       CI on 2026-08-27 (`handoff.md` §32), and one of them had let a real
       6px regression sit on the primary CTA for four commits. All three are
       fixed. What is not fixed is the reason they went unnoticed: `--full`
