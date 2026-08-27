@@ -67,6 +67,25 @@ describe('extractPaths', () => {
     expect(extractPaths('emitted to `dist/client/` by `.vercel/output/`')).toEqual([]);
   });
 
+  /**
+   * The generated path that is not build output. `tools/fetch-banners.mjs`
+   * writes `src/assets/banners/` before a build and it is gitignored, so it is
+   * absent from a fresh clone and from any run without Supabase credentials.
+   * Checking it made the gate pass for anyone who had built once and fail in
+   * CI, which is the shape of green this repo treats as worse than red.
+   */
+  it('ignores the downloaded hero banners, which a fresh clone does not have', () => {
+    expect(extractPaths('downloaded into `src/assets/banners/` before the build')).toEqual([]);
+    expect(extractPaths('`src/assets/banners/hero.jpg` is generated')).toEqual([]);
+  });
+
+  /** The exemption is that one directory, not the assets tree around it. */
+  it('still checks the rest of src/assets', () => {
+    expect(extractPaths('committed under `src/assets/products/`')).toEqual([
+      'src/assets/products/',
+    ]);
+  });
+
   it('deduplicates', () => {
     expect(extractPaths('`handoff.md` and again `handoff.md`')).toEqual(['handoff.md']);
   });

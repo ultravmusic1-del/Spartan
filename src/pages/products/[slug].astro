@@ -63,6 +63,25 @@ const image = loader ? (await loader()).default : undefined;
 
 const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}` : product.name;
 
+/*
+ * The two plain links below carry this product with them, so the message box at
+ * the other end already names what the buyer was reading. /contact says in its
+ * own copy that a product-specific request should be raised from the catalogue
+ * "so nobody has to work out which of four ventilation fan sizes you meant" —
+ * this is the half of that promise that was missing.
+ *
+ * `intent` is what makes the two buttons different at the destination. Both
+ * pages have a sensible default without it, so a truncated link still reads
+ * correctly; see src/lib/enquiry-prefill.ts.
+ *
+ * URLSearchParams encodes the name, which is the part that would otherwise fail
+ * silently: spec and product strings here carry `+`, `&` and `#`, and in a query
+ * string those mean space, next-parameter and fragment. Same trap as ShareRow
+ * (handoff.md §19), same answer.
+ */
+const askParams = (intent: 'quote' | 'info') =>
+  `?${new URLSearchParams({ product: product.slug, name: fullName, intent })}`;
+
 // X means the glove was not submitted for that test. 0 means it was tested and
 // scored the lowest level. The note only appears where an X is actually printed.
 const hasUntested = product.en388
@@ -221,8 +240,8 @@ const pageTitle = category
                   That link stays because it works without JavaScript, which the
                   island cannot. */}
               <EnquiryButton client:visible slug={product.slug} name={fullName} variant="solid" />
-              <PillButton href="/enquiry">Request a quote</PillButton>
-              <PillButton href="/contact">Ask about this product</PillButton>
+              <PillButton href={`/enquiry${askParams('quote')}`}>Request a quote</PillButton>
+              <PillButton href={`/contact${askParams('info')}`}>Ask about this product</PillButton>
 
               {
                 product.datasheetUrl && (

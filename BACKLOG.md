@@ -477,8 +477,11 @@ here:** it claimed `/_astro` was cached immutable. It was not — only
 `public, max-age=0, must-revalidate`, confirmed against the live response.
 The header was added on 2026-08-23.
 
-- [ ] **75% of the serverless function is an image library nothing uses at
-      runtime.** Measured 2026-08-23: `_render.func` is 25.6 MB, of which
+- [x] **75% of the serverless function is an image library nothing uses at
+      runtime.** **Done 2026-08-23** (`02c1cc3`, `handoff.md` §29.1) — the
+      adapter route to `/_image` now points at an inert 404, sharp leaves the
+      server graph, and gate 18 refuses `astro:assets` in any file that opts
+      out of prerendering. Original note follows. Measured 2026-08-23: `_render.func` is 25.6 MB, of which
       19.1 MB is sharp — bundled because Astro routes a `/_image` endpoint into
       the function. Nothing legitimate hits it: every public image is optimised
       at BUILD time into `/_astro/*`, no server-rendered page imports
@@ -491,7 +494,7 @@ The header was added on 2026-08-23.
       adapter's `excludeFiles` (leaves `/_image` a landmine — MUST ship with a
       verify gate banning `astro:assets` from server-rendered pages).
 
-- [ ] **Every Publish invalidates every visitor's cached banners and re-encodes
+- [x] **Every Publish invalidates every visitor's cached banners and re-encodes
       all 48 variants.** Verified 2026-08-23 by diffing two consecutive builds:
       the banner asset filenames are disjoint across builds, because the signed
       storage URL's token changes per build and Astro keys both its image cache
@@ -503,21 +506,34 @@ The header was added on 2026-08-23.
       cache key, but weakens "short-lived" from the spec §26), or accept the
       churn. Client should choose.
 
-- [ ] **The Resend SDK drags ~3 MB into the enquiry function for one HTTPS
-      POST.** `resend`'s dependency tree (@react-email/render → react-dom +
+      **Done 2026-08-23** (`cddbfec`, `handoff.md` §29.2) — and neither of the
+      two options above is what shipped. `tools/fetch-banners.mjs` downloads
+      the enabled banners into `src/assets/banners/` before `astro build`, so
+      Astro hashes them from CONTENT rather than from a URL carrying a fresh
+      token. Two consecutive builds now emit identical filenames for all 48,
+      and the short-lived-credential half of §26 is intact.
+
+- [x] **The Resend SDK drags ~3 MB into the enquiry function for one HTTPS
+      POST.** **Done 2026-08-23** (`34fd8d0`, `handoff.md` §29.3) — replaced
+      with one `fetch`, and the `unconfigured`/`failed` mapping gained eleven
+      tests it never had, including the `replyTo` → `reply_to` wire detail that
+      would have sent every reply to the wrong address in silence. Original
+      note follows. `resend`'s dependency tree (@react-email/render → react-dom +
       prettier) is bundled into `_render.func` while `src/pages/api/enquiry.ts`
       uses none of it — the send is one JSON POST to `api.resend.com`. A raw
       `fetch` removes it. **Rule-2 territory**: the enquiry email is a delivery
       channel, so this change needs its error-mapping preserved exactly
       (`unconfigured` vs `failed`) and the outcome tests run before and after.
 
-- [ ] **The product page's LCP image is `loading="eager"` but not
+- [x] **The product page's LCP image is `loading="eager"` but not
       `fetchpriority="high"`.** One attribute in `ProductImage`/the product
       page template, across all 94 pages. The hero banner already has it; this
       is the same reasoning applied to the second page type. While there: the
       catalogue grid lazy-loads all 110 images including row one, so the grid
       pops in late — LCP is unaffected (the H1 is the LCP element, measured),
       so eager-loading the first ~6 cards is cosmetic polish, not a metric fix.
+
+      **Done 2026-08-23** (`1552268`, `handoff.md` §29.4).
 
 
 - [ ] **Restore the hero carousel's test coverage — NOW OVERDUE, and the tests
@@ -637,7 +653,13 @@ The header was added on 2026-08-23.
       `source` while `products.source` is nullable, deliberately, because a
       record typed into the admin has no brochure page to cite. Both belong in
       that piece of work rather than being guessed at now.
-- [ ] **Apply the hero banner migration to the live project.** `hero_banners`
+- [x] **Apply the hero banner migration to the live project.** **Done
+      2026-08-23** — the migration was applied through the Supabase connector
+      and `npm run storage:setup` created the bucket; `handoff.md` §28 records
+      both, and §30 confirms the bucket now holds the client's three banners.
+      A fresh clone does not repeat either step. Original note follows.
+
+      `hero_banners`
       exists only in the throwaway stack. Until
       `supabase/migrations/20260823120000_hero_banners.sql` is applied to
       production and `npm run storage:setup` has created the bucket, **the
@@ -694,6 +716,16 @@ The header was added on 2026-08-23.
       open and never queued here, which is why it is being added now rather
       than found again later. Either gate it or make the scrim's floor
       independent of the image beneath it.
+
+- [ ] **CI is the only place the full suite runs, and that is the actual
+      finding.** Three gates were green locally and red or silently skipped in
+      CI on 2026-08-27 (`handoff.md` §32), and one of them had let a real
+      6px regression sit on the primary CTA for four commits. All three are
+      fixed. What is not fixed is the reason they went unnoticed: `--full`
+      needs Docker, Docker is not always up, and the habit of pushing on a
+      `verify` that skips Playwright is what makes CI the first place anything
+      is learned. Worth deciding whether `verify` should say something louder
+      than `skip` when the browser suite did not run.
 
 - [ ] **Analytics and error monitoring.** Zero references anywhere in `src/`.
       A lead-generation site with no measurement of the funnel it exists to
@@ -757,6 +789,39 @@ The header was added on 2026-08-23.
 ---
 
 ## Done
+
+- **2026-08-27** — **The product comes with you into the message box, and three
+  gates that were green for the wrong reason.** `handoff.md` §31 and §32.
+
+  "Ask about this product" and "Request a quote" now carry the product to the
+  form they open. /contact arrives holding an information request naming the
+  product and linking to it; /enquiry puts the product **on the basket list**
+  and opens with a quotation request, so the buyer lands on a complete,
+  sendable enquiry. The generic quote buttons elsewhere are untouched — they
+  have no product to name.
+
+  *Worth knowing:* **the links stay ordinary `<a>` elements.** Both
+  destinations are prerendered, so the work happens in the browser after
+  hydration and the controls still go where they always went with JavaScript
+  off — which is why `products/[slug].astro` kept that link in the first place.
+
+  *Worth knowing:* **the name travels in the URL and the link does not.** The
+  product link is rebuilt from the slug against the page's own origin, and a
+  slug outside `[a-z0-9-]` is refused rather than escaped. A URL parameter
+  naming a destination is how an open redirect starts.
+
+  *Worth knowing:* **the URL is cleaned the moment it is used, and at /enquiry
+  that is not tidiness.** `addItem` increments an existing line, so parameters
+  left in the address bar would mean a buyer who refreshed three times asking
+  for four of something they wanted one of.
+
+  *Worth knowing:* **the CI failures were all older than the commit that
+  surfaced them.** A doc-paths gate that only passed for people who had built
+  once; a counts gate that had been skipping silently on every CI run because
+  `run()` dropped stderr on success; and six pixels of the primary CTA under
+  the fold on a 360-wide screen, left by the hero restyle four commits earlier
+  and unseen because the full suite could not run locally. All three fixed, and
+  the counts gate now fails rather than skips when it cannot read its input.
 
 - **2026-08-17** — **The client's launch-feedback batch: four of eight points.**
   Full reasoning in `handoff.md` §19. Sharing on every product page, one

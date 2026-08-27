@@ -576,3 +576,35 @@ did not check. Changing one is a regression *you* would be introducing.
   nowhere else for a page to get a phone number; `src/lib/site-content.ts` is
   that somewhere. The gate matches any `data/*.json` import from `src/pages` or
   `src/components`, so the exemption cannot be reinstated by accident.
+
+- **A no-credential run of `tools/fetch-banners.mjs` EMPTIES
+  `src/assets/banners/`, and the next plain `astro build` with credentials then
+  fails.** The rows are enabled, the files are gone, and the build stops rather
+  than rendering a hero with a missing band — which is §26 working as designed.
+  But it means any build you run with the Supabase variables blanked (to
+  reproduce CI, say) leaves the working tree in a state only `npm run build`
+  recovers, because that is what chains the fetch. `npx astro build` alone will
+  keep failing and the error names the file rather than the cause.
+
+- **`src/assets/banners/` is generated, so a gate that checks it passes only for
+  people who have built once.** It is gitignored and absent from a fresh clone
+  and from CI. `tools/doc-paths.mjs` names it alongside `dist/` for exactly this
+  reason; a check that resolves it will be green on every developer's machine
+  and red in CI, which is the most expensive way for a gate to be wrong.
+
+- **A URL that fills the enquiry basket must clear its own parameters.**
+  `/enquiry?product=…` adds the product on mount, and `addItem` INCREMENTS an
+  existing line rather than duplicating it — so parameters left in the address
+  bar turn every reload into another unit. `src/lib/enquiry-prefill.ts`'s
+  consumers call `history.replaceState` the moment they have read the context,
+  and that call is correctness, not tidiness. The same `replaceState` is what
+  stops a second prefill overwriting a message the buyer has since edited.
+
+- **Geometry read straight after `page.goto('/')` on the home page is up to 16px
+  low.** `hero-rise` starts at `translateY(16px)` and settles over ~0.9s, so a
+  bounding box taken before it ends measures a frame of the motion rather than
+  the layout. It fails under contention and passes on retry, which reads as a
+  flaky test rather than a timing bug. `heroSettled()` in
+  `tests/e2e/hero-mobile.spec.ts` waits for the finite animations — and filters
+  the infinite ones out, because `finished` on the ticker never resolves and
+  awaiting it hangs the test until timeout.

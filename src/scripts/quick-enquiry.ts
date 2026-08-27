@@ -41,6 +41,8 @@
  * solved the same problem first.
  */
 
+import { readProductContext, prefillMessage } from '../lib/enquiry-prefill';
+
 interface EnquiryResponse {
   ok?: boolean;
   recorded?: boolean;
@@ -153,8 +155,45 @@ function enhance(form: HTMLFormElement): void {
   form.dataset.state = 'idle';
 }
 
+/**
+ * Fill the message box when the buyer arrived from a product page.
+ *
+ * Two rules, and both exist because of what happens on the second visit rather
+ * than the first.
+ *
+ * NEVER OVERWRITE. Only an empty box is filled. A browser restoring a form on
+ * back-navigation, or a buyer who typed a paragraph and then hit reload, must
+ * not have their words replaced by a template — losing what someone wrote is a
+ * worse failure than not helping them write it.
+ *
+ * CLEAN THE URL. `replaceState` drops the parameters as soon as they are used,
+ * so a refresh does not prefill a second time over an edited message, and a URL
+ * copied out of the address bar is the plain page rather than a link that puts
+ * words in the next person's mouth.
+ */
+function applyProductPrefill(): void {
+  const field = document.querySelector<HTMLTextAreaElement>(
+    'form[data-enquiry-form] textarea[name="message"]',
+  );
+  if (!field) return;
+
+  const form = field.closest<HTMLFormElement>('form[data-enquiry-form]');
+  const fallback = form?.dataset.enquiryIntent === 'quote' ? 'quote' : 'info';
+
+  const context = readProductContext(window.location.search, fallback);
+  if (!context) return;
+
+  if (!field.value.trim()) field.value = prefillMessage(context, window.location.origin);
+
+  const url = new URL(window.location.href);
+  for (const key of ['product', 'name', 'intent']) url.searchParams.delete(key);
+  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
 export function initQuickEnquiry(): void {
   document
     .querySelectorAll<HTMLFormElement>('form[data-enquiry-form]')
     .forEach((form) => enhance(form));
+
+  applyProductPrefill();
 }

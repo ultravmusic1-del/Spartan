@@ -103,11 +103,17 @@ const details = [
           </div>
         </div>
 
+        {/* `data-enquiry-intent` is the wording this form falls back to when a
+            buyer arrives from a product page without an explicit `intent` — see
+            src/lib/enquiry-prefill.ts. Declared here rather than assumed in the
+            script, so a second compact form that meant something else would
+            have to say so. */}
         <form
           class="cf2"
           data-enquiry-form
           data-enquiry-email={site.email}
           data-enquiry-source="contact"
+          data-enquiry-intent="info"
           aria-labelledby="cf2-title"
         >
           <h2 class="cb__h2" id="cf2-title">General enquiry</h2>

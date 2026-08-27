@@ -60,11 +60,20 @@ const ROOT_FILES = new Set([
 ]);
 
 /*
- * Build output. These are legitimate references whose existence depends on
- * whether a build has run, so checking them would make the gate's result depend
- * on the order the caller happened to use.
+ * Generated paths. These are legitimate references whose existence depends on
+ * whether something has run, so checking them would make the gate's result
+ * depend on the order — or the credentials — the caller happened to have.
+ *
+ * `src/assets/banners/` is the one that is not build output and is easy to miss.
+ * `tools/fetch-banners.mjs` downloads the enabled hero banners into it before
+ * `astro build`, and it is gitignored, so it is absent from a fresh clone and
+ * from any run without Supabase credentials. It cost a red CI run on 2026-08-27
+ * while every local run was green, because a developer who had built once had
+ * the directory and CI never did. Adding the fetch to `verify` would have made
+ * the public site's gate depend on Supabase being reachable, which is the exact
+ * coupling `src/middleware.ts` has an early return to avoid.
  */
-const IGNORED = ['dist/', '.vercel/', 'node_modules/'];
+const IGNORED = ['dist/', '.vercel/', 'node_modules/', 'src/assets/banners/'];
 
 /**
  * Backticked tokens that look like repo paths.

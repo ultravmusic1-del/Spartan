@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useStore } from '@nanostores/preact';
-import { clear, enquiry, removeItem, setNote, setQty } from '../../stores/enquiry';
+import { addItem, clear, enquiry, removeItem, setNote, setQty } from '../../stores/enquiry';
+import { readProductContext, prefillMessage } from '../../lib/enquiry-prefill';
 import {
   enquiryPayloadSchema,
   toFieldErrors,
@@ -74,6 +75,40 @@ export default function EnquiryForm({ email }: Props) {
   // commit makes hydration an exact match and turns the list's arrival into an
   // ordinary update. Same fix, and same reason, as EnquiryBadge.
   useEffect(() => setReady(true), []);
+
+  /**
+   * A buyer who pressed "Request a quote" on a product page arrives here with
+   * that product named in the URL. Put it on the list and say so in the message,
+   * so the enquiry is complete before they have typed anything.
+   *
+   * IN AN EFFECT, NOT IN THE FIRST RENDER. The server rendered an empty message
+   * box and an empty list; producing either on the first client pass is the
+   * hydration mismatch `ready` exists to avoid two fields up. After mount, both
+   * are ordinary updates.
+   *
+   * THE URL IS CLEANED IMMEDIATELY, and here that is not tidiness. `addItem`
+   * increments an existing line, so without `replaceState` a reload would add
+   * the product again, and again — a buyer refreshing three times would ask for
+   * four of something they wanted one of. It also stops a second prefill
+   * overwriting a message they have since edited.
+   *
+   * The message box is only filled when it is empty, for the same reason.
+   */
+  useEffect(() => {
+    const context = readProductContext(window.location.search, 'quote');
+    if (!context) return;
+
+    addItem({ slug: context.slug, name: context.name });
+
+    const field = formRef.current?.querySelector<HTMLTextAreaElement>('[name="message"]');
+    if (field && !field.value.trim()) {
+      field.value = prefillMessage(context, window.location.origin);
+    }
+
+    const url = new URL(window.location.href);
+    for (const key of ['product', 'name', 'intent']) url.searchParams.delete(key);
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }, []);
 
   // Focus is moved after the render that paints the messages, so the field is
   // already described by its error when it receives focus.

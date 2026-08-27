@@ -3323,3 +3323,160 @@ Two things to raise with the design team rather than fix here:
 because `--full` builds against the throwaway stack. That is now **three enabled
 banners in production against tests that require zero** — unchanged in
 substance, further from reality, and still the top of the testing backlog.
+
+## 31. The product comes with you into the message box — 2026-08-27
+
+**Status: implemented and green.** `verify 18/18 · 351 unit · 20 new e2e.`
+
+/contact has told buyers since it was written to raise a product-specific
+request from the catalogue, "so nobody has to work out which of four
+ventilation fan sizes you meant" — and then handed them an empty box. The two
+links on a product page now carry the product with them.
+
+### What changed, in one line each
+
+- **"Ask about this product"** goes to `/contact?product=…&name=…&intent=info`
+  and the message box arrives holding `I'd like more information about:`, the
+  product's name and its page URL.
+- **"Request a quote"** goes to `/enquiry` with `intent=quote`, which puts the
+  product **on the basket list** and opens with `Please send a quotation for:`.
+  The buyer arrives with a complete, sendable enquiry.
+- The generic "Request a quote" buttons on the hero, the home CTA and the
+  category pages are untouched. They have no product to name.
+
+### Three decisions worth the words
+
+**THE LINKS STAY ORDINARY `<a>` ELEMENTS.** `products/[slug].astro` already
+carried a comment saying that link is there because it works with JavaScript
+off, and turning it into a click handler to smuggle state across would have
+traded a working control for a convenience. Both destinations are prerendered,
+so there is no request to read a parameter from; everything runs in the browser
+after hydration, and without script the links still go where they always went.
+
+**THE NAME TRAVELS IN THE URL, AND THE LINK DOES NOT.** The destination needs a
+display name for the message and, at /enquiry, for the basket line — neither
+page holds the catalogue, and shipping a slug-to-name map to both to avoid one
+parameter costs about 2 KB gzipped each for nothing a buyer can feel. It is not
+an injection route: every value is assigned with `.value`, never as HTML, and
+`enquiryPayloadSchema` re-checks every field on submit. The **product link** is
+a different matter and is rebuilt from the slug against the page's own origin.
+A URL parameter naming a destination is how an open redirect starts, and there
+was no reason to accept one. A slug that is not `[a-z0-9-]` is refused outright
+rather than escaped.
+
+**THE URL IS CLEANED THE MOMENT IT IS USED,** and at /enquiry that is not
+tidiness. `addItem` increments an existing line, so with the parameters left in
+the address bar a buyer who refreshed three times would be asking for four of
+something they wanted one of, with nothing on screen to explain it. The message
+box is only ever filled when it is empty, for the same class of reason: losing
+what somebody wrote is a worse failure than never having helped them write it.
+
+### Two lines, not sixteen
+
+The message carries the name and the link and stops. Pasting the specification
+table in was the obvious alternative and it is worse: a buyer faced with sixteen
+rows they did not write deletes the lot, and takes the product name with it.
+
+### The encoding trap, in a new place
+
+Product names carry `&`, `+` and `#`, and in a query string those mean
+next-parameter, space and fragment. `Cotton Pants & Shirts` unencoded arrives as
+`Cotton Pants ` with the rest silently gone — the same failure `ShareRow` hit in
+§19, and the reason `URLSearchParams` builds the href rather than a template
+string. There are unit tests naming the real catalogue strings, and an
+end-to-end test that walks the whole journey with that product.
+
+### Where it lives
+
+`src/lib/enquiry-prefill.ts` holds the two pure functions —
+`readProductContext` and `prefillMessage` — so the rules are testable without a
+DOM. The impure halves are four lines in `quick-enquiry.ts` (for /contact) and
+a mount effect in `EnquiryForm.tsx` (for /enquiry). 15 unit tests, 10 e2e across
+two projects.
+
+## 32. Three gates that were green for the wrong reason — 2026-08-27
+
+CI failed on the docs commit in §30, which touched two Markdown files and
+nothing else. All three failures were older than that push and none of them was
+visible locally. That is the theme, and it is worth more than the fixes.
+
+### 1. A gate that passed only for people who had built once
+
+`instructional docs name real paths` failed in CI naming `src/assets/banners/`
+in three documents. The directory is written by `tools/fetch-banners.mjs` before
+a build and is gitignored, so it exists on the machine of anyone who has built
+with credentials and **never** on a fresh clone or in CI. Every developer saw
+green; CI saw red; the documents were right the whole time.
+
+Fixed by treating it as what it is — a generated path, in the same list as
+`dist/` and `.vercel/` — rather than by editing the documents, which name it
+correctly. Adding the fetch to `verify` was the other option and is worse: it
+would make the public site's gate depend on Supabase being reachable, the exact
+coupling `src/middleware.ts` carries an early return to avoid.
+
+### 2. A gate that had been skipping silently on every CI run
+
+`counts` reported `skip (vitest reported no count)` in CI and `ok` locally. The
+cause was in `run()`: it returned **only stdout** when a command succeeded, and
+stdout-plus-stderr when it failed. So which stream a tool chose to write its
+summary on changed what the gate could see — but only on the happy path.
+Vitest's summary did not land on stdout in CI, the total could not be parsed,
+and the check stepped aside without failing anything.
+
+Two changes, and the second matters more than the first. `run()` now returns
+both streams either way, via `spawnSync` — success and failure behave the same.
+And the skip branch was split: a **failed** unit suite still skips the counts
+check, because it has already failed the run and a stale-counts error on top
+would point the next reader at the wrong problem; a suite that **passed** while
+its total could not be read is now a **failure**, saying so by name. A gate that
+cannot see its input has to say so rather than step aside quietly.
+
+### 3. Six pixels of the one control the site converts on
+
+`"Browse catalogue" is above the fold on a 360-wide Android` measured 646.125px
+against a 640px fold. The hero header restyle of 2026-08-23 — the crest, the
+three-line oblique headline and the closing rule (§27) — spent the clearance
+that the short-screen block had been written to buy, and put the primary CTA
+6px under the crease on the tighter of the two screens it exists for. **Nothing
+caught it for four commits because the full suite could not run locally** —
+Docker was down, which §29 recorded at the time. This is that gap costing
+something real.
+
+**The trim came from rhythm, not from any of the three new elements.** The
+crest, the slant and the rule are the mockup's character and the client asked
+for them; shrinking one to satisfy a test would be undoing the design. What the
+short-screen block did not touch was 48px of margin between the headline and the
+rule — generous on a desktop, extravagant on a screen with 640px in total.
+Trimming those two to 10px and 12px restores the edge to 620px, which is the
+20px of clearance the block was written with.
+
+Two things were ruled out and are worth naming so they are not tried again. The
+hero's own 136px top padding is **clearance, not rhythm**: the sticky header's
+bottom edge is at 130px on that screen, so spending it puts the crest under the
+header. And the stage's 3:2 ratio below 720px is a pinned decision with its own
+test.
+
+### The flake underneath it, which was a different bug
+
+CI reported the same test as *failed* on one project and *flaky* on the other —
+passing on retry. That is not a 6px deficit, which would fail every time.
+`hero-rise` starts at `translateY(16px)` and settles over about 0.9 seconds, so
+a bounding box read before it ends is up to 16px lower than the layout. Under
+contention the read lands mid-animation.
+
+The tests now wait for the finite animations to finish before measuring, which
+is what they always meant: "fully visible without scrolling" is a claim about
+where the layout rests, not about a frame of the motion. **Infinite animations
+are excluded and that exclusion is load-bearing** — the home page carries the
+ticker, and `finished` on an infinite animation never resolves, so awaiting the
+unfiltered list would hang until the test timed out. A worse flake than the one
+being fixed. Five consecutive clean runs of the four hero specs after the change.
+
+### One local trap found on the way
+
+Running `tools/fetch-banners.mjs` **without** credentials empties
+`src/assets/banners/`, and a later plain `astro build` **with** credentials then
+fails: the rows are enabled, the files are gone. That is the loud failure §26
+designed, working correctly — but it means a no-credential build leaves the
+working tree in a state where only `npm run build` recovers it. Worth knowing
+before diagnosing it as something else.

@@ -12,10 +12,40 @@
  * is tall enough to miss them entirely. A test that silently exercises the wrong
  * branch is worse than no test.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /** The primary CTA. The whole site converts on this one. */
 const PRIMARY = '.hero__actions a[href="/catalogue"]';
+
+/**
+ * Wait for the hero's entrance to finish before measuring anything vertical.
+ *
+ * `hero-rise` and `hero-rise-lean` start at `translateY(16px)` and settle over
+ * about 0.9 seconds. A bounding box read before they end is therefore up to
+ * 16px LOWER than the layout, which is a quarter of the clearance the
+ * above-the-fold tests assert. That is what made this file flaky rather than
+ * wrong: under contention it fails on one project and passes on retry on the
+ * other, which is exactly how CI reported it on 2026-08-27.
+ *
+ * These tests are claims about where the layout RESTS — "fully visible without
+ * scrolling" — so a frame of the motion is the wrong thing to measure. This
+ * waits for the layout, and asserts against it unchanged.
+ *
+ * INFINITE ANIMATIONS ARE EXCLUDED, and the exclusion is load-bearing: the home
+ * page carries the category ticker and, when there is artwork, the carousel
+ * track. Their `finished` promise never resolves, so awaiting the unfiltered
+ * list would hang until the test timed out — a worse flake than the one being
+ * fixed.
+ */
+async function heroSettled(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const finite = document.getAnimations().filter((animation) => {
+      const timing = animation.effect?.getComputedTiming();
+      return timing != null && timing.iterations !== Infinity;
+    });
+    await Promise.all(finite.map((animation) => animation.finished.catch(() => undefined)));
+  });
+}
 
 test.describe('the hero source order', () => {
   test('stacks headline, then the carousel, then CTAs', async ({ page }) => {
@@ -86,6 +116,15 @@ test.describe('short screens buy the primary CTA back by spending card', () => {
    * not allow us to drop to buy the space back. Measured on the 360x640, the
    * tighter of the two: the primary CTA's bottom edge lands at 621px against a
    * 640px fold, which is 19px of clearance where the helmet had 12px.
+   *
+   * IT BROKE ONCE, AND THIS IS THE ENTRY THAT SAYS SO. The hero header restyle
+   * of 2026-08-23 — crest, three-line oblique headline, closing rule — spent
+   * that clearance and put the edge at 646px, 6px under the fold. Nothing
+   * caught it for four commits because the full suite could not run locally
+   * (handoff.md §29); CI caught it on 2026-08-27. The fix trimmed two rhythm
+   * margins on short screens in `Hero.astro` and restored the edge to 620px.
+   * So this test has now done the job the comment above claims for it, once —
+   * which is the argument for keeping it rather than relaxing it.
    */
   for (const size of [
     { width: 375, height: 667, name: 'iPhone SE' },
@@ -94,6 +133,7 @@ test.describe('short screens buy the primary CTA back by spending card', () => {
     test(`"Browse catalogue" is above the fold on ${size.name}`, async ({ page }) => {
       await page.setViewportSize({ width: size.width, height: size.height });
       await page.goto('/');
+      await heroSettled(page);
 
       const box = await page.locator(PRIMARY).boundingBox();
       expect(box).not.toBeNull();

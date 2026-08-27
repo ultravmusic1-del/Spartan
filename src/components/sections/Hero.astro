@@ -1181,6 +1181,38 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
      has the room and keeps the larger card. It also catches a phone held in
      landscape, which has even less height and wants the same treatment. */
   @media (max-width: 1180px) and (max-height: 700px) {
+    /* THE HEADER RESTYLE SPENT THIS BUDGET AND NOBODY NOTICED, because the
+       suite that measures it could not run — see handoff.md §29. The crest, the
+       three-line oblique headline and the closing rule arrived on 2026-08-23
+       and pushed the primary CTA's bottom edge to 646px against a 640px fold:
+       the one control the site converts on, 6px under the crease, on the
+       tighter of the two screens this block exists for. CI caught it on
+       2026-08-27, four commits later.
+
+       THE TRIM COMES FROM RHYTHM, NOT FROM ANY OF THE THREE NEW ELEMENTS. The
+       crest, the headline's slant and the rule are the mockup's character and
+       the client asked for them; shrinking one to buy pixels would be undoing
+       the design to satisfy a test. What these two margins carry is 48px of
+       space between them at every height, which is generous on a desktop and
+       extravagant on a screen with 640px in total. They are the only numbers
+       here that are taste rather than structure.
+
+       Not the hero's own 136px top padding: the sticky header's bottom edge is
+       at 130px on this screen, so that padding is clearance, and spending it
+       would put the crest under the header. Not the stage either — its 3:2
+       ratio below 720px is pinned by a test and was a deliberate call.
+
+       Measured after the trim on a 360x640: the primary CTA's bottom edge lands
+       at 620px, restoring the 20px of clearance the block was written with.
+       `tests/e2e/hero-mobile.spec.ts` asserts that edge on both screens. */
+    .hero__title {
+      margin-top: 10px;
+    }
+
+    .hero__underline {
+      margin-top: 12px;
+    }
+
     /* The band is full-width now, so there is no card width left to shrink —
        only vertical gaps. The stage keeps its ratio and the trims come out of
        the space around it. */

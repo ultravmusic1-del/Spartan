@@ -13,7 +13,7 @@
  * Adding a gate here is how a lesson learned becomes a lesson kept. If a
  * regression ever ships twice, the second time is this file's fault.
  */
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,20 +30,32 @@ const record = (name, ok, detail = '') => {
   console.log(`${ok ? '  ok  ' : ' FAIL '} ${name}${detail ? ` — ${detail}` : ''}`);
 };
 
-/** Run a command, capturing output. Never throws — the caller decides. */
+/**
+ * Run a command, capturing output. Never throws — the caller decides.
+ *
+ * BOTH STREAMS, ON SUCCESS AS WELL AS ON FAILURE. It used to return only
+ * stdout when the command succeeded, and concatenate stdout and stderr when it
+ * failed — so which stream a tool chose changed what the callers could see, but
+ * only on the happy path. That cost a real gate: the counts check parses
+ * vitest's total out of this string, found nothing on CI where vitest's summary
+ * did not land on stdout, and **skipped silently on every CI run** while
+ * passing on every developer's machine. A gate whose result depends on the
+ * platform is not a gate. `spawnSync` rather than `execFileSync` because only
+ * it hands back both streams.
+ */
 function run(cmd, args) {
-  try {
-    const stdout = execFileSync(cmd, args, {
-      cwd: root,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      shell: process.platform === 'win32',
-      maxBuffer: 64 * 1024 * 1024,
-    });
-    return { ok: true, out: stdout };
-  } catch (error) {
-    return { ok: false, out: `${error.stdout ?? ''}${error.stderr ?? ''}` };
-  }
+  const result = spawnSync(cmd, args, {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    shell: process.platform === 'win32',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+
+  return {
+    ok: result.status === 0,
+    out: `${result.stdout ?? ''}${result.stderr ?? ''}`,
+  };
 }
 
 /**
@@ -97,11 +109,14 @@ console.log('\nverify — Spartan\n');
 // Hoisted: the counts gate below reuses this rather than running the suite a
 // second time, which would double the slowest gate in the file.
 let unitTests = null;
+/** Whether the suite itself passed, which is a different question from whether its total could be read. */
+let unitSuitePassed = false;
 
 {
   const r = run('npx', ['vitest', 'run']);
   const m = r.out.match(/Tests\s+(\d+) passed/);
   if (m) unitTests = Number(m[1]);
+  unitSuitePassed = r.ok;
   record('vitest', r.ok, m ? `${m[1]} passed` : r.ok ? 'passed' : 'see output above');
   if (!r.ok) console.log(r.out.slice(-2000));
 }
@@ -785,15 +800,29 @@ let unitTests = null;
  * See tools/counts.mjs for the history. The short version: five copies of one
  * number, in three files, none of which read the test suite.
  *
- * Skipped when vitest did not report a count — a failed test run has already
- * failed the suite, and reporting a stale-counts error on top of it would point
- * the next reader at the wrong problem.
+ * Skipped when the unit suite FAILED — that has already failed the run, and a
+ * stale-counts error on top of it would point the next reader at the wrong
+ * problem.
+ *
+ * NOT skipped when the suite passed and the total could not be read. That used
+ * to be the same branch, and it hid this gate from CI completely: `run()`
+ * dropped stderr on success, vitest's summary was not on stdout there, and the
+ * check reported `skip` on every CI run for weeks while every local run said
+ * `ok`. `run()` is fixed, and this is the alarm for the next time something
+ * changes that output — a gate that cannot see its input has to say so, not
+ * step aside quietly.
  */
 {
   const { computeCounts, renderBlock, replaceBlock, TARGETS } = await import('./counts.mjs');
 
-  if (unitTests === null) {
-    console.log('  skip   counts (vitest reported no count)');
+  if (unitTests === null && !unitSuitePassed) {
+    console.log('  skip   counts (the unit suite failed — fix that first)');
+  } else if (unitTests === null) {
+    record(
+      'counts match the repo',
+      false,
+      'the unit suite passed but its total could not be read from the output, so the counts block was not checked',
+    );
   } else {
     const expected = renderBlock(computeCounts({ unitTests }));
     const problems = [];
