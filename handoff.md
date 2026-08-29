@@ -2994,7 +2994,7 @@ home page carries zero storage references and serves `/_astro` assets.
 `npm run verify` gained an eighteenth gate sweeping the built HTML for a signed
 storage URL, because every other check stayed green through it.
 
-## 28. Where to pick up — state as of 2026-08-23
+## 28. Where to pick up — state as of 2026-08-23 (SUPERSEDED by §36)
 
 Written so work can continue on a different computer without re-deriving any of
 it. §23 is the equivalent for 2026-08-19 and is superseded by this. §22 and
@@ -3788,3 +3788,92 @@ browser tests pass there, including axe and the contrast sweep, which have now
 run over a hero carousel for the first time.
 
 If CI goes red on `test:db:start`, the seeder is where to look.
+
+## 36. Where to pick up — state as of 2026-08-29
+
+**This is the current one.** §23 and §28 are the same section for 2026-08-19 and
+2026-08-23 and are marked superseded; they are kept because their reasoning is
+still the record of those days. Everything below was verified on 2026-08-29 by
+running the gate and reading the live site, not inferred from commits.
+
+### What is true right now
+
+| | |
+|---|---|
+| Branch | `main`, in sync with `origin/main`, at `d8f0edf`. Nothing uncommitted. |
+| Gates | **`npm run verify` = 18/18.** `-- --full` adds Playwright and needs Docker. |
+| Tests | **374 unit.** The e2e total moves with the hero's build-time branch — see §35. |
+| Build | 119 pages · 23 server-rendered routes · 8 inline-script CSP hashes |
+| Catalogue | 94 products / 15 categories / 2 divisions, in Postgres |
+| Supabase | Project `spartan`, ref `wslylysakixrirxkozih` |
+| Host | Still `spartan-ebon.vercel.app`. Buying the real domain is the largest launch blocker. |
+
+**Read off production on 2026-08-29, not assumed:**
+
+- home 200, hero rendering **three banners** (four slide nodes — the fourth is
+  the duplicated first slide the carousel needs, see §26)
+- **zero** Supabase storage references in the HTML; banners served from `/_astro`
+- `/_astro/*` returns `public, max-age=31536000, immutable`
+- `/_image` returns **404** — sharp is out of the serverless function (§29)
+- product pages carry `fetchpriority="high"` on the LCP image
+- the WhatsApp control is live on the home page and on product pages (§33)
+
+### What is finished, and where each decision lives
+
+§24 catalogue editing · §25 the specification table · §26 hero banners from
+`/admin` · §27 the hero header's crest and oblique headline · §29 the speed pass
+· §30 the poster record correction · §31 product context in the enquiry message
+· §32 three gates that were green for the wrong reason · §33 WhatsApp and the
+first real contact detail · §34 the counts gate · §35 the hero carousel's tests.
+
+`docs/TRAPS.md` is the short list of things that pass `astro check` and are
+wrong anyway. Read it before touching the hero, the admin, or anything that
+resolves an image.
+
+### Setting up a machine
+
+§28 has the long version and it is still correct. The short version:
+
+1. `npm ci`. **Node 22.12 or newer**; the work was done on 24.
+2. **Recreate `.env`** — gitignored, does not travel, eight keys:
+   `CATALOGUE_SOURCE=postgres`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `SUPABASE_ANON_KEY`, `RESEND_API_KEY`, `ENQUIRY_TO_EMAIL`,
+   `ENQUIRY_FROM_EMAIL`, `VERCEL_DEPLOY_HOOK_URL`.
+   Both Supabase keys can be re-read from the dashboard rather than copied.
+   **The service-role key bypasses RLS entirely** and the deploy hook triggers
+   production builds — move both like passwords.
+3. **Docker Desktop**, for `npm run dev:test` and `npm run verify -- --full`.
+   Public-site work does not need it.
+4. `npx playwright install`.
+
+**`npm run dev` is the wrong command for `/admin`.** `.env` holds live
+credentials, so a plain dev session edits the client's real catalogue and its
+Publish button deploys production. Use `npm run dev:test`, which points at the
+throwaway stack and blanks the deploy hook and mail.
+
+### Where a new session should start
+
+1. **Run `npm run verify -- --full` with Docker up.** It has not been run on
+   this machine since Docker stopped mid-session on 2026-08-23. Everything since
+   has been gated in CI, so this is confirmation rather than suspicion — but it
+   is the first thing to establish, not the last.
+2. **Buy the real domain.** One value in `astro.config.mjs` drives every
+   canonical, the sitemap and robots.txt; the vercel.app host then needs a
+   redirect or it becomes a duplicate of the real site.
+3. **Nothing in code stops the two wrong-fact posters returning.** The test that
+   named them matched on filename, and uploaded banners have generated paths.
+   Grip Guard GP1 advertises cut resistance the glove does not have. The
+   suggested replacement is a per-banner "checked against source" flag the admin
+   must set before Show will work. **This is the one open item with a safety
+   edge, and it is why it is above the rest.**
+4. **`BACKLOG.md` P0** for the remaining launch blockers, including the three
+   contact details still unset in `site.json` now that WhatsApp is real.
+5. **Sign off the weight scale** (§27) and **make `status: 'draft'` actually
+   hide a product** — both are switches that currently exist and do nothing.
+
+### The one flaky test, still named rather than re-rolled
+
+`[mobile] /enquiry › lists the basket and persists quantity edits to the store`
+fails roughly twice in six full-suite runs locally under eight workers and
+passes in isolation. **Do not treat a single green run as proof it is gone**,
+and read its `BACKLOG.md` entry before re-rolling it into a retry.

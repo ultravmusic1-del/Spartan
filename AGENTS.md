@@ -21,11 +21,17 @@ Supabase Postgres · Vercel.
 
 | Question | File |
 |---|---|
+| **Where do I pick up?** | **`handoff.md`, its LAST section** — always the current state and the next actions |
 | What will bite me here? | `docs/TRAPS.md` |
 | Why is it like this? | `handoff.md` |
 | How do I run it? | `README.md` |
 | What should I work on? | `BACKLOG.md` |
 | How do I edit the catalogue without being a developer? | `docs/CONTENT-EDITING.md` |
+
+"The last section", not a number: there have been three "where to pick up"
+sections and each superseded the one before it. The earlier ones are kept and
+marked, because their reasoning is still the record of the day they were
+written — but only the last one describes the repository you are looking at.
 
 Read `docs/TRAPS.md` before touching an area you have not touched before — it is
 the short list of things that pass `astro check` and are wrong anyway.
