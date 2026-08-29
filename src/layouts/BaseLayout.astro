@@ -31,6 +31,19 @@ interface Props {
   headerOnMedia?: boolean;
   /** Division id, for the social card. See Seo.astro. */
   division?: string;
+  /**
+   * Preload the hero headline font. TRUE ON THE HOME PAGE ONLY.
+   *
+   * The two preloads below are global, so a third would bill every page for a
+   * font that one element on one page sets — the trap src/styles/fonts.css
+   * describes for the mono. This prop is how the home page opts in without
+   * imposing the cost on the other 118.
+   *
+   * It is worth it there: Fira is the headline, it is above the fold, and
+   * measured without the preload it arrived at 1093ms against a first paint of
+   * 832ms — so the headline painted in Archivo and visibly swapped.
+   */
+  preloadHeroFont?: boolean;
   /** Structured data for this page — one node or several. See Seo.astro. */
   jsonLd?: object | object[];
 }
@@ -39,6 +52,7 @@ const {
   title,
   description,
   overlayHeader = true,
+  preloadHeroFont = false,
   headerOnMedia = false,
   division,
   jsonLd,
@@ -60,6 +74,15 @@ const {
     <Seo title={title} description={description} division={division} jsonLd={jsonLd} />
     <link rel="preload" href="/fonts/archivo-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/inter-variable.woff2" as="font" type="font/woff2" crossorigin />
+    {preloadHeroFont && (
+      <link
+        rel="preload"
+        href="/fonts/fira-sans-italic-variable.woff2"
+        as="font"
+        type="font/woff2"
+        crossorigin
+      />
+    )}
     {/*
       The Spartan helmet, cropped from the existing spartan-logo.svg vector to
       the helmet path's own bounding box. Not redrawn — the logo is extracted

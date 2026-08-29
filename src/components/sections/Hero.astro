@@ -555,7 +555,6 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
     white-space: nowrap;
   }
 
-
   /* Carried over from the helmet stage so the card is not a bright rectangle
      sitting on flat black with nothing between them. Sized to the card rather
      than to the old 540px circle, and softer — the artwork supplies its own
@@ -774,8 +773,6 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
     align-items: center;
   }
 
-
-
   /* THE HAZARD STRIPES AND THE SKEW ARE GONE, on request, 2026-08-20.
 
      This was a skewed parallelogram with a 30px block of red diagonal stripes
@@ -916,76 +913,63 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
   }
 
   /*
-   * WEIGHT 800 HERE IS A DELIBERATE EXCEPTION TO THE SCALE, NOT A MISS.
+   * FIRA SANS ITALIC, AND THE SKEW IS GONE WITH IT.
    *
-   * `--fw-display` is 500 and the scale runs weight DOWN as size runs UP,
-   * because optical weight grows with size (handoff.md §12). That is the right
-   * default and it is why every other display heading on the site is untouched.
-   * The client asked on 2026-08-23 for this headline to match a mockup whose
-   * face is a heavy oblique, and §12 states the scale is "a ceiling per band,
-   * not a mandate" — so this is the one element that exceeds it, on request,
-   * scoped to `.hero__title` rather than to the token.
+   * The client supplied Fira Sans on 2026-08-29 for this headline. It is set
+   * here and nowhere else — --font-display (Archivo) still serves every other
+   * heading on the site, so this is one element, not a re-typesetting.
    *
-   * It costs nothing in contrast: at 76px this is large text under WCAG either
-   * way, so `SOLUTIONS.` in brand red is judged against 3:1 whatever the
-   * weight. BACKLOG.md carries "sign off the weight scale against the approved
-   * design", and this is evidence for that conversation rather than a
-   * pre-emption of it.
+   * The slant is now DRAWN rather than sheared. This rule used to carry
+   * `transform: skewX(-9deg)`, which mechanically slanted upright Archivo, and
+   * that transform brought two traps with it: it lost to any animation that
+   * also set transform (hence a bespoke `hero-rise-lean` keyframe), and the
+   * `font-style: oblique` attempt before it reported a slant Chrome never
+   * synthesised. A real italic file removes the cause of both. The bespoke
+   * keyframe is gone too — this is back on the shared `hero-rise`.
    *
-   * THE SLANT IS A TRANSFORM, AND `font-style: oblique 9deg` WAS TRIED FIRST.
-   * Archivo ships no italic and no slant axis, so an oblique can only be
-   * synthesised — and Chrome declines to synthesise one for this family.
-   * `getComputedStyle` cheerfully reported `oblique 9deg` while the glyphs
-   * rendered bolt upright, which is the kind of "it says it worked" that a
-   * screenshot catches and an assertion does not.
-   *
-   * `skewX` leans the layout box as well as the glyphs. That is harmless here
-   * and only here: the headline is centred, so the skew is symmetrical about
-   * its own middle, and a transform does not affect the layout of anything
-   * around it. `transform-origin: center` is stated rather than left to the
-   * default so a later `transform-box` change cannot silently move the pivot.
+   * WEIGHT 800 IS TWO THINGS AT ONCE. It exceeds --fw-display (500) on purpose,
+   * which handoff.md §12 permits as "a ceiling per band, not a mandate" and §27
+   * records. It is ALSO the weight the font file is pinned to: the axis is
+   * pinned, not clipped, so any other value is silently clamped and renders
+   * 800 anyway. tools/subset-hero-font.test.ts fails if this number moves
+   * without the font being rebuilt.
    */
   .hero__title {
     margin: 22px 0 0;
-    font-family: var(--font-display);
+    font-family: var(--font-hero);
     font-size: clamp(38px, 5.6vw, 76px);
     font-weight: 800;
+    font-style: italic;
     line-height: 0.96;
-    /* -0.035em, and the third decimal is load-bearing — see the wrap note on
-       max-width below. Tight tracking also suits heavy display type, which is
-       why this was already the value before the weight changed. */
-    letter-spacing: -0.035em;
+    /* Fira's italic caps are wider than Archivo's at the same tracking, so this
+       is looser than the -0.035em Archivo needed — see the measured table on
+       max-width below, which is what set it. */
+    letter-spacing: -0.045em;
     text-transform: uppercase;
     color: var(--text);
-    transform: skewX(-9deg);
-    transform-origin: center;
     /*
-     * A WRAP POINT, NOT A CONTAINER WIDTH — and the numbers are measured, not
-     * estimated, because this broke once by five pixels.
+     * A WRAP POINT, NOT A CONTAINER WIDTH — measured, not estimated, because
+     * this has broken once already by five pixels.
      *
-     * Measured in a browser at the 76px ceiling, Archivo at -0.035em:
+     * The cap has to sit ABOVE line one and BELOW the whole string: above, so
+     * "HOME AND INDUSTRIAL" stays intact; below, so " SOLUTIONS." is forced
+     * onto its own line. That is the two-line desktop headline the mockup
+     * draws, without a hard <br> that would be wrong on a phone.
      *
-     *              weight 500   weight 800
-     *   line 1        831px       888px     "HOME AND INDUSTRIAL"
-     *   whole        1278px      1367px     ... plus " SOLUTIONS."
+     * Re-measured in a browser on 2026-08-29 when the face changed, at the
+     * 76px ceiling and weight 800:
      *
-     * The cap has to sit ABOVE line 1 and BELOW the whole string: above, so the
-     * first line stays intact; below, so " SOLUTIONS." is forced onto its own
-     * line. That is the two-line desktop headline the mockup draws, and it is
-     * done without a hard <br> that would be wrong on a phone.
+     *                            line 1    whole
+     *   Archivo    -0.035em       888px    1367px   (the previous face)
+     *   Fira Sans  -0.035em       726px    1121px
+     *   Fira Sans  -0.045em       712px    1098px   (this rule)
      *
-     * It was 900px, which held at weight 500 (831) and failed at weight 800:
-     * the line grew to ~905px at the tracking this briefly used, cleared the
-     * cap by five pixels and stacked into three lines on the live site. 940
-     * restores it with 52px of headroom rather than nine, so the next change to
-     * weight or tracking does not silently re-break it. Anything up to 1360 is
-     * still safe on the lower bound.
-     *
-     * Below ~980px the viewport is narrower than this cap and does the wrapping
-     * itself, which is where the mockup's three mobile lines come from.
+     * Below ~980px the viewport is narrower than this cap and does the
+     * wrapping itself, which is where the mockup's three mobile lines come
+     * from.
      */
     max-width: 940px;
-    animation: hero-rise-lean 0.7s var(--ease-out) 0.08s both;
+    animation: hero-rise 0.7s var(--ease-out) 0.08s both;
   }
 
   /* Brand red is correct here — this is display type well over the 24px bar. */
@@ -1047,24 +1031,9 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
    * that fades is ambiguous about which slide is actually showing.
    */
 
-
   @keyframes hero-rise {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
-  }
-
-  /*
-   * THE HEADLINE'S OWN ENTRANCE, CARRYING ITS SKEW IN BOTH FRAMES.
-   *
-   * `transform` is one property. `hero-rise` above ends at `translateY(0)`,
-   * and with `both` that end state persists — so a `transform: skewX()` on the
-   * element is simply overwritten the moment the animation is applied, and the
-   * headline stands upright with nothing in the CSS looking wrong. The skew has
-   * to be part of every keyframe or it is part of none of them.
-   */
-  @keyframes hero-rise-lean {
-    from { opacity: 0; transform: translateY(16px) skewX(-9deg); }
-    to { opacity: 1; transform: translateY(0) skewX(-9deg); }
   }
 
   /* Below this width the stage and the copy cannot coexist side by side.
@@ -1270,23 +1239,18 @@ const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
        this list is the failure the dangling-brace note above describes: the
        element keeps animating for a visitor who asked it not to, and the page
        still looks correct. tests/e2e/motion.spec.ts is what catches it. */
+    /* .hero__title rejoined this list on 2026-08-29. It was split out to keep
+       a `skewX` that `transform: none` would have flattened; the slant is
+       drawn into the italic now, so there is nothing left here to protect. */
     .hero__crest,
     .hero__underline,
+    .hero__title,
     .hero__actions {
       animation: none;
       opacity: 1;
       transform: none;
     }
 
-    /* THE HEADLINE KEEPS ITS SKEW HERE. It is separated from the three above
-       because `transform: none` would flatten it — and the slant is the
-       typeface's character, not motion. Reduced motion asks for stillness, not
-       for a different design. */
-    .hero__title {
-      animation: none;
-      opacity: 1;
-      transform: skewX(-9deg);
-    }
     .hero__stage {
       transition: none;
     }

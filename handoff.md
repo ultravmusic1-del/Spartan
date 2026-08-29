@@ -3877,3 +3877,80 @@ throwaway stack and blanks the deploy hook and mail.
 fails roughly twice in six full-suite runs locally under eight workers and
 passes in isolation. **Do not treat a single green run as proof it is gone**,
 and read its `BACKLOG.md` entry before re-rolling it into a retry.
+
+## 37. The hero headline is set in Fira Sans — 2026-08-29
+
+**Status: implemented and green.** `verify 18/18 · 378 unit · 4 new.`
+
+The client supplied the Fira Sans family on 2026-08-29 for the home page's
+headline. It is set there and nowhere else: `--font-display` (Archivo) still
+serves every other heading on the site, so this is one element, not a
+re-typesetting.
+
+### 245 KB became 13.7 KB, and that was the whole question
+
+The complete family is 14 MB. Its variable italic alone is 245 KB against
+Archivo's 34 KB — and it would land on the ONE page §12 identifies as having the
+least performance headroom, where a 23 KB font once cost a Lighthouse point.
+Shipping it whole was never an option. Measured, full printable ASCII:
+
+|  | size |
+|---|---|
+| variable italic, whole axis | 245.0 KB |
+| characters only | 21.6 KB |
+| characters + weight pinned to 800 | **13.7 KB** |
+
+`tools/subset-hero-font.mjs` follows `subset-mono.mjs` exactly: a `COVERAGE`
+constant that is the source of truth, a dynamically-imported harfbuzz binding
+so the unit suite never depends on it, a committed binary so a normal build
+never runs it, and the OFL licence shipped beside the file.
+
+**Full ASCII rather than caps alone**, which would have been 6.5 KB. The
+headline is `text-transform: uppercase` today, so caps alone works *today* and
+produces tofu the first time somebody removes that one declaration. 7 KB is a
+fair price for not booby-trapping a stylesheet.
+
+### The italic is drawn now, and two traps left with the skew
+
+The upright subsets to 12.9 KB — 0.8 KB less — and would still have needed
+`transform: skewX(-9deg)`. For 0.8 KB the headline gets real italic letterforms
+instead of a mechanical shear, and the transform goes, taking with it both
+traps §27 recorded: that a `transform` on an element loses to any animation
+that also sets `transform` (which is why a bespoke `hero-rise-lean` keyframe
+existed — now deleted), and that `font-style: oblique` reports a slant Chrome
+declines to synthesise. `.hero__title` is back on the shared `hero-rise`, and
+back in the shared `prefers-reduced-motion` list it had been split out of.
+
+### The wrap point had to be re-measured, and this is why
+
+The cap must sit above line one and below the whole string. Fira is **18%
+narrower** than Archivo at the same size, so the numbers §27 measured no longer
+described the face:
+
+|  | line 1 | whole |
+|---|---|---|
+| Archivo, -0.035em | 888px | 1367px |
+| Fira Sans, -0.045em | **712px** | **1098px** |
+
+940px still satisfies both, with 228px of headroom above line one instead of
+52px, so the cap did not move — but it was checked rather than assumed, and the
+table is in the rule.
+
+**One thing did break, and only a screenshot found it.** The rule shipped
+briefly with `max-width: PLACEHOLDER_CAP` while the measurement was pending.
+CSS discards a declaration it cannot parse and keeps the rest of the rule, so
+there was no error anywhere — the headline simply had no cap and ran onto a
+single line. Both that and the tofu risk are now in `docs/TRAPS.md`.
+
+### Preloaded on one page, by opt-in
+
+Without a preload the font landed at 1093ms against a first paint of 832ms, so
+the headline painted in Archivo and visibly swapped. `BaseLayout`'s two existing
+preloads are global, and a third would bill all 119 pages for a font one element
+on one page sets — the trap `fonts.css` already describes for the mono. So
+`BaseLayout` takes `preloadHeroFont`, `src/pages/index.astro` is the only caller
+that passes it, and the built output was checked to confirm no other page
+carries the link. With it, the font arrives at **372ms**.
+
+**CLS stayed 0.000** across the swap, measured under 4× CPU throttling on a
+simulated 4 Mbps connection.

@@ -31,6 +31,10 @@
   --color-grey-lt: #b4b4bc;
 
   --font-display: 'Archivo', system-ui, sans-serif;
+  /* The home hero headline only. A drawn italic, subset and pinned to weight
+     800 — see src/styles/fonts.css. Everything else that looks like a display
+     heading is --font-display. */
+  --font-hero: 'Fira Sans', 'Archivo', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
   /* Data, not language: spec values, EN 388 rating cells and model codes — the
      values a buyer transcribes into an RFQ. Never for prose, and never for a

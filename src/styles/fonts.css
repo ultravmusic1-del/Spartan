@@ -43,3 +43,30 @@
   font-display: swap;
   src: url('/fonts/jetbrains-mono-variable.woff2') format('woff2');
 }
+/* Fira Sans Italic, for the home page's hero headline and nothing else — see
+   --font-hero in tokens.css. Supplied by the client on 2026-08-29. OFL-1.1; the
+   licence ships beside the file at /fonts/fira-sans-LICENSE.txt because
+   redistribution requires it.
+
+   THE ITALIC FILE, DECLARED AS `font-style: italic`. The headline used to be
+   upright Archivo sheared by `skewX(-9deg)`; this is a drawn italic instead, so
+   the transform is gone and with it the two traps it carried (docs/TRAPS.md).
+
+   `font-weight: 800` ALONE, not a range. The committed file is subset with its
+   weight axis PINNED to 800 (tools/subset-hero-font.mjs), and this declaration
+   has to describe the file rather than the family: a pinned axis is clamped
+   silently, so advertising `100 900` would make a future `font-weight: 700`
+   render at 800 and look like a CSS specificity bug. tools/subset-hero-font.test.ts
+   fails if the two ever disagree.
+
+   NOT PRELOADED GLOBALLY, for the reason the mono gives above: BaseLayout's
+   preloads are on every page, and this font is set on one element on one page.
+   src/pages/index.astro preloads it locally instead, where it is above the
+   fold and worth the priority. */
+@font-face {
+  font-family: 'Fira Sans';
+  font-style: italic;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/fira-sans-italic-variable.woff2') format('woff2');
+}

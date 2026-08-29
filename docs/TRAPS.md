@@ -444,6 +444,24 @@ in `handoff.md`; this file states the trap and moves on.
   pass against an unslanted headline. Use a transform when the slant matters.
   *Caught by:* a screenshot.
 
+- **A CSS placeholder is not a syntax error — it is a dropped declaration.**
+  `max-width: PLACEHOLDER_CAP` left in a rule while the real number was being
+  measured did not fail the build, fail `astro check`, or warn. CSS discards a
+  declaration it cannot parse and keeps the rest of the rule, so the headline
+  simply had no wrap cap and ran onto one line. Anything that looks like a
+  value must be a value before the file is saved.
+  *Caught by:* a screenshot. Nothing else can see it.
+
+- **A subset font renders tofu, silently, for anything it does not carry.**
+  `public/fonts/fira-sans-italic-variable.woff2` holds 98 characters at ONE
+  weight. Change the hero headline to use a character outside that set and the
+  page builds, typechecks, passes axe, and shows empty boxes. Change
+  `.hero__title`'s `font-weight` and the pinned axis clamps silently back to
+  800, which reads as a CSS specificity bug.
+  *Caught by:* `tools/subset-hero-font.test.ts`, which reads the headline out
+  of `Hero.astro` rather than restating it, checks both letter cases because
+  the element is `text-transform: uppercase`, and names the offending
+  character. Proved against a planted "☑".
 ## Looks like a defect, is not
 
 Several of these have already been reported as regressions by someone who
