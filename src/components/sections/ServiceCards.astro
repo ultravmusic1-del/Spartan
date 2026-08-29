@@ -66,8 +66,12 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
 
 <section class="services">
   <div class="wrap">
+    {/* NOT `center`. Seven of the nine section heads on this page are
+        left-aligned and two were centred, which is the composition
+        inconsistency a review kept naming without anyone finding its cause.
+        The hero establishes a left axis; the page holds it. */}
     <SectionHeading
-      center
+      n="05"
       eyebrow="What we supply"
       title="Built for the sites<br>we supply."
       lede={`${categories.length} categories across ${divisions.length} divisions. Every specification is taken directly from the current Spartan product brochure.`}
@@ -102,35 +106,28 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
 
 <style>
   .services {
-    padding: 76px 0;
+    padding: var(--section-pad) 0;
     background: var(--surface-page);
     color: var(--text);
   }
 
-  /* Scoped override of the shared SectionHeading, not an edit to that
-     primitive: SectionHeading is also used on /about, /contact, /industries
-     etc., so its own defaults (sentence case, 700 weight) have to stay put.
-     `:global()` reaches the child-rendered `.sec h2` from inside this
-     section's own scope only — the pattern already used for `img` and
-     `.solid` elsewhere in this codebase — so only this instance picks up the
-     new uppercase/800-weight heading treatment. Colour is left alone: `.sec
-     h2` has no colour of its own and inherits `.services`'s `--color-ink`,
-     which is already correct for a light surface. */
-  .services :global(.sec h2) {
-    font-size: clamp(28px, 4vw, 46px);
-    font-weight: var(--fw-display);
-    line-height: 1.04;
-    letter-spacing: -0.025em;
-    text-transform: uppercase;
-  }
+  /* THE UPPERCASE HEADING OVERRIDE IS GONE — 2026-08-29.
 
-  /* SectionHeading owns its own spacing above; this is the mockup's 52px gap
-     between the heading block and the card grid. */
+     It reached into the shared head with `:global(.sec h2)` and set uppercase
+     at weight 800, and it predated the head system by months. The result, read
+     off a PDF of the whole page: seven section headings in sentence case and
+     two in caps, which is the "composition is inconsistent section-to-section"
+     complaint with a cause. The primitive's own treatment is the system's, and
+     a section that wants a different one is asking for a fifth design
+     language. */
+
+
+  /* The 52px gap that used to be declared here is gone: the shared head owns
+     the rhythm below itself now, at 40px, for every section on the page. */
   .services__grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
-    margin-top: 52px;
     background: var(--line);
     border: 1px solid var(--line);
   }

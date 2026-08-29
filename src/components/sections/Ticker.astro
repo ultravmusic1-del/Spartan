@@ -18,32 +18,54 @@ import { getCategories } from '../../lib/catalog';
  * category it names is a real link in the grid below.
  */
 const categories = await getCategories();
-const text = categories.map((c) => c.name).join(' · ') + ' · ';
 
 /*
- * Each span carries two copies, not one.
+ * FOUR SETS, AND EXACTLY ONE OF THEM IS REACHABLE.
  *
- * The loop is seamless only while one span is at least as wide as the viewport
- * — the track translates by exactly one span. A single copy of the fifteen
- * category names measures ~3218px in Archivo at 13px/800/0.3em, so the seam
+ * The loop is seamless only while the track is at least twice the viewport —
+ * it translates by exactly half of itself. A single copy of the fifteen
+ * category names measures ~3218px in Archivo at 13px/800/0.3em, so a seam
  * opened on an ultrawide display, and it would open sooner if categories were
- * ever removed or renamed shorter. Doubling covers past 6400px, and the
- * duration doubles with it so the scroll speed is unchanged.
+ * ever removed or renamed shorter. Four sets covers past 6400px, which is what
+ * the previous two-spans-of-two-copies arrangement bought; the total width and
+ * the -50% translation are unchanged, so the speed is unchanged with them.
+ *
+ * WHAT CHANGED ON 2026-08-29 is that the names are LINKS now, and that turns
+ * duplication from a rendering detail into an accessibility problem: four
+ * copies of fifteen links would be sixty tab stops for one shelf, and a
+ * focusable element inside `aria-hidden` is a violation in its own right.
+ *
+ * So the first set is the real navigation, and every other anchor carries
+ * `tabindex="-1"` inside an `aria-hidden` container — out of the tab order and
+ * out of the accessibility tree, present only to make the pixels loop.
  */
-const copy = text.repeat(2);
+const shelf = categories.map((c) => ({ name: c.name, href: `/catalogue/${c.slug}` }));
+const DECORATIVE_SETS = [0, 1, 2];
 ---
 
 <div class="ticker">
-  <div class="ticker__track" aria-hidden="true">
-    <span>{copy}</span>
-    <span>{copy}</span>
+  <div class="ticker__track">
+    <nav class="ticker__set" aria-label="Product categories">
+      {shelf.map((c) => (
+        <a class="ticker__item" href={c.href}>{c.name}</a>
+      ))}
+    </nav>
+
+    {DECORATIVE_SETS.map(() => (
+      <div class="ticker__set" aria-hidden="true">
+        {shelf.map((c) => (
+          <a class="ticker__item" href={c.href} tabindex="-1">
+            {c.name}
+          </a>
+        ))}
+      </div>
+    ))}
   </div>
 
-  <!-- The track above is aria-hidden, so a control named bare "Pause" would
-       have no referent anywhere on the page for a screen reader user — the
-       aria-label restates what is being paused. It still has to start with
-       the visible label text ("Pause"), or the mismatch is itself a 2.5.3
-       Label in Name failure. -->
+  <!-- The band is real navigation now, so "Pause" has a visible referent and
+       the aria-label is no longer covering for a hidden track — it restates
+       what is being paused. It still has to START with the visible label text
+       ("Pause"), or the mismatch is itself a 2.5.3 Label in Name failure. -->
   <input
     class="ticker__toggle"
     type="checkbox"
@@ -65,10 +87,25 @@ const copy = text.repeat(2);
   .ticker__track {
     display: flex;
     width: max-content;
+    /* 84s over a track that is four sets wide and translates -50%, i.e. one
+       viewport traversal well inside the 25-40s band a slow industrial display
+       wants. The 2026-08-29 change from two spans of two copies to four sets
+       kept the total width identical, so this number did not move with it. */
     animation: ticker-run 84s linear infinite;
   }
 
-  .ticker__track span {
+  .ticker__set {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .ticker__item {
+    display: inline-flex;
+    align-items: center;
+    /* WCAG 2.5.5: the band is 46.8px tall and the link fills it. */
+    min-height: 44px;
+    padding: 0 18px;
     font-family: var(--font-display);
     font-size: 13px;
     font-weight: var(--fw-label);
@@ -76,6 +113,42 @@ const copy = text.repeat(2);
     text-transform: uppercase;
     color: #fff;
     white-space: nowrap;
+    text-decoration: none;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  /* The separator the joined string used to carry, now a pseudo-element so it
+     belongs to the layout rather than to the link text — a screen reader
+     reading "Lighting" should not also read a middle dot. */
+  .ticker__item::after {
+    content: '·';
+    margin-left: 18px;
+    opacity: 0.55;
+  }
+
+  /* Inversion, not an underline: the hovered category reads as selected, which
+     is what makes the band feel like a control rather than a caption.
+     --accent-text on #fff is 9.07:1 — handoff.md §3's 8.40:1 is the same pair
+     measured against --color-paper, a slightly darker surface, not this one. */
+  .ticker__item:hover,
+  .ticker__item:focus-visible {
+    background: #fff;
+    color: var(--accent-text);
+  }
+
+  .ticker__item:hover::after,
+  .ticker__item:focus-visible::after {
+    opacity: 0;
+  }
+
+  /* Inset, for the same reason the pause button's ring is: the band is only
+     46.8px tall and clips with `overflow: hidden`, so an outward offset puts
+     both horizontal strokes outside the clip region. */
+  .ticker__item:focus-visible {
+    outline: 2px solid var(--color-red-dark);
+    outline-offset: -2px;
   }
 
   @keyframes ticker-run {
@@ -158,6 +231,23 @@ const copy = text.repeat(2);
      rules has to replace the mechanism, not just the styling. */
   .ticker:has(.ticker__toggle:checked) .ticker__track {
     animation-play-state: paused;
+  }
+
+  /* HOVER AND FOCUS ALSO STOP IT, added 2026-08-29 with the links.
+
+     Without this the categories are a moving target: a buyer reaching for
+     "Hand Protection" lands on "Safety Footwear". `:focus-within` is the
+     keyboard's half — tabbing into the band freezes it, so the focused link
+     does not travel out from under its own focus ring.
+
+     This is a convenience, NOT the WCAG 2.2.2 mechanism. Hover does not exist
+     on a touch screen, and the known, client-accepted 2.2.2 failure recorded
+     below is unchanged by it. */
+  @media (hover: hover) and (pointer: fine) {
+    .ticker:hover .ticker__track,
+    .ticker:focus-within .ticker__track {
+      animation-play-state: paused;
+    }
   }
   .ticker:has(.ticker__toggle:checked) .ticker__btn {
     background: #fff;

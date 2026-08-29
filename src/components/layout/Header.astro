@@ -2,11 +2,16 @@
 /**
  * Header — utility bar plus the 84px nav, in two modes.
  *
- * `transparent` (default) overlays a dark photographic hero: the utility bar is
- * `position: absolute; top: 0` and this nav is `position: absolute; top: 44px`,
- * so the hero's own padding-top clears them. Neither may sit in normal flow
- * inside a flex hero — they would be treated as flex items and drop to the
- * bottom of the viewport.
+ * `transparent` (default) overlays a hero: this nav is
+ * `position: absolute; top: 0`, so the hero's own padding-top clears it. It
+ * must not sit in normal flow inside a flex hero — it would be treated as a
+ * flex item and drop to the bottom of the viewport.
+ *
+ * THERE IS NOTHING ABOVE IT ANY MORE. A 44px utility bar used to sit here
+ * carrying "Follow Spartan" and three decorative marks that were not links,
+ * and it was the first thing on every page. It was removed on 2026-08-29:
+ * the brand's social profiles are not published, so the strip spent the top of
+ * the first screen on content nobody could act on.
  *
  * `solid` is for pages with no hero: the nav gets `--surface-page` and sticks
  * to the top of the viewport while the utility bar scrolls away above it.
@@ -27,11 +32,10 @@
  * `site.json` is site chrome, not catalogue content: the `catalog.ts` seam rule
  * covers products, categories and divisions only.
  */
-import { getSiteSettings } from '../../lib/site-content';
+import { getSiteSettings, isPlaceholderNumber } from '../../lib/site-content';
 
 const site = await getSiteSettings();
 import logoDark from '../../assets/brand/spartan-logo.svg';
-import UtilityBar from './UtilityBar.astro';
 import MobileNav from './MobileNav.tsx';
 import EnquiryBadge from '../enquiry/EnquiryBadge.tsx';
 import EnquiryDrawer from '../enquiry/EnquiryDrawer.tsx';
@@ -93,10 +97,18 @@ const items: NavItem[] = [
 ];
 
 const current = normalisePath(Astro.url.pathname);
+/*
+ * THE PHONE LINK IS CONDITIONAL, and that is not defensive coding — it is the
+ * difference between an affordance and a lie. `site.phone` still ships as
+ * `+971 00 000 0000`, so until 2026-08-29 every page in the site published a
+ * `tel:` link that dials nothing. While the number is a placeholder the header
+ * offers the contact page, which works; the day a real number lands the phone
+ * link comes back with no code change. `isPlaceholderNumber` and the reason
+ * its threshold is four zeros are in src/lib/site-content.phone.test.ts.
+ */
+const phoneIsReal = !isPlaceholderNumber(site.phone);
 const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 ---
-
-<UtilityBar mode={mode} onMedia={onMedia} />
 
 <header class:list={['site-header', `site-header--${mode}`, { 'on-dark': onMedia }]}>
   <div class="wrap nav">
@@ -194,7 +206,52 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
       </ul>
     </nav>
 
-    <a class="nav__tel" href={telHref}>{site.phone}</a>
+    {/* A plain GET form, so search works with no JavaScript at all: it lands
+        on /catalogue, which server-renders every product, and the island there
+        reads `?q=` on mount and narrows the list.
+
+        NOT an island, and NOT an inline script. `script-src` is hash-based
+        with no 'unsafe-inline' and `npm run csp` derives its hashes from
+        `dist/client` — a script added here would work locally and be silently
+        blocked in production, with nothing failing. */}
+    {/* THE FUNCTIONAL GROUP. A design review on 2026-08-29 said the header
+        read as "separate objects floating along a horizontal row" rather than
+        one composed system, and it was right: logo, links, a boxed input and a
+        text link, each drifting on its own. The logo stands alone on the left,
+        the links are the middle, and search plus the commercial action are one
+        group hard right with a hairline in front of them. */}
+    <div class="nav__tools">
+    <form class="nav__search" action="/catalogue" method="get" role="search">
+      <label class="nav__search-label" for="nav-search">Search products</label>
+      <span class="nav__search-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.6-3.6"></path>
+        </svg>
+      </span>
+      <input
+        class="nav__search-input"
+        id="nav-search"
+        name="q"
+        type="search"
+        placeholder="Search products"
+        autocomplete="off"
+      />
+    </form>
+
+    {
+      phoneIsReal ? (
+        <a class="nav__tel" href={telHref}>
+          <span class="nav__tel-label">Sales</span>
+          {site.phone}
+        </a>
+      ) : (
+        <a class="nav__tel nav__tel--fallback" href="/contact">
+          Contact sales<span class="nav__tel-chev" aria-hidden="true">↗</span>
+        </a>
+      )
+    }
+    </div>
 
     {/* The basket count. `.eq-slot` is styled by src/styles/enquiry.css, not
         here: it holds a Preact island, and the rules that reserve its width key
@@ -226,10 +283,16 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     z-index: 25;
   }
 
-  /* Over a hero: out of flow, clearing the 44px utility bar. */
+  /* Over a hero: out of flow, at the top of the document.
+
+     Was `top: 44px` to clear a utility bar that carried three decorative
+     social marks and nothing else. That bar is gone (2026-08-29), so this is 0
+     and the chrome is 86px tall at every width — 84px of nav plus the 2px
+     progress rule. `Hero.astro`'s `--hero-chrome` IS that number and has to
+     move with it; docs/TRAPS.md records why nothing catches it if it does not. */
   .site-header--transparent {
     position: absolute;
-    top: 44px;
+    top: 0;
   }
 
   /* No hero: opaque and pinned, so the white wordmark keeps its background. */
@@ -303,8 +366,13 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     padding-block: 3px;
   }
 
+  /* 48px, up from 38px on 2026-08-29. The lockup was reading as navbar
+     metadata beside a 68px headline, and the brandmark has to look like the
+     company owns the page. 48 plus 18 of clear space top and bottom still fits
+     the 84px row, so the nav height — and every hero number derived from it —
+     is unchanged. */
   .nav__logo img {
-    height: 38px;
+    height: 48px;
     width: auto;
   }
 
@@ -314,7 +382,10 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
   .nav__menu ul {
     display: flex;
-    gap: 28px;
+    /* 22px, down from 28px. The links grew from 11px to 13px in the same pass;
+       giving the gap back keeps the row's total width, so the 1080px
+       breakpoint still lands exactly where it was measured. */
+    gap: 22px;
     list-style: none;
   }
 
@@ -337,7 +408,12 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     padding-bottom: 3px;
     border-bottom: 2px solid transparent;
     font-family: var(--font-display);
-    font-size: 11px;
+    /* 13px, up from 11px on 2026-08-29. At 11px with 0.16em of tracking the
+       primary navigation was the smallest type on the page, sitting under the
+       largest — the interface read as though the browser were zoomed out.
+       Still --fw-label, which the weight scale assigns to anything below
+       15px. */
+    font-size: 13px;
     font-weight: var(--fw-label);
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -534,15 +610,208 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     /* 44px target for a 20px line of text. */
     min-height: 44px;
     font-family: var(--font-display);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: var(--fw-label);
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
 
+  /* The qualifier that gives the number a job. A phone number floating alone
+     against the right edge reads as placeholder content even when it is real.
+     11px on --text-muted, 4.96:1 on --surface-page. */
+  .nav__tel-label {
+    margin-right: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* THE TOOLS GROUP — search and the commercial action, read as one unit.
+     The hairline in front of it is the only vertical rule in the header, and
+     it is what separates "navigate the site" from "act". */
+  .nav__tools {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-left: auto;
+    padding-left: 24px;
+    border-left: 1px solid var(--line);
+  }
+
+  /* CONTACT SALES IS A CONTROL, NOT A NAV ITEM.
+
+     It replaced a dead `tel:` link and then read as one more link in a row of
+     links — a design review put it plainly: it needs commercial hierarchy. A
+     filled red button would have been the obvious answer and the wrong one;
+     the hero's primary CTA is a red fill, and a second one in the header
+     spends that meaning twice.
+
+     A sharp-cornered red outline instead. Distinct, unmistakably a control,
+     and it stays subordinate to the thing it is pointing at. The outline
+     fills on hover, which is where the emphasis is earned. */
+  .nav__tel--fallback {
+    gap: 8px;
+    padding: 0 16px;
+    /* --accent-text, not brand red: this is 14px, normal-size text, and the
+       4.5:1 floor applies. 9.07:1 on white. Rule 4. */
+    color: var(--accent-text);
+    border: 1px solid var(--accent);
+    text-transform: uppercase;
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+  }
+
+  /* A TINT, NOT A FILL, and the reason is a gate rather than taste.
+
+     The first version filled red and turned the label white on hover. White on
+     --accent-fill is 4.91:1 and perfectly legal — but `theme-sweep.test.ts`
+     bans literal white in any public file that is not already on its
+     red-surface allowlist, and the only way to keep the fill was to add
+     `Header.astro` to that list. That would exempt the one file that renders
+     on all 119 pages from a check that exists because a white-on-white product
+     name once shipped to every category page.
+
+     Not worth it for a hover state. This is the same tint idiom PillButton
+     already uses, the border does the work, and the gate keeps its teeth. */
+  .nav__tel--fallback:hover {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-color: var(--accent-fill);
+  }
+
+  /* A large decorative glyph, so brand red is legal on it — the 4.30:1 limit
+     covers small text and this is not text. Same call PillButton documents. */
+  .nav__tel-chev {
+    color: var(--accent);
+  }
+
+  /* THE SEARCH FIELD. Square, hairlined, and deliberately not a pill: the
+     site's whole visual argument is hard lines, and a rounded search box is
+     the one control that would make this header look like every other SaaS
+     header. */
+  .nav__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  /* Available to a screen reader, not to the eye. A placeholder is not an
+     accessible name and `role="search"` alone does not label the field. */
+  .nav__search-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Right, not left: it now reads as the submit end of the field rather than
+     as decoration in front of the caret. */
+  .nav__search-icon {
+    position: absolute;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    color: var(--text-muted);
+  }
+
+  .nav__search-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* A RULE, NOT A BOX.
+
+     The first version was a bordered rectangle with the icon inside it, and a
+     design review named it correctly: a default component, "very generic
+     ecommerce", sitting under a hero built entirely out of hard lines and
+     technical labels. A four-sided border is also four more lines on a page
+     that already had too many.
+
+     One line under the field is the whole control. The icon moves to the right
+     where a submit affordance belongs, the placeholder carries the uppercase
+     technical voice the masthead speaks in, and the rule turns red on focus —
+     which is the one moment red belongs on a header control.
+
+     The 44px target is kept in full: the height is unchanged, only the border
+     is. */
+  .nav__search-input {
+    width: clamp(150px, 15vw, 210px);
+    /* WCAG 2.5.5 minimum touch target — do not reduce. */
+    min-height: 44px;
+    padding: 0 26px 0 2px;
+    background: transparent;
+    border: 0;
+    /* --line-control (3.43:1), never the decorative --line (1.27:1): this edge
+       IS the control, so it carries meaning. Same reasoning PillButton's
+       outline records. */
+    border-bottom: 1px solid var(--line-control);
+    border-radius: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 11.5px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition: border-color var(--dur-base) var(--ease-out);
+  }
+
+  .nav__search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .nav__search-input:hover {
+    border-bottom-color: var(--text-muted);
+  }
+
+  /* The rule thickens and turns red, and the ring is offset clear of it. An
+     `outline` alone on a borderless field would draw a box the design just
+     removed, so the focus state is carried by the rule the field already has
+     plus a ring that sits outside it. */
+  .nav__search-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-bottom-color: var(--accent);
+  }
+
+  .nav__search-input:focus-visible + .nav__search-icon,
+  .nav__search:hover .nav__search-icon {
+    color: var(--accent-text);
+  }
+
   .nav__mobile {
     display: flex;
     align-items: center;
+  }
+
+  /* THE SQUEEZE BAND — between the desktop menu boundary and a comfortable
+     desktop, everything gives a little.
+
+     `tests/e2e/navigation.spec.ts` measures the row at 1081px, one pixel above
+     the width where the menu collapses to the mobile trigger, and it caught
+     this: the tools group added on 2026-08-29 (search plus the Contact sales
+     control plus a divider) pushed the row 41px past the wrap at exactly that
+     width. Nothing about it looked wrong at 1440.
+
+     The savings are taken from spacing rather than from the controls: the
+     row's own gaps give 32px, the tools group's gap and divider padding give
+     14 more. The search box keeps its 44px target and the Contact control
+     keeps its outline; only air is spent. */
+  @media (max-width: 1240px) {
+    .nav {
+      gap: 24px;
+    }
+
+    .nav__tools {
+      gap: 16px;
+      padding-left: 16px;
+    }
   }
 
   /* Desktop: the menu is on, the trigger is off. */
@@ -562,8 +831,19 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
       display: none;
     }
 
-    .nav__tel {
-      margin-left: auto;
+    /* Below the desktop boundary the row is logo, trigger and badge, and the
+       search box would take the width the trigger needs. Search stays one tap
+       away: the mobile panel links /catalogue, which carries the same field. */
+    .nav__search {
+      display: none;
+    }
+
+    /* `.nav__tools` already carries `margin-left: auto`, so the group pushes
+       right on its own; the divider goes because there is nothing to its left
+       to divide from once the menu is gone. */
+    .nav__tools {
+      padding-left: 0;
+      border-left: 0;
     }
   }
 

@@ -1,6 +1,6 @@
 ---
 import Chevron from '../primitives/Chevron.astro';
-import Eyebrow from '../primitives/Eyebrow.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
 import { getDivisions } from '../../lib/catalog';
@@ -38,10 +38,13 @@ const divisions = await getDivisions();
 <section class="cta">
   <Chevron class="right-[-50px] top-[-30px] w-[400px] h-[460px]" />
 
+  {/* Head above the columns — the repeatable section architecture. */}
+  <div class="wrap">
+    <SectionHeading n="09" eyebrow="Trade enquiries" title="Build your enquiry list,<br />send it once." />
+  </div>
+
   <div class="wrap cta__inner">
     <div>
-      <Eyebrow>Trade enquiries</Eyebrow>
-      <h2 class="cta__title">Build your enquiry list,<br />send it once.</h2>
       <p class="cta__body">
         Add products as you browse the catalogue and submit a single request across both divisions.
         Our team responds with availability and pricing for everything on the list.
@@ -151,8 +154,10 @@ const divisions = await getDivisions();
 <style>
   .cta {
     position: relative;
-    padding: 96px 0;
-    background: var(--surface-alt);
+    padding: var(--section-pad) 0;
+    /* White since 2026-08-29 (the FAQ above is alt now). The enquiry panel
+       keeps its own raised surface and border, so it still reads as a panel. */
+    background: var(--surface-page);
     overflow: hidden;
   }
 
@@ -162,7 +167,10 @@ const divisions = await getDivisions();
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
     gap: 60px;
-    align-items: center;
+    /* `start` since the head hoisted above these columns — centring the
+       now-shorter copy column against the tall form panel opened a hole
+       directly under the heading. Same reasoning as Spotlight's grid. */
+    align-items: start;
   }
 
   /* Honeypot. Off-screen rather than `display: none`, which the cruder bots

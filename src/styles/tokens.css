@@ -67,7 +67,27 @@
   --fw-label: 650;      /* <15px   — uppercase micro labels, eyebrows, buttons */
   --fw-body: 400;
 
-  --wrap-max: 1240px;
+  /* THE PAGE'S ONE MEASURE. 1240 -> 1360 on 2026-08-29.
+
+     A design review found the content floating in a large empty field with the
+     outer canvas doing nothing, and gave two ways out: widen the system, or
+     make the margins carry something. Widening is the honest one — the margins
+     had no work to do, and inventing some for them is the "decoration about
+     decoration" the same review asked us to stop.
+
+     IT IS WIDENED SITE-WIDE, NEVER JUST IN THE HERO. A hero on a wider measure
+     than the sections under it is a fifth design language, which is the exact
+     problem that pass existed to remove. If a section ever needs its own
+     width, that is a signal the section is wrong, not the token. */
+  --wrap-max: 1360px;
+
+  /* EVERY SECTION BAND'S VERTICAL PADDING. Added 2026-08-29 after measuring
+     the rendered page: the eight home sections carried 80, 76, 76, 76, 80,
+     76, 76 and 96 — three different values doing one job, which is the
+     "sizing is so inconsistent" a client review named. A section that wants
+     more or less air than this token is asking to leave the system, and that
+     is a decision for a human, not a stylesheet. */
+  --section-pad: clamp(64px, 6.5vw, 92px);
   --wrap-pad: 32px;
 
   --dur-fast: 150ms;

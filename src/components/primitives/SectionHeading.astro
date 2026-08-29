@@ -1,5 +1,6 @@
 ---
 import Eyebrow from './Eyebrow.astro';
+import SectionIndex from './SectionIndex.astro';
 
 /**
  * SectionHeading — eyebrow + heading + optional lede, used at the top of most
@@ -27,6 +28,18 @@ interface Props {
    * with the rename alone.
    */
   level?: 'h1' | 'h2';
+  /**
+   * The section's number in the home page's sequence — "02", "03". Formatted
+   * by the caller, never computed here: the sequence is a property of the page
+   * and this component renders one section.
+   *
+   * OMITTED MEANS NO NUMERAL, and that is what keeps `/about`, `/contact` and
+   * `/industries` unchanged. It is not a way to opt a home section out — see
+   * the numbering rule in `docs/superpowers/plans/2026-08-29-homepage-design-system.md`:
+   * every headed section on the home page is numbered or none is, and
+   * `tests/e2e/home.spec.ts` asserts the sequence has no gaps.
+   */
+  n?: string;
 }
 
 const {
@@ -35,21 +48,129 @@ const {
   lede,
   center = false,
   level: Heading = 'h2',
+  n,
 } = Astro.props;
+
+/* The action slot is optional and the head's layout changes with it, so it is
+   resolved here rather than guessed at in CSS. */
+const hasAction = Astro.slots.has('action');
 ---
 
-<div class:list={['sec', { 'sec--center': center }]}>
-  <Eyebrow center={center}>{eyebrow}</Eyebrow>
-  <Heading set:html={title} />
-  {lede && <p>{lede}</p>}
+<div class:list={['sec', { 'sec--center': center, 'sec--side': n || hasAction }]}>
+  <div class="sec__body">
+    <Eyebrow center={center}>{eyebrow}</Eyebrow>
+    <Heading set:html={title} />
+    {lede && <p>{lede}</p>}
+  </div>
+
+  {/* THE NUMERAL IS TYPESET WITH THE HEAD, NOT POSTED NEAR IT.
+
+      The first system absolutely positioned it against the section, and the
+      client's PDF export showed what that bought: one numeral clipped by its
+      section's `overflow: hidden`, one drawn straight through a two-column
+      heading, all of them hovering in corners nothing else used — decoration
+      nailed to a wall rather than set in type. A review's own rule was
+      "always associated with the section heading", and an absolute element is
+      associated with nothing.
+
+      Here it is a grid cell of the head itself: the eyebrow and heading on the
+      left, the numeral as the right-hand counterweight, any action tucked
+      beneath it. The layout engine reserves its space, so collision and
+      clipping are impossible rather than merely guarded against, and "same
+      place in every section" is true by construction. */}
+  {(n || hasAction) && (
+    <div class="sec__side">
+      {n && <SectionIndex n={n} flow />}
+      {hasAction && (
+        <div class="sec__action">
+          <slot name="action" />
+        </div>
+      )}
+    </div>
+  )}
 </div>
 
 <style>
+  /* THE HEAD IS THE SYSTEM. Every section on the home page renders this, which
+     is the whole point of the 2026-08-29 pass: there were four different
+     heading idioms across eight sections — this primitive, `Eyebrow` plus a
+     bespoke h2, two entirely hand-rolled heads — and every complaint about the
+     page feeling "partially designed, partially templated" followed from
+     there being no shared head to hang a rhythm on.
+
+     `position: relative` for the numeral to anchor to. Deliberately NO
+     `overflow: hidden`: the numeral is offset upward by a fraction of its own
+     size that stays inside a section's existing top padding, and clipping here
+     would cut legitimate content in the sections that overlap this block. */
+  .sec {
+    /* THE HEAD'S OWN RHYTHM, and the reason it lives here.
+
+       Measured across the home page on 2026-08-29, the gap between a section
+       head and the content under it was 0, 0, 0, 52, 32, 0, 52, 0 — every
+       section deciding for itself, which is the "spacing is inconsistent
+       section-to-section" the review named. Two of those zeros were regressions
+       from this conversion: `CategoryGrid` and `FeaturedLines` had carried the
+       gap on their own head wrappers, and those wrappers went away with them.
+
+       40px, once, here. A section whose next element brings its own top margin
+       (body copy) simply reads a little airier, which on inspection is an
+       improvement rather than a cost. */
+    margin-bottom: 40px;
+    /* RULE: the numeral is 2.4x its section's heading — the whole clamp, so
+       the ratio holds at every width, and small enough that the numeral is the
+       head's counterweight rather than a billboard behind it. The first
+       version used 3.5x anchored to the page edge; at that scale, in-flow, it
+       would out-shout the heading it belongs to. The hero stays at 3.5x of its
+       own larger clamp, so it is the largest on the page by construction. */
+    --si-size: calc(clamp(30px, 4vw, 46px) * 2.4);
+  }
+
+  /* With a numeral or an action the head is two columns; with neither it
+     collapses to one and nothing shifts — which is what keeps /about, /contact
+     and /industries rendering exactly as before. */
+  .sec--side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 12px 32px;
+  }
+
+  .sec__body {
+    min-width: 0;
+  }
+
+  /* Numeral at the top, action at the bottom — the action lands level with
+     the heading's baseline when the numeral is short, and tucks under the
+     numeral when it is tall. Both right-aligned to the measure's edge. */
+  .sec__side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
   .sec h1,
   .sec h2 {
     font-size: clamp(30px, 4vw, 46px);
     margin-top: 16px;
     letter-spacing: -0.028em;
+  }
+
+  /* AN EMPHASISED WORD IN A SECTION HEADING IS RED. One rule, here, rather
+     than per section.
+
+     It arrived by losing it: `CategoryGrid`'s "15 categories, ONE SHELF" set
+     its red word through `.cg__title span`, and converting that section to the
+     shared head dropped the colour on the floor — the heading rendered
+     entirely dark and the section's best typographic moment quietly went
+     missing. Caught by looking at the page.
+
+     Brand red, not --accent-text: the clamp floor is 30px, comfortably over
+     WCAG's 24px large-text bar where --accent's 4.30:1 is legal. Any heading
+     that ever drops below 24px must not use this. */
+  .sec :is(h1, h2) :global(span) {
+    color: var(--accent);
   }
 
   /* Was --color-grey-lt with a `.sec--on-light` override, and the override was
@@ -69,6 +190,11 @@ const {
   .sec--center {
     text-align: center;
   }
+
+  /* No centred-numeral case any more: every section head on the home page is
+     left-aligned since the same pass, so the numeral is always at the right
+     edge of the measure. `.sec--center` still exists for other pages, and if
+     one ever renders a numeral this is where that case would go back. */
 
   .sec--center p {
     margin-inline: auto;

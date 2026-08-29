@@ -40,7 +40,7 @@ const faqs = [
 
 <section class="faq">
   <div class="wrap">
-    <SectionHeading center eyebrow="Support" title="Frequently asked questions" />
+    <SectionHeading n="08" eyebrow="Support" title="Frequently asked questions" />
 
     <div class="faq__list">
       {
@@ -57,31 +57,32 @@ const faqs = [
 
 <style>
   .faq {
-    padding: 76px 0;
-    background: var(--surface-page);
+    padding: var(--section-pad) 0;
+    /* --surface-alt, flipped 2026-08-29 with Spotlight's move to white: the
+       measured sequence ran grey-grey across the band/spotlight seam and
+       white-white across spotlight/faq, so two section boundaries on the page
+       were invisible. Strict alternation from the catalogue down is what makes
+       every section's edge readable while scrolling. */
+    background: var(--surface-alt);
     color: var(--text);
   }
 
-  /* Scoped override of the shared SectionHeading, not an edit to that
-     primitive: SectionHeading also renders on /about, /contact, /industries
-     etc., so its own defaults (sentence case, 700 weight) have to stay put
-     there. `:global()` reaches the child-rendered `.sec h2` from inside this
-     section's own scope only — the same reach-into-a-child-component pattern
-     already used for `img` and `.solid` elsewhere in this codebase — so only
-     this instance picks up the new uppercase/800-weight heading treatment.
-     No colour override: `.sec h2` has no colour of its own and inherits
-     `.faq`'s `--color-ink`, already correct for a light surface. */
-  .faq :global(.sec h2) {
-    font-size: clamp(28px, 4vw, 46px);
-    font-weight: var(--fw-display);
-    line-height: 1.04;
-    letter-spacing: -0.025em;
-    text-transform: uppercase;
-  }
+  /* THE UPPERCASE HEADING OVERRIDE IS GONE — 2026-08-29.
+
+     It reached into the shared head with `:global(.sec h2)` and set uppercase
+     at weight 800, and it predated the head system by months. The result, read
+     off a PDF of the whole page: seven section headings in sentence case and
+     two in caps, which is the "composition is inconsistent section-to-section"
+     complaint with a cause. The primitive's own treatment is the system's, and
+     a section that wants a different one is asking for a fifth design
+     language. */
+
 
   .faq__list {
     max-width: 880px;
-    margin: 52px auto 0;
+    /* The head is left-aligned now, so this is too — a centred list under a
+       left-aligned head is the same axis problem one level down. */
+    margin: 0;
     border-top: 1px solid #e1e1e4;
   }
 

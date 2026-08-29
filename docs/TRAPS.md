@@ -462,6 +462,27 @@ in `handoff.md`; this file states the trap and moves on.
   of `Hero.astro` rather than restating it, checks both letter cases because
   the element is `text-transform: uppercase`, and names the offending
   character. Proved against a planted "☑".
+- **The hero's top padding is arithmetic, not taste.**
+  `src/components/sections/Hero.astro` carries three numbers derived from the
+  height of the absolutely positioned header — `--hero-chrome`, `.hero`'s
+  `padding-top`, and a second `padding-top` in its `max-width: 1180px` block.
+  The header is 84px of nav plus a 2px progress rule, so all three read 86.
+  Nothing connects them but this entry. Change the header's height without
+  changing all three and the dot field paints up behind the nav, the crop marks
+  climb into the logo, and every gate stays green — nothing here resolves a
+  rendered background against a rendered header.
+  It has already moved once: it was 130 while a 44px utility bar sat above the
+  nav, and that bar was removed on 2026-08-29.
+  *Caught by:* nothing. Read the rendered page.
+
+- **`.hero__controls` must not carry a `max-width`.**
+  940px is the measure the crest and the closing rule use, and it is the COPY
+  column — the banner band is the full wrap width. Written with `max-width:
+  940px` on 2026-08-29, the control rail rendered 940 wide against a 1176 frame
+  and sat visibly inset from the artwork it controls. It inherits the stage's
+  width instead, so the two edges cannot drift apart.
+  *Caught by:* `tests/e2e/home.spec.ts`, which measures both boxes.
+
 ## Looks like a defect, is not
 
 Several of these have already been reported as regressions by someone who

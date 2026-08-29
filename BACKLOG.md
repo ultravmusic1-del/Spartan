@@ -21,6 +21,17 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P0 — losing leads right now
 
+- [ ] **The header no longer publishes a dead `tel:` link — the number is still
+      missing.** Since 2026-08-29 (`handoff.md` §38) the header renders
+      `Contact sales` pointing at `/contact` while `site.phone` is the
+      `+971 00 000 0000` placeholder, and reverts to a real `tel:` link with no
+      code change the moment a number is supplied — `isPlaceholderNumber` in
+      `src/lib/site-content.ts`. **This made the site honest, not complete.**
+      A buyer still cannot phone Spartan from any page, and the country code in
+      the placeholder is UAE while the one real contact detail on file is a
+      Bahrain WhatsApp number. Ask the client which market the site is for at
+      the same time as asking for the number.
+
 - [x] **Wire the inert enquiry forms to `/api/enquiry`.** Done for the home CTA
       and the /contact form — see Done below. The footer field was split out as
       its own item (next) because it is a newsletter subscribe, not an enquiry,
@@ -476,6 +487,36 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P1 — discoverability and hardening
 
+- [ ] **Sign off or replace the hero headline.** From the 2026-08-29 design
+      review (`handoff.md` §38), whose first and highest-priority finding was
+      that the hero is visually loud and semantically quiet. The pass kept
+      `Home and industrial solutions.` because it is the client's approved line
+      and `tests/e2e/home.spec.ts` pins it, and answered the underlying
+      complaint — a visitor could not tell what Spartan sells — with the
+      division eyebrow and the supporting sentence instead. The reviewed
+      alternative was `BUILT FOR THE JOB. / READY FOR INDUSTRY.`
+      **This is a client decision, not a developer one.** Changing it is one
+      line in `src/components/sections/Hero.astro` and one assertion in
+      `tests/e2e/home.spec.ts`.
+
+- [ ] **Decide `Categories` vs `Products` — asked four times now.** Four independent
+      design reviews (2026-08-29, `handoff.md` §38, §39, §40 and §41) have called
+      `Categories` database terminology where `Products` is customer
+      terminology. It was not changed either time because the client chose the
+      label on 2026-08-17, and a nav label is theirs. **Do not build the
+      reviews' example menu**: it lists Power Tools, Material Handling and
+      Pumps, none of which Spartan sells. The dropdown already renders both
+      divisions and all fifteen real categories through the catalogue seam.
+      One string in `src/lib/nav.ts`'s caller and three assertions in
+      `tests/e2e/navigation.spec.ts`.
+
+- [ ] **Decide whether `Browse catalogue` should read `Browse products`.** Same
+      review, which argues "catalogue" can imply a PDF while "products" implies
+      discovery. Kept as-is on 2026-08-29 for consistency with the `/catalogue`
+      route, the nav panel's "View the full catalogue" and the breadcrumbs —
+      changing one label of four buys hero clarity at the cost of consistency
+      everywhere else. One word in `src/components/sections/Hero.astro`.
+
 ### Speed — scanned and measured 2026-08-23
 
 What is already healthy, so nobody "fixes" it: gzipped HTML is 15/30/11 KB
@@ -813,6 +854,70 @@ The header was added on 2026-08-23.
       consent UI onto the site; confirm the choice before wiring it.
 
 ## P2 — quality
+
+- [ ] **Decide whether About wants its own stat strip back.** Removed
+      2026-08-29 (`handoff.md` §42): it stated the founding year, the product
+      count and the division count — the same three facts the hero's index
+      states four sections earlier, in a different order, with different labels
+      ("94 PRODUCT LINES" against "PRODUCTS 94") and different padding. On one
+      page that reads as two datasets rather than one.
+
+      **This is a content decision, not a bug fix.** If the client wants
+      credibility figures inside About, the right version is a DIFFERENT three
+      — and every candidate raised so far (dealers, markets, territories, years
+      of experience) is unsourceable on this machine and refused under rule 1.
+      The numbers themselves are unchanged and still on `/about`.
+
+- [ ] **Per-section art direction, now that the system exists.** A design
+      review on 2026-08-29 (`handoff.md` §41) rated the page's sections after
+      the hero as "competent but bland" and named four specifically. The system
+      pass deliberately did not touch them — its own instruction was "stop
+      inventing new visual tricks and focus on system-building", and each of
+      these is easier and safer to judge against a shared head, numeral and
+      rhythm than alongside the change that created them.
+
+      In the review's own priority order:
+      - **`About.astro`** — the two helmet cutouts "feel placed, not composed".
+        The image treatment is the weakest on the page against the ambition of
+        the hero.
+      - **`FeaturedLines.astro`** — evenly repeated cards with no layout
+        rhythm; the filter controls work but are not bespoke to the brand.
+      - **`ServiceCards.astro`** — "could exist on hundreds of websites with
+        minor copy changes"; too much vertical space for the visual reward, and
+        the same pill CTA repeated six times.
+      - **`Spotlight.astro`** — good content idea, flat presentation; the
+        product image area is plain and the image/panel relationship is weak.
+      - **`Faq.astro`** and the enquiry form — clean and default; "fine is the
+        problem".
+
+      **Do them one at a time, against the system, and look at the page after
+      each.** The shared head, the 40px rhythm and the numbering are the fixed
+      points; anything that needs to break one of them is probably wrong.
+
+- [ ] **Standardise the card.** The review's other systemic note: cards vary in
+      border treatment, spacing, image ratio, label hierarchy, CTA placement
+      and hover behaviour across `CategoryGrid`, `FeaturedLines` and
+      `ServiceCards`. The heads are one component now; the cards are still
+      three. A `Card` primitive is the same move applied one level down, and it
+      is the highest-value item left after the head system.
+
+- [ ] **Carry the section numbering to the remaining home sections.**
+      `src/components/primitives/SectionIndex.astro` exists and is used twice —
+      the hero is 01, `CategoryGrid` is 02 (`handoff.md` §40). A third review
+      rated extending it highly: 03 FeaturedLines, 04 Spotlight, and so on,
+      each cropped and placed differently so the series reads as a series
+      rather than as the same sticker on every band.
+
+      **Two rules the primitive's header states and a caller must honour:** the
+      caller needs `position: relative` and `overflow: hidden`, or an oversized
+      absolute child gives the page horizontal scroll on a narrow screen; and
+      placement is passed by `--si-top` / `--si-right` / `--si-size`, never by
+      an inline `style` attribute, which `style-src`'s hashes do not cover.
+
+      Not done in one go on purpose — the same review's first sentence was "I
+      would not do another major redesign from here", and stamping six sections
+      in one pass is how a system becomes wallpaper. Add them as each section
+      is next touched, and look at the page after each one.
 
 - [ ] **Product pages are thin.** The product schema has **no description field
       at all**; every product is name + specs. The richest page on

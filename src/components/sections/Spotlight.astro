@@ -2,7 +2,7 @@
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import Chevron from '../primitives/Chevron.astro';
-import Eyebrow from '../primitives/Eyebrow.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
 import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
 import SpecTable from '../catalog/SpecTable.astro';
@@ -46,6 +46,15 @@ const hasUntested = product?.en388
     <section class="spot">
       <Chevron class="left-[-60px] bottom-[-40px] w-[380px] h-[440px]" />
 
+      {/* Head above the columns, like every section. The eyebrow is the
+          CATEGORY and the heading is the PRODUCT — the one head on the page
+          whose copy is data rather than authored. `category.name` reaches the
+          eyebrow prop, never `title`: `set:html` is only safe for strings
+          written in this repo. */}
+      <div class="wrap">
+        <SectionHeading n="07" eyebrow={category ? category.name : 'Featured'} title={product.name} />
+      </div>
+
       <div class="wrap spot__inner">
         <div class="spot__vis">
           {image && (
@@ -59,8 +68,6 @@ const hasUntested = product?.en388
         </div>
 
         <div>
-          {category && <Eyebrow>{category.name}</Eyebrow>}
-          <h2 class="spot__title">{product.name}</h2>
           <p class="spot__body">
             HPPE, steel, polyester and spandex liner with a polyurethane coating and a knit wrist
             cuff. Supplied in grey, in sizes 7 to 12.
@@ -100,8 +107,10 @@ const hasUntested = product?.en388
 <style>
   .spot {
     position: relative;
-    padding: 76px 0;
-    background: var(--surface-alt);
+    padding: var(--section-pad) 0;
+    /* White, not alt — see Faq.astro: the band above is alt, and two grey
+       sections in a row made this seam disappear into a 1300px slab. */
+    background: var(--surface-page);
     border-top: 1px solid var(--line);
     overflow: hidden;
   }
@@ -112,7 +121,11 @@ const hasUntested = product?.en388
     display: grid;
     grid-template-columns: 0.95fr 1.05fr;
     gap: 64px;
-    align-items: center;
+    /* `start`, not `center`, since the head hoisted above these columns:
+       centring floated the (shorter) image down and left a hole in the top
+       left directly under the heading. Top-aligned, the image meets the spec
+       copy at the same line the head just established. */
+    align-items: start;
   }
 
   .spot__vis {

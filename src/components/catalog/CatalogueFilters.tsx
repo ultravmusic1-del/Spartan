@@ -51,7 +51,28 @@ export default function CatalogueFilters({ divisions, categories, total }: Props
   const [ready, setReady] = useState(false);
   const [division, setDivision] = useState('');
   const [category, setCategory] = useState('');
+  /*
+   * SEEDED FROM `?q=`, AND FROM `?q=` ONLY.
+   *
+   * The note above says filter state is not in the URL, and for division and
+   * category that still holds — both have real server-rendered addresses, so a
+   * query parameter would publish a second URL for content that already has a
+   * canonical one.
+   *
+   * A search term has no such address, and the header's search box has to land
+   * somewhere. The alternative was a box that throws away what the buyer
+   * typed, which is worse than the cost this accepts: /catalogue is
+   * prerendered, so the page paints every product and this narrows them on
+   * mount. That flash is real. It is the price of search working with
+   * JavaScript switched off, and only someone who arrived with a term already
+   * typed ever pays it.
+   */
   const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    const seed = new URLSearchParams(window.location.search).get('q');
+    if (seed) setQuery(seed);
+  }, []);
   const [shown, setShown] = useState(total);
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);

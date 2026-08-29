@@ -548,7 +548,12 @@ let unitSuitePassed = false;
 
   // Each entry: the field, its placeholder shape, and what a visitor hits.
   const checks = [
-    ['phone', (v) => !v || /0{3,}/.test(v), 'a dead tel: link in the header of every page'],
+    // NOT a dead tel: link any more. Since 2026-08-29 the header renders
+    // "Contact sales" while this is a placeholder and only becomes a phone
+    // link when a real number lands — `isPlaceholderNumber` in
+    // src/lib/site-content.ts. The number is still missing, so this is still a
+    // launch blocker; what it costs has changed and the message says so.
+    ['phone', (v) => !v || /0{3,}/.test(v), 'no phone number anywhere on the site'],
     ['email', (v) => !v || v.endsWith('.example'), 'an undeliverable mailto: in every footer'],
     ['address', (v) => !v || /^address line/i.test(v), 'a fabricated location'],
     ['whatsapp', (v) => !v, 'no WhatsApp affordance anywhere (renders nothing, which is honest)'],

@@ -267,6 +267,43 @@ Six of the 72 products carry a verified rating. For every other glove, **leave `
 
 ---
 
+## Hero banner artwork
+
+The banner on the home page is uploaded at `/admin/banners`. It is a 4:1 band,
+nearly the full width of a desktop screen and roughly a third of that on a
+phone — and that second fact is the one that catches people out. Type that is
+comfortable in the design file is unreadable on the device most buyers arrive
+on.
+
+**What the uploader enforces, and will reject:**
+
+- JPEG or PNG
+- aspect ratio between 3.8:1 and 4.2:1
+- between 1400px and 6000px wide
+- 8 MB maximum
+
+**What it cannot enforce, and you have to hold to:**
+
+- **Master size 2800 x 700.** Smaller is accepted and then upscaled, which
+  looks soft on a large screen.
+- **8% clear margin on all four sides.** The band is cropped at narrow widths,
+  and anything in that margin is what gets cropped.
+- **No text below 28px in the master.** At 2800px wide, 28px lands at roughly
+  11px on a 1240px screen and roughly 6px on a phone. 6px is not small, it is
+  absent.
+- **At most four product groups.** Five is a contact sheet, not a banner.
+- **No body copy.** A banner is a headline, a product and a mark. If it needs a
+  sentence, it needs a page.
+- **A new banner arrives hidden.** Look at it on a phone before you switch it
+  on — that is what the hidden state is for.
+
+**Check the facts before you upload, not after.** A banner is artwork to the
+person uploading it and a product claim to the person reading it. Two posters
+were withdrawn from this site for printing a protection rating the product does
+not carry. Nothing in the code can catch that, and an EN 388 "X" means *not
+submitted for that test*, never *failed* — printing a number in its place
+advertises protection the product was never tested for.
+
 ## When you are done
 
 ```bash

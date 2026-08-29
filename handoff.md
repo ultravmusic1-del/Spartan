@@ -3961,3 +3961,871 @@ carries the link. With it, the font arrives at **372ms**.
 
 **CLS stayed 0.000** across the swap, measured under 4× CPU throttling on a
 simulated 4 Mbps connection.
+
+## 38. The landing page's interface pass — 2026-08-29
+
+**Status: implemented, not committed.** `verify 18/18 · 389 unit · 11 new ·
+329 public e2e passing, 0 failing.` Left in the working tree deliberately: the
+client asked to see a browser preview before anything reached the live site.
+
+### What this was
+
+A design review of the above-the-fold experience, delivered as 28 numbered
+findings with a priority table. Its summary was fair and worth keeping: the
+page had **creative direction without enough interface refinement**. The dotted
+engineering grid, the oblique red-and-black headline, the rectangular
+merchandising band and the moving category rail are a real visual idea; what
+was missing was hierarchy, scale and a proposition.
+
+The plan is `docs/superpowers/plans/2026-08-29-landing-page-refinement.md`.
+
+### The three decisions that were the business's, not the code's
+
+They were taken so work could proceed, each is one line to reverse, and all
+three are in `BACKLOG.md`.
+
+1. **The H1 wording was NOT changed.** `Home and industrial solutions.` is the
+   client's approved line and `tests/e2e/home.spec.ts` pins it. The review's
+   actual complaint — a visitor could not tell what Spartan sells — is a real
+   defect, and it is fixed by the eyebrow and the supporting sentence. That is
+   a different change from overwriting someone's brand voice.
+2. **`Browse catalogue` keeps its wording and its red.** The review suggested
+   `Browse products`. The route is `/catalogue`, the nav panel says "View the
+   full catalogue" and the breadcrumbs say Catalogue; changing one label of
+   four buys clarity in the hero at the cost of consistency everywhere else.
+3. **The placeholder phone number left the header.** See below.
+
+### What was refused, and the number that refuses it
+
+The review proposed a trust band reading **1,000+ PRODUCTS**, **BUILT FOR GCC
+CONDITIONS** and **QUALITY ASSURED**. The catalogue holds **94** products, and
+there is no source on this machine for a region claim or a certification claim.
+That is rule 1, and here it is a safety rule rather than a style one.
+
+What shipped instead counts: the hero reads the catalogue through
+`src/lib/catalog.ts` and renders "94 products in 15 categories". A counted
+number cannot drift into a fabricated one, and `Hero.test.ts` mocks the
+catalogue with 7 and 3 precisely so that a hard-coded literal would fail.
+
+The review also proposed relabelling `Categories` to `Products` with a mega-menu
+listing Power Tools, Material Handling and Pumps. Spartan sells none of those.
+The dropdown already renders both divisions and all fifteen real categories
+through the seam; only the label is in question, and the client chose it on
+2026-08-17.
+
+### The changes
+
+**The utility bar is gone.** 44px at the top of every page carrying "Follow
+Spartan" and three social marks that were not links — the profiles are not
+published. `.site-header--transparent` moved from `top: 44px` to `top: 0`, and
+`--hero-chrome` from 130 to 86. **Those numbers plus two hero paddings are one
+arithmetic chain and nothing connects them but a comment**, which is now also a
+`docs/TRAPS.md` entry.
+
+**The interface scaled up and the headline scaled down.** Logo 38 to 48px, nav
+links 11 to 13px, phone 13 to 14px, hero CTAs 13.5 to 15px at 18px of padding;
+the H1 ceiling 76 to 68px. The complaint was never that the headline was too
+big in isolation — it was too big relative to a 38px logo and an 11px nav.
+Five hand-tuned hero margins became four `--hero-gap-*` names on a 4px grid.
+
+**The header no longer publishes a dead `tel:` link.** `site.phone` is still
+`+971 00 000 0000`; until now every page carried a phone link that dials
+nothing. `isPlaceholderNumber` in `src/lib/site-content.ts` decides, and the
+header renders `Contact sales` while the number is a placeholder — reverting to
+a real `tel:` link with no code change the day one is supplied.
+
+**The threshold is four consecutive zeros, not three, and that is the whole
+test.** The client's real WhatsApp number is `+973 3800 0458`, whose digits
+contain `000`. At three, a working number would have been classified a
+placeholder and hidden. `src/lib/site-content.phone.test.ts` pins both
+directions.
+
+**Search reached the header.** A plain GET form to `/catalogue`, no island and
+no inline script — an inline script here would work locally and be silently
+blocked in production, because `npm run csp` derives its hashes from
+`dist/client`. `CatalogueFilters.tsx` seeds its box from `?q=`.
+
+**That `?q=` is a deliberate exception to a documented rule.** The component
+says filter state is not in the URL, because `/catalogue` is prerendered and a
+shared `?category=` link would paint all 94 products and then visibly cut down.
+That reasoning still holds for division and category — both have canonical
+pages. A search term has none, and the alternative was a header box that throws
+away what the buyer typed. The flash is real, and it is paid only by someone
+who arrived with a term already typed.
+
+**The carousel controls became one rail.** `01 / 03`, the pips as a continuous
+track, the pause at the end. The pip geometry changed and **the clock did not** —
+the animation and its 42s duration were carried across verbatim.
+
+**The category band became navigation.** Fifteen names, fifteen real links, and
+hover or focus stops the track so they are not a moving target. The duplicates
+that make the loop seamless carry `tabindex="-1"` inside `aria-hidden`
+containers: 15 reachable and 45 unreachable, measured in the browser. A
+focusable element inside `aria-hidden` is a violation in its own right, which is
+why the split exists at all.
+
+**Red was spent more carefully.** The two decorative edge ticks went from
+`--accent` to `--line-control`. The crest, the headline's red span and both CTAs
+kept theirs — brand and action. When everything on a screen is red, the button
+is not.
+
+### Two things the browser caught that review did not
+
+**The control rail was 940px against a 1176px frame.** 940 is the measure the
+crest and the closing rule use — the copy column, not the band — so the rail sat
+visibly inset from the artwork it controls. Found by measuring the rendered
+page. It now inherits the stage's width, so the two edges cannot drift apart,
+and `tests/e2e/home.spec.ts` measures both boxes.
+
+**A hover-pause on the hero carousel turned its toggle into a one-way door.**
+The design database's rule for auto-rotating media is to stop on hover, focus
+and reduced motion, and it was added on that basis. `.hero__controls` sits
+INSIDE `.hero__stage`, so the pointer that clicks Pause is hovering the stage —
+and pressing the control a second time left the band stopped.
+`tests/e2e/hero-carousel.spec.ts` has an explicit "toggle and not a one-way
+door" test, and it failed. **The rule was removed and the reason is written into
+the file so it is not re-added.** Generic advice lost to a specific tested
+contract. `Ticker.astro` keeps its hover-pause, because there the links
+genuinely move under the cursor and its control is hover-revealed by design.
+
+### The fold arithmetic was estimated pessimistically, then measured
+
+The supporting sentence and the taller CTAs cost roughly 63px on a 360x640
+screen, against 42px handed back by the utility bar. The estimate said this
+would be marginal. Measured: the primary CTA's bottom edge lands at **584px
+against a 640px fold**, with 56px of clearance where the block was written with
+20. The sentence is NOT dropped on a phone — it is the change that answers
+"what does this company sell", and a phone is where that gets asked most. It is
+set tighter, and the CTAs hand back the padding they gained.
+
+### What did not change, and why
+
+- **Ticker speed.** The review asked for 25–40s per traversal. It already runs
+  84s over a doubled track, which is inside that band, and
+  `prefers-reduced-motion` already stops it dead.
+- **The sections below the fold.** The review asked for a trust band and
+  category tiles after the hero. `src/pages/index.astro` already renders
+  Ticker, then CategoryGrid, then FeaturedLines, before any editorial section.
+- **No card was introduced anywhere.** The review was explicit that rounded
+  SaaS cards, gradients and glassmorphism would make this worse. The banner
+  frame went from a 4px radius to 2px rather than the other way.
+
+### Playwright ran, and that is worth recording
+
+§36 deferred `--full` because Docker would not start. **The public suites do not
+need it** — only the authenticated admin tests do. 329 public e2e tests pass
+across desktop and mobile, including 11 new ones. The admin suites are still
+unrun locally, and that is unchanged from §36.
+
+One new test was written flaky and fixed rather than shipped: clicking a link in
+the moving band passed alone and failed under ten workers. Hovering pauses a
+track that is mid-animation and the click can still land after it has travelled;
+the fix is an assertion between the hover and the click, so the stop is
+synchronised rather than hoped for. `.check()` on the pause switch is not the
+alternative it looks like — the input carries `pointer-events: none`, so even a
+forced click leaves it unchanged.
+
+### Where a new session should start
+
+Everything in §36's list still stands. Ahead of it: **look at the preview and
+decide the three business questions above**, then commit. Nothing here has been
+committed, so `git status` is the honest picture of what this section describes.
+
+## 39. The hero stops being symmetrical — 2026-08-29
+
+**Status: implemented, not committed.** `verify 18/18 · 392 unit · 332 public
+e2e passing.` Still in the working tree: the client is reviewing the preview
+before anything reaches the live site.
+
+### What the second review said, and why it was right
+
+§38's pass fixed the practical problems and made the page **more
+conventional**. The review's own summary: "the hero typography is carrying
+almost all the responsibility for making the page memorable, yet its
+composition is extremely ordinary." Eyebrow, headline, rule, sentence, banner —
+five centred strips down the middle of a page whose brand is angular and
+industrial. It scored the result 7.5 functionally and 6.5 creatively, and the
+diagnosis was better than the score: **the page was trying to create interest
+with small decorative details around a boring composition.**
+
+The instruction taken from it was to flip that — an interesting composition
+with *fewer* decorative details — and specifically not to answer it by adding
+more dots, lines, badges and arrows.
+
+### Three moves, and nothing else
+
+**1. The centre axis is gone.** `.hero` is `text-align: left` and the wrap is
+`align-items: stretch`. Masthead, headline and lede share one left edge;
+`tests/e2e/home.spec.ts` measures all three and fails if any of them drifts
+back to the middle.
+
+**2. The headline is a composition, not an H1 with a font size.** Two spans on
+one source line rather than a measured wrap point. Line one runs from the left
+margin at up to 72px; line two is pushed right by up to 118px and set at 1.18x,
+so it lands near 85px. Leading closed to 0.84. Equal lines stack; unequal lines
+that lean read as one shape, and that is the whole argument.
+
+**The measured `max-width: 940px` wrap point is gone with it**, along with the
+table of per-face line widths that set it. The break is structural now and
+cannot drift when the face or the tracking changes — which is a better version
+of what the cap was protecting.
+
+**3. The counted totals became the counterweight.** The review's best single
+idea: "94 products in 15 categories is actually useful design material. Use
+it." The numbers left the sentence and became a `<dl>` on the right of the
+composition — mono labels, display numerals, zero-padded to two digits, one
+vertical red rule down its left edge. The lede keeps the language and now
+carries no digits at all; a unit test asserts that, because the same fact in
+two places is how one of them goes stale.
+
+### The one grid violation, and why there is only one
+
+An outlined `94` at up to 340px sits behind the headline. It is the same number
+the index states — decoration made of data rather than of shapes — and it is
+the only element allowed to break the plane.
+
+`color: transparent` with `-webkit-text-stroke` is a safety property, not a
+trick: a browser without the stroke property paints **nothing**, which is the
+correct failure. A filled fallback would put a black slab across the headline.
+It is anchored right and above, deliberately never behind "SOLUTIONS." — the
+red word has the least contrast headroom on the page and stacking texture
+behind it is exactly how a measured ratio quietly stops being true.
+
+### Four horizontal rules became one vertical one
+
+The review counted them: crest arms either side of the badge, the notched rule
+under the headline, the rule trailing off the FEATURED label, and a progress
+rail spanning the full width of the band. In a hero about 600px tall they were
+competing rather than structuring.
+
+Removed: the crest, the hexagonal badge, the closing underline, the label's
+trailing rule. Added: one vertical red rule on the index. The campaign label
+and the carousel controls merged into a single row above the band, which
+removed a whole horizontal strip on its own, and the controls compressed from
+1160px to a 340px cap — a progress indicator has no reason to mirror the width
+of the thing it indexes.
+
+**The controls moved ABOVE the band, and the constraint that put them below is
+still satisfied.** That constraint was never "below"; it was "never over the
+artwork", because the banners carry near-white footer strips where a white pip
+is invisible and a scrim dark enough to fix it covers the client's QR code.
+Above sits on the page's own surface.
+
+### The badge went and the founding year came back, which is not a reversal
+
+§38 removed "Est. 2015" because a hexagonal badge was spending the most
+valuable line on the page on a fact that is not a proposition. It is now one
+segment of `SPARTAN® / ELECTRICALS + SAFETY / EST. 2015`, a mono masthead where
+it costs nothing. The objection was to the prominence, never to the fact.
+
+The review also found the divisions confusing as a hero label. Inside a
+masthead they read as provenance rather than as a title for the page, which is
+what they always were.
+
+### The header
+
+Search stopped being a bordered box and became a **rule**: one line under the
+field, icon at the right where a submit affordance belongs, uppercase technical
+placeholder. A four-sided border was four more lines on a page that had too
+many, and the review called the original "very generic ecommerce".
+
+`Contact sales` became a sharp-cornered red **outline** with an ↗. A filled red
+button was the obvious answer and the wrong one — the hero's primary CTA is a
+red fill, and a second one in the header spends that meaning twice.
+
+Search and Contact are one group now, hard right behind a hairline, so the row
+reads as logo / navigation / tools rather than four objects drifting along a
+line.
+
+### The band gives back 6%
+
+`max-width: 1160px`, left-aligned to the same axis as the headline. The review
+was right that the hero had become "headline → explanation → giant advert", and
+right about why it matters: **the artwork is uploaded by an admin and changes
+every campaign, so whatever is loaded that week was setting the visual
+temperature of the whole page.** The site has to stay louder than its own
+advertising. The frame is 4:1 and fixed, so width is height here.
+
+`max-width` is not binding below 1160px, so nothing about the phone changes.
+
+### What was refused this time
+
+- **`GCC SUPPLY` as a third index row.** No source on this machine. Rule 1.
+- **`01 /` prefixes on the campaign label.** The review suggested
+  `01 / FEATURED`; there is no section 02, so the 01 would have been a number
+  that means nothing. Tiny technical type works because it looks like it
+  carries real structure — inventing the structure is how it becomes
+  decoration, which is the thing this pass exists to remove.
+- **`Categories` → `Products`.** Two reviews now. The client chose the label on
+  2026-08-17 and it is still their call; it stays in `BACKLOG.md`.
+- **Changing the H1 wording.** Unchanged and unasked-for: the review itself
+  said "don't necessarily change the words yet, change how they're treated."
+
+### Three things measurement caught that reasoning did not
+
+**The mobile fold broke by 77px.** The index fell back to a stacked column
+below 560px, which looked fine and cost 170px on a 360x640 screen — enough to
+push the primary CTA well under the crease. It stays a three-column row all the
+way down and the type steps down instead; 45px instead of 170, and the CTA
+lands at 607 with 33px of clearance. The estimate had said "tight". It was not
+tight, it was broken.
+
+**The nav row overflowed at exactly 1081px**, one pixel above the width where
+the menu collapses. The tools group added 41px past the wrap, and nothing about
+it looked wrong at 1440. `tests/e2e/navigation.spec.ts` measures that width on
+purpose. A squeeze band between 1080 and 1240 pays it back out of spacing —
+never out of the 44px target or the Contact outline.
+
+**A stray `®` gap.** Loose text nodes inside a flex container become anonymous
+flex items, so "Spartan" and the registered mark were two items with the row's
+10px gap between them. Every masthead segment is its own span now.
+
+### The gate caught a white that would have been legal
+
+`Contact sales` originally filled red with white text on hover — 4.91:1 and
+correct. `theme-sweep.test.ts` refused it, because keeping it meant adding
+`Header.astro` to the red-surface allowlist, and that would exempt the one file
+rendering on all 119 pages from a check that exists because a white-on-white
+product name once shipped to every category page. **The design gave way, not
+the gate.** The hover is a 10% tint now — the idiom `PillButton` already uses.
+
+### On the browser suite
+
+332 public e2e pass. Two full runs each showed one failure and both were
+environment rather than regression: a clipboard permission flake under ten
+workers, and a **429 from the enquiry API's rate limiter**, which had
+accumulated hits from the many suite runs of this session against a
+long-running preview server. Restarting the server and re-running gave 44/44 on
+`csp.spec.ts` and `enquiry.spec.ts`. Worth knowing before anyone else chases it:
+**repeatedly running the enquiry tests against one preview process will
+eventually 429, and that is the limiter working.**
+
+The admin suites are still unrun locally — Docker, unchanged from §36.
+
+## 40. The refinement pass, and a numbering system — 2026-08-29
+
+**Status: implemented, not committed.** `verify 18/18 · 389 unit · 333 public
+e2e passing, 0 failing.` Still in the working tree for the client's review.
+
+### What the third review said
+
+It scored §39's hero 8/10 and opened with the instruction that matters most:
+**"I would not do another major redesign from here."** The risk had flipped —
+the danger was no longer blandness but overreaction, and the remaining gains
+were in composition rather than ornament. Everything below is a refinement to
+something already there. Nothing new was invented except one component, and
+that one exists to make an element already on the page mean something.
+
+### The headline closes up
+
+`line-height` 0.84 → 0.74, which is 7.2px out of the gap at the 72px ceiling.
+The two lines were still reading as "two formatted lines of an H1" rather than
+one shape. The red line is tucked under the black one now.
+
+The size step went 1.18 → 1.22. **The review asked for the second line to be
+"5–8% larger", believing the two were the same size — it was already 18%
+larger, and that is worth recording so the next person does not chase the same
+ghost.** What was actually missing was the leading: at 0.84 the gap between the
+lines was reading as the separation, not the size.
+
+### The oversized numeral stopped being two things at once
+
+It was `94`, sitting inches from a stated `94`. The review was right that the
+same figure was being read twice inside one cluster, and right that the device
+had to pick a role: decoration or data.
+
+**It is decoration, and the tie-breaker is not taste.** The numeral is drawn
+with `-webkit-text-stroke` over a transparent fill, so it renders as *nothing*
+in a browser without that property — the correct failure for an ornament and a
+disqualifying one for information. A fact whose only carrier can vanish has not
+been stated. So the numeral is a section index, `aria-hidden`, and every
+counted total lives in the index below as real text.
+
+### And the numbering became a system rather than a loose number
+
+`01` alone is as arbitrary as `94` was. The review's strongest strategic idea
+was a repeatable numbering language — 01 the hero, 02 the shelf, each set huge,
+outlined and cropped differently — so `src/components/primitives/SectionIndex.astro`
+is that device, and it is used twice: the hero is 01 and `CategoryGrid` is 02.
+Two instances is what makes it a series rather than a promise.
+
+**Placement is passed by inherited custom properties, never by an inline
+`style` attribute.** `style-src` is hash-based here and hashes do not cover
+inline style *attributes* — one would have worked locally and been dropped in
+production with nothing failing. The caller sets `--si-top`, `--si-right` and
+`--si-size`; they inherit. The caller must also be `position: relative` and
+clip its own overflow, or an oversized absolute child gives the page horizontal
+scroll on a narrow screen.
+
+### The third statistic earns its place
+
+`DIVISIONS / 02` was called weak, and worse, said to make the range sound
+unintentionally small. Agreed on both counts — and the divisions are named in
+the masthead directly above, where they read as scope rather than as a total.
+
+The suggested replacements were dealers, markets and territories. **Not one is
+sourceable on this machine, so all three were refused.** The founding year is
+on file, is already published on the About page, and is the one credibility
+figure here that is not an invention. It moved out of the masthead in the same
+edit, so it is stated exactly once — a unit test counts the occurrences.
+
+That year has now had three addresses: a hexagonal badge on the hero's best
+line, a masthead segment, and a statistic. Each move was the same judgement
+with better information — the fact is worth stating, the prominence was not.
+
+### Smaller things
+
+- **Microcopy up a pixel, not a shade.** The masthead was one you had to search
+  for. The review offered size *or* contrast, not both; size is the one to take,
+  because `--text-muted` is 4.96:1 against a 4.5:1 floor and there is no darker
+  muted token — "raise the contrast" would have meant inventing a colour and
+  measuring it.
+- **The lede tightened** to `Lighting, ventilation, water management, PPE and
+  workwear for contractors and distributors.` at a 470px measure, in px rather
+  than `ch` — this rule's size is a clamp, so a `ch` cap silently changes
+  measure at every viewport, which is the opposite of the fixed footprint asked
+  for.
+- **CTAs 8px closer to the band**, taken by moving down one step of the existing
+  scale rather than inventing a number beside it.
+- **The control rail compressed** about 12% again, to a 300px cap.
+
+### The progress rail had been broken since §39, quietly
+
+The review said the progress state read as too subtle. It did, and the reason
+was a real defect: `@keyframes hero-pip` animated `width` between 26px and
+18px, and **a flex item with `flex-basis: 0` ignores `width` entirely.** When
+the pips became flex segments in §39 the geometry changed and the keyframe did
+not, so for one revision the only thing marking the active slide was its
+colour. It animates `flex-grow` now — the current segment is visibly wider and
+red, which is what a progress rail is supposed to look like.
+
+### A trigger that was measuring the wrong thing
+
+The headline's offset and size step were collapsed inside the
+`(max-width: 1180px) and (max-height: 700px)` fold block, because that is where
+they were first needed. That block also fires on a **1000×700 laptop window**,
+where it flattened the composition into two equal flush-left lines — the exact
+thing the previous review had asked us to get away from, on a screen with
+plenty of width to spare. The reason to flatten is that the measure cannot pay
+for an offset, and that is a question about width alone. It is a
+`max-width: 640px` rule now.
+
+### What was refused
+
+- **`01 / FEATURED CAMPAIGN`** on the campaign label. It would have been the
+  third `01` above the fold — the section index, the slide counter beside that
+  very label, and then this. That is the same redundancy the review had just
+  asked us to remove from the giant numeral, arriving from another direction.
+  The slide counter is the number this module needs and it already has it.
+- **A double period after "distributors".** Reported from a screenshot; there
+  is one period in the source and one in the built HTML. Nothing to fix.
+- **`Categories` → `Products`.** Asked three times now, across three reviews.
+  The client chose the label on 2026-08-17 and it remains theirs; it is in
+  `BACKLOG.md` and it is one string.
+- **`Browse catalogue` → `Browse products`.** The review's own condition was
+  "keep Catalogue if it's genuinely a catalogue-browser experience". It is —
+  `/catalogue` is a filterable index of all 94 products.
+
+### The fold got healthier, not tighter
+
+The tightened leading and the shorter lede handed space back. On a 360×640 the
+primary CTA's bottom edge is at **559px with 81px of clearance**, against 607
+and 33 before this pass, and against a block originally written with 20.
+
+### On the 429 that keeps appearing
+
+Worth knowing before someone chases it: **Playwright reuses a server already
+listening on 4321**, so a long-running preview from the browser pane becomes
+the test server — carrying its accumulated in-memory rate-limit state into the
+enquiry tests. Stop the preview before a full run, or expect a 429 on
+`csp.spec.ts` that is the limiter working correctly.
+
+## 41. One head, one rhythm, one numbering — 2026-08-29
+
+**Status: implemented, not committed.** `verify 18/18 · 392 unit · 333 public
+e2e passing, 0 failing.` Plan:
+`docs/superpowers/plans/2026-08-29-homepage-design-system.md`.
+
+### The diagnosis was visible in the imports
+
+The fourth review said the page reads as "3–4 different design languages
+stitched together" and that the hero "belongs to a more ambitious website than
+the rest of the page". Both were literally true, and the evidence was not a
+matter of taste — it was in how each section built its head:
+
+| Section | Head |
+|---|---|
+| `ServiceCards`, `Faq` | the `SectionHeading` primitive |
+| `About`, `Spotlight`, `EnquiryCta` | `Eyebrow` + a bespoke `<h2>` |
+| `CategoryGrid` | hand-rolled `.cg__eyebrow` + `.cg__title` |
+| `FeaturedLines` | hand-rolled `.fl__title`, **no eyebrow at all** |
+| `TrustBand` | `.band__lead` on a full-bleed red band |
+
+Four idioms for eight sections. Every downstream symptom — inconsistent
+spacing, sections that feel templated, decoration that reads as arbitrary —
+followed from there being no shared head to hang a rhythm on. **All eight
+render one component now.**
+
+### The system, stated so it can be checked
+
+1. Every section on the home page has the same head: micro-label, heading,
+   optional lede, optional trailing action, section numeral.
+2. **The numbering is complete or it does not exist.** Every headed section is
+   numbered in DOM order, 01 to 09. The category ticker is a band with no
+   heading and takes no number. There is no third case.
+3. **The numeral is 3.5x its own section's heading ceiling** — not a fixed
+   size. That is what lets the hero's stay dramatic against a 72px headline and
+   a content section's stay proportionate against a 46px one, with one rule
+   rather than two exceptions.
+4. Always top-right of the head block, outlined, 11% of `--text`, always
+   `aria-hidden`. It never carries a fact — see below.
+5. An emphasised word in a section heading is red. One rule on the primitive.
+6. 40px between a head and the content under it. One value, everywhere.
+7. Red marks action and brand, not surfaces. One red band remains: the ticker,
+   which is navigation.
+
+`tests/e2e/home.spec.ts` asserts 2 and 4 directly. **Without that invariant
+this pass produces the same half-committed system it replaced, one section at a
+time, the next time someone adds a section.**
+
+### Why the numeral can never become the statistic
+
+Asked and settled twice now, and worth stating once properly. `SectionIndex`
+draws with `-webkit-text-stroke` over a transparent fill, so it renders as
+*nothing* where that property is unsupported. That is the correct failure for
+an ornament and a disqualifying one for information: a fact whose only carrier
+can vanish has not been stated. It is decoration; the counted totals live in
+the hero's index as real text.
+
+### The crop marks are gone, and so is their spec
+
+Four registration marks and two red edge ticks. The review's verdict was
+delete, and the reasoning held: they repeated nowhere else, carried no
+hierarchy, and sat far enough out to read as detached.
+
+**`tests/e2e/hero-marks.spec.ts` was deleted with them, and that deserves
+saying out loud.** The client raised a real defect against their own mockup —
+the bottom marks landing on the CTAs — and that spec was written so deleting
+the marks could not read as a passing fix. Deleting it alongside the decoration
+is not that dodge: a collision between a mark and a button cannot recur once no
+mark exists. If any of it comes back, the spec comes back with it.
+
+### The measure widened, site-wide
+
+`--wrap-max` 1240 → 1360. The review found the content floating in a large
+empty field with the outer canvas doing nothing, and offered two ways out:
+widen, or make the margins carry something. Widening is the honest one — the
+margins had no work to do, and inventing some is the "decoration about
+decoration" the same review asked us to stop.
+
+**It is widened site-wide, never just in the hero.** A hero on a wider measure
+than the sections under it is a fifth design language.
+
+### The industries band joined the system
+
+It was a full-bleed red strip with white text, and the review said it "feels
+like it belongs to a different design system". The accurate version of that:
+red was doing four jobs on one page — headline accent, primary CTA, category
+ticker, and this surface — and a colour doing four jobs marks none of them. It
+is an ordinary light section now with the shared head and `06`. The industries
+and the comment recording that they are inferred from the product mix and
+pending client confirmation both survived the edit.
+
+### Three defects the browser caught that review would not have
+
+**The catalogue heading silently lost its red word.** `CategoryGrid` set
+"15 categories, **one shelf**" through `.cg__title span`; converting to the
+shared head dropped the colour and the section's best typographic moment went
+missing. It is a rule on the primitive now — an emphasised word in any section
+heading is red — so it cannot be lost again by moving a heading.
+
+**The numbering anchored consistently to inconsistent boxes.** `FeaturedLines`
+kept its filter tabs in a `.fl__head` flex row beside the head, which
+shrink-wrapped the head to its own text — so `03` landed near the middle of the
+page while every other numeral sat at the measure's right edge. The rule was
+being followed; the box it was following was wrong. The tabs ride in the head's
+action slot now, the same move `CategoryGrid`'s "All products" link makes.
+
+**A ratio binds where a fixed width did not.** The hero band's `max-width:
+1160px` became `93.5%` so the ~6% it gives back would survive the wider
+measure. But 93.5% of a 320px phone column is 299px, so the band stopped
+spanning the column on a phone — `tests/e2e/hero-mobile.spec.ts` measures
+exactly that and failed. The ratio now applies only above 900px, where there is
+surplus width to give back and something to protect the page from.
+
+### Measured before and after
+
+The gap between each section head and the content under it, down the page:
+
+```
+before   0 · 0 · 0 · 52 · 32 · 0 · 52 · 0
+after   40 · 40 · 40 · 40 · 40 · 40 · 40 · 40
+```
+
+Two of those zeros were regressions from this very conversion — `CategoryGrid`
+and `FeaturedLines` had carried the gap on head wrappers that went away with
+them. Measuring is what found them.
+
+### What was deliberately NOT done
+
+The review's P2 and P3 lists ask for per-section art direction: the About
+helmets composed rather than floating, Featured Lines given a less repetitive
+rhythm, cards standardised, the FAQ and enquiry form refined.
+
+**Not in this pass, and the reason is the review's own closing instruction** —
+"stop inventing new visual tricks and instead focus on system-building". Every
+one of those is easier and safer against a shared head, a shared numeral and a
+shared rhythm. Doing both at once means changing the frame and the picture in
+one edit with no way to tell which caused a regression. They are in
+`BACKLOG.md` with this reasoning attached.
+
+`Categories` → `Products` has now been raised in four consecutive reviews. It
+is still one string and still the client's call.
+
+## 42. Reading the rendered page found six defects — 2026-08-29
+
+**Status: implemented, not committed.** `verify 18/18 · 392 unit · 339 public
+e2e passing.`
+
+### What this was
+
+The client exported the whole home page to PDF and asked whether the mistakes
+were visible now. They were — six of them, and **not one was findable by
+reading a component on its own.** Every gate was green through all of it.
+
+That is the lesson worth keeping from this section: this repo has strong
+per-file discipline and no habit of looking at the finished page end to end.
+Four of the six below are the same shape of mistake — a rule being followed
+exactly while measuring the wrong thing.
+
+### 1. The numeral anchored to the wrong box
+
+`SectionIndex` sat inside `.sec`, which is only as wide as the column it
+occupies. In the three two-column sections — About, Spotlight, Trade Enquiries
+— that put the section marker in the **middle of the page** while every
+single-column section's sat at the measure's right edge. The rule "top-right of
+the head block" was being honoured perfectly.
+
+`.sec` is no longer positioned; the numeral's containing block is the
+`<section>`, and its right offset is computed in to where the 1360px measure
+ends — `max(gutter, (100% - wrap-max) / 2 + gutter)`. **Measured after: all
+nine numerals end on the same vertical line at every width.**
+
+### 2. Content sections carried a bigger numeral than the hero
+
+The size rule was "3.5x the section's heading **ceiling**" — `calc(46px * 3.5)`
+— so it never moved while the heading shrank with the viewport. At ~830px wide
+section headings were drawing at 33px under a 161px numeral, and the hero's was
+126px. The page's own hero had the smallest section marker on it.
+
+Multiplying the whole clamp makes the rule real: `calc(clamp(30px, 4vw, 46px) *
+3.5)`. The hero uses the identical expression with its own clamp, so it is the
+largest by construction rather than by a chosen number.
+
+### 3. Three numerals straddled a section boundary
+
+`line-height: 0.7` means the ink overflows the element's own box, so a
+`-0.42em` top offset put 03, 05 and 07 across the join with the boundary line
+visible straight through them. The offset is `+32px` now and every numeral
+stays inside its own section. **A test asserts that**, with tolerance for the
+ink overflow rather than for the box.
+
+### 4. "1 items"
+
+Insect Killers and Cables both stock exactly one product, and the home page
+said `1 ITEMS` for each. A template string with no singular case — the kind of
+defect that is invisible in code review and unmissable in a rendered page.
+
+### 5. The page stated the same three facts twice, in two vocabularies
+
+The hero's index says `PRODUCTS 94 / CATEGORIES 15 / ESTABLISHED 2015`. Four
+sections later, About's strip said `2015 ESTABLISHED / 94 PRODUCT LINES / 2
+DIVISIONS` — same facts, different order, different labels, and a bare `2`
+against the hero's padded `02`. Side by side in a PDF it reads as two different
+datasets.
+
+**About's strip is removed.** The hero's index is the systemised statement and
+it wins; About keeps the story and the route through to `/about`, where all
+three numbers still are. Nothing was invented and no fact left the site — a
+duplication was removed, not a number. Reversible, and in `BACKLOG.md` as such.
+
+### 6. Two of nine section heads were uppercase and centred
+
+`ServiceCards` and `Faq` still carried scoped overrides — `text-transform:
+uppercase` plus the `center` prop — from before the head system existed. So the
+page had seven sentence-case left-aligned heads and two uppercase centred ones,
+which is the "composition is inconsistent section-to-section" complaint with a
+cause. Both overrides are gone. Nine heads, one case, one axis.
+
+### What is now asserted rather than hoped for
+
+`tests/e2e/home.spec.ts` gained three geometry invariants: every numeral ends
+on the same vertical line, the hero's is the largest, and none crosses out of
+its own section. They are the cheap version of looking at the whole page, and
+they exist because looking at the whole page is what found all three.
+
+### What is still open, and deliberately
+
+The per-section art direction from §41's backlog entry is untouched: the About
+helmets, Featured Lines' rhythm, the card standardisation, the FAQ and the
+enquiry form. Reading the PDF confirmed rather than changed that list — the
+catalogue grid is three columns and Featured Lines two directly under it, with
+different card heights and different image scales, which is the card primitive
+that entry describes.
+
+`Categories` → `Products` remains the client's call, now raised in four
+reviews.
+
+## 43. The numerals go in-flow, and the page gets one rhythm — 2026-08-29
+
+**Status: implemented, not committed.** `verify 18/18 · 392 unit · 339 public
+e2e passing, 0 failing.`
+
+### The client was right, and §42's fix was a patch on the wrong idea
+
+A second PDF export showed the numerals still failing: `06` clipped by its own
+section's `overflow: hidden`, `07` drawn straight through the Spotlight
+heading, all of them floating pale in corners nothing else used. §42 had made
+them *consistently positioned* — but consistently positioned **in space**,
+which is decoration nailed to a wall. Every failure was a placement bug, and
+placement bugs are what absolute positioning invites: each section became
+responsible for clearance it could not see it owed.
+
+### The fix is structural: the numeral is typeset WITH the head
+
+`SectionIndex` gained a `flow` variant and `SectionHeading` places it as a grid
+cell — eyebrow and heading on the left, the numeral as the head's right-hand
+counterweight, any action (the catalogue's link, the featured tabs) tucked
+beneath it. The layout engine reserves its space, so **clipping, collision and
+drift are impossible by construction rather than guarded against by
+vigilance.** The review's own rule was "always associated with the section
+heading"; an absolute element is associated with nothing.
+
+Scale dropped from 3.5x to 2.4x of the section heading's clamp — at
+counterweight size it is typography; at billboard size, in flow, it would
+out-shout the heading it belongs to. The hero keeps its absolute 3.5x numeral:
+that one sits *behind* a composition in a file that owns both layers, and it
+stays the page's largest by construction. Stroke went 11% → 15% everywhere —
+at 11% it read as a printing artifact in the PDF. Secondary must not mean
+barely there.
+
+**The three §42 geometry invariants passed unchanged against the new
+implementation** — same right edge, hero largest, none escaping its section.
+That is what made this a safe rebuild rather than a rewrite: the contract was
+already pinned, only the mechanism changed.
+
+### One repeatable section architecture, finally
+
+About, Spotlight and EnquiryCta had their heads INSIDE a column of their
+two-column grids — the root cause of every numeral placement problem in those
+sections. All three heads hoisted to a full-width row above their columns.
+Every section on the page is now: head row (label / heading / numeral /
+action), then content. Their grids also went `align-items: center` → `start`:
+with the head gone from the column, centring opened a hole directly under the
+heading.
+
+### The scroll rhythm, measured then fixed
+
+Before, at 842px wide:
+
+```
+padding   80 · 76 · 76 · 76 · 80 · 76 · 76 · 96   (three values, one job)
+surfaces  alt RED alt white alt white alt ALT white ALT   (two invisible seams)
+```
+
+- **One token**: `--section-pad: clamp(64px, 6.5vw, 92px)` in tokens.css,
+  every section. A section wanting different air is asking to leave the
+  system, and that is a human decision.
+- **Strict alternation**: Spotlight → white, FAQ → alt, EnquiryCta → white.
+  The band/spotlight seam was grey-on-grey — a 1,300px slab with an invisible
+  join — and spotlight/faq would have been white-on-white. Every section
+  boundary is now visible while scrolling, which is most of what "inconsistent
+  sizing" feels like from the scrollbar.
+
+### A bug the measurement caught mid-pass
+
+The first cut of the flow variant carried `align-self: start` — written for a
+grid cell, rendered in a flex column, where align-self controls the cross axis
+and `start` means LEFT. The two sections whose side column is widened by an
+action rendered their numeral 41px and 235px off the shared line; every other
+section masked the bug because its column was exactly numeral-wide. Caught by
+measuring all nine right edges before screenshotting, fixed by deleting the
+property. The comment in `SectionIndex.astro` records it so it does not come
+back.
+
+### Cleaned up rather than left behind
+
+The `--si-top`/`--si-right` `max()` computation in `SectionHeading`, the
+`position: relative` + stale comments §42 spread across four section roots,
+and CategoryGrid's `overflow: hidden` (which §41 added for the absolute
+numeral and which §42's PDF showed clipping `06` on TrustBand's twin) — all
+removed with the mechanism that needed them.
+
+## 44. The hero lands on two edges — 2026-08-29
+
+**Status: implemented, not committed.** `verify 18/18 · 392 unit · 339 public
+e2e passing, 0 failing.`
+
+### The critique that drove it
+
+The client sent a desktop screenshot and asked whether the layout was genuinely
+optimal. It was not, and the failures were all the same species: **elements
+aligned to numbers instead of to each other.**
+
+- The banner stopped at 93.5% of the wrap, so its right edge met *nothing* —
+  an orphan sliver of dot grid between the artwork and the margin.
+- `SOLUTIONS.` was pushed right by `clamp(0px, 7vw, 118px)` — a distance that
+  aligned with nothing and needed a hand-written collapse below 640px.
+- The ghost `01` floated absolutely in the top-right and read as a smudge
+  behind the stats rail, whose own bottom edge hung against nothing.
+- The CTA row's right half was empty while the top-right was crowded.
+
+### The principle, then the moves
+
+**The hero now has exactly two vertical edges — the wrap's left and right —
+and every element lands on one of them.** Masthead, headline, lede and CTAs on
+the left; numeral, carousel controls, the banner's right edge and the spec
+strip on the right. An edge shared with another element is a composition; a
+distance is a guess.
+
+1. **The staircase became flush-right and self-maintaining.** The h1 is
+   `width: fit-content` and line two is `text-align: right`, so the red word's
+   last letter lands exactly under the black line's last letter at every
+   viewport and font size — measured: both line-ends at x=811. The margin
+   clamp and its mobile collapse are deleted; the mechanism cannot drift.
+2. **The numeral joined the flow.** Same `flow` treatment as every section
+   head, in the composition's right grid cell, scaled by the same
+   heading-multiple rule. It cannot smudge, clip or collide — and the hero
+   finally became the system's first instance instead of its exception.
+3. **The banner runs wrap edge to wrap edge.** The 93.5% cap is gone with its
+   orphan sliver. Dominance is governed by what it always really was: the
+   fixed 4:1 ratio and the frame.
+4. **The spec strip closes the hero on the CTA row** — actions left, counted
+   proof right, one full-measure line. It sat under the lede for one revision
+   and cost the fold ~78px while the CTA row's right half sat empty; pairing
+   them fixed both, and the visitor is asked to act at the exact moment the
+   numbers argue they should.
+
+### Measured, at 1280×850
+
+CTA bottom went 901 → **793** (from below the fold to comfortably inside it).
+Line-ends agree to the pixel; masthead, strip, stage and controls all span
+137→1433; the numeral's right edge sits on the same line. On a 360×640 phone
+the CTA clearance is **138px** — the best any revision has measured.
+
+### Two mobile clips the phone screenshot caught
+
+Both were swallowed by the hero's own `overflow: hidden`, so neither raised a
+scrollbar: the campaign bar's PAUSE button rendered half off a 360px edge
+(the label + rail total ~380px at their floors — the bar wraps now), and the
+right-anchored spec strip pushed "ESTABLISHED / 2015" past the edge once the
+row wrapped (it anchors left below 560px). **`overflow: hidden` turns overflow
+bugs into silent crops; only looking at a rendered phone finds them.**
+
+### Tests
+
+The staircase test was rewritten honestly: both headline spans are full-width
+blocks now, so box positions would pass vacuously — it measures the rendered
+ink via a `Range` and asserts the two line-ends agree within 4px of italic
+overhang. The vacuous narrow-screen margin test became an ink-containment
+assertion. All three numbering-geometry invariants passed unchanged.

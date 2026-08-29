@@ -1,0 +1,99 @@
+---
+/**
+ * SectionIndex — the oversized outlined numeral that marks a section.
+ *
+ * WHAT IT IS FOR. A design review on 2026-08-29 argued that the strongest
+ * available move for this site was a repeatable numbering system rather than a
+ * unique decorative device per section: 01 the hero, 02 the catalogue shelf,
+ * and so on, each set huge, outlined and cropped differently. Paired with the
+ * red vertical rule and the mono micro-labels, that is a visual language a
+ * reader could recognise with the logo removed — which is the benchmark the
+ * brief set.
+ *
+ * IT IS DECORATION, AND IT MUST STAY DECORATION. `aria-hidden`, always. The
+ * numeral is drawn with `-webkit-text-stroke` over a transparent fill, so a
+ * browser without that property paints NOTHING here. That is the correct
+ * failure for an ornament and a disqualifying one for information: a fact
+ * whose only carrier can vanish has not been stated. This is exactly why the
+ * hero's numeral is a section index and not its product count — an earlier
+ * revision used `94`, which put a real figure inside an element that can
+ * silently render as nothing, and duplicated the number the index below states
+ * properly as text.
+ *
+ * PLACEMENT BELONGS TO THE CALLER, and it is passed by inherited custom
+ * properties rather than by an inline `style` attribute. `style-src` here is
+ * hash-based, and hashes do not cover inline style ATTRIBUTES — one would
+ * work locally and be dropped in production with nothing failing. The caller
+ * sets `--si-top`, `--si-right` and `--si-size` on any ancestor; they inherit.
+ *
+ * THE CALLER MUST BE `position: relative` and should clip its own overflow.
+ * This is absolutely positioned and deliberately oversized, so an unclipped
+ * parent gains horizontal scroll on narrow screens.
+ */
+interface Props {
+  /** The section's number, already formatted — "01", "02". Never computed here. */
+  n: string;
+  /**
+   * Render IN FLOW instead of absolutely positioned.
+   *
+   * This exists because the absolute version failed three different ways on
+   * the rendered page — clipped by a section's own `overflow: hidden`, drawn
+   * across a two-column section's heading, and floating in a corner nothing
+   * else occupied. All three were placement bugs, and placement bugs are what
+   * absolute positioning invites: every section became responsible for
+   * clearance it could not see it owed.
+   *
+   * In flow, inside the head's own grid, the layout engine reserves the space
+   * — clipping, collision and drift are impossible by construction, not by
+   * vigilance. The hero keeps the absolute variant because its numeral sits
+   * BEHIND a composition, which is a deliberate overlap in a file that owns
+   * both layers.
+   */
+  flow?: boolean;
+}
+
+const { n, flow = false } = Astro.props;
+---
+
+<span class:list={['section-index', { 'section-index--flow': flow }]} aria-hidden="true">{n}</span>
+
+<style>
+  .section-index {
+    position: absolute;
+    top: var(--si-top, 0);
+    right: var(--si-right, 0);
+    z-index: 0;
+    font-family: var(--font-hero);
+    font-size: var(--si-size, 220px);
+    font-weight: 800;
+    font-style: italic;
+    line-height: 0.7;
+    letter-spacing: -0.06em;
+    /* Load-bearing. See the note above: transparent fill plus a stroke means
+       "absent" is the failure mode, never a solid slab across the copy. */
+    color: transparent;
+    /* 15%, up from 11%. At 11% the stroke read as a printing artifact in the
+       client's PDF export — secondary must not mean barely there, and this is
+       the page's signature device. Still far below any contrast floor because
+       it is aria-hidden decoration that carries nothing. */
+    -webkit-text-stroke: 1.5px color-mix(in srgb, var(--text) 15%, transparent);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* The in-flow variant: the head's grid places it, so it has no coordinates
+     of its own. `line-height` still overflows the box upward by design — the
+     head's own top padding absorbs it, which one component can guarantee where
+     nine sections could not. */
+  .section-index--flow {
+    position: static;
+    /* NO align-self / justify-self HERE — measured, not assumed. The first
+       cut set `align-self: start`, written for a grid cell; the head places
+       this inside a FLEX column, where align-self controls the cross axis and
+       `start` means LEFT. The two sections whose side column is widened by an
+       action (the catalogue's link, the featured tabs) rendered their numeral
+       41px and 235px off the shared right edge — everything else masked the
+       bug because its column was exactly numeral-wide. The parent's
+       `align-items: flex-end` is the alignment; this variant adds nothing. */
+  }
+</style>

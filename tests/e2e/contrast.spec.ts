@@ -62,7 +62,6 @@ const CASES = [
   // the desktop nav below 1080px. `minWidth` skips rather than lets them fail
   // as "missing" — a skip says the element is absent by design, where a failure
   // would say the page is broken.
-  { path: '/', selector: '.util__label', what: 'utility bar label on --surface-alt', minWidth: 821 },
   { path: '/', selector: '.nav__link', what: 'header nav link on white', minWidth: 1081 },
   // The one dark surface left on the public site. Inside `.on-dark`,
   // --text-muted resolves back to --color-grey, which is 6.13:1 on the

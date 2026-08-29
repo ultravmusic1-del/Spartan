@@ -55,6 +55,24 @@ vi.mock('../../lib/site-content', async (importOriginal) => {
   return { ...actual, getHeroBanners: async () => banners.current };
 });
 
+/**
+ * The catalogue, mocked with counts that are DELIBERATELY NOT the real ones.
+ *
+ * The hero counts products and categories for its supporting sentence rather
+ * than stating them, which is the whole point — the one number that used to go
+ * stale on the home page was a typed one. A fixture holding 94 and 15 would
+ * pass whether the component counted or hard-coded, so it holds 7 and 3, and
+ * the assertion below would fail the moment somebody types a literal in.
+ */
+vi.mock('../../lib/catalog', () => ({
+  getDivisions: async () => [
+    { id: 'electricals', slug: 'electricals', name: 'Spartan Electricals' },
+    { id: 'safety', slug: 'safety', name: 'Spartan Safety' },
+  ],
+  getCategories: async () => Array.from({ length: 3 }, (_, i) => ({ id: `c${i}` })),
+  getProducts: async () => Array.from({ length: 7 }, (_, i) => ({ slug: `p${i}` })),
+}));
+
 /** Renders Hero.astro against whatever `banners.current` holds. */
 async function renderHero(): Promise<string> {
   const { experimental_AstroContainer } = await import('astro/container');
@@ -153,6 +171,25 @@ describe('with banners', () => {
     }
   });
 
+  /**
+   * THE COUNTER'S TOTAL IS DERIVED, NEVER TYPED. Added 2026-08-29 when the
+   * controls became one rail. A fourth banner must not require an edit here,
+   * which is why the assertion is on the zero-padded count rather than on the
+   * literal "03" appearing somewhere in the markup.
+   */
+  it('states the position and the total beside the pips', async () => {
+    banners.current = Array.from({ length: 3 }, (_, i) => banner(i));
+    const html = await renderHero();
+
+    expect(countElements(html, 'hero__count')).toBe(1);
+    expect(html).toMatch(/hero__count-total[^>]*>\s*03\s*</);
+  });
+
+  it('pads a two-banner total to 02 rather than printing a bare 2', async () => {
+    banners.current = Array.from({ length: 2 }, (_, i) => banner(i));
+    expect(await renderHero()).toMatch(/hero__count-total[^>]*>\s*02\s*</);
+  });
+
   /** One pip per banner — NOT per slide, or the duplicate would light an extra one. */
   it('renders one pip per banner, not per slide', async () => {
     for (const count of [2, 3, 6]) {
@@ -237,5 +274,125 @@ describe('with banners', () => {
     expect(duration(two)).toBeDefined();
     expect(duration(five)).toBeDefined();
     expect(duration(two)).not.toBe(duration(five));
+  });
+});
+
+/**
+ * THE PROPOSITION — what a first-time visitor can learn above the fold, and
+ * where they learn it from.
+ *
+ * Added 2026-08-29 from a design review whose first finding was that the hero
+ * was visually loud and semantically quiet. Rewritten the same day after a
+ * second review found the fix had made the page more CONVENTIONAL: everything
+ * centred, the numbers buried inside a sentence, four competing horizontal
+ * rules. The counted totals are their own element now.
+ */
+describe('the proposition', () => {
+  it('names both divisions in the masthead', async () => {
+    const html = await renderHero();
+    expect(html).toContain('Electricals + Safety');
+  });
+
+  it('drops the "Spartan" prefix, which the logo above has just said', async () => {
+    const html = await renderHero();
+    expect(html).not.toContain('Spartan Electricals');
+  });
+
+  /**
+   * THE FOUNDING YEAR IS A STATISTIC NOW, AND THAT IS ITS THIRD ADDRESS.
+   *
+   * It was a hexagonal "Est. 2015" badge on the hero's most valuable line; it
+   * became one segment of the mono masthead; it is now the third row of the
+   * counted index. Each move was the same judgement applied with better
+   * information — the fact is worth stating, the prominence was not.
+   *
+   * What put it in the index was a review calling "DIVISIONS / 02" a weak
+   * third statistic that made the range sound unintentionally small. The
+   * suggested replacements were dealers, markets and territories; not one of
+   * them is sourceable on this machine, so all three were refused under rule 1
+   * and the founding year is the credibility figure that is actually on file.
+   *
+   * IT MUST APPEAR EXACTLY ONCE. Stating it in the masthead as well would be
+   * the same duplication this pass removed from the giant numeral.
+   */
+  it('states the founding year once, as a statistic rather than a badge', async () => {
+    const html = await renderHero();
+
+    expect(countElements(html, 'hero__badge')).toBe(0);
+    expect((html.match(/2015/g) ?? []).length).toBe(1);
+    expect(html).toMatch(/<dt[^>]*>Established<\/dt>/);
+  });
+
+  it('carries exactly one supporting sentence, and no numbers inside it', async () => {
+    const html = await renderHero();
+    expect(countElements(html, 'hero__lede')).toBe(1);
+
+    const lede = html.match(/class="[^"]*hero__lede[^"]*"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? '';
+    expect(lede.length).toBeGreaterThan(20);
+    // The totals moved OUT of this sentence and became the index beside it.
+    // A digit reappearing here means the two have started saying the same
+    // thing in two places, which is how one of them goes stale.
+    expect(lede).not.toMatch(/\d/);
+  });
+
+  /**
+   * THE INDEX COUNTS, IT DOES NOT STATE.
+   *
+   * The fixture at the top of this file mocks the catalogue with 7 products
+   * and 3 categories precisely so a hard-coded "94" would fail here. Padded to
+   * two digits, which is the register the slide counter and the masthead both
+   * speak in.
+   */
+  it('renders the counted totals as an index of three padded pairs', async () => {
+    const html = await renderHero();
+
+    expect(countElements(html, 'hero__index')).toBe(1);
+    expect(countElements(html, 'hero__index-row')).toBe(3);
+
+    // `[^>]*` on both tags, not bare `<dt>`: Astro stamps a scope attribute
+    // onto every element it renders, so an exact-tag regex matches nothing
+    // and fails against markup that is correct.
+    expect(html).toMatch(/<dt[^>]*>Products<\/dt>\s*<dd[^>]*>07<\/dd>/);
+    expect(html).toMatch(/<dt[^>]*>Categories<\/dt>\s*<dd[^>]*>03<\/dd>/);
+    // Not padded: `padStart(2)` leaves a four-digit year alone, which is what
+    // makes it safe to apply to every row rather than case by case.
+    expect(html).toMatch(/<dt[^>]*>Established<\/dt>\s*<dd[^>]*>2015<\/dd>/);
+  });
+
+  /**
+   * THE OVERSIZED NUMERAL IS A SECTION INDEX, NOT A STATISTIC.
+   *
+   * It was the product count, and a review caught the flaw: an outlined 94 sat
+   * inches from a stated 94, so the same figure was read twice inside one
+   * cluster and the device was decoration and data at once.
+   *
+   * The tie-breaker is not taste. `SectionIndex` draws with
+   * `-webkit-text-stroke` over a transparent fill, so it renders as NOTHING in
+   * a browser without that property — the right failure for an ornament and a
+   * disqualifying one for information. A fact whose only carrier can vanish
+   * has not been stated. So the numeral is "01", it is aria-hidden, and every
+   * counted total lives in the index below as real text.
+   */
+  it('marks the hero as section 01, decoratively and out of the accessibility tree', async () => {
+    const html = await renderHero();
+
+    expect(countElements(html, 'section-index')).toBe(1);
+    expect(html).toMatch(/class="[^"]*section-index[^"]*"[^>]*aria-hidden="true"[^>]*>\s*01\s*</);
+
+    // And it is no longer a copy of a statistic: the fixture's product count
+    // is 7, which must appear only in the index.
+    expect((html.match(/>07</g) ?? []).length).toBe(1);
+  });
+
+  /**
+   * The headline is two spans on ONE source line. `tests/e2e/home.spec.ts`
+   * reads `textContent` directly rather than through a matcher that collapses
+   * whitespace, because "Home andindustrial" has shipped once already — a
+   * newline introduced between these spans puts it straight back.
+   */
+  it('keeps the headline text exact across the two composed lines', async () => {
+    const html = await renderHero();
+    const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '';
+    expect(h1.replace(/<[^>]+>/g, '')).toBe('Home and industrial solutions.');
   });
 });

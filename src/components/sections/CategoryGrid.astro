@@ -2,6 +2,8 @@
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { getCategories, getProducts } from '../../lib/catalog';
+import SectionIndex from '../primitives/SectionIndex.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
 
 /**
  * The fifteen-category shelf.
@@ -33,7 +35,14 @@ const tiles = await Promise.all(
     return {
       ...category,
       image,
-      countLabel: category.productCount === 0 ? 'Expanding' : `${category.productCount} items`,
+      /* "1 items" shipped on the home page for two categories — Insect
+         Killers and Cables, both of which stock exactly one. Found by reading
+         a PDF of the rendered page, which is the only place a template string
+         like this is ever actually read. */
+      countLabel:
+        category.productCount === 0
+          ? 'Expanding'
+          : `${category.productCount} item${category.productCount === 1 ? '' : 's'}`,
     };
   }),
 );
@@ -46,15 +55,22 @@ const divisionNames: Record<string, string> = {
 
 <section class="cg">
   <div class="wrap">
-    <div class="cg__head">
-      <div>
-        <p class="cg__eyebrow">The catalogue</p>
-        <h2 class="cg__title">
-          {categories.length} categories, <span>one shelf</span>
-        </h2>
-      </div>
-      <a class="cg__all" href="/catalogue">All products ›</a>
-    </div>
+    {/* CONVERTED TO THE SHARED HEAD, 2026-08-29. This section used to build its
+        own — `.cg__eyebrow` plus `.cg__title` plus a `.cg__all` link floated
+        into the top-right corner — and a design review found that link
+        "too detached", reading as an afterthought rather than as part of the
+        heading. It is the head's action slot now, on the heading's baseline.
+
+        The count stays interpolated and the red word stays a `<span>`: `title`
+        is rendered with `set:html` for exactly this, and the heading is one of
+        the page's strongest, so nothing about it changes but where it lives. */}
+    <SectionHeading
+      n="02"
+      eyebrow="The catalogue"
+      title={`${categories.length} categories, <span>one shelf</span>`}
+    >
+      <a slot="action" class="cg__all" href="/catalogue">All products ›</a>
+    </SectionHeading>
 
     <ul class="cg__grid">
       {
@@ -113,45 +129,17 @@ const divisionNames: Record<string, string> = {
 <style>
   .cg {
     background: var(--surface-alt);
-    padding: 80px 0;
+    padding: var(--section-pad) 0;
   }
 
-  .cg__head {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
-    margin-bottom: 32px;
-  }
-
-  .cg__eyebrow,
+  /* `.cg__head`, `.cg__eyebrow` and `.cg__title` are gone: this section builds
+     its head from the shared `SectionHeading` since 2026-08-29, and the red
+     accent word its `<span>` carries is a rule on that primitive now. What is
+     left here is only what the head does not own — the action link's own
+     lettering, and the per-tile count. */
   .cg__all,
   .cg__count {
     color: var(--accent-text);
-  }
-
-  .cg__eyebrow {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: 12px;
-    font-weight: var(--fw-label);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-
-  .cg__title {
-    margin: 14px 0 0;
-    font-family: var(--font-display);
-    font-size: clamp(30px, 4vw, 46px);
-    font-weight: var(--fw-display);
-    line-height: 1.04;
-    letter-spacing: -0.025em;
-    text-transform: uppercase;
-    color: var(--text);
-  }
-
-  .cg__title span {
-    color: var(--accent);
   }
 
   .cg__all {
@@ -281,10 +269,6 @@ const divisionNames: Record<string, string> = {
   @media (max-width: 640px) {
     .cg__grid {
       grid-template-columns: repeat(2, 1fr);
-    }
-    .cg__head {
-      flex-direction: column;
-      align-items: flex-start;
     }
   }
 </style>

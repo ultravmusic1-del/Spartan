@@ -188,3 +188,28 @@ export function heroClock(slideCount: number): HeroClock {
     pipDelays: Array.from({ length: slideCount }, (_, i) => i * perSlide),
   };
 }
+
+/**
+ * True when `site.phone` is still a placeholder rather than a number a buyer
+ * can dial.
+ *
+ * WHY THIS IS A HEURISTIC AND NOT A FLAG IN site.json. A flag has to be flipped
+ * by the same person who types the real number, and the failure mode of
+ * forgetting is a `tel:` link that dials nothing on every page — which is the
+ * exact defect this exists to prevent. A heuristic heals itself.
+ *
+ * WHY THE THRESHOLD IS FOUR ZEROS AND NOT THREE. The client's real WhatsApp
+ * number is `+973 3800 0458`, whose digits contain `000`. At three this would
+ * classify a working number as a placeholder and hide it. Four is the smallest
+ * run that clears every real number on file and still catches
+ * `+971 00 000 0000`, which carries nine. `site-content.phone.test.ts` pins
+ * both directions, and the WhatsApp case is the one that would break silently.
+ *
+ * The length floor catches the empty string and any half-typed fragment. Seven
+ * is the shortest national subscriber number in use anywhere; below that there
+ * is nothing to dial.
+ */
+export function isPlaceholderNumber(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length < 7 || /0{4,}/.test(digits);
+}

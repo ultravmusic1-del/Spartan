@@ -1,5 +1,6 @@
 ---
 import Chevron from '../primitives/Chevron.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
 import { getSiteSettings } from '../../lib/site-content';
 
 const site = await getSiteSettings();
@@ -23,16 +24,17 @@ const industries: string[] = site.industries;
   product mix (site.json -> industries). The Spartan brochure does not state an
   industries-served list. Confirm or replace before launch.
 -->
-<section class="band" aria-labelledby="band-lead">
+<section class="band">
   <Chevron class="left-[-30px] top-[-40px] w-[300px] h-[330px]" opacity={0.09} />
   <Chevron class="right-[-30px] bottom-[-40px] w-[300px] h-[330px]" opacity={0.09} flip />
 
-  <div class="wrap band__inner">
+  <div class="wrap">
     <!-- "Industries we serve" is the client's own framing from their brief.
          Avoid "Trusted across industries" or similar: that asserts a track
          record we have no source for, and it would sit directly above a
          sector list that is itself still pending client confirmation. -->
-    <h2 class="band__lead" id="band-lead">Industries we serve</h2>
+    <SectionHeading n="06" eyebrow="Where it goes" title="Industries we serve" />
+
     <ul class="band__list">
       {industries.map((industry) => <li>{industry}</li>)}
     </ul>
@@ -40,54 +42,47 @@ const industries: string[] = site.industries;
 </section>
 
 <style>
+  /* THIS WAS A FULL-BLEED RED STRIP WITH WHITE TEXT UNTIL 2026-08-29.
+
+     A design review said it "feels like it belongs to a different design
+     system", and that was the accurate version of a problem this repo had
+     already half-named: red was doing four jobs on one page — the headline
+     accent, the primary CTA, the category ticker and this surface — and a
+     colour doing four jobs marks none of them.
+
+     ONE RED BAND REMAINS ON THE PAGE, the category ticker, because that one is
+     navigation. This is a section, so it looks like the other sections: the
+     shared head, the shared measure, the shared numeral. The industries did
+     not change and neither did the caveat above them.
+
+     THE CHEVRONS STAY. They are the brand's own mark at 9% and they were never
+     the loud part; against --surface-alt they read as watermark rather than as
+     the pair of red wings they were against the fill. */
   .band {
     position: relative;
-    padding: 34px 0;
-    /* Red surface behind white text, so the fill token, not brand red. */
-    background: var(--accent-fill);
-    color: #fff;
+    padding: var(--section-pad) 0;
+    background: var(--surface-alt);
     overflow: hidden;
   }
 
-  .band__inner {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 34px;
-  }
-
-  /* An <h2> so the band is a labelled landmark rather than a loose strip of
-     text, styled down to the mockup's 13px lead. */
-  .band__lead {
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: var(--fw-label);
-    letter-spacing: 0.18em;
-    line-height: 1.4;
-    text-transform: uppercase;
-  }
-
   .band__list {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    margin-top: 32px;
     list-style: none;
   }
 
+  /* --line-control, not --line: a chip's border is what makes it a chip, so it
+     is a boundary that carries meaning and takes the 3:1 token rather than the
+     1.27:1 decorative hairline. Same call PillButton's outline records. */
   .band__list li {
-    padding: 8px 15px;
-    border: 1px solid rgba(255, 255, 255, 0.42);
+    padding: 9px 16px;
+    border: 1px solid var(--line-control);
     font-size: 13px;
     font-weight: 500;
-  }
-
-  @media (max-width: 820px) {
-    .band__inner {
-      justify-content: flex-start;
-      gap: 20px;
-    }
+    color: var(--text);
   }
 </style>
