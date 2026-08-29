@@ -246,6 +246,41 @@ put the Vercel adapter into hybrid mode.
 `node tools/brand-sheet.mjs` builds a PDF contact sheet of the brand and every
 product asset, for handing to a design tool.
 
+## The UI/UX skill
+
+Design decisions on this site — a new page, a component, a palette, a type
+pairing — go through the **ui-ux-pro-max** skill. It is a searchable local
+database (styles, palettes, font pairings, UX guidelines, chart types, and
+per-stack guidance including Astro), cloned from
+github.com/nextlevelbuilder/ui-ux-pro-max-skill at 8bd29e7, v2.13.0.
+
+**It is gitignored, so a fresh clone does not have it and neither does another
+machine.** Nothing fails when it is absent — the skill is simply not offered,
+and design decisions quietly go back to being guesses, which is the failure
+mode this section exists to name. Run this once per machine, from the
+repository root:
+
+```bash
+mkdir -p .claude/skills
+git clone --depth 1 https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git /tmp/ui-ux-pro-max-skill
+cp -r /tmp/ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max .claude/skills/
+rm -rf /tmp/ui-ux-pro-max-skill
+```
+
+Its helper scripts are Python and its own instructions call them as `python
+scripts/search.py`. On Windows that resolves to the Microsoft Store stub and
+fails; use `py` instead. A failed search prints nothing alarming, so check the
+result rather than assuming the database was consulted.
+
+**It advises; it does not override the four rules.** It suggests colour, and
+rule 4 still stands: a ratio is measured, not accepted because a palette
+recommended it. It knows nothing about safety equipment, so rule 1 outranks
+any product copy it proposes.
+
+An older copy of the same skill may also be installed globally under the
+user's home directory. If the skill you get reports smaller counts than the
+numbers above, the global copy shadowed the project one.
+
 ## Improvement loop
 
 `/improve` runs one backlog item end to end and commits it to

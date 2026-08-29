@@ -42,3 +42,9 @@ src/assets/banners/
 
 # Superpowers brainstorming scratch (visual companion mockups)
 .superpowers/
+
+# Third-party skill, cloned from github.com/nextlevelbuilder/ui-ux-pro-max-skill
+# and pinned in CLAUDE.md. Machine-local on purpose: it has an upstream that is
+# the source of truth, and a committed copy is a fork nobody would remember to
+# update. A new machine runs the clone command in CLAUDE.md once.
+.claude/skills/
