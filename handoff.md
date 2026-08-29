@@ -3800,9 +3800,9 @@ running the gate and reading the live site, not inferred from commits.
 
 | | |
 |---|---|
-| Branch | `main`, in sync with `origin/main`, at `d8f0edf`. Nothing uncommitted. |
+| Branch | `main`, in sync with `origin/main`. Nothing uncommitted. **No hash here on purpose** — one written into a committed file is wrong the moment that file is committed. `git log -1` is the answer. |
 | Gates | **`npm run verify` = 18/18.** `-- --full` adds Playwright and needs Docker. |
-| Tests | **374 unit.** The e2e total moves with the hero's build-time branch — see §35. |
+| Tests | **378 unit.** The e2e total moves with the hero's build-time branch — see §35. |
 | Build | 119 pages · 23 server-rendered routes · 8 inline-script CSP hashes |
 | Catalogue | 94 products / 15 categories / 2 divisions, in Postgres |
 | Supabase | Project `spartan`, ref `wslylysakixrirxkozih` |
@@ -3824,7 +3824,8 @@ running the gate and reading the live site, not inferred from commits.
 `/admin` · §27 the hero header's crest and oblique headline · §29 the speed pass
 · §30 the poster record correction · §31 product context in the enquiry message
 · §32 three gates that were green for the wrong reason · §33 WhatsApp and the
-first real contact detail · §34 the counts gate · §35 the hero carousel's tests.
+first real contact detail · §34 the counts gate · §35 the hero carousel's
+**tests · §37 the hero headline set in Fira Sans Italic.**
 
 `docs/TRAPS.md` is the short list of things that pass `astro check` and are
 wrong anyway. Read it before touching the hero, the admin, or anything that
@@ -3853,19 +3854,25 @@ throwaway stack and blanks the deploy hook and mail.
 
 ### Where a new session should start
 
-1. **Run `npm run verify -- --full` with Docker up.** It has not been run on
-   this machine since Docker stopped mid-session on 2026-08-23. Everything since
-   has been gated in CI, so this is confirmation rather than suspicion — but it
-   is the first thing to establish, not the last.
-2. **Buy the real domain.** One value in `astro.config.mjs` drives every
+1. **Buy the real domain.** One value in `astro.config.mjs` drives every
    canonical, the sitemap and robots.txt; the vercel.app host then needs a
    redirect or it becomes a duplicate of the real site.
-3. **Nothing in code stops the two wrong-fact posters returning.** The test that
-   named them matched on filename, and uploaded banners have generated paths.
-   Grip Guard GP1 advertises cut resistance the glove does not have. The
-   suggested replacement is a per-banner "checked against source" flag the admin
-   must set before Show will work. **This is the one open item with a safety
-   edge, and it is why it is above the rest.**
+2. **Nothing in code stops the two wrong-fact posters returning.** The test
+   that named them matched on filename, and uploaded banners have generated
+   paths. Grip Guard GP1 advertises cut resistance the glove does not have.
+   The suggested replacement is a per-banner "checked against source" flag the
+   admin must set before Show will work. **This is the one open item with a
+   safety edge.**
+3. **Run `npm run verify -- --full` with Docker up — DEFERRED, not forgotten.**
+   The browser suite has not run on this machine since Docker crashed
+   mid-session on 2026-08-23, and Docker still will not start: four zero-byte
+   sockets in `%LOCALAPPDATA%\Docker\run` survive every non-elevated attempt
+   to remove them. The remedy needs an Administrator shell
+   (`Restart-Service WSLService -Force` then delete them) or a reboot. The
+   client set this aside on 2026-08-29 to work on the front end, which is a
+   reasonable call: CI runs `--full` on every push and has been green
+   throughout, so this is confirmation rather than suspicion. It is still the
+   one gate no local run has covered.
 4. **`BACKLOG.md` P0** for the remaining launch blockers, including the three
    contact details still unset in `site.json` now that WhatsApp is real.
 5. **Sign off the weight scale** (§27) and **make `status: 'draft'` actually
