@@ -129,16 +129,16 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
 </article>
 
 <style>
+  /* THE HOVER CUE MOVED TO THE GRID CELL, 2026-08-30. This card used to change
+     its GROUND on hover — --surface-raised to --surface-alt — where every other
+     card on the site changes its BOUNDARY, and nothing recorded why. The cue is
+     `.card-surface--rule` on the cell now, so all four card families answer a
+     pointer the same way. The surface stays here because it is the card's. */
   .card {
     display: flex;
     flex-direction: column;
     width: 100%;
     background: var(--surface-raised);
-    transition: background var(--dur-base) var(--ease-out);
-  }
-
-  .card:hover {
-    background: var(--surface-alt);
   }
 
   .card__link {

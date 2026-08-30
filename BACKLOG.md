@@ -954,18 +954,28 @@ The header was added on 2026-08-23.
       exact species `docs/TRAPS.md` names as invisible to every token gate. It
       resolves through `--surface-raised` now.
 
-- [ ] **Decide whether the product card joins the card language.** Left out of
-      the standardisation above on purpose: the review named three components
-      and this is a fourth, on the catalogue rather than the home page.
+- [x] **The product card joins the card language.** Done 2026-08-30, the day
+      after it was raised. Its hover changed the card's GROUND
+      (--surface-raised to --surface-alt) where every other card changes its
+      BOUNDARY, and nothing recorded why.
 
-      Its surface is already correct — `--surface-raised`, and it sits in a
-      `gap: 1px` grid, so it is a seam card exactly like `ServiceCards`. **What
-      differs is the hover cue, and nothing records why:** every other card on
-      the site changes its *boundary* on hover, and this one changes its
-      *ground* (`--surface-alt`). One of the two is right for a 94-item grid and
-      it is a judgement about density, not a defect — but it is the last card
-      divergence left, and adopting `.card-surface--seam` is a one-line change
-      once somebody has decided.
+      It needed a third mechanism rather than an existing one. `ProductGrid`
+      does not use the container-background-shows-through technique
+      `ServiceCards` uses: its grid background is --surface-raised, because a
+      last row that does not fill its columns would otherwise leave the unused
+      cells showing as lighter grey blocks. The hairline is therefore each
+      cell's own outset shadow. `.card-surface--rule` names that, and it is
+      applied to the grid cell rather than the card inside it — on the card it
+      would nest a second 1px rule inside the first and read as a doubled
+      border.
+
+      The card language is now three mechanisms and one cue: a real border where
+      cards are spaced apart, an inset shadow where the container draws the
+      seam, an outset shadow where each cell draws its own. All four card
+      families answer a pointer the same way.
+
+      `--rule` deliberately has no drop shadow where `--seam` does: the lift is
+      right for six service cards and wrong for a grid of ninety-four.
 
 - [ ] **Carry the section numbering to the remaining home sections.**
       `src/components/primitives/SectionIndex.astro` exists and is used twice —

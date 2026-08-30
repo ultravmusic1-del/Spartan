@@ -96,6 +96,14 @@ img, svg { display: block; max-width: 100%; }
  * already right; what was duplicated is the styling. A `Card.astro` would mean
  * restructuring three components to change nothing a reader can see.
  *
+ * THREE MECHANISMS, ONE CUE. A card's boundary turns accent on hover and on
+ * focus-within, always — but how the boundary is drawn depends on how its
+ * container draws seams, and those genuinely differ: a real border where cards
+ * are spaced apart, an inset shadow where the container's background shows
+ * through a 1px gap, an outset shadow where each cell draws its own rule. The
+ * variants below name all three so a fourth card picks one instead of inventing
+ * a fourth.
+ *
  * WHAT IS DELIBERATELY *NOT* UNIFIED: title size and case, and media height.
  * A category tile's 13px uppercase label and a service card's 20px sentence-case
  * heading are different levels of the same hierarchy, not an inconsistency —
@@ -136,6 +144,32 @@ img, svg { display: block; max-width: 100%; }
   box-shadow:
     inset 0 0 0 1px var(--accent),
     0 18px 40px rgb(0 0 0 / 0.09);
+}
+
+/* For a card whose hairline is its OWN outset shadow rather than a border or a
+   container's background. `ProductGrid` works this way deliberately: its grid
+   background is --surface-raised, not --line, so a last row that does not fill
+   its columns cannot leave the unused cells showing as lighter grey blocks. The
+   rule therefore belongs to each cell, and the hover cue has to move with it.
+
+   Applied to the grid cell rather than the card inside it, because that is
+   where the hairline lives. Putting it on the card would nest a second 1px rule
+   just inside the first and read as a doubled border.
+
+   NO DROP SHADOW HERE, WHERE `--seam` HAS ONE. The lift is right for six
+   service cards and wrong for a grid of ninety-four: at that density every
+   pointer move would raise and drop a shadow, and the boundary alone already
+   says which card is under the cursor. Same cue, less of it, on purpose. */
+.card-surface--rule {
+  box-shadow: 0 0 0 1px var(--line);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+.card-surface--rule:hover,
+.card-surface--rule:focus-within {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 /* The image ground. Fixed height so a row of cards keeps one baseline whatever

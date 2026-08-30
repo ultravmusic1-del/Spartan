@@ -39,7 +39,7 @@ const cols = { lg: Math.min(n, 4), md: Math.min(n, 3), sm: Math.min(n, 2) };
       style={`--pg-cols:${cols.lg};--pg-cols-md:${cols.md};--pg-cols-sm:${cols.sm}`}
     >
       {products.map((product) => (
-        <li>
+        <li class="card-surface--rule">
           <ProductCard product={product} />
         </li>
       ))}
@@ -70,11 +70,15 @@ const cols = { lg: Math.min(n, 4), md: Math.min(n, 3), sm: Math.min(n, 2) };
      opening into a gap wherever a card is shorter than its row.
      The 1px rules are each cell's own box-shadow rather than a --color-line
      container showing through the gaps: a last row that does not fill its
-     columns would otherwise leave the unused cells as lighter grey blocks. */
+     columns would otherwise leave the unused cells as lighter grey blocks.
+
+     That shadow and its hover cue now come from `.card-surface--rule` in
+     global.css — the third of the card language's three boundary mechanisms,
+     and the one this grid needs. It is on the cell rather than the card inside
+     it because the hairline is the cell's. */
   .grid > li {
     display: flex;
     background: var(--surface-raised);
-    box-shadow: 0 0 0 1px var(--line);
   }
 
   .empty {
