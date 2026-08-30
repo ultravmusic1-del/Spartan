@@ -166,7 +166,7 @@ const reasons = [
      --accent-text and comes out deep red instead. */
   .rs__n {
     font-family: var(--font-display);
-    font-size: 34px;
+    font-size: var(--fs-display);
     font-weight: var(--fw-section);
     letter-spacing: -0.04em;
     line-height: 1;
@@ -177,7 +177,7 @@ const reasons = [
      large-text threshold, so the 3:1 bar applies. */
   .rs__title {
     margin: 16px 0 12px;
-    font-size: 19px;
+    font-size: var(--fs-title-sm);
     font-weight: var(--fw-subhead);
     letter-spacing: -0.01em;
     /* red-deep — same reason as ServiceCards' .card__title: 19px on white was
@@ -189,7 +189,7 @@ const reasons = [
   /* --color-grey is 3.17:1 on light and must never be used here; ink-muted is
      4.96:1 and passes AA. */
   .rs__body {
-    font-size: 14px;
+    font-size: var(--fs-body-sm);
     color: var(--text-muted);
   }
 
@@ -213,7 +213,7 @@ const reasons = [
 
   .wc__body {
     max-width: 56ch;
-    font-size: 15px;
+    font-size: var(--fs-body);
     color: var(--text-muted);
   }
 

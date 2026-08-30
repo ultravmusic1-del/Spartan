@@ -202,7 +202,7 @@ const year = new Date().getFullYear();
 
   .f-item small {
     display: block;
-    font-size: 11px;
+    font-size: var(--fs-label);
     letter-spacing: 0.13em;
     text-transform: uppercase;
     /* 6.13:1 on black. */
@@ -219,7 +219,7 @@ const year = new Date().getFullYear();
     display: flex;
     align-items: center;
     min-height: 44px;
-    font-size: 14px;
+    font-size: var(--fs-body-sm);
     color: #fff;
   }
 
@@ -256,7 +256,7 @@ const year = new Date().getFullYear();
   .f-main p {
     max-width: 38ch;
     margin-top: 18px;
-    font-size: 13.5px;
+    font-size: var(--fs-ui);
     /* 6.13:1 on black. */
     color: var(--color-grey);
   }
@@ -264,7 +264,7 @@ const year = new Date().getFullYear();
   .f-head {
     margin-bottom: 18px;
     font-family: var(--font-display);
-    font-size: 11px;
+    font-size: var(--fs-label);
     font-weight: var(--fw-label);
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -279,7 +279,7 @@ const year = new Date().getFullYear();
   .f-main a {
     display: block;
     padding: 6px 0;
-    font-size: 13.5px;
+    font-size: var(--fs-ui);
     color: var(--f-link);
     transition: color var(--dur-base) var(--ease-out);
   }
@@ -312,7 +312,7 @@ const year = new Date().getFullYear();
     padding: 20px 0;
     border-top: 1px solid var(--f-divider);
     text-align: center;
-    font-size: 12.5px;
+    font-size: var(--fs-meta);
     /* The mockup's #5E5E66 measures 3.25:1 on black — below AA for body text.
        --color-grey is 6.13:1 and reads as the same recessive grey. */
     color: var(--color-grey);

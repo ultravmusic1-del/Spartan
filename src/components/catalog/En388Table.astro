@@ -69,14 +69,14 @@ const columns = en388 ? en388Columns(en388) : [];
   .en {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13.5px;
+    font-size: var(--fs-ui);
   }
 
   .en th {
     background: var(--surface-alt);
     color: var(--text);
     font-family: var(--font-display);
-    font-size: 10.5px;
+    font-size: var(--fs-micro);
     font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -108,7 +108,7 @@ const columns = en388 ? en388Columns(en388) : [];
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-weight: var(--fw-subhead);
-    font-size: 16px;
+    font-size: var(--fs-body);
     color: var(--accent-text);
   }
 
@@ -130,13 +130,13 @@ const columns = en388 ? en388Columns(en388) : [];
      than a cosmetic one. */
   @media (max-width: 640px) {
     .en th {
-      font-size: 12px;
+      font-size: var(--fs-meta);
       letter-spacing: 0.01em;
       padding: 10px 3px;
     }
 
     .en td {
-      font-size: 14px;
+      font-size: var(--fs-body-sm);
       padding: 10px 4px;
     }
   }

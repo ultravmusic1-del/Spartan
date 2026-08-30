@@ -33,7 +33,7 @@
   background: var(--color-black);
   color: var(--color-paper);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
@@ -71,7 +71,7 @@
 
 .ad-brand {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: var(--fw-label);
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -104,7 +104,7 @@
   min-height: 44px;
   padding: 0 12px;
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: var(--fs-ui);
   font-weight: var(--fw-subhead);
   /* 7.4:1 on --color-panel. */
   color: var(--color-grey-lt);
@@ -124,7 +124,7 @@
 }
 
 .ad-who {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   /* 5.6:1 on --color-panel — recessive but readable. */
   color: var(--color-grey);
   overflow-wrap: anywhere;
@@ -150,7 +150,7 @@
 .ad-eyebrow {
   margin: 0 0 6px;
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: var(--fw-label);
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -163,7 +163,7 @@
 .ad-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: var(--fs-head-sm);
   font-weight: var(--fw-section);
   letter-spacing: -0.01em;
   line-height: 1.15;
@@ -171,7 +171,7 @@
 
 .ad-sub {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-ui);
   color: var(--color-grey);
 }
 
@@ -187,7 +187,7 @@
   padding: 0 18px;
   border-radius: 3px;
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: var(--fw-label);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -238,7 +238,7 @@
 
 .ad-label {
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: var(--fw-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -253,7 +253,7 @@
   border: 1px solid var(--color-line);
   border-radius: 3px;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   color: var(--color-paper);
 }
 
@@ -268,7 +268,7 @@
 }
 
 .ad-hint {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   /* 5.6:1 on --color-panel. */
   color: var(--color-grey);
 }
@@ -283,7 +283,7 @@
 }
 
 .ad-link {
-  font-size: 13px;
+  font-size: var(--fs-ui);
   color: var(--color-red-light);
 }
 
@@ -295,7 +295,7 @@
   border-left: 3px solid var(--color-red-light);
   border-radius: 0 4px 4px 0;
   background: var(--color-card);
-  font-size: 13px;
+  font-size: var(--fs-ui);
 }
 
 .ad-alert--ok {
@@ -328,7 +328,7 @@
 
 .ad-tile__label {
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: var(--fw-label);
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -343,7 +343,7 @@
 .ad-tile__value {
   margin-top: 3px;
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: var(--fs-title);
   font-weight: 500;
   line-height: 1.1;
   color: var(--color-paper);
@@ -362,7 +362,7 @@
 
 .ad-note {
   margin: -12px 0 18px;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   /* 5.6:1 on --color-black. */
   color: var(--color-grey);
 }
@@ -389,7 +389,7 @@
   border: 1px solid var(--color-line);
   background: transparent;
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: var(--fw-subhead);
   color: var(--color-grey-lt);
   text-decoration: none;
@@ -410,7 +410,7 @@
 
 .ad-chip__n {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 500;
   opacity: 0.85;
 }
@@ -427,7 +427,7 @@
 .ad-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--fs-ui);
 }
 
 .ad-table thead th {
@@ -436,7 +436,7 @@
   background: var(--color-card);
   border-bottom: 1px solid var(--color-line);
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: var(--fw-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -475,7 +475,7 @@
 /* Figures, aligned on the right so the column can be scanned down. */
 .ad-num {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 400;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -483,7 +483,7 @@
 
 .ad-when {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 400;
   white-space: nowrap;
 }
@@ -512,7 +512,7 @@
   border-radius: 99px;
   border: 1px solid transparent;
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: var(--fw-label);
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -573,7 +573,7 @@
   border-radius: 3px;
   color: var(--color-grey-lt);
   text-decoration: none;
-  font-size: 13px;
+  font-size: var(--fs-ui);
 }
 
 .ad-pager a:hover {
@@ -582,7 +582,7 @@
 }
 
 .ad-pager__at {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   color: var(--color-grey);
   font-family: var(--font-mono);
 }
@@ -610,7 +610,7 @@
 .ad-card__title {
   margin: 0 0 12px;
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: var(--fw-label);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -622,7 +622,7 @@
   grid-template-columns: minmax(96px, auto) 1fr;
   gap: 9px 18px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-ui);
 }
 
 .ad-dl dt {
@@ -660,7 +660,7 @@
   border: 1px solid var(--color-line);
   border-radius: 3px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-ui);
 }
 
 /* ------------------------------------------------- narrow: table -> cards -- */
@@ -729,7 +729,7 @@
     content: attr(data-label);
     flex: 0 0 auto;
     font-family: var(--font-display);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     font-weight: var(--fw-label);
     letter-spacing: 0.12em;
     text-transform: uppercase;

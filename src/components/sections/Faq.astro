@@ -96,7 +96,7 @@ const faqs = [
     /* WCAG 2.5.5: the summary is the control, so it carries the target. */
     min-height: 44px;
     font-family: var(--font-display);
-    font-size: 16.5px;
+    font-size: var(--fs-body);
     font-weight: var(--fw-subhead);
     cursor: pointer;
     list-style: none;
@@ -122,7 +122,7 @@ const faqs = [
     border: 1px solid #d2d2d6;
     border-radius: 50%;
     font-family: var(--font-body);
-    font-size: 16px;
+    font-size: var(--fs-body);
     line-height: 1;
     /* 16px is under the AA large-text bar, so this is the deep red, not brand
        red: 8.40:1 on --color-paper against 3.99:1. */
@@ -154,7 +154,7 @@ const faqs = [
   .faq__a {
     max-width: 58ch;
     padding: 0 46px 24px 0;
-    font-size: 14.5px;
+    font-size: var(--fs-body-sm);
     color: var(--text-muted);
   }
 

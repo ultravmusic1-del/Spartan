@@ -177,7 +177,7 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
      label) resolves --accent-text and comes out deep red instead. */
   .card__title {
     margin: 20px 0 12px;
-    font-size: 19px;
+    font-size: var(--fs-title-sm);
     font-weight: var(--fw-subhead);
     letter-spacing: -0.01em;
     /* red-deep, not brand red. At 19px this cleared AA only while the global
@@ -196,7 +196,7 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
     /* Keeps the pills on a row aligned when the copy runs to different lengths,
        without clipping the longest description. */
     min-height: 66px;
-    font-size: 14px;
+    font-size: var(--fs-body-sm);
     color: var(--text-muted);
   }
 

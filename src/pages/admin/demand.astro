@@ -302,7 +302,7 @@ const busiest = Math.max(...rows.map((r) => r.enquiries), 1);
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 13px;
+    font-size: var(--fs-ui);
   }
 
   .dm-dot {
@@ -319,7 +319,7 @@ const busiest = Math.max(...rows.map((r) => r.enquiries), 1);
   .dm-legend__n {
     margin-left: auto;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--fs-meta);
     color: var(--color-paper);
     white-space: nowrap;
   }
@@ -339,7 +339,7 @@ const busiest = Math.max(...rows.map((r) => r.enquiries), 1);
     grid-template-columns: minmax(0, 1fr) 90px 34px;
     align-items: center;
     gap: 12px;
-    font-size: 13px;
+    font-size: var(--fs-ui);
   }
 
   .dm-rank__label {
@@ -364,7 +364,7 @@ const busiest = Math.max(...rows.map((r) => r.enquiries), 1);
 
   .dm-rank__n {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--fs-meta);
     text-align: right;
     color: var(--color-paper);
   }
@@ -396,7 +396,7 @@ const busiest = Math.max(...rows.map((r) => r.enquiries), 1);
 
   .dm-pct {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: var(--fs-meta);
     color: var(--color-grey-lt);
     min-width: 34px;
     text-align: right;

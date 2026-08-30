@@ -234,7 +234,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   .st__body {
     max-width: 52ch;
     margin-bottom: 16px;
-    font-size: 15px;
+    font-size: var(--fs-body);
     color: var(--text-muted);
   }
 
@@ -261,7 +261,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   .st__stat dd {
     order: -1;
     font-family: var(--font-display);
-    font-size: 27px;
+    font-size: var(--fs-head-sm);
     font-weight: var(--fw-section);
     letter-spacing: -0.03em;
     line-height: 1.1;
@@ -269,7 +269,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   }
 
   .st__stat dt {
-    font-size: 11px;
+    font-size: var(--fs-label);
     letter-spacing: 0.13em;
     text-transform: uppercase;
     /* Dark surface only. */
@@ -328,7 +328,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
      threshold, so the 3:1 bar applies and brand red on white measures 4.30:1.
      Anything smaller in red on this surface uses --color-red-deep. */
   .dv__name {
-    font-size: 21px;
+    font-size: var(--fs-title-sm);
     /* red-deep. This one is the subtlest of the three: it declares no weight at
        all, so it inherited global.css's h1-h4 700 and that inherited bold was
        the only thing making 21px "large". Lowering the global default to 600
@@ -341,14 +341,14 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   .dv__blurb {
     max-width: 44ch;
     margin: 12px 0 16px;
-    font-size: 14.5px;
+    font-size: var(--fs-body-sm);
     color: var(--text-muted);
   }
 
   .dv__count {
     margin-bottom: 20px;
     font-family: var(--font-display);
-    font-size: 11px;
+    font-size: var(--fs-label);
     font-weight: var(--fw-label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -376,7 +376,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
 
   .ac__body {
     max-width: 56ch;
-    font-size: 15px;
+    font-size: var(--fs-body);
     color: var(--text-muted);
   }
 

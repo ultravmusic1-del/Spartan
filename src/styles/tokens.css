@@ -67,6 +67,56 @@
   --fw-label: 650;      /* <15px   — uppercase micro labels, eyebrows, buttons */
   --fw-body: 400;
 
+  /* THE BANDS ABOVE DESCRIBE THE INTENT AND NOT, TODAY, THE RENDERED PAGE.
+     Measured 2026-08-30: `global.css` sets `h1, h2, h3, h4` to --fw-subhead as
+     the default for every heading at every size, so only a rule that names a
+     weight explicitly follows its band. `SectionHeading` sizes its head at
+     clamp(30px, 4vw, 46px) — a 40-99px maximum, so --fw-display by the table —
+     and inherits 600 instead, which is every section head on the site.
+
+     LEFT ALONE ON PURPOSE. Moving those to 500 is a visible typographic change
+     across every page and it sits inside "Sign off the weight scale against the
+     approved design", still open in BACKLOG.md: the mockup specifies 700/800,
+     this scale already departs from that, and a second departure taken without
+     the client is not one to make quietly. The comment is corrected so the next
+     reader is not told something the page disproves. */
+
+  /* ------------------------------------------------------------ type size --
+   *
+   * ADDED 2026-08-30, AND UNTIL THEN THERE WAS NO SCALE AT ALL. Colour and
+   * weight were tokenised; size was a literal chosen inside whichever component
+   * needed one. That produced 25 distinct literals across 205 declarations and
+   * 22 rendered sizes on the home page alone — fifteen of them inside a nine
+   * pixel range, in steps of half a pixel. A half-pixel step is not a level of
+   * hierarchy anybody can see; it is a value somebody typed.
+   *
+   * THE MAPPING MOVED NOTHING BY MORE THAN 1px. That was the constraint, not an
+   * outcome: this collapses sub-perceptual duplicates and names the survivors,
+   * and it deliberately does NOT impose a modular ratio. A true 1.2 scale would
+   * have moved 12px and 14px — 54 declarations between them — by two or three
+   * pixels each, which is a redesign and a person's decision rather than a
+   * refactor. 25 steps became 11.
+   *
+   * The names are roles, not sizes, to match --fw-* above: a component asks for
+   * the label size, not for eleven pixels, so the scale can be retuned in one
+   * place.
+   *
+   * NOT COVERED, ON PURPOSE: the twelve fluid `clamp()` headings. Those were
+   * tuned across the 2026-08-29 review passes and several converge on the same
+   * rendered value anyway; folding them is a display-scale decision that wants a
+   * person looking at the page. */
+  --fs-micro: 10px;      /* the finest labels — hero stat captions, table heads */
+  --fs-label: 11px;      /* uppercase micro labels and eyebrows — the workhorse */
+  --fs-meta: 12px;       /* counts, captions, the EN 388 header floor */
+  --fs-ui: 13px;         /* buttons, pills, compact controls */
+  --fs-body-sm: 14px;    /* dense body copy, form fields, table cells */
+  --fs-body: 16px;       /* body copy and ledes */
+  --fs-title-sm: 20px;   /* small card and panel titles */
+  --fs-title: 22px;      /* panel titles */
+  --fs-head-sm: 27px;    /* sub-heads */
+  --fs-head: 30px;       /* page sub-heads */
+  --fs-display: 34px;    /* the largest fixed size; above this the heads are fluid */
+
   /* THE PAGE'S ONE MEASURE. 1240 -> 1360 on 2026-08-29.
 
      A design review found the content floating in a large empty field with the

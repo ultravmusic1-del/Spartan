@@ -204,14 +204,14 @@ const industries = (site.industries as string[]).map((name) => {
   }
 
   .ind__name {
-    font-size: 20px;
+    font-size: var(--fs-title-sm);
     color: var(--text);
   }
 
   .ind__note {
     max-width: 52ch;
     margin: 12px 0 20px;
-    font-size: 14.5px;
+    font-size: var(--fs-body-sm);
     color: var(--text-muted);
   }
 
@@ -231,7 +231,7 @@ const industries = (site.industries as string[]).map((name) => {
     min-height: 44px;
     padding: 10px 15px;
     border: 1px solid var(--line);
-    font-size: 13px;
+    font-size: var(--fs-ui);
     color: var(--text-muted);
     transition:
       border-color var(--dur-base) var(--ease-out),
@@ -248,7 +248,7 @@ const industries = (site.industries as string[]).map((name) => {
      surface. --color-red-light is 4.62:1. */
   .ind__count {
     font-family: var(--font-display);
-    font-size: 11px;
+    font-size: var(--fs-label);
     font-weight: var(--fw-label);
     letter-spacing: 0.06em;
     color: var(--accent-text);
@@ -272,7 +272,7 @@ const industries = (site.industries as string[]).map((name) => {
 
   .ic__body {
     max-width: 56ch;
-    font-size: 15px;
+    font-size: var(--fs-body);
     color: var(--text-muted);
   }
 

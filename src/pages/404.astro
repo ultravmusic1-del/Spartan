@@ -99,7 +99,7 @@ const [divisions, categories, products] = await Promise.all([
 
   .nf__body {
     max-width: 52ch;
-    font-size: 15.5px;
+    font-size: var(--fs-body);
     color: var(--text-muted);
   }
 
@@ -126,7 +126,7 @@ const [divisions, categories, products] = await Promise.all([
     /* 44px target for a single line of text. */
     min-height: 44px;
     font-family: var(--font-display);
-    font-size: 12.5px;
+    font-size: var(--fs-meta);
     font-weight: 600;
     letter-spacing: 0.13em;
     text-transform: uppercase;
