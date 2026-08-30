@@ -208,6 +208,21 @@ Before believing a measurement, assert something you already know — a token
 resolves, `body` has its background — and treat a blank `--line-control` or a
 transparent `body` as "the stylesheet never arrived", not as a finding.
 
+**A `client:visible` island below the fold is inert, and clicking it silently
+does nothing.** This one cost a false defect report against the enquiry basket
+— the site's entire conversion mechanism — and the report was wrong. On a
+product page `EnquiryButton` sits at y≈1233. At 1440×900 that is above the
+fold, so it hydrates on load and any click works. At 375×812 it is below the
+fold, the island still carries its `ssr` attribute, and a scripted `.click()`
+lands on a button with no handler: no error, no badge, no store write. It reads
+exactly like "the basket is broken on mobile".
+
+Scroll the element into view, wait for hydration, then click — the basket works
+identically on both viewports, in both engines. `client:visible` is deliberate
+here so a catalogue page does not hydrate 94 buttons. Before reporting any
+mobile interaction as broken, check `astro-island[ssr]` on the control you just
+clicked, and prefer a real `page.click()` (which scrolls) over a synthetic one.
+
 ## The skill advises; it does not measure
 
 The **ui-ux-pro-max** skill is a database of styles, palettes, pairings and UX
