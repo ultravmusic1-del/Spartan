@@ -215,7 +215,24 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     );
   }
 
-  return json(outcome.body, outcome.status);
+  /**
+   * THE REFERENCE IS THE ROW'S OWN ID, AND IT IS ONLY SENT WHEN THERE IS A ROW.
+   *
+   * The buyer gets no confirmation email — the notification goes to Spartan with
+   * their address as `reply_to` — so the success screen is the only artefact
+   * they ever hold, and it had nothing on it they could quote back. This is the
+   * id `markNotified` already uses and the id the admin inbox lists by, so it
+   * resolves to a real enquiry rather than being a comfort string.
+   *
+   * When the store is unconfigured or failed, the enquiry may still have been
+   * delivered by mail and the submission is still a success — but no row exists,
+   * nothing can be looked up, and a reference printed anyway would be exactly
+   * the "reported as sent when it was not" this endpoint is built to avoid. So
+   * it is absent, and the screen simply does not offer one.
+   */
+  const body = stored.id ? { ...outcome.body, reference: stored.id } : outcome.body;
+
+  return json(body, outcome.status);
 };
 
 /**

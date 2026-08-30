@@ -863,6 +863,29 @@ The header was added on 2026-08-23.
       not a bug report — but it should be taken knowing the overlap is real and
       universal rather than absent.
 
+- [ ] **Decide what the buyer is promised after they send, and whether they get
+      an email.** The success screen now carries the three facts the site can
+      state honestly on its own — the address the reply will go to, the lines
+      that were sent with quantities, and the enquiry's reference when a row was
+      written (`handoff.md` and commit for the reasoning). **Two things were
+      deliberately left out because they are the client's to give, not the
+      site's to invent:**
+
+      **A response time.** "We reply within one working day" is the single most
+      valuable sentence that could go on that screen — Peak-End says the last
+      moment shapes the memory of the whole errand — and nobody at Spartan has
+      committed to a number. Writing one would be the site making a promise on
+      their behalf. Ask, then put it in `site.json` beside the contact details
+      so it is theirs to change.
+
+      **A confirmation email to the buyer.** There is none. `sendEnquiryMail`
+      notifies Spartan with the buyer's address as `reply_to`, so the buyer
+      leaves with nothing in their inbox and the success screen is their only
+      receipt — if they close the tab, the reference is gone. A copy to them
+      would fix that, and the mail path already holds a validated address. It is
+      a second send per enquiry and a second thing that can fail, so it needs
+      deciding rather than assuming.
+
 - [ ] **Analytics and error monitoring.** Zero references anywhere in `src/`.
       A lead-generation site with no measurement of the funnel it exists to
       serve. Prefer a cookieless, no-consent-banner option so it does not drag a

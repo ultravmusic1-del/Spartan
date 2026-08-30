@@ -49,6 +49,13 @@ export default function EnquiryForm({ email }: Props) {
    * configured on this deployment, which is the one case the confirmation must
    * not dress up as success.
    */
+  /* Captured before `clear()` runs, because the whole point of the summary is
+     that the basket is gone by the time it renders. */
+  const [receipt, setReceipt] = useState<{
+    items: { name: string; qty: number }[];
+    email: string;
+    reference?: string;
+  } | null>(null);
   const [captured, setCaptured] = useState(true);
   /** Bumped on every failed attempt so the focus effect re-runs after render. */
   const [attempt, setAttempt] = useState(0);
@@ -198,12 +205,18 @@ export default function EnquiryForm({ email }: Props) {
       delivered?: boolean;
       errors?: EnquiryFieldErrors;
       message?: string;
+      reference?: string;
     };
 
     if (response.ok && body.ok) {
       // Either channel holding the enquiry is enough. With the row written, a
       // mail outage costs a notification rather than the lead.
       setCaptured(Boolean(body.recorded) || Boolean(body.delivered));
+      setReceipt({
+        items: parsed.data.items.map((i) => ({ name: i.name, qty: i.qty })),
+        email: parsed.data.email,
+        reference: body.reference,
+      });
       setStatus('sent');
       setErrors({});
       setFormError('');
@@ -261,6 +274,56 @@ export default function EnquiryForm({ email }: Props) {
           Thank you. Our team will come back to you on the products you listed, with availability
           and pricing.
         </p>
+
+        {/* THE ONLY RECEIPT THE BUYER GETS. No confirmation email is sent — the
+            notification goes to Spartan with this address as `reply_to` — so
+            everything they might later need to quote or check has to be on this
+            screen. Three facts, all of them things that actually happened:
+            where the reply goes, what was asked for, and the row's own id.
+
+            Deliberately not here: a response time. Nobody has committed to one,
+            and inventing "within one working day" on the client's behalf would
+            be a promise the site cannot keep. It is in BACKLOG.md for them to
+            decide. */}
+        {receipt && (
+          <div class="ef-receipt">
+            <p class="ef-receipt__to">
+              We will reply to <strong>{receipt.email}</strong>.
+            </p>
+
+            {receipt.items.length > 0 && (
+              <>
+                <h3 class="ef-receipt__head">What you sent</h3>
+                <ul class="ef-receipt__list">
+                  {receipt.items.map((item) => (
+                    <li key={item.name}>
+                      <span class="ef-receipt__name">{item.name}</span>
+                      <span class="ef-receipt__qty">× {item.qty}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {/* Present only when a row was actually written. A reference for an
+                enquiry that exists solely as an email would resolve to nothing.
+
+                PRINTED IN FULL, AND NOT TRUNCATED TO SOMETHING PRETTIER.
+                `getEnquiry` looks the row up with an exact `.eq('id', id)` and
+                the admin's detail page is `/admin/enquiries/<id>`, so the whole
+                UUID is what staff can actually resolve. An eight-character
+                prefix would read better and match nothing — a comfort string,
+                which on the buyer's only receipt is worse than no reference at
+                all. Shortening this means giving the admin a prefix search
+                first. */}
+            {receipt.reference && (
+              <p class="ef-receipt__ref">
+                <span class="ef-receipt__ref-label">Reference</span>
+                <code>{receipt.reference}</code>
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Never dressed up. When neither the database nor the mail provider is
             configured, the enquiry exists only as a line in a server log, and

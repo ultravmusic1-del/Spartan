@@ -634,6 +634,90 @@ const site = await getSiteSettings();
     color: var(--text-muted);
   }
 
+  /* The receipt block. Sizes and colours are taken from what this page already
+     uses rather than introducing new ones: 11px uppercase label like .ef-field
+     label, 14px body like .ef-done__pending, --text-muted for the recessive
+     line and --text for the facts. */
+  .ef-receipt {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    text-align: left;
+  }
+
+  .ef-receipt__to {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .ef-receipt__to strong {
+    color: var(--text);
+    font-weight: var(--fw-subhead);
+  }
+
+  .ef-receipt__head {
+    margin-top: 20px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .ef-receipt__list {
+    margin-top: 10px;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ef-receipt__list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  /* Tabular figures so a column of quantities lines up, the same reason the
+     spec tables use them. */
+  .ef-receipt__qty {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .ef-receipt__ref {
+    margin-top: 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .ef-receipt__ref-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: var(--fw-label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* A UUID has no spaces, so it needs an explicit break rule or it pushes the
+     card wider than a phone. */
+  .ef-receipt__ref code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
   .ef-done__pending {
     margin-top: 18px;
     padding: 14px 16px;
