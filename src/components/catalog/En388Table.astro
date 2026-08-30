@@ -112,16 +112,27 @@ const columns = en388 ? en388Columns(en388) : [];
     color: var(--accent-text);
   }
 
-  /* "Abrasion" and "Puncture" are single words that cannot wrap, so at 10.5px
-     with 0.14em tracking the five columns need ~373px — more than a 375px
-     phone has after page padding. Scaling the header type down is preferable
-     to hiding columns behind a scroll: all five levels stay comparable at a
-     glance, which is the whole point of the pictogram. */
+  /* "Abrasion" and "Puncture" are single words that cannot wrap, and at 10.5px
+     with 0.14em tracking the five columns needed ~373px — more than a 375px
+     phone has after page padding. That was answered by dropping the header to
+     9px, which kept all five levels comparable at a glance and made the labels
+     naming them too small to read. This is the same trade taken against the
+     other variable.
+
+     THE TRACKING WAS THE COST, NOT THE TYPE SIZE. Measured across 320-600px in
+     both engines: at 0.01em and 3px of side padding the header sets at 12px
+     with every column still visible and no scroll. The two single words that
+     cannot wrap fit at every width down to 320. "Blade cut" and "TDM cut" wrap
+     to two lines below 375px, which is what a two-word label is for.
+
+     12px is the floor for a label naming a protection level. This is the one
+     table on the site where a misread column is a safety consequence rather
+     than a cosmetic one. */
   @media (max-width: 640px) {
     .en th {
-      font-size: 9px;
-      letter-spacing: 0.05em;
-      padding: 10px 4px;
+      font-size: 12px;
+      letter-spacing: 0.01em;
+      padding: 10px 3px;
     }
 
     .en td {

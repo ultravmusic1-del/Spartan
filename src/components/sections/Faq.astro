@@ -146,8 +146,13 @@ const faqs = [
   }
 
   /* --color-grey is 3.17:1 on light and is never allowed here. */
+  /* 74ch measured 93 actual characters at 677px: `ch` is the width of "0",
+     which in this face is wider than its average letter, so a ch-based measure
+     over-runs. 58ch lands at ~72 characters, inside the 65-75 the body copy
+     everywhere else on the site already sits in. Mobile was never the problem
+     — it sets 31-45 characters and is untouched by this. */
   .faq__a {
-    max-width: 74ch;
+    max-width: 58ch;
     padding: 0 46px 24px 0;
     font-size: 14.5px;
     color: var(--text-muted);

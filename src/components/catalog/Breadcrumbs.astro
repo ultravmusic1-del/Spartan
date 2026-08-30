@@ -80,9 +80,14 @@ const { trail, class: cls = '' } = Astro.props;
     color: var(--text);
   }
 
+  /* --line is the decorative boundary token at 1.27:1 on white, which on a
+     glyph means an invisible one: the separators were simply not there. This
+     mark is aria-hidden and must stay quieter than the links it divides, so it
+     takes --line-control (3.43:1) rather than --text-muted, which would set it
+     as loud as the crumbs themselves. */
   .crumbs__sep {
     margin-inline: 10px;
-    color: var(--line);
+    color: var(--line-control);
   }
 
   .crumbs__current {

@@ -1085,7 +1085,7 @@ const settings = await getSiteSettings();
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--text-muted);
-    animation: hero-rise 0.6s var(--ease-out) both;
+    animation: hero-rise 0.4s var(--ease-out) both;
   }
 
   .hero__masthead-item {
@@ -1171,7 +1171,7 @@ const settings = await getSiteSettings();
     margin: 0 0 0 auto;
     padding-left: 22px;
     border-left: 2px solid var(--accent);
-    animation: hero-rise 0.7s var(--ease-out) 0.2s both;
+    animation: hero-rise 0.4s var(--ease-out) 0.14s both;
   }
 
   .hero__index-row {
@@ -1313,7 +1313,7 @@ const settings = await getSiteSettings();
        aligned with nothing and had to be hand-collapsed on phones. An edge
        shared with another element is a composition; a distance is a guess. */
     width: fit-content;
-    animation: hero-rise 0.7s var(--ease-out) 0.08s both;
+    animation: hero-rise 0.4s var(--ease-out) 0.06s both;
   }
 
   .hero__title-a,
@@ -1338,7 +1338,7 @@ const settings = await getSiteSettings();
     align-items: center;
     gap: 16px;
     margin-top: var(--hero-gap-step);
-    animation: hero-rise 0.7s var(--ease-out) 0.18s both;
+    animation: hero-rise 0.4s var(--ease-out) 0.12s both;
   }
 
   /* THE TWO CTAs NOW READ AS ONE PAIR.
@@ -1402,6 +1402,21 @@ const settings = await getSiteSettings();
    * that fades is ambiguous about which slide is actually showing.
    */
 
+  /* THE FOUR USERS OF THIS RUN 0.4s, AND THEY USED TO RUN 0.7s. With
+     `animation-fill-mode: both` the `from` state holds through the delay, so
+     the longest chain — 0.7s plus a 0.2s delay — left the headline, the two
+     CTAs and the counts fully transparent for the first ~0.9s of the page. A
+     screenshot taken on load photographed an empty hero, and that is not a
+     camera artefact: it is what a visitor on a slow device sees, and what
+     Largest Contentful Paint records.
+
+     0.4s with delays of 0.06 / 0.12 / 0.14 keeps the stagger legible and puts
+     the worst case at ~0.54s. The delays stay proportional so the order still
+     reads as one gesture rather than four separate ones.
+
+     Do not answer this by deleting the opacity from the keyframes: both
+     keyframes must keep a `transform`, or any `transform` declared on the same
+     element is silently overwritten — docs/TRAPS.md has the case that cost. */
   @keyframes hero-rise {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }

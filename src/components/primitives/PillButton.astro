@@ -84,8 +84,12 @@ const Tag = href ? 'a' : 'button';
     background: color-mix(in srgb, var(--accent) 8%, transparent);
   }
 
+  /* Brand red is 4.30:1 on this button's white ground, just under the 4.5:1
+     this glyph needs as normal-size text. --accent-text resolves to the deep
+     red on light and clears it; inside .on-dark the same token gives the light
+     red, which is the pairing rule 4 asks for on that surface. */
   .pill .chev {
-    color: var(--accent);
+    color: var(--accent-text);
     font-weight: var(--fw-label);
   }
 </style>

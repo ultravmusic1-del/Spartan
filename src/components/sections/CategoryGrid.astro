@@ -142,8 +142,17 @@ const divisionNames: Record<string, string> = {
     color: var(--accent-text);
   }
 
+  /* The text is 12px, so the link's own box was 14px tall — a target a third
+     of the 44px WCAG 2.5.5 asks for. The padding is what buys the height; the
+     negative inline margin keeps the text optically aligned with the heading
+     row it sits in, so nothing moves visually. */
   .cg__all {
     flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 10px;
+    margin-inline: -10px;
     font-family: var(--font-display);
     font-size: 12px;
     font-weight: var(--fw-label);
