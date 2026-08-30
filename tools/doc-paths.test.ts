@@ -25,6 +25,7 @@ describe('INSTRUCTIONAL', () => {
       'AGENTS.md',
       'README.md',
       'docs/TRAPS.md',
+      'docs/UI-UX-AUDIT.md',
       '.claude/commands/improve.md',
     ]);
   });

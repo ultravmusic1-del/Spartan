@@ -26,6 +26,7 @@ Supabase Postgres · Vercel.
 | Why is it like this? | `handoff.md` |
 | How do I run it? | `README.md` |
 | What should I work on? | `BACKLOG.md` |
+| How do I check a UI change on real glass? | `docs/UI-UX-AUDIT.md` |
 | How do I edit the catalogue without being a developer? | `docs/CONTENT-EDITING.md` |
 
 "The last section", not a number: there have been three "where to pick up"
@@ -246,7 +247,27 @@ put the Vercel adapter into hybrid mode.
 `node tools/brand-sheet.mjs` builds a PDF contact sheet of the brand and every
 product asset, for handing to a design tool.
 
-## The UI/UX skill
+## UI/UX work
+
+**Read `docs/UI-UX-AUDIT.md` before auditing, screenshotting or restyling
+anything.** It is the order of operations for looking at the rendered site, and
+it exists because an audit that skipped it filed a settled client decision as a
+defect, re-reported a tracked backlog item as new, and spent a whole session
+unable to read any small text because it used the wrong screenshot tool. Four
+things it settles, each of which has already cost a wrong conclusion:
+
+- **Read `docs/TRAPS.md` and `BACKLOG.md` first.** On this project a decision
+  usually looks exactly like a defect and has a test holding it in place.
+- **`design/direction-b-forge.html` is the approved design** and the source of
+  truth for spacing, size and layout — though not for colour pairing.
+- **Never judge pixels on `npm run dev`.** On Windows its image endpoint 404s
+  on `/@fs/C:` paths, so every image is broken and the page cannot be assessed.
+  Build, then `npm run preview`.
+- **Screenshot with Playwright, and check iOS claims in WebKit.** Both are
+  installed. The editor's browser pane returns scaled images that cannot resolve
+  this site's 9–12px labels at all.
+
+### The skill
 
 Design decisions on this site — a new page, a component, a palette, a type
 pairing — go through the **ui-ux-pro-max** skill. It is a searchable local
