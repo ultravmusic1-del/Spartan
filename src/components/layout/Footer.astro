@@ -288,6 +288,25 @@ const year = new Date().getFullYear();
     color: var(--color-red-light);
   }
 
+  /* The 6px padding above is the approved design's, and it holds down to the
+     820px where that design stops. Below it the columns become a single stack
+     of 22 links, and 13.5px + 6px + 6px is a 33.6px row with a measured gap
+     between adjacent links of -0.6px to 0.4px — under the 44px target and the
+     8px separation at the same time, which is the pair that produces mis-taps.
+     The mobile nav already answers this at 44-60px; this matches it.
+
+     Scoped to the phone deliberately: `direction-b-forge.html` never draws
+     below 820px, so raising the target here fills a gap it leaves open rather
+     than departing from it, and the approved desktop footer is untouched. */
+  @media (max-width: 820px) {
+    .f-main a {
+      min-height: 44px;
+      padding: 10px 0;
+      display: flex;
+      align-items: center;
+    }
+  }
+
   /* ---------- bottom bar ---------- */
   .f-bot {
     padding: 20px 0;

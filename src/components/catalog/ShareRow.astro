@@ -112,16 +112,23 @@ const share = shareTargets(product, url);
   }
 
   /* The .pill treatment without its chevron: the chevron means "this goes
-     somewhere", and two of these three do not navigate. Text is inherited
-     white on --color-black, so no red text sits on a light surface here and
-     rule 4 has nothing to measure. */
+     somewhere", and two of these three do not navigate.
+
+     The border was a white outline at 0.32 alpha until 2026-08-30, written when
+     this row sat on --color-black. It does not: the product page is light, the
+     text resolves to near-black, and white-on-white measured 1.00:1 — three
+     controls with no visible edge, directly under three properly outlined
+     buttons. `PillButton.astro` had the identical bug and fixed it on
+     2026-08-20; this instance was missed because nothing gates an invisible
+     boundary. A button's outline is what makes it a button, so it carries
+     meaning and takes --line-control (3.43:1 on white), not --line (1.27:1). */
   .sh__btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     background: transparent;
     color: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.32);
+    border: 1px solid var(--line-control);
     border-radius: 999px;
     cursor: pointer;
     font-family: var(--font-body);

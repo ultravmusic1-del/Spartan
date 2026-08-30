@@ -501,6 +501,20 @@ const site = await getSiteSettings();
     resize: vertical;
   }
 
+  /* iOS Safari zooms the viewport on focus for any control under 16px, so at
+     14px the page lurches sideways on the first tap of the site's only
+     conversion form. 16px below the tablet breakpoint stops it.
+
+     `direction-b-forge.html` specifies 14px and stops at 820px, so this leaves
+     the approved rendering intact everywhere the approved design describes and
+     only fills in the phone, which it never drew. */
+  @media (max-width: 820px) {
+    .ef-field input,
+    .ef-field textarea {
+      font-size: 16px;
+    }
+  }
+
   .ef-field input:hover,
   .ef-field textarea:hover {
     border-color: var(--line-control);

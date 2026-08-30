@@ -343,6 +343,18 @@ const details = [
     resize: vertical;
   }
 
+  /* iOS Safari zooms on focus below 16px. Same fix and same reasoning as
+     `src/pages/enquiry.astro` — the approved design specifies 14px and stops
+     at 820px, so the phone is a gap it leaves rather than a rule to depart
+     from. */
+  @media (max-width: 820px) {
+    .cf2__field input,
+    .cf2__field select,
+    .cf2__field textarea {
+      font-size: 16px;
+    }
+  }
+
   /* The mockup's #5C5C64 placeholder is 3.2:1 on this field background, below
      AA. --color-grey is 5.2:1 and keeps the same recessive role — the same
      substitution the footer and EnquiryCta make. */
