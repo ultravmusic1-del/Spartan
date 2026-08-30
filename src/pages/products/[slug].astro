@@ -200,7 +200,10 @@ const pageTitle = category
         />
 
         <div class="pd__inner">
-          <div class="pd__vis">
+          <div
+            class="pd__vis"
+            style={image ? `--nat-w:${image.width}; --nat-h:${image.height}` : undefined}
+          >
             {/* fetchpriority, not just eager: eager stops lazy-loading but the
                 browser still queues this behind CSS and fonts at default
                 priority. This is the page's LCP element on all 94 product
@@ -346,12 +349,38 @@ const pageTitle = category
   /* Same radial-lit panel as the home page Spotlight. The cutout is transparent
      and sits straight on the gradient — a visible black rectangle here means the
      extraction pipeline has regressed (handoff.md section 6). */
+  /* 4/3, NOT A SQUARE, AND THE ASSETS ARE THE REASON. The panel was a 585px
+     square with a 481px inner box. 41 of the 90 product photographs are under
+     400px wide natively and 74 are under 600 — the spill-control range is
+     148-177px — so the smallest of them rendered at 32% of the inner width and
+     read as a broken image floating in an empty card rather than as a product.
+
+     Shrinking the panel is the half of this that costs nothing. Upscaling is
+     the half that does: a 154px source shown at 308 CSS px is 4x on a 2x
+     screen, and a soft photograph of safety equipment is worse than a small
+     sharp one. So the image is still never stretched, and the box stops being
+     cavernous around it.
+
+     THIS IS NOT THE FIX, IT IS THE MITIGATION. The fix is re-sourcing the
+     photography at 1200px+, which is a client ask already tracked in
+     BACKLOG.md. Nothing here recovers detail that was never captured. */
   .pd__vis {
     display: grid;
     place-items: center;
-    aspect-ratio: 1;
-    padding: 52px;
-    background: radial-gradient(circle at 50% 45%, var(--surface-alt) 0%, var(--surface-page) 68%);
+    /* The card is sized from the photograph it holds, via --nat-w/--nat-h set
+       on the element from the imported asset. A fixed 585px square gave the
+       148-177px spill-control range a card five times its own area to sit in.
+       The fallbacks are a mid-sized asset, so a missing image still gets a
+       sensible box. */
+    max-width: calc(var(--nat-w, 600) * 1px + 180px);
+    height: clamp(240px, calc(var(--nat-h, 360) * 1px + 120px), 470px);
+    /* start, not centred: a narrow card centred in a 585px column floats with
+       dead space on both sides. Aligned left it shares an edge with the
+       breadcrumb and the heading, and the slack collects in the gutter between
+       the two columns, where it reads as spacing rather than as absence. */
+    justify-self: start;
+    padding: 40px;
+    background: radial-gradient(circle at 50% 45%, var(--surface-alt) 0%, var(--surface-page) 72%);
     border: 1px solid var(--line);
   }
 
@@ -413,11 +442,22 @@ const pageTitle = category
     color: var(--text-muted);
   }
 
+  /* The four controls used to wrap 3 + 1, orphaning "Enquire on WhatsApp" on
+     its own line for no reason a reader could see — 596px of buttons in a 647px
+     column. Giving the primary its own row makes the break deliberate and says
+     the same thing the colour does: one primary action, three subordinate ones.
+     The three pills then sit together on one line at 569px. */
   .pd__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 30px;
+  }
+
+  .pd__actions :global(.eq-add-wrap) {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: flex-start;
   }
 
   .rel {
@@ -442,6 +482,14 @@ const pageTitle = category
 
     .pd__vis {
       padding: 36px;
+      /* The height above is derived from the asset's own height, which only
+         holds while width is the slack dimension. On a phone the column is
+         narrower than most photographs, so a wide one is scaled down by width
+         and then sits in a card still reserving its full height — the helmets
+         filled 39% of it. Letting the card follow its contents here keeps the
+         same fit on every product. */
+      height: auto;
+      min-height: 220px;
     }
 
     .rel {
