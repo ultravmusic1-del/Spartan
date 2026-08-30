@@ -910,6 +910,31 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     background: var(--surface-page);
   }
 
+  /* THE PANEL'S 60 ABOVE IS NOT WHAT SORTS IT AGAINST THE PAGE, AND ON ITS OWN
+     IT NEVER WORKED. The panel renders inside `.site-header`, which is
+     `position: absolute; z-index: 25` — a stacking context. 60 therefore only
+     orders the panel against its siblings *inside* the header. What competes
+     with the rest of the page is the header's 25, and the floating WhatsApp
+     button is 40, so the button painted over an open menu and `elementFromPoint`
+     at its centre returned the button, not the panel: it took the tap.
+
+     `handoff.md` §33 records the intended order — header 25, float 40, panel 60,
+     enquiry drawer 70 — and three quarters of it held. This is what makes the
+     panel's quarter true. RAISING THE PANEL'S OWN 60 DOES NOTHING; the number
+     that has to move is the header's, because that is the context the page sees.
+
+     Scoped with `:has()` so the header only leaves its normal layer while the
+     panel is in the DOM, and `MobileNav.tsx` renders it only while the menu is
+     open. 65 clears the float at 40 and stays under `.eq-drawer` at 70, which is
+     a sibling of this header rather than a child and so is genuinely at 70.
+
+     This rule has to live in the global block: the panel is a Preact island, so
+     Astro's scoped selectors never reach it, and a scoped `:has(.mnav-panel)`
+     would match nothing. */
+  .site-header:has(.mnav-panel) {
+    z-index: 65;
+  }
+
   .mnav-panel__bar {
     display: flex;
     align-items: center;

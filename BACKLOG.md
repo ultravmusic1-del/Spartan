@@ -842,11 +842,26 @@ The header was added on 2026-08-23.
 
 - [ ] **Decide whether the floating WhatsApp button belongs on /contact and
       /enquiry.** It is sitewide as asked, which means it sits on the two pages
-      whose entire job is the form the buyer is already looking at. Nothing is
-      broken — it overlaps no field and no submit control, checked at 375px —
-      but it is a second conversion path offered next to the first, and the
-      basket is the mechanism the rest of the site is built around. A judgement
-      call for the client rather than a defect. `handoff.md` §33.
+      whose entire job is the form the buyer is already looking at. It is a
+      second conversion path offered next to the first, and the basket is the
+      mechanism the rest of the site is built around. A judgement call for the
+      client rather than a defect. `handoff.md` §33.
+
+      **The premise was corrected on 2026-08-30, and it cuts both ways.** This
+      item and §33 both said the float "overlaps no field and no submit
+      control, checked at 375px". Swept again at 375px in 60px scroll steps:
+      it overlaps **every field on both forms and both Send buttons** at some
+      scroll position. §33's sweep covered the home page at each scroll
+      position and the form pages at one.
+
+      **It is still not a defect, for the reason §33 itself gives** — the test
+      is whether a control stays operable elsewhere, the same allowance made
+      for category cards and FAQ disclosures. Worst case measured is **9% of a
+      control's area, with a 266–268px clear strip** to the left of the button
+      on every one of them, Send included. The natural tap target is nowhere
+      near it. So the decision here stays a judgement about conversion paths,
+      not a bug report — but it should be taken knowing the overlap is real and
+      universal rather than absent.
 
 - [ ] **Analytics and error monitoring.** Zero references anywhere in `src/`.
       A lead-generation site with no measurement of the funnel it exists to

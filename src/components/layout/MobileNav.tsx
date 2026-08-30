@@ -87,12 +87,24 @@ export default function MobileNav({ items, current }: Props) {
     };
 
     document.addEventListener('keydown', onKey);
+
+    /* THE LOCK GOES ON documentElement, NOT body, AND THAT IS THE WHOLE FIX.
+       `document.scrollingElement` is <html> here, so `body { overflow: hidden }`
+       locked nothing: measured with the menu open, `scrollTo(0, 400)` still
+       moved the page to 400. The reader scrolled the page behind the panel and
+       came back somewhere they had not chosen. Both are set because which
+       element scrolls is a document-mode detail not worth depending on. */
+    const html = document.documentElement;
+    const prevHtml = html.style.overflow;
+    const prevBody = document.body.style.overflow;
+    html.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     panelRef.current?.querySelector<HTMLElement>('a')?.focus();
 
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
+      html.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
     };
   }, [open]);
 
