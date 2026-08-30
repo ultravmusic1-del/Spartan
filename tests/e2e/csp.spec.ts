@@ -103,7 +103,9 @@ test.describe('the policy does not break the site', () => {
     await expect(button).toBeVisible();
     await button.click();
 
-    await expect(button).toHaveText(/Added/i);
+    // "In your list" is the post-add state; under a broken policy the island
+    // never hydrates and the label never leaves "Enquire"/"Add to enquiry".
+    await expect(button).toHaveText(/In your list/i);
     expect(violations).toEqual([]);
   });
 

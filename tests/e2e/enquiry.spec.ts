@@ -150,10 +150,37 @@ test.describe('collecting products', () => {
     await button.evaluate((el) => el.scrollIntoView({ block: 'center' }));
     await expect(button).toHaveText(/Add to enquiry/);
     await button.click();
-    await expect(button).toHaveText(/Added to enquiry/);
+    await expect(button).toHaveText(/In your list/);
     await expect(
       page.locator('.eq-add-wrap:has(button.eq-add--solid) [role="status"]'),
     ).toHaveText('Grip Guard GP5 added to your enquiry list. Quantity 1.');
+  });
+
+  /**
+   * The state is the store, not a timer. It used to be a 2.4s "Added" flash, so
+   * a product already on the list looked exactly like one that was not and a
+   * second click raised the quantity with nothing on screen saying so.
+   */
+  test('the enquiry button still says so after a reload, and counts a second add', async ({
+    page,
+  }) => {
+    await page.goto('/products/grip-guard-gp5');
+    const button = page.locator('button.eq-add--solid');
+    await button.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await button.click();
+    await expect(button).toHaveText(/In your list/);
+
+    await page.reload();
+    await button.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await expect(button).toHaveText(/In your list/);
+    await expect(button).toHaveAttribute('aria-label', 'In your list: Grip Guard GP5');
+
+    // Repeat-add is kept on purpose; what changed is that it is now visible.
+    await button.click();
+    await expect(button).toHaveText(/In your list \(2\)/);
+    expect((await readBasket(page)).map((i) => [i.slug, i.qty])).toEqual([
+      ['grip-guard-gp5', 2],
+    ]);
   });
 
   test('a keyboard Enter on the enquiry button adds the product', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { useStore } from '@nanostores/preact';
 import { addItem, enquiry } from '../../stores/enquiry';
 
 interface Props {
@@ -18,12 +19,33 @@ interface Props {
  * Hydrated with `client:visible`, so a full page of cards does not pay for as many
  * islands before they are scrolled to.
  *
- * Two things are deliberately not left to colour alone. The confirmation
- * changes the *label* as well as the tint, and it is announced through a live
- * region: a tick that only appears is not perceivable without sight, and this
- * button is the only way to build an enquiry. The announcement carries the
- * running quantity so a second add of the same product is a different string —
- * an unchanged live region is not re-announced.
+ * Two things are deliberately not left to colour alone. The state changes the
+ * *label* as well as the tint, and every add is announced through a live region:
+ * a tick that only appears is not perceivable without sight, and this button is
+ * the only way to build an enquiry. The announcement carries the running quantity
+ * so a second add of the same product is a different string — an unchanged live
+ * region is not re-announced.
+ *
+ * THE BUTTON REFLECTS MEMBERSHIP, AND THAT IS THE POINT OF IT. It used to flash
+ * "Added" for 2.4 seconds and then revert, so a product already on the list was
+ * indistinguishable from one that was not, and a second click raised the quantity
+ * to 2 with nothing on screen ever saying so. On a request for quotation that is
+ * the buyer asking for twice what they wanted, found by nobody until the
+ * quotation comes back wrong. The state now comes from the store rather than a
+ * timer, so it survives a reload and flips back when the item is removed
+ * elsewhere.
+ *
+ * A SECOND CLICK STILL ADDS, AND THAT IS DELIBERATE. `tests/e2e/enquiry.spec.ts`
+ * holds it — "the same product again: units go up, lines do not" — and repeat-add
+ * is a reasonable way to ask for two of something. The defect was never that the
+ * quantity rose; it was that it rose invisibly. It is now on the button's face
+ * the moment it happens, and adjustable in the drawer and on /enquiry.
+ *
+ * The membership state is gated on `ready`. `useStore` returns the persisted
+ * basket on the very first render, so an ungated read would render "In your list"
+ * where the server sent "Add to enquiry" — a hydration mismatch Preact repairs by
+ * walking the wrong nodes. `EnquiryBadge` defers by one commit for the same
+ * reason.
  *
  * Without JavaScript the button removes itself rather than sitting there dead
  * (see `.eq-add--pending` in src/styles/enquiry.css). The basket genuinely
@@ -33,32 +55,36 @@ interface Props {
  */
 export default function EnquiryButton({ slug, name, variant = 'card' }: Props) {
   const [ready, setReady] = useState(false);
-  const [added, setAdded] = useState(false);
   const [message, setMessage] = useState('');
   const timer = useRef<number | undefined>(undefined);
+  const items = useStore(enquiry);
 
   useEffect(() => {
     setReady(true);
     return () => window.clearTimeout(timer.current);
   }, []);
 
+  const entry = ready ? items.find((i) => i.slug === slug) : undefined;
+  const inList = entry !== undefined;
+  const qty = entry?.qty ?? 0;
+
   const onClick = () => {
     addItem({ slug, name });
-    const qty = enquiry.get().find((i) => i.slug === slug)?.qty ?? 1;
+    const next = enquiry.get().find((i) => i.slug === slug)?.qty ?? 1;
+    setMessage(`${name} added to your enquiry list. Quantity ${next}.`);
 
-    setAdded(true);
-    setMessage(`${name} added to your enquiry list. Quantity ${qty}.`);
-
+    /* The live region is cleared again, the button is not. The message is an
+       announcement of a change and has no business being re-read every time the
+       user navigates past it; the membership state is carried by the label. */
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => {
-      setAdded(false);
-      setMessage('');
-    }, 2400);
+    timer.current = window.setTimeout(() => setMessage(''), 2400);
   };
 
   const label = variant === 'solid' ? 'Add to enquiry' : 'Enquire';
-  const doneLabel = variant === 'solid' ? 'Added to enquiry' : 'Added';
-  const visible = added ? doneLabel : label;
+  /* The quantity is only spoken when it is not 1: "In your list (1)" reads as
+     noise, and the number matters precisely when it is no longer the default. */
+  const inListLabel = qty > 1 ? `In your list (${qty})` : 'In your list';
+  const visible = inList ? inListLabel : label;
 
   /**
    * WCAG 2.5.3 Label in Name: the accessible name must CONTAIN the visible text
@@ -79,11 +105,11 @@ export default function EnquiryButton({ slug, name, variant = 'card' }: Props) {
     <div class={`eq-add-wrap${ready ? '' : ' eq-add-wrap--pending'}`}>
       <button
         type="button"
-        class={`eq-add eq-add--${variant}${added ? ' eq-add--done' : ''}`}
+        class={`eq-add eq-add--${variant}${inList ? ' eq-add--done' : ''}`}
         aria-label={ariaLabel}
         onClick={onClick}
       >
-        {added ? <TickIcon /> : <PlusIcon />}
+        {inList ? <TickIcon /> : <PlusIcon />}
         <span>{visible}</span>
       </button>
 
