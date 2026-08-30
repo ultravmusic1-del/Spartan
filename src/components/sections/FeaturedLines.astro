@@ -90,8 +90,8 @@ const TABS = [
       {
         cards.map((card) => (
           <li data-division={card.divisionId}>
-            <a class="fl__card" href={`/products/${card.slug}`}>
-              <span class="fl__media">
+            <a class="fl__card card-surface" href={`/products/${card.slug}`}>
+              <span class="fl__media card-media">
                 {card.image && (
                   /* Tiered like CategoryGrid's, but not by the grid's own breakpoints:
                      there the column count sets the cap, here `.fl__media`'s
@@ -190,33 +190,26 @@ const TABS = [
     gap: var(--space-4);
   }
 
+  /* Surface, border, transition and the hover/focus cue come from
+     `.card-surface` in global.css. This card and `CategoryGrid`'s declared the
+     same six properties independently until 2026-08-30. */
   .fl__card {
     display: block;
     height: 100%;
-    background: var(--surface-raised);
-    border: 1px solid var(--line);
     text-decoration: none;
-    transition: border-color var(--dur-base) var(--ease-out);
   }
 
-  .fl__card:hover,
-  .fl__card:focus-visible {
-    border-color: var(--accent);
-  }
-
+  /* Taller than the category tile's box on purpose: these cards are wider, and
+     a shared pixel height would leave the two sections at different
+     proportions. The treatment is `.card-media`; only the two dimensions are
+     this section's. */
   .fl__media {
-    height: 178px;
-    background: var(--surface-alt);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    --card-media-h: 178px;
+    --card-media-img-h: 140px;
   }
 
   .fl__media :global(img) {
-    max-height: 140px;
     max-width: 78%;
-    width: auto;
-    height: auto;
     object-fit: contain;
   }
 

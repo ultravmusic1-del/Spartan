@@ -76,8 +76,8 @@ const divisionNames: Record<string, string> = {
       {
         tiles.map((tile) => (
           <li>
-            <a class="cg__card" href={`/catalogue/${tile.slug}`}>
-              <span class="cg__media">
+            <a class="cg__card card-surface" href={`/catalogue/${tile.slug}`}>
+              <span class="cg__media card-media">
                 {
                   tile.image ? (
                     <>
@@ -187,38 +187,27 @@ const divisionNames: Record<string, string> = {
     min-width: 0;
   }
 
+  /* Surface, border, transition and the hover/focus cue all come from
+     `.card-surface` in global.css — the one definition of a card on this site.
+     What is left here is only what makes this card this card. */
   .cg__card {
     display: block;
-    background: var(--surface-raised);
-    border: 1px solid var(--line);
     text-decoration: none;
     height: 100%;
-    transition: border-color var(--dur-base) var(--ease-out);
   }
 
-  /* Not the focus indicator — `global.css` already sets a site-wide
-     `:focus-visible { outline: 2px solid var(--accent); outline-offset:
-     3px }` that nothing here resets, so keyboard focus is always visible.
-     This border swap is a secondary cue layered on top of it, matching hover. */
-  .cg__card:hover,
-  .cg__card:focus-visible {
-    border-color: var(--accent);
-  }
-
+  /* Layout, ground and the contained image come from `.card-media`; the two
+     dimensions are this section's, because the tiles are narrower than the
+     featured cards and one shared pixel height would give them a different
+     proportion. */
   .cg__media {
-    height: 128px;
-    background: var(--surface-alt);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    --card-media-h: 128px;
+    --card-media-img-h: 104px;
     overflow: hidden;
   }
 
   .cg__media :global(img) {
-    max-height: 104px;
     max-width: 82%;
-    width: auto;
-    height: auto;
     object-fit: contain;
   }
 

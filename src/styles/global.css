@@ -82,6 +82,79 @@ img, svg { display: block; max-width: 100%; }
    same utility resolves through --accent-text to the light red instead. */
 .text-brand { color: var(--accent-text); }
 
+/* ---------------------------------------------------------------- cards ---
+ *
+ * ONE DEFINITION OF WHAT A CARD IS, ADDED 2026-08-30. Before this the site had
+ * three card families and no card: `CategoryGrid` and `FeaturedLines` declared
+ * byte-for-byte the same surface, border, transition and hover cue, and
+ * `ServiceCards` declared a third that reached the same place a different way.
+ * A client review named it — "cards vary in border treatment, spacing, image
+ * ratio, label hierarchy, CTA placement and hover behaviour" — and it was the
+ * highest-value item left after the heads became one component.
+ *
+ * These live in global.css rather than a primitive because the markup is
+ * already right; what was duplicated is the styling. A `Card.astro` would mean
+ * restructuring three components to change nothing a reader can see.
+ *
+ * WHAT IS DELIBERATELY *NOT* UNIFIED: title size and case, and media height.
+ * A category tile's 13px uppercase label and a service card's 20px sentence-case
+ * heading are different levels of the same hierarchy, not an inconsistency —
+ * flattening them would remove information. Media height is a parameter
+ * (--card-media-h) because the cards are different widths, so one pixel height
+ * would give them different proportions. The treatment is shared; the dimension
+ * is per-section. */
+.card-surface {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+
+/* Not the focus indicator. `:focus-visible` above already draws a site-wide
+   outline that nothing resets; this border swap is a secondary cue layered on
+   top, and it matches hover so pointer and keyboard get the same answer. */
+.card-surface:hover,
+.card-surface:focus-visible,
+.card-surface:focus-within {
+  border-color: var(--accent);
+}
+
+/* For a card sitting in a `gap: 1px` grid, where the container's background
+   already draws the hairline between cards. A literal border there doubles the
+   seam into a visible 2px channel, so the boundary moves to an inset shadow:
+   same cue, no contribution to the box model. */
+.card-surface--seam {
+  border: 0;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+.card-surface--seam:hover,
+.card-surface--seam:focus-visible,
+.card-surface--seam:focus-within {
+  position: relative;
+  z-index: 2;
+  box-shadow:
+    inset 0 0 0 1px var(--accent),
+    0 18px 40px rgb(0 0 0 / 0.09);
+}
+
+/* The image ground. Fixed height so a row of cards keeps one baseline whatever
+   the photograph's shape, and the image is contained rather than cropped —
+   these are cut-outs on a flat ground, not scenes. */
+.card-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--card-media-h);
+  background: var(--surface-alt);
+}
+
+.card-media img {
+  width: auto;
+  height: auto;
+  max-height: var(--card-media-img-h);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

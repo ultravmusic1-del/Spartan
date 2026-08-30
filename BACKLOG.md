@@ -932,12 +932,40 @@ The header was added on 2026-08-23.
       each.** The shared head, the 40px rhythm and the numbering are the fixed
       points; anything that needs to break one of them is probably wrong.
 
-- [ ] **Standardise the card.** The review's other systemic note: cards vary in
-      border treatment, spacing, image ratio, label hierarchy, CTA placement
-      and hover behaviour across `CategoryGrid`, `FeaturedLines` and
-      `ServiceCards`. The heads are one component now; the cards are still
-      three. A `Card` primitive is the same move applied one level down, and it
-      is the highest-value item left after the head system.
+- [x] **Standardise the card.** Done 2026-08-30. `.card-surface`,
+      `.card-surface--seam` and `.card-media` in `src/styles/global.css` are the
+      one definition; `CategoryGrid`, `FeaturedLines` and `ServiceCards` adopt
+      them and keep only what makes each card itself.
+
+      Not a `Card` primitive in the end. The markup was already right — what was
+      duplicated was styling, and `CategoryGrid` and `FeaturedLines` declared
+      byte-for-byte the same six properties and the same hover. Restructuring
+      three components to change nothing a reader can see would have been cost
+      without benefit.
+
+      **Two things were deliberately not flattened**, because they carry
+      information rather than inconsistency: title size and case — a 13px
+      uppercase tile label and a 20px sentence-case service heading are
+      different levels of one hierarchy — and media height, which is a
+      `--card-media-h` parameter because the cards are different widths and one
+      pixel height would leave them at different proportions.
+
+      Found on the way: `ServiceCards` set `background: #fff` as a literal, the
+      exact species `docs/TRAPS.md` names as invisible to every token gate. It
+      resolves through `--surface-raised` now.
+
+- [ ] **Decide whether the product card joins the card language.** Left out of
+      the standardisation above on purpose: the review named three components
+      and this is a fourth, on the catalogue rather than the home page.
+
+      Its surface is already correct — `--surface-raised`, and it sits in a
+      `gap: 1px` grid, so it is a seam card exactly like `ServiceCards`. **What
+      differs is the hover cue, and nothing records why:** every other card on
+      the site changes its *boundary* on hover, and this one changes its
+      *ground* (`--surface-alt`). One of the two is right for a 94-item grid and
+      it is a judgement about density, not a defect — but it is the last card
+      divergence left, and adopting `.card-surface--seam` is a one-line change
+      once somebody has decided.
 
 - [ ] **Carry the section numbering to the remaining home sections.**
       `src/components/primitives/SectionIndex.astro` exists and is used twice —

@@ -80,7 +80,7 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
     <div class="services__grid">
       {
         cards.map((category) => (
-          <article class="card">
+          <article class="card card-surface card-surface--seam">
             <svg
               class="card__icon"
               viewBox="0 0 24 24"
@@ -132,37 +132,26 @@ const cards = FEATURED.map((id) => byId.get(id)).filter((c) => c !== undefined);
     border: 1px solid var(--line);
   }
 
-  /* Card surface treatment, adapted for a light band: the grid above already
-     draws hairlines between cards via its own 1px background gap (the same
-     technique documented on About's `.about__stats`), and a literal `border`
-     here would double that hairline into a visible 2px seam. An inset
-     box-shadow gets the "hover/focus border-color: var(--accent)" cue
-     from the shared card language without adding to the box model or
-     doubling anything — transparent at rest, so the base state is unchanged. */
+  /* `.card-surface--seam` in global.css carries the surface, the inset boundary
+     and the hover/focus cue. The seam variant exists because the grid above
+     draws the hairlines between cards through its own 1px background gap (the
+     same technique as About's `.about__stats`), so a literal border here would
+     double that into a visible 2px channel.
+
+     THE GROUND WAS A HARDCODED `#fff` UNTIL 2026-08-30, which is the exact
+     species docs/TRAPS.md names: a literal that was correct when it was typed
+     and that no token gate can see. It resolves through --surface-raised now,
+     with everything else that is a card.
+
+     The variant answers to `:focus-within` as well as `:focus-visible` because
+     this is an `<article>` rather than a link — the card is never the focus
+     target, the PillButton inside it is. Brand red on the boundary is a
+     non-text UI component under WCAG 1.4.11's 3:1, and measures 4.30:1. */
   .card {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     padding: 36px 32px;
-    background: #fff;
-    box-shadow: inset 0 0 0 1px transparent;
-    transition:
-      box-shadow var(--dur-base) var(--ease-out);
-  }
-
-  /* `:focus-within`, not `:focus-visible` on `.card` itself — this is an
-     `<article>`, not a link, so the card is never the focus target; the
-     PillButton inside it is. `:focus-within` gives the same cue when that
-     button is reached by keyboard. Brand red is fine here: this is a
-     non-text UI-component boundary (WCAG 1.4.11's 3:1), not body text, and
-     4.30:1 on white clears that with room to spare. */
-  .card:hover,
-  .card:focus-within {
-    position: relative;
-    z-index: 2;
-    box-shadow:
-      inset 0 0 0 1px var(--accent),
-      0 18px 40px rgba(0, 0, 0, 0.09);
   }
 
   .card__icon {
