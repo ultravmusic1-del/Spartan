@@ -45,15 +45,36 @@ A finding that restates a tracked item is noise. A finding that reopens a
 settled client decision is worse than noise — it spends the client's attention
 on a question they already answered.
 
-### 1. Read the approved design
+### 1. Read the approved design — and know what it still governs
 
-`design/direction-b-forge.html` is the source of truth for **spacing, size and
-layout**. It is not the source of truth for colour pairing — it shipped with a
-contrast failure of its own, recorded in `handoff.md`. Where the built page and
-the approved design disagree on geometry, that disagreement is the finding.
+`design/direction-b-forge.html` is the signed-off direction, and
+`handoff.md` calls it the source of truth for spacing, size and layout. **That
+sentence predates the seven design-review passes of 2026-08-29** (`handoff.md`
+§38–§44), which deliberately moved the site off it on exactly those axes:
+`--wrap-max` 1240 → 1360, every section band onto one `--section-pad`, the
+crop marks deleted, the hero rebuilt, sections added and reordered. The mockup
+was committed on 2026-08-03 and has not been touched since. Those reviews came
+from the client, so they supersede it rather than drift from it.
 
-Deliberate departures exist and are recorded in the component that makes them.
-Read the component before calling a departure a defect.
+So do not diff the render against it and call the differences defects. What it
+still governs, verified 2026-08-30 by measuring both:
+
+- **Proportions, which are exact.** About 50:50, Spotlight 47.5:52.5, Enquiry
+  CTA 57.5:42.5 — identical in the mockup and the build. A section whose
+  column ratio has drifted *is* a finding.
+- **Not absolute widths or vertical rhythm.** Those are `--wrap-max` and
+  `--section-pad` now, and both are reasoned in `src/styles/tokens.css`.
+- **Not colour.** It shipped with its own contrast failure, recorded in
+  `handoff.md`, and the site went light-first on 2026-08-20 while the mockup
+  is dark throughout.
+- **Not the section inventory.** The ticker and featured lines do not exist in
+  it; the footer's newsletter field and social column do, and were removed by
+  decision.
+
+Three departures are open for client sign-off and must not be re-reported as
+defects: the heading weight scale (600, where the mockup sets 700/800), the
+Name field added to the home CTA, and the removed footer email field. All three
+are in `BACKLOG.md`.
 
 ### 2. Build. Never judge pixels on the dev server
 
