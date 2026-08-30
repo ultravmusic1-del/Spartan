@@ -255,22 +255,63 @@ test.describe('the hero proposition', () => {
     /*
      * THE HERO'S BLANDNESS WAS MEASURABLE, so this guards against it coming
      * back. A design review found the composition "killing the energy" with
-     * five centred strips stacked down the middle. The masthead, the headline
-     * and the lede now share one left edge, and the counted index is the
-     * counterweight out to the right.
+     * five centred strips stacked down the middle.
+     *
+     * THE LEDE LEFT THE LEFT AXIS ON 2026-08-30, at the client's explicit
+     * instruction, and this test changed with it rather than being deleted.
+     * The old arrangement — masthead, headline and lede all on one left edge,
+     * numeral alone on the right — measured a 463 x 190 hole between the
+     * headline's last letter and that numeral, the largest empty region on the
+     * page. The lede is real content and now fills it.
+     *
+     * What is asserted instead is stricter than what it replaced: the block is
+     * still driven off the left axis, and the rail's two members each share a
+     * real edge with the headline rather than sitting at a chosen distance
+     * from it.
      */
-    const left = async (sel: string) => (await page.locator(sel).boundingBox())!.x;
+    /* Wait for `hero-rise` before measuring anything. It starts at
+       translateY(16px), the headline carries it and the numeral does not, so a
+       geometry read taken straight after `goto` compares a settled element with
+       one still 16px low — which is exactly what this assertion caught the
+       first time it was written. docs/TRAPS.md records the same hazard. */
+    await page.evaluate(async () => {
+      const finite = document.getAnimations().filter((a) => {
+        const t = a.effect?.getComputedTiming();
+        return t != null && t.iterations !== Infinity;
+      });
+      await Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
+    });
 
-    const masthead = await left('.hero__masthead');
-    const title = await left('.hero__title');
-    const lede = await left('.hero__lede');
+    const box = async (sel: string) => (await page.locator(sel).boundingBox())!;
 
-    expect(Math.round(title)).toBe(Math.round(masthead));
-    expect(Math.round(lede)).toBe(Math.round(masthead));
+    const masthead = await box('.hero__masthead');
+    const title = await box('.hero__title');
+    const lede = await box('.hero__lede');
+    const numeral = await box('.hero__composition .section-index');
 
-    // And the index sits well to the right of the headline's own column.
-    const index = await left('.hero__index');
-    expect(index).toBeGreaterThan(title + 600);
+    // The left axis survives: masthead and headline still start together.
+    expect(Math.round(title.x)).toBe(Math.round(masthead.x));
+
+    // The lede is in the right rail, clear of the headline's column.
+    expect(lede.x).toBeGreaterThan(title.x + title.width);
+
+    // A shared edge, not a distance: the numeral starts on the headline's line.
+    expect(Math.round(numeral.y)).toBe(Math.round(title.y));
+
+    // The rail closes on the wrap's right edge, which is the hero's second
+    // vertical edge and the line every section numeral on the page ends on.
+    const wrapRight = await page
+      .locator('.hero__composition')
+      .evaluate((el) => Math.round(el.getBoundingClientRect().right));
+    expect(Math.round(numeral.x + numeral.width)).toBe(wrapRight);
+    expect(Math.round(lede.x + lede.width)).toBe(wrapRight);
+
+    // The lede is below the numeral in the rail, not beside it.
+    expect(lede.y).toBeGreaterThan(numeral.y + numeral.height);
+
+    // And the counted index still anchors the opposite end of the CTA row.
+    const index = await box('.hero__index');
+    expect(index.x).toBeGreaterThan(title.x + 600);
   });
 
   test("steps the second headline line right, flush to the first line's end", async ({

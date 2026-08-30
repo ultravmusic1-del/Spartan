@@ -311,14 +311,25 @@ const settings = await getSiteSettings();
             A newline between these two spans puts it straight back, and the
             trailing space belongs INSIDE the first span for the same reason. */}
         <h1 class="hero__title"><span class="hero__title-a">Home and industrial </span><span class="hero__title-b">solutions.</span></h1>
+      </div>
+
+      {/* THE RIGHT RAIL. The numeral used to stand here alone and the lede sat
+          under the headline, which left a measured 463 x 190 hole between the
+          headline's right edge and the numeral — the largest empty region on
+          the page and the one a client screenshot picked out. The lede is real
+          content and it belongs where the hole was.
+
+          Both still land on the wrap's right edge, so §44's two-edge rule is
+          kept rather than broken: the rail simply gives that edge a column
+          instead of a single glyph. */}
+      <div class="hero__rail">
+        <SectionIndex n="01" flow />
 
         <p class="hero__lede">
           Lighting, ventilation, water management, PPE and workwear for
           contractors and distributors.
         </p>
       </div>
-
-      <SectionIndex n="01" flow />
     </div>
 
     <div class="hero__stage" data-hero-stage>
@@ -1114,11 +1125,14 @@ const settings = await getSiteSettings();
      column, which is the phone layout and needs no separate rules. */
   .hero__composition {
     display: grid;
-    /* `auto` for the numeral column: it is as wide as its own two digits and
-       never steals measure from the headline. The gap collapses on a phone so
-       the pair can share 320px the way every section head already does. */
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
+    /* The right column was `auto` — the numeral's own two digits and nothing
+       else — which is what left the hole this rail now fills. It is a real
+       column with a real minimum, so the headline keeps the larger share of the
+       measure and the composition still has exactly two vertical edges. */
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+    /* `stretch`, so the rail is as tall as the headline and can pin one child
+       to each end of it. */
+    align-items: stretch;
     gap: 0 clamp(20px, 4vw, 56px);
     /* --hero-gap-close, not step: the masthead is an 11px line and 32px under
        it read as a hole once the stats strip left this block. */
@@ -1136,9 +1150,44 @@ const settings = await getSiteSettings();
     font-size: calc(clamp(36px, 5.4vw, 72px) * 2.4);
   }
 
+  /* A container, so the headline can be sized from the column it is in rather
+     than from the viewport. With a fixed-width rail beside it, the column
+     narrows faster than `vw` does — which is why a viewport-based clamp fitted
+     at 1440 and wrapped line one at 1280. */
   .hero__type {
     position: relative;
     min-width: 0;
+    container-type: inline-size;
+  }
+
+  /* The rail stacks the numeral over the lede and pins both to the wrap's right
+     edge. `align-items: end` is what does the pinning — the numeral is as wide
+     as its digits and the lede is as wide as its measure, so without it they
+     would ragged-left against each other and the edge would stop being an
+     edge. */
+  .hero__rail {
+    display: flex;
+    flex-direction: column;
+    /* The numeral's cap-top on the headline's cap-top, the lede's last line on
+       the headline's baseline. Two shared edges rather than two distances —
+       §44's rule, applied inside the block instead of only at its sides. The
+       pair share a left edge with each other, which is what makes the rail read
+       as a column and not as two floating objects. */
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  /* The numeral stretches to the rail and pushes its digits to the far side, so
+     its box ends on the wrap's right edge — the same line every other section's
+     numeral ends on, which `home.spec.ts` asserts across all nine. Left-aligning
+     it inside the rail broke that line, and the numbering system is a system
+     precisely because no instance is allowed its own geometry. */
+  .hero__rail :global(.section-index) {
+    /* `width: 100%` rather than `align-self: stretch`: the flow variant already
+       resolves to `align-self: start`, and an explicit width settles it without
+       a specificity argument with the primitive. */
+    width: 100%;
+    text-align: right;
   }
 
   /* THE OUTLINED PRODUCT COUNT. See the note in the markup for why this is the
@@ -1215,9 +1264,15 @@ const settings = await getSiteSettings();
        in the current face at the current size, and this rule's size is a
        clamp — so a `ch` cap silently changes measure at every viewport, which
        is the opposite of the fixed footprint being asked for. `min()` keeps it
-       from overflowing a narrow column. */
-    max-width: min(470px, 100%);
-    margin: var(--hero-gap-close) 0 0;
+       from overflowing a narrow column.
+
+       The cap is the rail's width now rather than 470px: in the rail it is the
+       column, so a measure narrower than its own container would re-open a
+       smaller version of the hole it was moved here to close. The 430-480px the
+       review asked for is what `minmax(300px, 400px)` plus the gap resolves to
+       on a desktop measure anyway. */
+    max-width: 100%;
+    margin: var(--hero-gap-step) 0 0;
     color: var(--text-muted);
     font-family: var(--font-body);
     font-size: clamp(15px, 1.25vw, 17.5px);
@@ -1276,7 +1331,24 @@ const settings = await getSiteSettings();
        68 -> 72 at the ceiling, and the composition carries far more weight
        than the extra 4px suggests: line two lands at 85px. The review asked
        for roughly 62-70 and 82-94, which is where this sits. */
-    font-size: clamp(36px, 5.4vw, 72px);
+    /* 72px -> 92px at the cap, 2026-08-30. With the lede moved into the right
+       rail the type column is its own width and the headline was filling barely
+       half of it — 675px of an 840px column, which is what left a hole between
+       its last letter and the rail. The staircase is `width: fit-content`, so
+       the only way to make it hold its column is to set it larger.
+
+       88px, NOT MORE, AND THE CEILING IS STRUCTURAL. Line one has to stay on
+       one line: the staircase is "line two's last letter under line one's last
+       letter", and a wrapped line one turns that alignment into a three-line
+       stack with nothing to align to. At 92px "Home and industrial " measured
+       wider than the 840px column and wrapped, which is exactly what
+       home.spec.ts caught.
+
+       `cqw`, NOT `vw`, AND THAT IS THE WHOLE FIX. Line one's width is 9.375x
+       its font size in this face, so the size that exactly fills the column is
+       10.67cqw. 10.4cqw fills 97.5% of it and leaves the wrap headroom at every
+       width, where a viewport unit could only ever be tuned for one. */
+    font-size: clamp(36px, 10.4cqw, 88px);
     font-weight: 800;
     font-style: italic;
     /* 0.96 -> 0.84 -> 0.74. The second step came from a third review: the two
@@ -1486,6 +1558,32 @@ const settings = await getSiteSettings();
       /* 86px of chrome plus 8px, matching the tighter 136/128 relationship
          this breakpoint carried before the utility bar was removed. */
       padding: 94px 0 64px;
+    }
+  }
+
+  /* THE RAIL COMES APART BELOW 900px, AND `display: contents` IS WHAT DOES IT.
+     The rail's 300px floor is right on a desktop measure and impossible on a
+     phone: at 375px it claimed the whole wrap and left the headline's column at
+     0px, with the h1 overflowing a column that no longer existed.
+
+     Dissolving the rail promotes the numeral and the lede to grid items in
+     their own right, which restores exactly the arrangement this block had
+     before the rail existed — headline and numeral side by side, lede on its
+     own full-measure row beneath. No second copy of the layout, and nothing to
+     keep in sync: the mobile case is the desktop case with one box removed. */
+  @media (max-width: 900px) {
+    .hero__composition {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .hero__rail {
+      display: contents;
+    }
+
+    .hero__lede {
+      grid-column: 1 / -1;
+      max-width: min(470px, 100%);
+      margin-top: var(--hero-gap-close);
     }
   }
 

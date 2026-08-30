@@ -4829,3 +4829,83 @@ blocks now, so box positions would pass vacuously — it measures the rendered
 ink via a `Range` and asserts the two line-ends agree within 4px of italic
 overhang. The vacuous narrow-screen margin test became an ink-containment
 assertion. All three numbering-geometry invariants passed unchanged.
+
+---
+
+## 45. The hero's empty half, and the rail that filled it — 2026-08-30
+
+**Status: implemented.** `verify 18/18 · 392 unit · 341 public e2e, 0 failing.`
+
+### The instruction, because it reverses two recorded decisions
+
+The client sent a desktop screenshot of the hero and asked for its symmetry and
+empty space to be fixed. Told that §39 and §44 had settled the composition
+deliberately, they answered: **"you have permission to bypass the previous
+asymmetry laws and instructions."** That is the authority for everything below.
+Without it none of this should have been touched.
+
+### What was actually empty
+
+Measured rather than eyeballed — every painting element's box, sampled onto a
+40×24 grid over the hero's own area, at 1280, 1440 and 1600:
+
+- **Ink occupancy 61%.**
+- A **463 × 190px hole** between the headline's last letter (x 747) and the
+  numeral (x 1210), running the full height of the type block. The largest
+  empty region on the page.
+- A second, milder gap on the CTA row between the actions and the stats.
+
+§44's two-edge rule was being honoured and was not the problem. The problem was
+that the right edge was held by a single outlined glyph while the left held four
+elements, so the top half of the hero was a column and a smudge.
+
+### Three moves
+
+**1. The lede moved into a right rail with the numeral.** It is real content and
+it belonged where the hole was. Both members still land on the wrap's right
+edge, so the two-edge rule is kept rather than broken — the rail gives that edge
+a column instead of a lone glyph.
+
+**2. The headline scales off its column, not the viewport.** With a fixed rail
+beside it the type column narrows faster than `vw` does, which is why a
+viewport clamp fitted at 1440 and wrapped line one at 1280 — and a wrapped line
+one destroys the staircase, whose whole mechanism is "line two's last letter
+under line one's last letter". `.hero__type` is a container and the h1 is
+`clamp(36px, 10.4cqw, 88px)`. Line one's width is 9.375× its font size in this
+face, so 10.4cqw fills 97.5% of whatever column it is given. Verified one line
+and flush-right to 0px at 960 → 1920.
+
+**3. The rail comes apart below 900px via `display: contents`.** Its 300px floor
+is right on a desktop measure and impossible on a phone — at 375px it claimed
+the whole wrap and left the headline's column at 0px. Dissolving it promotes
+both children to grid items and restores exactly the pre-rail arrangement:
+headline and numeral side by side, lede on its own full-measure row. The mobile
+case is the desktop case with one box removed.
+
+**Result: occupancy 61% → 67%, and the 463 × 190 hole is gone.** CTA bottom at
+1280×850 went 793 → 813, still inside the fold.
+
+### Two things the tests caught that measurement alone did not
+
+**The numeral stopped ending on the wrap's right edge.** Left-aligned in the
+rail it ended at 1126, and `home.spec.ts` asserts all nine section numerals end
+on one vertical line. It is `width: 100%` with `text-align: right` now — an
+explicit width rather than `align-self: stretch`, because the flow variant
+already resolves to `align-self: start` and this settles it without a
+specificity argument with the primitive.
+
+**The composition test raced the entrance animation.** `hero-rise` starts at
+`translateY(16px)`; the headline carries it and the numeral does not, so a
+geometry read taken straight after `goto` compared a settled element with one
+still 16px low. `docs/TRAPS.md` records this exact hazard and the test now waits
+for the finite animations, as `hero-mobile.spec.ts` does.
+
+### One assertion was withdrawn rather than satisfied
+
+The rewritten test first claimed the lede's last line lands on the headline's
+baseline. It does not: the rail is taller than the headline, so the lede pins to
+the composition block's bottom. Making it true would have meant contorting the
+layout to satisfy a sentence, so the sentence went. What is asserted now is what
+is there — the left axis, the numeral's cap-top on the headline's, both rail
+members closing on the wrap's right edge, and the lede below the numeral rather
+than beside it.
