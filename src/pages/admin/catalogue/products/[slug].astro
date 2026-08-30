@@ -330,8 +330,8 @@ const specRows = [
 
   .ad-specs {
     display: grid;
-    gap: 10px;
-    margin-top: 22px;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
   }
 
   /* Label and value side by side on a desktop, stacked on a phone. The label
@@ -340,7 +340,7 @@ const specRows = [
   .ad-spec {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    gap: 10px;
+    gap: var(--space-3);
     margin: 0;
   }
 
@@ -351,7 +351,7 @@ const specRows = [
   }
 
   .ad-specs__note {
-    margin-top: 14px;
+    margin-top: var(--space-4);
   }
 
   code {

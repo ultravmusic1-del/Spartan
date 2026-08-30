@@ -306,7 +306,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .nav {
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: var(--space-10);
     height: 84px;
   }
 
@@ -385,7 +385,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     /* 22px, down from 28px. The links grew from 11px to 13px in the same pass;
        giving the gap back keeps the row's total width, so the 1080px
        breakpoint still lands exactly where it was measured. */
-    gap: 22px;
+    gap: var(--space-6);
     list-style: none;
   }
 
@@ -444,7 +444,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .nav__link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
   }
 
   .nav__caret svg {
@@ -505,7 +505,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .nav__cols {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 26px;
+    gap: var(--space-7);
   }
 
   /* The division's own name, verbatim from the record — already "Spartan
@@ -541,7 +541,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .nav__sub {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 5px 0;
     font-family: var(--font-body);
     font-size: var(--fs-ui);
@@ -581,8 +581,8 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .nav__all {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    margin-top: 16px;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
     padding-top: 14px;
     border-top: 1px solid var(--line);
     width: 100%;
@@ -633,7 +633,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .nav__tools {
     display: flex;
     align-items: center;
-    gap: 22px;
+    gap: var(--space-6);
     margin-left: auto;
     padding-left: 24px;
     border-left: 1px solid var(--line);
@@ -651,7 +651,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
      and it stays subordinate to the thing it is pointing at. The outline
      fills on hover, which is where the emphasis is earned. */
   .nav__tel--fallback {
-    gap: 8px;
+    gap: var(--space-2);
     padding: 0 16px;
     /* --accent-text, not brand red: this is 14px, normal-size text, and the
        4.5:1 floor applies. 9.07:1 on white. Rule 4. */
@@ -805,11 +805,11 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
      keeps its outline; only air is spent. */
   @media (max-width: 1240px) {
     .nav {
-      gap: 24px;
+      gap: var(--space-6);
     }
 
     .nav__tools {
-      gap: 16px;
+      gap: var(--space-4);
       padding-left: 16px;
     }
   }
@@ -824,7 +824,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   /* Below the boundary: the trigger is on, the menu is off. */
   @media (max-width: 1080px) {
     .nav {
-      gap: 16px;
+      gap: var(--space-4);
     }
 
     .nav__menu {
@@ -946,7 +946,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .mnav-list {
     display: flex;
     flex-direction: column;
-    margin-top: 12px;
+    margin-top: var(--space-3);
   }
 
   .mnav-link {
@@ -1003,7 +1003,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
   .mnav-sub {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-3);
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     font-family: var(--font-body);

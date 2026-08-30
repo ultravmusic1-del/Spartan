@@ -175,13 +175,13 @@ const year = new Date().getFullYear();
     align-items: center;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 48px;
+    gap: var(--space-12);
   }
 
   .f-item {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: var(--space-4);
   }
 
   .f-item__ic {
@@ -240,7 +240,7 @@ const year = new Date().getFullYear();
        left in place it contributes a trailing 44px gap to a track with nothing
        in it. */
     grid-template-columns: 1.6fr 1fr 1fr 1fr;
-    gap: 44px;
+    gap: var(--space-11);
   }
 
   .f-logo {
@@ -255,7 +255,7 @@ const year = new Date().getFullYear();
 
   .f-main p {
     max-width: 38ch;
-    margin-top: 18px;
+    margin-top: var(--space-5);
     font-size: var(--fs-ui);
     /* 6.13:1 on black. */
     color: var(--color-grey);
@@ -340,12 +340,12 @@ const year = new Date().getFullYear();
 
   @media (max-width: 520px) {
     .f-top__inner {
-      gap: 28px;
+      gap: var(--space-7);
     }
 
     .f-main__inner {
       grid-template-columns: 1fr;
-      gap: 32px;
+      gap: var(--space-8);
     }
   }
 </style>

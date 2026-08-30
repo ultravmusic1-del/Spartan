@@ -230,7 +230,7 @@ const details = [
     z-index: 2;
     display: grid;
     grid-template-columns: 0.85fr 1.15fr;
-    gap: 56px;
+    gap: var(--space-14);
     align-items: start;
   }
 
@@ -262,7 +262,7 @@ const details = [
   }
 
   .det__row dd {
-    margin-top: 6px;
+    margin-top: var(--space-2);
     font-size: var(--fs-body);
     color: var(--text);
   }
@@ -280,7 +280,7 @@ const details = [
   }
 
   .note {
-    margin-top: 32px;
+    margin-top: var(--space-8);
     padding: 26px 24px;
     border: 1px solid var(--line);
     background: var(--surface-raised);
@@ -306,7 +306,7 @@ const details = [
   .cf2__row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: var(--space-4);
   }
 
   .cf2__field {
@@ -379,7 +379,7 @@ const details = [
      `:empty` collapses it without the `hidden` attribute, which Tailwind 4's
      preflight would make `!important` and unstyleable. */
   .cf2__status {
-    margin-top: 16px;
+    margin-top: var(--space-4);
     font-size: var(--fs-body-sm);
     line-height: 1.5;
     color: var(--text-muted);
@@ -403,7 +403,7 @@ const details = [
      flashes. */
   .cf2__submit {
     display: none;
-    margin-top: 6px;
+    margin-top: var(--space-2);
   }
 
   html[data-js] .cf2__submit {
@@ -411,7 +411,7 @@ const details = [
   }
 
   .cf2__nojs {
-    margin-top: 16px;
+    margin-top: var(--space-4);
     font-size: var(--fs-body-sm);
     line-height: 1.5;
     color: var(--text-muted);
@@ -435,7 +435,7 @@ const details = [
   @media (max-width: 980px) {
     .cb__inner {
       grid-template-columns: 1fr;
-      gap: 44px;
+      gap: var(--space-11);
     }
   }
 

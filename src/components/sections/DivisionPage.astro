@@ -284,7 +284,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   }
 
   .dh__title {
-    margin-top: 20px;
+    margin-top: var(--space-5);
     font-size: clamp(40px, 6.6vw, 84px);
     font-weight: var(--fw-display);
     letter-spacing: -0.035em;
@@ -295,7 +295,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
 
   .dh__blurb {
     max-width: 52ch;
-    margin-top: 20px;
+    margin-top: var(--space-5);
     font-size: var(--fs-body);
     /* 8.2:1 over the scrimmed photograph at its lightest point. */
     color: #bfbfc6;
@@ -307,7 +307,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     display: inline-grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1px;
-    margin-top: 30px;
+    margin-top: var(--space-8);
     background: var(--line);
     border: 1px solid var(--line);
   }
@@ -343,8 +343,8 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   .dh__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 30px;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
   }
 
   .dc {
@@ -358,7 +358,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
 
   .dc__lede {
     max-width: 60ch;
-    margin-top: 14px;
+    margin-top: var(--space-4);
     font-size: var(--fs-body);
     color: var(--text-muted);
   }
@@ -368,7 +368,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
-    margin-top: 32px;
+    margin-top: var(--space-8);
     list-style: none;
     background: var(--line);
     border: 1px solid var(--line);
@@ -400,19 +400,19 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    gap: 40px;
+    gap: var(--space-10);
     margin-bottom: 36px;
   }
 
   .ds__title {
-    margin-top: 16px;
+    margin-top: var(--space-4);
     font-size: clamp(26px, 3.2vw, 38px);
     letter-spacing: -0.026em;
   }
 
   .ds__lede {
     max-width: 58ch;
-    margin-top: 14px;
+    margin-top: var(--space-4);
     font-size: var(--fs-body);
     color: var(--text-muted);
   }
@@ -420,8 +420,8 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
   .ds__foot {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 40px;
+    gap: var(--space-3);
+    margin-top: var(--space-10);
   }
 
   @media (max-width: 1080px) {
@@ -451,7 +451,7 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     .ds__head {
       flex-direction: column;
       align-items: flex-start;
-      gap: 24px;
+      gap: var(--space-6);
     }
   }
 

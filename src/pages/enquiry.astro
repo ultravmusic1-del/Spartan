@@ -172,12 +172,12 @@ const site = await getSiteSettings();
   }
 
   .eb__nojs-body {
-    margin-top: 12px;
+    margin-top: var(--space-3);
     color: var(--text-muted);
   }
 
   .eb__nojs-detail {
-    margin-top: 22px;
+    margin-top: var(--space-6);
     border-top: 1px solid var(--line);
   }
 
@@ -209,7 +209,7 @@ const site = await getSiteSettings();
     align-items: center;
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
-    margin-top: 12px;
+    margin-top: var(--space-3);
     padding: 10px 2px;
     border-bottom: 1px solid var(--accent);
     font-family: var(--font-display);
@@ -225,7 +225,7 @@ const site = await getSiteSettings();
   .ef {
     display: grid;
     grid-template-columns: 1.02fr 0.98fr;
-    gap: 32px;
+    gap: var(--space-8);
     align-items: start;
   }
 
@@ -252,7 +252,7 @@ const site = await getSiteSettings();
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--space-4);
     padding-bottom: 16px;
     border-bottom: 1px solid var(--line);
   }
@@ -278,7 +278,7 @@ const site = await getSiteSettings();
   }
 
   .ef-list__empty-note {
-    margin-top: 10px;
+    margin-top: var(--space-3);
     font-size: var(--fs-body-sm);
     color: var(--text-muted);
   }
@@ -288,7 +288,7 @@ const site = await getSiteSettings();
     align-items: center;
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
-    margin-top: 10px;
+    margin-top: var(--space-3);
     padding: 10px 2px;
     border-bottom: 1px solid var(--accent);
     font-family: var(--font-display);
@@ -322,7 +322,7 @@ const site = await getSiteSettings();
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .ef-item__name {
@@ -361,8 +361,8 @@ const site = await getSiteSettings();
   .ef-item__controls {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    margin-top: 12px;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
   }
 
   .ef-qty {
@@ -456,11 +456,11 @@ const site = await getSiteSettings();
   .ef-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: var(--space-4);
   }
 
   .ef-field {
-    margin-top: 16px;
+    margin-top: var(--space-4);
   }
 
   .ef-field label {
@@ -531,7 +531,7 @@ const site = await getSiteSettings();
      say what is wrong. */
   .ef-field__error,
   .ef-alert {
-    margin-top: 8px;
+    margin-top: var(--space-2);
     padding: 10px 12px;
     border-left: 3px solid var(--accent);
     background: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -541,16 +541,16 @@ const site = await getSiteSettings();
   }
 
   .ef-alert {
-    margin-top: 20px;
+    margin-top: var(--space-5);
   }
 
   .ef-submit {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--space-3);
     width: 100%;
-    margin-top: 22px;
+    margin-top: var(--space-6);
     padding: 14px 26px;
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
@@ -588,7 +588,7 @@ const site = await getSiteSettings();
   }
 
   .ef-note {
-    margin-top: 12px;
+    margin-top: var(--space-3);
     font-size: var(--fs-meta);
     color: var(--text-muted);
   }
@@ -621,7 +621,7 @@ const site = await getSiteSettings();
   }
 
   .ef-done__title {
-    margin-top: 18px;
+    margin-top: var(--space-5);
     font-family: var(--font-display);
     font-size: clamp(26px, 3.4vw, 34px);
     font-weight: var(--fw-section);
@@ -630,7 +630,7 @@ const site = await getSiteSettings();
   }
 
   .ef-done__body {
-    margin-top: 14px;
+    margin-top: var(--space-4);
     color: var(--text-muted);
   }
 
@@ -639,7 +639,7 @@ const site = await getSiteSettings();
      label, 14px body like .ef-done__pending, --text-muted for the recessive
      line and --text for the facts. */
   .ef-receipt {
-    margin-top: 26px;
+    margin-top: var(--space-7);
     padding-top: 22px;
     border-top: 1px solid var(--line);
     text-align: left;
@@ -656,7 +656,7 @@ const site = await getSiteSettings();
   }
 
   .ef-receipt__head {
-    margin-top: 20px;
+    margin-top: var(--space-5);
     font-family: var(--font-display);
     font-size: var(--fs-label);
     font-weight: var(--fw-label);
@@ -666,19 +666,19 @@ const site = await getSiteSettings();
   }
 
   .ef-receipt__list {
-    margin-top: 10px;
+    margin-top: var(--space-3);
     list-style: none;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .ef-receipt__list li {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--space-4);
     font-size: var(--fs-body-sm);
     color: var(--text);
   }
@@ -693,10 +693,10 @@ const site = await getSiteSettings();
   }
 
   .ef-receipt__ref {
-    margin-top: 20px;
+    margin-top: var(--space-5);
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    gap: var(--space-3);
     flex-wrap: wrap;
   }
 
@@ -719,7 +719,7 @@ const site = await getSiteSettings();
   }
 
   .ef-done__pending {
-    margin-top: 18px;
+    margin-top: var(--space-5);
     padding: 14px 16px;
     border-left: 3px solid var(--accent);
     background: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -736,7 +736,7 @@ const site = await getSiteSettings();
     align-items: center;
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
-    margin-top: 20px;
+    margin-top: var(--space-5);
     padding: 10px 2px;
     border-bottom: 1px solid var(--accent);
     font-family: var(--font-display);
@@ -755,7 +755,7 @@ const site = await getSiteSettings();
   @media (max-width: 980px) {
     .ef {
       grid-template-columns: 1fr;
-      gap: 24px;
+      gap: var(--space-6);
     }
   }
 
@@ -778,7 +778,7 @@ const site = await getSiteSettings();
     .ef-item__controls {
       flex-direction: column;
       align-items: stretch;
-      gap: 10px;
+      gap: var(--space-3);
     }
 
     .ef-qty {

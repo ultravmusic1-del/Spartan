@@ -666,7 +666,7 @@ const settings = await getSiteSettings();
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: var(--space-3);
     aspect-ratio: 4 / 1;
     border: 1px dashed var(--line-control);
     background: var(--surface-page);
@@ -846,7 +846,7 @@ const settings = await getSiteSettings();
     display: flex;
     align-items: center;
     flex: 0 0 auto;
-    gap: 10px;
+    gap: var(--space-3);
     /* 340 -> 300 at the ceiling, and the gap with it: a third review still
        found the assembly loose. Roughly 12% out of the whole unit. */
     width: clamp(185px, 22vw, 300px);
@@ -858,7 +858,7 @@ const settings = await getSiteSettings();
   .hero__count {
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: var(--space-1);
     flex-shrink: 0;
     margin: 0;
     font-family: var(--font-mono);
@@ -885,7 +885,7 @@ const settings = await getSiteSettings();
     display: flex;
     flex: 1 1 auto;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     min-width: 0;
   }
 
@@ -956,7 +956,7 @@ const settings = await getSiteSettings();
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
-    gap: 7px;
+    gap: var(--space-2);
     padding: 5px 12px;
     border: 1px solid var(--line);
     border-radius: 2px;
@@ -1336,7 +1336,7 @@ const settings = await getSiteSettings();
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
+    gap: var(--space-4);
     margin-top: var(--hero-gap-step);
     animation: hero-rise 0.4s var(--ease-out) 0.12s both;
   }
@@ -1521,7 +1521,7 @@ const settings = await getSiteSettings();
     .hero__actions {
       flex-direction: column;
       align-items: stretch;
-      gap: 12px;
+      gap: var(--space-3);
     }
   }
 
@@ -1574,21 +1574,21 @@ const settings = await getSiteSettings();
     /* The composition carries the top gap now; the headline sits inside it and
        no longer has a margin of its own to trim. */
     .hero__composition {
-      margin-top: 12px;
+      margin-top: var(--space-3);
     }
 
     /* The index sits under the type on one column here, so it needs its own
        gap rather than the grid's. */
     .hero__index {
-      gap: 12px;
-      margin-top: 20px;
+      gap: var(--space-3);
+      margin-top: var(--space-5);
     }
 
     /* The band is full-width now, so there is no card width left to shrink —
        only vertical gaps. The stage keeps its ratio and the trims come out of
        the space around it. */
     .hero__stage {
-      margin-top: 16px;
+      margin-top: var(--space-4);
     }
 
     /* The control row is a WCAG 2.2.2 requirement whenever a carousel is
@@ -1601,7 +1601,7 @@ const settings = await getSiteSettings();
     }
 
     .hero__actions {
-      margin-top: 16px;
+      margin-top: var(--space-4);
     }
 
     /* THE 2026-08-29 PASS SPENT THIS BUDGET AND PAID IT BACK HERE.
@@ -1620,7 +1620,7 @@ const settings = await getSiteSettings();
        Measured, not estimated: see the note above. Re-measure both screens if
        any of these move. */
     .hero__lede {
-      margin-top: 8px;
+      margin-top: var(--space-2);
       font-size: var(--fs-body-sm);
       line-height: 1.45;
     }

@@ -341,9 +341,9 @@ const pageTitle = category
   .pd__inner {
     display: grid;
     grid-template-columns: 0.95fr 1.05fr;
-    gap: 64px;
+    gap: var(--space-16);
     align-items: start;
-    margin-top: 32px;
+    margin-top: var(--space-8);
   }
 
   /* Same radial-lit panel as the home page Spotlight. The cutout is transparent
@@ -417,7 +417,7 @@ const pageTitle = category
      and the label they land on would then be two different reds; it uses the
      dark-surface text red for the same reason .eyebrow does. 5.08:1. */
   .pd__variant {
-    margin-top: 10px;
+    margin-top: var(--space-3);
     font-family: var(--font-display);
     font-size: var(--fs-ui);
     font-weight: var(--fw-label);
@@ -437,7 +437,7 @@ const pageTitle = category
   }
 
   .pd__note {
-    margin-top: 10px;
+    margin-top: var(--space-3);
     font-size: var(--fs-meta);
     color: var(--text-muted);
   }
@@ -450,8 +450,8 @@ const pageTitle = category
   .pd__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 30px;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
   }
 
   .pd__actions :global(.eq-add-wrap) {
@@ -477,7 +477,7 @@ const pageTitle = category
 
     .pd__inner {
       grid-template-columns: 1fr;
-      gap: 44px;
+      gap: var(--space-11);
     }
 
     .pd__vis {

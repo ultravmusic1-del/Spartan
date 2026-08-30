@@ -140,6 +140,44 @@
   --section-pad: clamp(64px, 6.5vw, 92px);
   --wrap-pad: 32px;
 
+  /* -------------------------------------------------------------- spacing --
+   *
+   * ADDED 2026-08-30, ALONGSIDE THE TYPE SCALE AND FOR THE SAME REASON. Gaps
+   * and margins were per-component literals: 25 distinct gap values and 22
+   * distinct top margins, of which only 3 and 2 respectively sat on an 8px
+   * multiple. Rendered spacing included 6, 7, 10, 14, 26 and 30px — a rhythm
+   * nobody chose, assembled one component at a time.
+   *
+   * A 4px grid, indexed by step so --space-3 is unambiguously 12px. `gap`,
+   * `row-gap`, `column-gap` and `margin-top` are on it; values were snapped to
+   * the nearest step with ties rounding up, so NOTHING MOVED MORE THAN 2px.
+   *
+   * 1px AND 2px GAPS ARE EXCLUDED AND MUST STAY LITERAL. `gap: 1px` over a
+   * background colour is how the category grid and the service cards draw their
+   * hairline rules — it is a border technique, not spacing, and snapping it to
+   * 4px would turn every one of those seams into a visible channel.
+   *
+   * NOT COVERED: `padding`. It is the larger surface and it is where component
+   * internals live, so snapping it multiplies the blast radius of one pass;
+   * `--section-pad` and `--wrap-pad` above already hold the two that matter
+   * most. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-11: 44px;
+  --space-12: 48px;
+  --space-13: 52px;
+  --space-14: 56px;
+  --space-15: 60px;
+  --space-16: 64px;
+
   --dur-fast: 150ms;
   --dur-base: 220ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);

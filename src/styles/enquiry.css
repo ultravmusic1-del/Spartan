@@ -66,7 +66,7 @@ html[data-js] .eq-add-wrap--pending {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   /* WCAG 2.5.5 minimum touch target — do not reduce. */
   min-height: 44px;
   cursor: pointer;
@@ -257,7 +257,7 @@ html[data-enquiry] .eq-slot > astro-island {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   flex-shrink: 0;
   padding: 16px 16px 16px 24px;
   border-bottom: 1px solid var(--line);
@@ -317,7 +317,7 @@ html[data-enquiry] .eq-slot > astro-island {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .eq-item__name {
@@ -356,7 +356,7 @@ html[data-enquiry] .eq-slot > astro-island {
 .eq-qty {
   display: flex;
   align-items: center;
-  margin-top: 12px;
+  margin-top: var(--space-3);
   width: fit-content;
   border: 1px solid var(--line);
 }
@@ -412,7 +412,7 @@ html[data-enquiry] .eq-slot > astro-island {
 
 .eq-item__note {
   display: block;
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 
 .eq-item__field {
@@ -462,7 +462,7 @@ html[data-enquiry] .eq-slot > astro-island {
   align-items: center;
   /* WCAG 2.5.5 minimum touch target — do not reduce. */
   min-height: 44px;
-  margin-top: 18px;
+  margin-top: var(--space-5);
   padding: 10px 4px;
   border-bottom: 1px solid var(--accent);
   font-family: var(--font-display);
@@ -482,7 +482,7 @@ html[data-enquiry] .eq-slot > astro-island {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   flex-shrink: 0;
   padding: 16px 24px;
   border-top: 1px solid var(--line);

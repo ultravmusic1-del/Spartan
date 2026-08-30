@@ -88,7 +88,7 @@ const share = shareTargets(product, url);
 
 <style>
   .sh {
-    margin-top: 28px;
+    margin-top: var(--space-7);
   }
 
   /* Same treatment as the page's own .pd__label ("Specification", "EN 388
@@ -108,7 +108,7 @@ const share = shareTargets(product, url);
   .sh__row {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--space-3);
   }
 
   /* The .pill treatment without its chevron: the chevron means "this goes
@@ -125,7 +125,7 @@ const share = shareTargets(product, url);
   .sh__btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     background: transparent;
     color: inherit;
     border: 1px solid var(--line-control);
@@ -169,7 +169,7 @@ const share = shareTargets(product, url);
   }
 
   .sh__status {
-    margin-top: 8px;
+    margin-top: var(--space-2);
     min-height: 1.2em;
     font-size: var(--fs-meta);
     color: var(--text-muted);

@@ -218,7 +218,7 @@ const industries = (site.industries as string[]).map((name) => {
   .ind__cats {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-2);
     margin-top: auto;
     list-style: none;
   }
@@ -226,7 +226,7 @@ const industries = (site.industries as string[]).map((name) => {
   .ind__cats a {
     display: inline-flex;
     align-items: center;
-    gap: 9px;
+    gap: var(--space-2);
     /* WCAG 2.5.5 minimum touch target — do not reduce. */
     min-height: 44px;
     padding: 10px 15px;
@@ -279,8 +279,8 @@ const industries = (site.industries as string[]).map((name) => {
   .ic__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 24px;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
   }
 
   @media (max-width: 820px) {
