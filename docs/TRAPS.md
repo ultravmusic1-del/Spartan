@@ -707,3 +707,13 @@ did not check. Changing one is a regression *you* would be introducing.
   nothing caught it. A page whose header sits on a dark surface must pass
   `headerOnMedia` to `BaseLayout`; the home page does now.
 
+- **A screenshot of the home page taken without scrolling shows every section
+  below the fold at opacity 0, and that is the motion layer, not a defect.**
+  `src/scripts/landing-motion.ts` hides below-viewport elements at load and
+  reveals them on intersection; a full-page capture straight after `goto`
+  photographs the hidden state. Scroll through the page first (the
+  screenshot helper in `docs/UI-UX-AUDIT.md`'s workflow does), or capture
+  under `prefers-reduced-motion: reduce`, where the layer does nothing. The
+  same applies to the proof strip's numbers, which read "0" for the first
+  second after they enter the viewport.
+

@@ -21,6 +21,19 @@ test.describe('prefers-reduced-motion', () => {
    */
   test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
+  test('leaves every section visible and every number final without the motion layer', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    // Under reduced motion the module does nothing: nothing is set to opacity
+    // 0, and the proof strip keeps its server-rendered values from the start.
+    const dim = await page.locator('.sec, .cg__grid > li, .sp__grid > li').evaluateAll(
+      (els) => els.filter((el) => parseFloat(getComputedStyle(el).opacity) < 0.99).length,
+    );
+    expect(dim).toBe(0);
+    await expect(page.locator('.hero__proof dd').first()).toHaveText('94');
+  });
+
   test('cancels the hero animations without stranding the copy', async ({
     page,
   }) => {
@@ -59,5 +72,38 @@ test.describe('prefers-reduced-motion', () => {
       await expect(el).toHaveCSS('opacity', '1');
     }
 
+  });
+});
+
+test.describe('the motion layer', () => {
+  /*
+   * anime.js reveals sections as they scroll into view and counts the proof
+   * strip up to its real totals. Two things it must never do: leave an
+   * element invisible after it has been scrolled past, and end a count on a
+   * number other than the server-rendered one.
+   */
+  test('reveals every section by the time the page has been scrolled through', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(async () => {
+      const h = document.documentElement.scrollHeight;
+      for (let y = 0; y < h; y += 400) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 60));
+      }
+    });
+    // Reveals last 720ms plus a stagger; give the slowest one time to land.
+    await page.waitForTimeout(1600);
+    const dim = await page.locator('.sec, .cg__grid > li, .sp__grid > li, .faq__item').evaluateAll(
+      (els) => els.filter((el) => parseFloat(getComputedStyle(el).opacity) < 0.99).length,
+    );
+    expect(dim).toBe(0);
+  });
+
+  test('counts the proof strip up to the counted totals, not past them', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.hero__proof').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1800);
+    const values = await page.locator('.hero__proof dd').allTextContents();
+    expect(values.map((v) => v.trim())).toEqual(['94', '15', '2015', 'India & China']);
   });
 });

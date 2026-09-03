@@ -4992,6 +4992,38 @@ the light lockup. `/safety` shows it.
   and `TrustBand.astro` are unused by any page and left in place for the client
   to see the before; delete them once the branch is approved.
 
+### The motion layer, and the red folios — later the same day
+
+The client asked for the section numerals in red (outline, not fill) and for
+anime.js animations on the numbers and page elements, "premium" but still
+serious. `SectionIndex` strokes in `--accent` at 55% now, on every page it
+appears. `src/scripts/landing-motion.ts`, imported from `index.astro` alone,
+does the rest:
+
+- **Count-ups.** The proof strip's integers count from zero to the value the
+  server rendered; the section folios tick "00" up to their number as each head
+  arrives. The final text is always restored from the DOM, never typed.
+- **Reveals.** Sections, tiles, cards, steps and FAQ items rise 28px into place
+  with a sibling stagger as they enter the viewport. The numerals fade only.
+- **Lifts.** Cards that answer a pointer rise 2px on hover.
+
+Four things the file's header states and a change must keep:
+
+1. **It hides nothing unless it is running**, and only elements still BELOW
+   the viewport when it runs. No script, no missing content; a late script
+   never touches what the reader has already seen.
+2. **The hero is not re-animated** — it has `hero-rise`, and the e2e geometry
+   tests wait for CSS animations, which anime.js is invisible to.
+3. **Numerals never get a transform**: `home.spec.ts` asserts their right
+   edges share one line.
+4. **`prefers-reduced-motion` switches all of it off.**
+
+It is bundled with anime.js into an external chunk, so `script-src 'self'`
+covers it and the CSP hash count stayed at seven — `npm run csp` confirmed it
+after the build. `tests/e2e/motion.spec.ts` asserts every section is visible
+after a scroll-through, the proof strip ends on its counted totals, and
+reduced motion leaves everything final from the first paint.
+
 ### Where to pick up
 
 1. Review the branch on a preview deploy; merge or return notes. `--full` has

@@ -74,3 +74,12 @@ const description = `Lighting, ventilation and water management alongside protec
     <EnquiryCta />
   </main>
 </BaseLayout>
+
+{/* THE MOTION LAYER. Bundled with anime.js into an external chunk, so it
+    needs no CSP hash — `npm run csp` proves the count after every build. It
+    hides nothing unless it is running, leaves the hero to its own CSS
+    entrance, and switches itself off under prefers-reduced-motion. See the
+    header of the module. */}
+<script>
+  import '../scripts/landing-motion';
+</script>

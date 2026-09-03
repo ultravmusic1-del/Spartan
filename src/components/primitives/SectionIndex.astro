@@ -76,7 +76,11 @@ const { n, flow = false } = Astro.props;
        client's PDF export — secondary must not mean barely there, and this is
        the page's signature device. Still far below any contrast floor because
        it is aria-hidden decoration that carries nothing. */
-    -webkit-text-stroke: 1.5px color-mix(in srgb, var(--text) 15%, transparent);
+    /* RED SINCE 2026-09-03, at the client's request: the outline is the brand
+       accent at 55%, which reads as red on white without shouting over the
+       heading it belongs to. Still far below any contrast floor — it is
+       aria-hidden decoration that carries nothing. */
+    -webkit-text-stroke: 1.5px color-mix(in srgb, var(--accent) 55%, transparent);
     pointer-events: none;
     user-select: none;
   }

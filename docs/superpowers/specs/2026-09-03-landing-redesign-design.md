@@ -232,6 +232,17 @@ light pairs already measured in `handoff.md` §3 — `--text` and `--text-muted`
 on `--surface-alt` and `--surface-raised`, `--accent-text` for small red,
 `--accent` only on the ≥40px headline line (3.99:1 on `--surface-alt`).
 
+### Motion
+
+Added at the client's request after the third cut. `src/scripts/landing-motion.ts`
+(anime.js, bundled into an external chunk, no CSP hash) counts the proof strip
+and the section folios up to their server-rendered values, reveals sections
+and cards with a staggered 28px rise as they enter the viewport, fades the
+numerals in, and lifts cards 2px on hover. It hides only elements below the
+viewport at load, never touches the hero's own CSS entrance, never transforms
+a numeral, and does nothing under `prefers-reduced-motion`. The section
+numerals stroke in `--accent` at 55% instead of `--text` at 15%.
+
 ### Tests
 
 Rewritten to match: `Hero.test.ts` (proposition assertions), `home.spec.ts`
