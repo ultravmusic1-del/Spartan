@@ -48,7 +48,7 @@ async function heroSettled(page: Page): Promise<void> {
 }
 
 test.describe('the hero source order', () => {
-  test('stacks headline, then the carousel, then CTAs', async ({ page }) => {
+  test('stacks headline, then CTAs, then the campaign band', async ({ page }) => {
     await page.goto('/');
 
     /*
@@ -62,7 +62,14 @@ test.describe('the hero source order', () => {
       return nodes.map((n) => (n.tagName === 'H1' ? 'headline' : n.className.split(' ')[0]));
     });
 
-    expect(order).toEqual(['headline', 'hero__stage', 'hero__actions']);
+    /*
+     * REVERSED ON 2026-09-03. The carousel used to sit between the headline
+     * and the actions, which is what pushed the primary CTA past the fold on
+     * short phones and needed a card-shrinking media query to buy it back.
+     * The campaign band now closes the hero, below the doors and the proof
+     * strip, so the two actions follow the lede directly at every width.
+     */
+    expect(order).toEqual(['headline', 'hero__actions', 'hero__stage']);
   });
 });
 

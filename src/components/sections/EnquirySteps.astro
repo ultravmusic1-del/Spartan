@@ -1,0 +1,208 @@
+---
+/**
+ * HOW ENQUIRIES WORK — new on 2026-09-03.
+ *
+ * The site's conversion is a multi-product basket that sends one request for
+ * quotation, and nothing on the old landing page said so until the closing
+ * form. Every RFQ-form study the redesign research read says the same thing:
+ * explain the mechanism once, early, in steps, next to the claims a buyer is
+ * weighing. Three steps, the three client-confirmed claims, one action.
+ *
+ * WHAT IS DELIBERATELY NOT HERE: a response-time promise ("a quote within N
+ * hours"). It would lift conversion, and it has not been confirmed, so it
+ * would be a promise the site makes on the client's behalf. The three claims
+ * are the ones already approved for `EnquiryCta`; the two the mockup carried
+ * beyond them (file upload, per-line lead times) stay cut for the reasons
+ * recorded there.
+ */
+import SectionHeading from '../primitives/SectionHeading.astro';
+import PillButton from '../primitives/PillButton.astro';
+
+const steps = [
+  {
+    title: 'Add products as you browse',
+    body: 'Every product page and card has an "Add to enquiry" button. The list is kept on your device until you send it.',
+  },
+  {
+    title: 'Send one request',
+    body: 'Electricals and Safety go in the same list. Set quantities, add a note, and submit once — no account needed.',
+  },
+  {
+    title: 'We reply on every line',
+    body: 'Our team comes back with availability and pricing for everything on the list, so you can compare it as one order.',
+  },
+];
+
+/* Three claims, all client-confirmed and approved to ship. */
+const claims = [
+  'Bulk and contract pricing on quantity',
+  'Mixed pallets across both divisions',
+  'Samples on safety lines before you commit',
+];
+---
+
+<section class="steps">
+  <div class="wrap">
+    <SectionHeading
+      n="04"
+      eyebrow="Trade enquiries"
+      title="Build a list, <span>send it once</span>."
+      lede="Add products from anywhere in the catalogue and submit one request. There are no prices online and nothing to sign up for: the reply is a quotation for your list."
+    >
+      <PillButton slot="action" href="/enquiry">Start an enquiry</PillButton>
+    </SectionHeading>
+
+    <div class="steps__inner">
+      <ol class="steps__list">
+        {
+          steps.map((step, i) => (
+            <li class="steps__item">
+              <span class="steps__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="steps__title">{step.title}</h3>
+              <p class="steps__body">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="steps__side">
+        <p class="steps__side-label">What we can offer</p>
+        <ul class="steps__claims">
+          {claims.map((claim) => <li>{claim}</li>)}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .steps {
+    background: var(--surface-alt);
+    padding: var(--section-pad) 0;
+  }
+
+  .steps__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    gap: var(--space-12);
+    align-items: start;
+  }
+
+  /* Three cells drawn with the seam technique: a 1px --line ground showing
+     through the gap, each cell on the raised surface. */
+  .steps__list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--line);
+    border: 1px solid var(--line);
+    counter-reset: step;
+  }
+
+  .steps__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: 26px 24px 28px;
+    background: var(--surface-raised);
+  }
+
+  /* The step numeral is the section-index device at reading scale: the
+     drawn italic, outlined, and — unlike the section numerals — filled,
+     because here it carries the order and must not be able to vanish. */
+  .steps__n {
+    font-family: var(--font-hero);
+    font-size: var(--fs-display);
+    font-weight: 800;
+    font-style: italic;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+  }
+
+  .steps__title {
+    font-size: var(--fs-title-sm);
+    font-weight: var(--fw-subhead);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--text);
+  }
+
+  .steps__body {
+    font-size: var(--fs-body-sm);
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  .steps__side {
+    padding-top: 6px;
+  }
+
+  .steps__side-label {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-label);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+  }
+
+  .steps__claims {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--line-control);
+  }
+
+  .steps__claims li {
+    display: flex;
+    gap: var(--space-3);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: var(--fs-body-sm);
+    color: var(--text);
+  }
+
+  .steps__claims li::before {
+    content: '';
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin-top: 7px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  @media (max-width: 1000px) {
+    .steps__inner {
+      grid-template-columns: 1fr;
+      gap: var(--space-9);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .steps__list {
+      grid-template-columns: 1fr;
+    }
+
+    .steps__item {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: var(--space-4);
+      padding: 20px;
+    }
+
+    .steps__n {
+      font-size: var(--fs-head-sm);
+    }
+
+    .steps__body {
+      flex-basis: 100%;
+    }
+  }
+</style>

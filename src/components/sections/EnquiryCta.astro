@@ -40,33 +40,19 @@ const divisions = await getDivisions();
 
   {/* Head above the columns — the repeatable section architecture. */}
   <div class="wrap">
-    <SectionHeading n="09" eyebrow="Trade enquiries" title="Build your enquiry list,<br />send it once." />
+    <SectionHeading n="07" eyebrow="Send an enquiry" title="Tell us what you need." />
   </div>
 
   <div class="wrap cta__inner">
     <div>
       <p class="cta__body">
-        Add products as you browse the catalogue and submit a single request across both divisions.
-        Our team responds with availability and pricing for everything on the list.
+        Start with a name, a company and a division and our team will come back to you. For a
+        priced list, add products as you browse and send them from the enquiry page.
       </p>
       <div class="cta__actions">
         <SolidButton href="/enquiry">Request a quote</SolidButton>
         <PillButton href="/contact">Become a distributor</PillButton>
       </div>
-
-      {/*
-        Three claims, all client-confirmed and approved to ship. The mockup
-        carried two more that are not here on purpose: "send a list, a
-        drawing or a photo of the old part" (this form has no file upload,
-        so it would promise a capability that does not exist) and a promise
-        that quotes return unit price, stock position and lead time on every
-        line (never confirmed). Do not add either back without new sign-off.
-      */}
-      <ul class="cta__claims">
-        <li>Bulk and contract pricing on quantity</li>
-        <li>Mixed pallets across both divisions</li>
-        <li>Samples on safety lines before you commit</li>
-      </ul>
     </div>
 
     <form

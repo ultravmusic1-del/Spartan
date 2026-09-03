@@ -906,7 +906,13 @@ The header was added on 2026-08-23.
       of experience) is unsourceable on this machine and refused under rule 1.
       The numbers themselves are unchanged and still on `/about`.
 
-- [ ] **Per-section art direction, now that the system exists.** A design
+- [x] **Per-section art direction, now that the system exists.** Done as part of
+      the 2026-09-03 landing redesign (`handoff.md` §46): About recomposed on
+      the worker photograph, FeaturedLines replaced by the catalogue's own card,
+      ServiceCards and Spotlight removed, the enquiry form tightened. The
+      original finding is kept below for the record.
+
+      Original entry: A design
       review on 2026-08-29 (`handoff.md` §41) rated the page's sections after
       the hero as "competent but bland" and named four specifically. The system
       pass deliberately did not touch them — its own instruction was "stop
@@ -977,7 +983,11 @@ The header was added on 2026-08-23.
       `--rule` deliberately has no drop shadow where `--seam` does: the lift is
       right for six service cards and wrong for a grid of ninety-four.
 
-- [ ] **Carry the section numbering to the remaining home sections.**
+- [x] **Carry the section numbering to the remaining home sections.** Moot
+      since 2026-09-03: every headed section on the home page renders
+      `SectionHeading` with a numeral, 01–07 (`handoff.md` §46).
+
+      Original entry:
       `src/components/primitives/SectionIndex.astro` exists and is used twice —
       the hero is 01, `CategoryGrid` is 02 (`handoff.md` §40). A third review
       rated extending it highly: 03 FeaturedLines, 04 Spotlight, and so on,

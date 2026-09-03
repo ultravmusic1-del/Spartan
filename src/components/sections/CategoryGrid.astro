@@ -1,29 +1,36 @@
 ---
+/**
+ * THE RANGE — every category, grouped by division. Rebuilt 2026-09-03.
+ *
+ * It was one 5 x 3 grid of portrait tiles with the division printed on each.
+ * The research behind the redesign (spec 2026-09-03) put the same point three
+ * ways: the buyer should be able to read the WHOLE scope of the catalogue
+ * within one scroll, PPE brands organise it head to toe, and grouping under a
+ * division heading is what makes fifteen tiles a structure rather than a
+ * wall. So: two groups, each with a linked division label and its counted
+ * size, and landscape "directory" tiles three across — image, name, count —
+ * the shape RS Components and McMaster-Carr use for exactly this job.
+ *
+ * Head-to-toe order inside Safety is the catalogue's own `order` field, so
+ * nothing here re-sorts data.
+ *
+ * The two `.cg__grid` lists still hold fifteen `<li>` between them and the
+ * empty categories still render a marked "Range expanding" tile with NO
+ * product image — a photograph in a category that stocks nothing is an untrue
+ * claim about stock (docs/TRAPS.md). `tests/e2e/home.spec.ts` pins both.
+ */
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import { getCategories, getProducts } from '../../lib/catalog';
-import SectionIndex from '../primitives/SectionIndex.astro';
+import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
 import SectionHeading from '../primitives/SectionHeading.astro';
 
-/**
- * The fifteen-category shelf.
- *
- * THE TWO EMPTY CATEGORIES SHOW NO PRODUCT. Electrical Accessories and Spill
- * Control both have productCount 0 and heroProductSlug null. The design mockup
- * filled them with `waterproof-fittings` and `nonwoven-disposable-coverall` — a
- * product image in a category that stocks nothing is a claim about stock that
- * is not true, so they get a marked empty tile instead.
- *
- * Counts come from getCategories(), which derives productCount from the
- * published set. The mockup's hardcoded numbers are from the 72-product era —
- * it has Fans & Ventilation at 4 against a real 17.
- */
-const categories = await getCategories();
-const products = await getProducts();
+const [divisions, categories, products] = await Promise.all([
+  getDivisions(),
+  getCategories(),
+  getProducts(),
+]);
 const bySlug = new Map(products.map((p) => [p.slug, p]));
 
-// Root-absolute glob so the keys are root-absolute and this works unchanged
-// from any directory. Lazy, so only rendered images are emitted.
 const productImages = import.meta.glob<{ default: ImageMetadata }>('/src/assets/products/*.png');
 
 const tiles = await Promise.all(
@@ -35,10 +42,7 @@ const tiles = await Promise.all(
     return {
       ...category,
       image,
-      /* "1 items" shipped on the home page for two categories — Insect
-         Killers and Cables, both of which stock exactly one. Found by reading
-         a PDF of the rendered page, which is the only place a template string
-         like this is ever actually read. */
+      /* "1 item", not "1 items": Cables and Insect Killers stock exactly one. */
       countLabel:
         category.productCount === 0
           ? 'Expanding'
@@ -47,82 +51,76 @@ const tiles = await Promise.all(
   }),
 );
 
-const divisionNames: Record<string, string> = {
-  electricals: 'Electricals',
-  safety: 'Safety',
-};
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+const groups = divisions.map((division) => {
+  const own = tiles.filter((t) => t.divisionId === division.id);
+  return {
+    ...division,
+    tiles: own,
+    productCount: own.reduce((sum, t) => sum + t.productCount, 0),
+  };
+});
 ---
 
 <section class="cg">
   <div class="wrap">
-    {/* CONVERTED TO THE SHARED HEAD, 2026-08-29. This section used to build its
-        own — `.cg__eyebrow` plus `.cg__title` plus a `.cg__all` link floated
-        into the top-right corner — and a design review found that link
-        "too detached", reading as an afterthought rather than as part of the
-        heading. It is the head's action slot now, on the heading's baseline.
-
-        The count stays interpolated and the red word stays a `<span>`: `title`
-        is rendered with `set:html` for exactly this, and the heading is one of
-        the page's strongest, so nothing about it changes but where it lives. */}
     <SectionHeading
       n="02"
       eyebrow="The catalogue"
-      title={`${categories.length} categories, <span>one shelf</span>`}
+      title={`Everything we supply, on <span>one shelf</span>.`}
     >
-      <a slot="action" class="cg__all" href="/catalogue">All products ›</a>
+      <a slot="action" class="cg__all" href="/catalogue">All {products.length} products ›</a>
     </SectionHeading>
 
-    <ul class="cg__grid">
-      {
-        tiles.map((tile) => (
-          <li>
-            <a class="cg__card card-surface" href={`/catalogue/${tile.slug}`}>
-              <span class="cg__media card-media">
-                {
-                  tile.image ? (
-                    <>
-                      {/* `sizes` is tiered because the grid is, and a flat value was
-                          wrong at every width: 5 columns cap the image at 184px, 3
-                          columns at 276px, 2 columns at 240px on phones down to 175px
-                          at the narrowest. The old flat `160px` under-fetched the
-                          widest case by more than half at DPR 2 — a visibly soft tile —
-                          while over-fetching on phones. Each `sizes` condition must
-                          declare the cap at the TOP of its own range, not at some
-                          viewport partway through it: a `(max-width: 640px)` tier
-                          covers the whole 0-640px band, so it has to name the cap at
-                          640px (240px), not the cap at some narrower viewport like
-                          390px (138px) — that mistake under-fetched everything above
-                          ~480px up to 640px. The 0-640px band is split into two tiers
-                          (175px at 480px, 240px at 640px) so phones near the bottom of
-                          the range aren't over-fetching to cover the top of it. 560
-                          tops the `widths` ladder because 276 CSS px at DPR 2 is 552;
-                          Astro clamps each candidate to the source, so the 100-440px
-                          brochure photography cannot be upscaled by asking. */}
+    {
+      groups.map((group) => (
+        <div class="cg__group">
+          <div class="cg__group-head">
+            <a class="cg__division" href={`/${group.slug}`}>
+              {group.name}
+              <span class="cg__division-chev" aria-hidden="true">›</span>
+            </a>
+            <p class="cg__group-meta">
+              {plural(group.tiles.length, 'category', 'categories')} ·{' '}
+              {plural(group.productCount, 'product', 'products')}
+            </p>
+          </div>
+
+          <ul class="cg__grid">
+            {group.tiles.map((tile) => (
+              <li>
+                <a class="cg__card card-surface" href={`/catalogue/${tile.slug}`}>
+                  <span class="cg__media card-media">
+                    {tile.image ? (
+                      /* 112px CSS box at DPR 2 is 224; 240 tops the ladder and
+                         Astro clamps to the source, so the 100-440px brochure
+                         photography is never upscaled by asking. */
                       <Image
                         src={tile.image}
                         alt=""
-                        widths={[160, 240, 320, 560]}
-                        sizes="(max-width: 480px) 175px, (max-width: 640px) 240px, (max-width: 1100px) 276px, 184px"
+                        widths={[120, 180, 240]}
+                        sizes="112px"
                         loading="lazy"
                       />
-                    </>
-                  ) : (
-                    <span class="cg__empty">Range expanding</span>
-                  )
-                }
-              </span>
-              <span class="cg__body">
-                <span class="cg__name">{tile.name}</span>
-                <span class="cg__meta">
-                  <span>{divisionNames[tile.divisionId] ?? tile.divisionId}</span>
-                  <span class="cg__count">{tile.countLabel}</span>
-                </span>
-              </span>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+                    ) : (
+                      <span class="cg__empty">Range expanding</span>
+                    )}
+                  </span>
+                  <span class="cg__body">
+                    <span class="cg__name">{tile.name}</span>
+                    <span class="cg__meta">
+                      <span class="cg__count">{tile.countLabel}</span>
+                    </span>
+                  </span>
+                  <span class="cg__chev" aria-hidden="true">›</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
   </div>
 </section>
 
@@ -132,20 +130,11 @@ const divisionNames: Record<string, string> = {
     padding: var(--section-pad) 0;
   }
 
-  /* `.cg__head`, `.cg__eyebrow` and `.cg__title` are gone: this section builds
-     its head from the shared `SectionHeading` since 2026-08-29, and the red
-     accent word its `<span>` carries is a rule on that primitive now. What is
-     left here is only what the head does not own — the action link's own
-     lettering, and the per-tile count. */
   .cg__all,
   .cg__count {
     color: var(--accent-text);
   }
 
-  /* The text is 12px, so the link's own box was 14px tall — a target a third
-     of the 44px WCAG 2.5.5 asks for. The padding is what buys the height; the
-     negative inline margin keeps the text optically aligned with the heading
-     row it sits in, so nothing moves visually. */
   .cg__all {
     flex: none;
     display: inline-flex;
@@ -160,69 +149,120 @@ const divisionNames: Record<string, string> = {
     text-transform: uppercase;
   }
 
+  .cg__group + .cg__group {
+    margin-top: var(--space-10);
+  }
+
+  /* The group head: a linked division name on the left axis with a red rule
+     running out to the counted meta on the right — the eyebrow's dash, at the
+     scale of a row. */
+  .cg__group-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .cg__group-head::after {
+    content: '';
+    order: 2;
+    flex: 1 1 auto;
+    height: 1px;
+    align-self: center;
+    background: var(--line-control);
+    opacity: 0.5;
+  }
+
+  .cg__division {
+    order: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    font-family: var(--font-display);
+    font-size: var(--fs-title-sm);
+    font-weight: var(--fw-subhead);
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .cg__division-chev {
+    color: var(--accent-text);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .cg__division:hover .cg__division-chev {
+    transform: translateX(3px);
+  }
+
+  .cg__group-meta {
+    order: 3;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
   .cg__grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: var(--space-4);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
   }
 
-  /* Grid items default to `min-width: auto`, so a `1fr` track can never
-     shrink below the min-content of whatever it holds — the track sizing
-     algorithm treats that min-content as a hard floor, not a preference.
-     At 320px the two-column layout below measured the floor at 163px
-     (content box), set by `.cg__meta` on the "Electrical Accessories"
-     tile: "Electricals" (83px) + "Expanding" (72px) + the 8px gap, with
-     nowrap flex children that can't shrink below their own content either.
-     That is wider than the 133px a track actually has to give (280px grid
-     − 14px gap, halved), so the card — and the page — overflowed by
-     exactly the difference. `.cg__name`'s longest word never came close
-     (96px worst case, "Electrical Accessories"), so it was never the
-     driver. `min-width: 0` here removes the item's own floor; without it
-     also being removed from `.cg__meta`'s flex children below, the
-     overflow just relocates from the grid track to inside the card. */
   .cg__grid li {
     min-width: 0;
   }
 
-  /* Surface, border, transition and the hover/focus cue all come from
-     `.card-surface` in global.css — the one definition of a card on this site.
-     What is left here is only what makes this card this card. */
+  /* A landscape tile: the image ground on the left at a fixed 112px, the
+     name and count filling the rest, a chevron on the trailing edge. The
+     surface, hairline and hover cue are `.card-surface`. */
   .cg__card {
-    display: block;
-    text-decoration: none;
+    display: flex;
+    align-items: stretch;
     height: 100%;
+    text-decoration: none;
   }
 
-  /* Layout, ground and the contained image come from `.card-media`; the two
-     dimensions are this section's, because the tiles are narrower than the
-     featured cards and one shared pixel height would give them a different
-     proportion. */
   .cg__media {
-    --card-media-h: 128px;
-    --card-media-img-h: 104px;
+    --card-media-h: 96px;
+    --card-media-img-h: 72px;
+    flex: 0 0 112px;
+    height: auto;
+    min-height: var(--card-media-h);
     overflow: hidden;
+    border-right: 1px solid var(--line);
   }
 
   .cg__media :global(img) {
-    max-width: 82%;
+    max-width: 80%;
     object-fit: contain;
   }
 
   .cg__empty {
+    padding: 0 8px;
     font-family: var(--font-display);
     font-size: var(--fs-micro);
     font-weight: var(--fw-label);
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
+    text-align: center;
     text-transform: uppercase;
     color: var(--text-muted);
   }
 
   .cg__body {
-    display: block;
-    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-1);
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 14px 16px;
   }
 
   .cg__name {
@@ -235,38 +275,53 @@ const divisionNames: Record<string, string> = {
     color: var(--text);
   }
 
-  /* --color-grey is annotated "dark surfaces only" because it fails AA on
-     --color-paper (3.17:1). This is --color-card, not --color-paper — measured
-     at 5.32:1 here, clearing the 4.5:1 floor — so the token is used correctly. */
-  /* flex-wrap + min-width: 0 let the division label and count drop to their
-     own line instead of holding the flex line to their combined min-content
-     (see the comment on `.cg__grid li` above for the measured numbers).
-     Each one alone (83px / 72px worst case) fits well inside even the
-     narrowest track, so wrapping never actually happens above ~360px — it
-     only engages at the low end where the track can't take the pair
-     side by side. */
   .cg__meta {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--space-2);
-    min-width: 0;
-    margin-top: var(--space-2);
     font-size: var(--fs-label);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-muted);
   }
 
+  .cg__chev {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    padding: 0 16px 0 4px;
+    font-size: var(--fs-title-sm);
+    color: var(--text-muted);
+    transition:
+      color var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+  }
+
+  .cg__card:hover .cg__chev {
+    color: var(--accent-text);
+    transform: translateX(2px);
+  }
+
   @media (max-width: 1100px) {
     .cg__grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (max-width: 640px) {
     .cg__grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
+    }
+
+    .cg__group-head {
+      flex-wrap: wrap;
+    }
+
+    .cg__group-head::after {
+      display: none;
+    }
+
+    .cg__group-meta {
+      order: 3;
+      margin-left: auto;
     }
   }
 </style>

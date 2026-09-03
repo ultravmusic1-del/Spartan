@@ -40,7 +40,7 @@ const faqs = [
 
 <section class="faq">
   <div class="wrap">
-    <SectionHeading n="08" eyebrow="Support" title="Frequently asked questions" />
+    <SectionHeading n="06" eyebrow="Support" title="Frequently asked questions" />
 
     <div class="faq__list">
       {
@@ -78,8 +78,15 @@ const faqs = [
      language. */
 
 
+  /* Two columns above 900px since 2026-09-03: five items in one 880px column
+     made the section as tall as the catalogue for a fifth of the content.
+     `<details>` in CSS columns can split across the gap, so this is a grid;
+     items keep their own rules and the first stays open. */
   .faq__list {
-    max-width: 880px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-12);
+    align-items: start;
     /* The head is left-aligned now, so this is too — a centred list under a
        left-aligned head is the same axis problem one level down. */
     margin: 0;
@@ -88,6 +95,12 @@ const faqs = [
 
   .faq__item {
     border-bottom: 1px solid #e1e1e4;
+  }
+
+  @media (max-width: 900px) {
+    .faq__list {
+      grid-template-columns: 1fr;
+    }
   }
 
   .faq__q {

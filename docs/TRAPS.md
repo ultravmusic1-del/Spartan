@@ -699,3 +699,21 @@ did not check. Changing one is a regression *you* would be introducing.
   test in `tests/e2e/hero-carousel.spec.ts` that pins it.** Cropping to 3:2 cuts
   the sides off artwork carrying a headline and a QR code, which is why
   reversing it needs the client rather than a CSS edit.
+
+- **The hero's campaign band overlaps the dark band by a percentage of the
+  WRAP'S WIDTH, and two expressions have to agree.** `.hero__stage` is pulled
+  up by `margin-top: -12.5%` — half a 4:1 frame's height, because percentage
+  margins resolve against the containing block's width — and `.hero__band`
+  reserves the same room with `padding-bottom: calc(min(--wrap-max, 100vw -
+  2 * --wrap-pad) * 0.125 + 48px)`. Change the frame's ratio, the wrap, or the
+  overlap and both move together, or the band either clips the strip or floats
+  in a gap. `home.spec.ts` asserts the stage starts inside the dark band and
+  ends below it.
+
+- **The header's logo lockup follows `onMedia`, and before 2026-09-03 it did
+  not.** `Header.astro` rendered the black-wordmark lockup on every surface, so
+  the division pages' dark heroes had an invisible wordmark for weeks — a
+  rendered `<img>` with correct `alt`, dimensions and a 200, which is why
+  nothing caught it. A page whose header sits on a dark surface must pass
+  `headerOnMedia` to `BaseLayout`; the home page does now.
+

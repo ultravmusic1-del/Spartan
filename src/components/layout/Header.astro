@@ -36,6 +36,7 @@ import { getSiteSettings, isPlaceholderNumber } from '../../lib/site-content';
 
 const site = await getSiteSettings();
 import logoDark from '../../assets/brand/spartan-logo.svg';
+import logoLight from '../../assets/brand/spartan-logo-light.svg';
 import MobileNav from './MobileNav.tsx';
 import EnquiryBadge from '../enquiry/EnquiryBadge.tsx';
 import EnquiryDrawer from '../enquiry/EnquiryDrawer.tsx';
@@ -54,6 +55,15 @@ interface Props {
 }
 
 const { mode = 'transparent', onMedia = false } = Astro.props;
+
+/* THE LOCKUP FOLLOWS THE SURFACE. handoff.md §3: the red-helmet-black-wordmark
+   lockup is for light backgrounds and the white-wordmark one for dark, and
+   using the wrong one makes the wordmark invisible — a bug no gate can catch,
+   because an invisible wordmark is still a rendered <img> with correct alt.
+   Before 2026-09-03 this header used the dark lockup everywhere, so on the
+   division pages' scrimmed heroes the wordmark vanished. `onMedia` is exactly
+   the flag that says the surface is dark. */
+const logo = onMedia ? logoLight : logoDark;
 
 /*
  * THE HEADER NOW READS CATALOGUE CONTENT, AND IT GOES THROUGH THE SEAM.
@@ -113,7 +123,7 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 <header class:list={['site-header', `site-header--${mode}`, { 'on-dark': onMedia }]}>
   <div class="wrap nav">
     <a class="nav__logo" href="/">
-      <img src={logoDark.src} width={logoDark.width} height={logoDark.height} alt="Spartan" />
+      <img src={logo.src} width={logo.width} height={logo.height} alt="Spartan" />
     </a>
 
     <nav class="nav__menu" aria-label="Primary">

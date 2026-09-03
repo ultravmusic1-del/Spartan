@@ -1,138 +1,48 @@
 ---
-import { Picture } from 'astro:assets';
+/**
+ * THE HERO — rebuilt 2026-09-03. See
+ * docs/superpowers/specs/2026-09-03-landing-redesign-design.md.
+ *
+ * Two bands in one section:
+ *
+ *   1. The dark band: a client-supplied photograph under the division pages'
+ *      scrim, the approved headline, the lede, the two actions, and two
+ *      "division doors" — real links into /electricals and /safety carrying
+ *      counted totals. A proof strip of four sourced facts closes it.
+ *   2. The campaign band: the client's uploaded banners, carousel machinery
+ *      UNCHANGED from the previous hero, pulled up over the dark band's foot so
+ *      it bridges the two surfaces instead of competing with the headline.
+ *
+ * The research behind the order (17 industrial home pages, Baymard, NN/G) is
+ * summarised in the spec: one headline and one idea, no carousel beside it,
+ * the catalogue reachable within one scroll, trust as counted numbers.
+ *
+ * WHAT DID NOT CHANGE, on purpose: the carousel's clock (`heroClock`), the
+ * generated `is:inline` keyframes and their `[data-hero-stage]` prefix, the
+ * checkbox-driven pause, the pips, the 4:1 frame that is 84px on a phone by
+ * client decision (docs/TRAPS.md), the reduced-motion branch, and every class
+ * name the tests reach for. `Hero.test.ts`, `tests/e2e/hero-carousel.spec.ts`
+ * and `tests/e2e/hero-mobile.spec.ts` cover both states.
+ */
+import { Image, Picture } from 'astro:assets';
 import SolidButton from '../primitives/SolidButton.astro';
 import SectionIndex from '../primitives/SectionIndex.astro';
 import PillButton from '../primitives/PillButton.astro';
 import { getHeroBanners, getSiteSettings, heroClock } from '../../lib/site-content';
 import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+import heroPhoto from '../../assets/hero/safety.jpg';
 
-/**
- * Hero — headline, an empty banner band, and the two CTAs.
- *
- * THE BAND IS EMPTY ON PURPOSE, as of 2026-08-20. The client asked for the
- * mockup's insertable slot and for the existing posters to go. All six were
- * deleted — artwork and data entries — because they are portrait (1261:1561)
- * and the slot is specified at 2800 x 700, a 4:1 band. Letterboxing a portrait
- * poster into a 4:1 strip would have been worse than showing the shape
- * honestly and waiting for the right artwork.
- *
- * THE CAROUSEL CODE IS STILL HERE, and that is deliberate rather than
- * forgetful. Since 2026-08-23 an admin uploads a banner at /admin/banners and
- * switches it on, and it renders here — clock and pips and pause included —
- * at the next build. That is the seam doing its job.
- *
- * TWO BANNERS MUST NEVER COME BACK UNCORRECTED. The Grip Guard GP1 poster
- * prints an EN 388 icon reading 4X43D while the glove's own label —
- * photographed in that same banner — reads 4131X, overstating cut resistance
- * as D where the glove says X, NOT TESTED. The Orbit Fan poster labels the fan
- * FW-40W, a code belonging to no product (handoff.md §17). Both are in
- * BACKLOG.md for reissue.
- *
- * **NOTHING IN CODE STOPS EITHER ONE ANY MORE, AND THAT IS A REAL LOSS.**
- * site-content.test.ts used to assert that neither filename was enabled. An
- * uploaded banner has a generated path and an admin-chosen name, so no test can
- * recognise those two artworks. The protection is now this paragraph, the two
- * BACKLOG.md items, and a person not uploading them. If either is reissued,
- * correct the artwork FIRST.
- *
- * DECORATIVE EITHER WAY. Slides carry alt="" and the track is aria-hidden;
- * the empty slot is aria-hidden too. These are marketing posters whose content
- * is baked-in text — headlines, spec blocks, a QR code, a phone number — that
- * alt text cannot reproduce, and every product they show is reachable in the
- * catalogue below. The <h1> and the two CTAs carry the hero's meaning.
- *
- * IT AUTO-ADVANCES WHEN IT HAS SLIDES, SO IT NEEDS A PAUSE MECHANISM. WCAG
- * 2.2.2 applies to any motion that starts automatically and runs past five
- * seconds, decorative or not, and axe does not test for it. The control is a
- * checkbox read by `:has()`, deliberately not an island — a pause button that
- * needs JavaScript to exist is no use to a visitor whose JavaScript is off,
- * and the animation runs for them regardless. The whole control row is absent
- * in the empty state, because a pause button with nothing to pause is a
- * control that cannot do what it says.
- *
- * NO SCRIPT AT ALL NOW. The carousel is pure CSS and the cursor parallax was
- * deleted with the side-by-side layout — it moved the stage against the copy
- * beside it, and a centred column has nothing to move against. That took the
- * page's inline-script count from 9 to 8: `npm run csp` re-run and
- * vercel.json committed with it.
- */
-
-/*
- * WHICH BANNERS, AND IN WHAT ORDER, IS DATA — see src/lib/site-content.ts.
- *
- * It was a literal array here until 2026-08-19. Moving it behind the seam is
- * what makes banner selection editable from /admin later without touching this
- * component, and it is the same structural decision rule 3 makes for products.
- *
- * The order still matters and is set in the data: alternating Safety and
- * Electricals keeps consecutive slides from sharing a palette — spill control
- * is red and dark, the highbay a blue-lit warehouse, solar a violet dusk, the
- * coveralls orange, the vests hi-viz yellow, the insect killer near-white.
- *
- * SINCE 2026-08-23 THE ARTWORK IS UPLOADED, NOT COMMITTED. The files live in a
- * private Supabase Storage bucket and `getHeroBanners()` hands back a
- * short-lived signed URL per banner. That URL is spent HERE, at build time:
- * `<Picture>` downloads it, re-encodes it and emits local assets, so the page a
- * visitor gets still references `/_astro/*` and `img-src 'self'` never widens.
- *
- * The `import.meta.glob` this replaced could only ever see committed files,
- * which is why an admin could not add a banner before. The rule it carried is
- * kept and moved: a banner that cannot be resolved throws in
- * `src/lib/site-content.ts` rather than rendering a gap in the carousel.
- *
- * THIS COMPONENT MUST NEVER IMPORT SUPABASE. `npm run verify` fails if the
- * service-role key's name appears anywhere under src/components, and it is
- * right to — Vite inlines `import.meta.env.*` at build time. It calls
- * `getHeroBanners()` and nothing else.
- */
 const BANNERS = await getHeroBanners();
-
-/*
- * The track carries one extra slide: a second copy of the first.
- *
- * The animation runs 0 -> -N00% and then restarts at 0. Without the repeat that
- * final frame would be blank, and a "rewind" back through every slide is the
- * alternative — visible, and wrong. Landing on a copy of slide 1 and cutting
- * back to the real slide 1 is invisible because the two are the same image.
- * Ticker.astro duplicates its track for the same reason.
- */
+/* The last slide is a second copy of the first so the loop's reset is
+   invisible. Delete it and the carousel visibly rewinds — docs/TRAPS.md. */
 const SLIDES = BANNERS.length > 0 ? [...BANNERS, BANNERS[0]] : [];
-
-/*
- * THE CLOCK, AND WHY IT IS COMPUTED RATHER THAN TYPED.
- *
- * The track's keyframe stops, the pips' stagger and the cycle length are ONE
- * system derived from the slide count. While the count was a literal six, so
- * were all three — and enabling a seventh banner would then have produced a
- * carousel whose lit pip reported a slide that was not showing. That reads as a
- * rendering bug and is arithmetic, which is the worst kind to debug.
- *
- * So the count is the only input. Each slide holds for HOLD seconds and moves
- * for SLIDE seconds; the cycle is the sum times the count. At six banners this
- * computes to exactly the values that were previously hard-coded — 42s, stops
- * at 14.286% and 16.667%, pips every 7s — which is what makes this refactor
- * verifiable: the rendered page does not change.
- *
- * ASTRO SCOPED STYLES CANNOT INTERPOLATE A FRONTMATTER VALUE. That is why the
- * generated rules go in an `is:inline` <style> below rather than in the scoped
- * block, and it is the same constraint that forces `Hero.astro`'s PORTRAIT
- * media query to be written twice in the retained-artwork version. It costs no
- * CSP hash: `style-src` is `'self' 'unsafe-inline'`, unlike `script-src`, which
- * is hash-based with no 'unsafe-inline' at all.
- */
-/*
- * NULL WHEN THERE ARE NO BANNERS, and the guard is load-bearing rather than
- * defensive. `heroClock` throws below one slide, on purpose — a carousel with
- * nothing in it is a bug everywhere except here, where an empty stage is the
- * shipped design. So the empty case is handled at the one place that knows it
- * is legitimate, and the throw stays intact for every other caller.
- */
 const clock = BANNERS.length > 0 ? heroClock(BANNERS.length) : null;
 
 const pct = (n: number) => `${Number(n.toFixed(3))}%`;
-/** `translateX(0)` for the first slide rather than `-0%`, which computes the same and reads as a typo. */
 const shift = (i: number) => (i === 0 ? '0' : `-${i * 100}%`);
 
+/* Generated from the slide count so a fourth banner cannot light the wrong
+   pip. Unscoped, hence the `[data-hero-stage]` prefix on every selector. */
 const carouselCss = clock === null ? '' : `
 @keyframes hero-carousel {
 ${BANNERS.map(
@@ -152,206 +62,145 @@ ${clock!.pipDelays
   .join('\n')}
 `.trim();
 
-/*
- * THE BYTE BUDGET, WHICH IS THE REAL COST OF THIS CHANGE.
- *
- * The helmet was one 18 KB AVIF. A full-width banner is not, and pretending
- * otherwise would be the kind of unmeasured claim handoff.md §12 exists to warn
- * about — a 23 KB font cost this page a Lighthouse point once.
- *
- * THESE NUMBERS WERE RE-DERIVED ON 2026-08-23 AND THE OLD ONES WERE WRONG.
- * `widths` stopped at 600 and `sizes` claimed 436px, both correct for the
- * portrait card this hero used to carry beside its copy. The redesigned hero
- * puts the band across the full column, and measured in a browser it renders
- * 1176px wide on a desktop and 350px on a 390px phone. The old numbers handed a
- * 436px source to a 1174px box — a 2.7x upscale, on the largest image on the
- * site, and nothing failed because an upscaled image is still an image.
- *
- * So `sizes` states the measured layout: capped at 1176px once the column stops
- * growing at 1216px, and `calc(100vw - 40px)` below that, which is the 40px of
- * gutter measured at 390px. `widths` runs to 2352 — 1176 at DPR 2 — and Astro
- * clamps to the source, so an upload at the 1400px floor simply gets fewer
- * variants rather than an upscaled one.
- *
- * `quality={42}` is kept. Astro default sits ABOVE it — asking for 58 made the
- * files BIGGER, which is worth knowing before someone "optimises" by raising
- * it. It was checked at 2x against the old artwork's QR code and re-checked
- * against a 2000x486 banner at DPR 2 on 2026-08-23.
- */
 const WIDTHS = [390, 700, 1176, 1600, 2352];
-const SIZES = '(min-width: 1216px) 1176px, calc(100vw - 40px)';
-/*
- * THE HERO COUNTS THE CATALOGUE, AND IT GOES THROUGH THE SEAM.
- *
- * Rule 3: never `src/data/*`, never `getCollection`. This is the same read
- * `src/pages/index.astro` already performs for its meta description, and for
- * the same reason — the only number on that page that could go stale was a
- * typed one. Both this component and that page are prerendered, so the read
- * happens at build time and costs a visitor nothing.
- *
- * RULE 1 IS WHY THE SENTENCE SAYS WHAT IT SAYS. The design review this came
- * from proposed "1,000+ PRODUCTS" and "QUALITY ASSURED" as trust markers. The
- * catalogue holds 94 products, and there is no source on this machine for a
- * certification claim. A counted number cannot drift into a fabricated one.
- */
-const [divisions, categories, products] = await Promise.all([
+const SIZES = '(min-width: 1424px) 1296px, calc(100vw - 2 * var(--wrap-pad, 32px))';
+
+const [divisions, categories, products, settings] = await Promise.all([
   getDivisions(),
   getCategories(),
   getProducts(),
+  getSiteSettings(),
 ]);
 
-/* "Spartan Electricals · Spartan Safety" says the brand twice under a logo
-   that has just said it. The ranges are what the eyebrow is for. */
+/* "Electricals + Safety": the logo above has just said "Spartan", so the
+   masthead names the ranges without it. */
 const ranges = divisions.map((d) => d.name.replace(/^Spartan\s+/, '')).join(' + ');
 
-/* The founding year, back as metadata rather than as a badge. It left the hero
-   on 2026-08-29 because a hexagonal "Est. 2015" was occupying the most valuable
-   line on the page for a fact that is not a proposition. As one segment of a
-   technical masthead it costs nothing and adds provenance. */
-const settings = await getSiteSettings();
+/* The doors carry COUNTED totals per division. Nothing here is typed, so a
+   catalogue edit in /admin changes the hero without a code change. */
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+const doors = divisions.map((division) => ({
+  ...division,
+  categoryCount: categories.filter((c) => c.divisionId === division.id).length,
+  productCount: products.filter((p) => {
+    const category = categories.find((c) => c.id === p.categoryId);
+    return category?.divisionId === division.id;
+  }).length,
+}));
+
+/* THE PROOF STRIP. Four facts, each with a source: two counted through the
+   seam, the year from site.json (published on /about), the manufacturing
+   statement from the brochure (already in the footer and on /about). Rule 1:
+   nothing else on this site qualifies, so the strip has four cells and not
+   the six a template would want. */
+const proof = [
+  { label: 'Products', value: String(products.length) },
+  { label: 'Categories', value: String(categories.length) },
+  { label: 'Established', value: String(settings.established) },
+  { label: 'Manufactured in', value: 'India & China' },
+];
 ---
 
 <section class="hero">
-  <div class="hero__grid" aria-hidden="true"></div>
-
-  {/* THE CROP MARKS AND THE TWO EDGE TICKS ARE GONE — 2026-08-29.
-
-      Four registration marks at the hero's corners and a red tick at each
-      edge. They were the first attempt at a technical register and they were
-      the wrong one: they repeated nowhere else on the page, carried no
-      hierarchy, sat far enough out to read as detached from the content, and
-      cost a visual layer for no payoff. A review put it plainly — delete them.
-
-      The register they were reaching for now exists and is systematic: the dot
-      grid, the section numerals, the mono micro-labels, the red vertical rule
-      and the thin heads. Adding crop marks on top of that is decoration about
-      decoration.
-
-      `tests/e2e/hero-marks.spec.ts` WENT WITH THEM, and that deserves saying
-      out loud. The client raised a real defect against their own mockup — the
-      bottom marks landing on the CTAs — and that spec was written so deleting
-      the marks could not read as a passing fix. Deleting it alongside the
-      decoration is not that dodge: a collision between a mark and a button
-      cannot recur once no mark exists. If any of this comes back, the spec
-      comes back with it. */}
-
-
-  {/* ONE CENTRED COLUMN, AND THE SOURCE-ORDER SPLIT IS GONE WITH IT.
-
-      This used to be two `.wrap`s with the stage between them, because the
-      desktop layout floated the stage beside the copy while the phone stacked
-      badge, headline, stage, CTAs — and CSS `order` could not interleave a
-      child of `.hero` with a grandchild of `.hero__wrap`. Splitting the
-      markup was the only way to express both.
-
-      The client asked for the mockup's centred stack on 2026-08-20, so both
-      layouts are now the same order and the split has nothing left to buy. One
-      column, one wrap, DOM order is the layout at every width. */}
-  <div class="wrap hero__wrap">
-    {/* THE MASTHEAD — a technical system line, replacing the hexagonal badge
-        and the two red rules that used to flank it.
-
-        Three segments, and every one is read from somewhere rather than typed:
-        the brand, the divisions through the catalogue seam, the founding year
-        through site-content. It reads like the header of a specification
-        sheet, which is what this company's own product pages already look
-        like — the layout coming out of the brand rather than industrial
-        styling applied on top of it.
-
-        The slashes are aria-hidden. A screen reader announcing "slash" three
-        times is noise; the segments read perfectly well as a list. */}
-    <p class="hero__masthead">
-      {/* EVERY SEGMENT IS ITS OWN SPAN, and that is required rather than tidy.
-          A bare text node inside a flex container becomes an anonymous flex
-          item, so "Spartan" and the registered mark were two items with the
-          row's 10px gap between them — it rendered as "SPARTAN ®". Wrapping
-          each segment makes the gap fall between segments, where it belongs. */}
-      <span class="hero__masthead-item">Spartan<span class="hero__masthead-reg">&#174;</span></span>
-      <span class="hero__masthead-sep" aria-hidden="true">/</span>
-      <span class="hero__masthead-item">{ranges}</span>
-    </p>
-
-    {/* THE COMPOSITION: headline left, counted data right.
-
-        Everything here used to be centred — eyebrow, headline, rule, sentence,
-        band — and a design review on 2026-08-29 was blunt about the cost:
-        "that much symmetry is killing the energy". It was right. A brand whose
-        whole identity is angular and industrial was laying itself out like a
-        restrained corporate brochure.
-
-        What replaces it is a deliberate imbalance. The headline runs from the
-        left margin and its second line is pushed right and set larger, so the
-        two lines lean against each other instead of stacking politely. The
-        counted totals become the counterweight on the right — the review's own
-        best idea, that "94 products in 15 categories" is design material and
-        should be used as such rather than buried inside a sentence. */}
-    {/* THE COMPOSITION — headline left, the section numeral as the in-flow
-        counterweight, and the counted totals as a spec strip underneath.
-
-        THIS IS THE FOURTH SHAPE THIS BLOCK HAS TAKEN and the first one built
-        on real edges. A client screenshot of the previous version showed what
-        every earlier shape shared: elements aligned to numbers instead of to
-        each other. The ghost numeral floated absolutely in the top-right and
-        read as a smudge behind the stats; the stats rail bottom-hung in space;
-        the banner stopped at 93.5% so its right edge met nothing.
-
-        Now there are exactly two vertical edges — the wrap's left and right —
-        and everything lands on one of them: masthead, headline, lede, spec
-        strip and CTAs on the left; numeral, carousel controls and the banner's
-        right edge on the right. The numeral is a grid cell, not a coordinate,
-        so it cannot smudge, clip or drift; it is the same in-flow treatment
-        every section head uses, which finally makes the hero the system's
-        first instance instead of its exception. */}
-    <div class="hero__composition">
-      <div class="hero__type">
-        {/* ONE LINE IN THE SOURCE, ON PURPOSE. `tests/e2e/home.spec.ts` reads
-            `textContent` directly rather than through a matcher that collapses
-            whitespace, because "Home andindustrial" has shipped once already.
-            A newline between these two spans puts it straight back, and the
-            trailing space belongs INSIDE the first span for the same reason. */}
-        <h1 class="hero__title"><span class="hero__title-a">Home and industrial </span><span class="hero__title-b">solutions.</span></h1>
-      </div>
-
-      {/* THE RIGHT RAIL. The numeral used to stand here alone and the lede sat
-          under the headline, which left a measured 463 x 190 hole between the
-          headline's right edge and the numeral — the largest empty region on
-          the page and the one a client screenshot picked out. The lede is real
-          content and it belongs where the hole was.
-
-          Both still land on the wrap's right edge, so §44's two-edge rule is
-          kept rather than broken: the rail simply gives that edge a column
-          instead of a single glyph. */}
-      <div class="hero__rail">
-        <SectionIndex n="01" flow />
-
-        <p class="hero__lede">
-          Lighting, ventilation, water management, PPE and workwear for
-          contractors and distributors.
-        </p>
-      </div>
+  <div class="hero__band on-dark">
+    {/* The photograph is the division pages' idiom: a real image element
+        under a three-layer scrim, so the copy column resolves against flat
+        --color-black and every ratio is the measured one from handoff.md §3.
+        It only occupies the right of the band above 900px — the source is a
+        1225px portrait, and covering the full width would upscale it. */}
+    <div class="hero__bg" aria-hidden="true">
+      <Image
+        src={heroPhoto}
+        alt=""
+        widths={[640, 900, 1225]}
+        sizes="(min-width: 901px) 62vw, 100vw"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
     </div>
 
+    <div class="wrap hero__wrap">
+      <div class="hero__head">
+        {/* Every segment is its own span: a bare text node in a flex row
+            becomes an anonymous item and picks up the row's gap. */}
+        <p class="hero__masthead">
+          <span class="hero__masthead-item">Spartan<span class="hero__masthead-reg">&#174;</span></span>
+          <span class="hero__masthead-sep" aria-hidden="true">/</span>
+          <span class="hero__masthead-item">{ranges}</span>
+        </p>
+        <SectionIndex n="01" flow />
+      </div>
+
+      {/* ONE LINE IN THE SOURCE, ON PURPOSE. `tests/e2e/home.spec.ts` reads
+          `textContent` directly, because "Home andindustrial" has shipped
+          once already. The trailing space belongs INSIDE the first span. */}
+      <h1 class="hero__title"><span class="hero__title-a">Home and industrial </span><span class="hero__title-b">solutions.</span></h1>
+
+      <p class="hero__lede">
+        Lighting, ventilation, water management, PPE and workwear for
+        contractors and distributors.
+      </p>
+
+      <div class="hero__actions">
+        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+        <PillButton href="/enquiry">Request a quote</PillButton>
+      </div>
+
+      {/* THE DIVISION DOORS. The single most-repeated finding in four client
+          reviews was that a visitor could not tell what Spartan sells. Two
+          links, each naming a division, its blurb from the seam, and its
+          counted size, answer that above the fold and route the buyer one
+          level down without a menu. */}
+      <ul class="hero__doors">
+        {
+          doors.map((door) => (
+            <li>
+              <a class="hero__door" href={`/${door.slug}`}>
+                <span class="hero__door-kicker">Division</span>
+                <span class="hero__door-name">{door.name}</span>
+                <span class="hero__door-blurb">{door.blurb}</span>
+                <span class="hero__door-meta">
+                  <span>
+                    {plural(door.categoryCount, 'category', 'categories')} ·{' '}
+                    {plural(door.productCount, 'product', 'products')}
+                  </span>
+                  <span class="hero__door-chev" aria-hidden="true">›</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="wrap">
+      <dl class="hero__proof">
+        {
+          proof.map((cell) => (
+            <div class="hero__proof-cell">
+              <dt>{cell.label}</dt>
+              <dd>{cell.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </div>
+
+  {/* THE CAMPAIGN BAND. Same stage, same contract, new position: it sits on
+      the light page surface and is pulled up over the dark band's foot by
+      half its own height. Everything in it that has a colour sits on the
+      light surface, where the pairs are the measured ones. */}
+  <div class="wrap hero__stage-wrap">
     <div class="hero__stage" data-hero-stage>
       {
         BANNERS.length === 0 ? (
-          /* THE EMPTY SLOT — the shipped state as of 2026-08-20.
-
-             The six posters were deleted on instruction: they are portrait
-             (1261:1561) and cannot fill a 4:1 band, so letterboxing them into
-             one would have been worse than showing the shape honestly.
-
-             aria-hidden, because it is a note to whoever supplies the artwork
-             and not content. A screen-reader user has no use for "2800 x 700"
-             and the <h1> and CTAs carry the hero's actual meaning, exactly as
-             they did when this held a carousel.
-
-             THE MOCKUP'S "or browse files" LINK IS DELIBERATELY NOT HERE. It
-             would be an affordance that does nothing — the same defect this
-             repo has already removed twice, from the footer's newsletter field
-             and its three href="#" social icons, both recorded in Footer.astro.
-             Real upload is Stage 6 of the admin content plan and belongs there,
-             not faked here. */
+          /* THE EMPTY SLOT. aria-hidden, because it is a note to whoever
+             supplies the artwork and not content. No "browse files" link:
+             an affordance that does nothing is a defect this repository has
+             already removed twice. */
           <div class="hero__slot" aria-hidden="true">
             <svg class="hero__slot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -359,9 +208,6 @@ const settings = await getSiteSettings();
               <path d="m3.5 17 4.8-4.4a1.8 1.8 0 0 1 2.4 0L16 17" />
               <path d="m14 14.4 1.7-1.5a1.8 1.8 0 0 1 2.4 0l2.4 2.1" />
             </svg>
-            {/* The dimensions are one token and must not break across lines —
-                "2800 ×" on one line and "700 (4:1)" on the next reads as two
-                numbers rather than one size. */}
             <p class="hero__slot-label">
               Drop the horizontal hero banner —{' '}
               <span class="hero__slot-dim">2800 &times; 700 (4:1)</span>
@@ -370,13 +216,8 @@ const settings = await getSiteSettings();
         ) : (
           <>
             {/* The checkbox is the state and the label is the control, so the
-                pause works with no JavaScript at all. `:has()` on the stage
-                reads it.
-
-                The accessible name has to START with the visible label text
-                ("Pause"), or the mismatch is itself a 2.5.3 Label in Name
-                failure — the same defect that sat on every product card at a
-                green axe score. */}
+                pause works with no JavaScript at all. Its accessible name
+                STARTS with the visible label text, or it is a 2.5.3 failure. */}
             <input
               class="hero__toggle"
               type="checkbox"
@@ -385,85 +226,17 @@ const settings = await getSiteSettings();
               aria-label="Pause the rotating product banners"
             />
 
-            {/* THE CAMPAIGN BAR — the module's label and its controls on one
-                row, above the band.
-
-                They were two separate horizontal strips: a "FEATURED" label
-                with a rule trailing off to the right, then the artwork, then a
-                progress rail spanning the band's full width. A design review
-                on 2026-08-29 counted the rules in this hero and asked for half
-                of them gone, and it was right that a progress indicator has no
-                reason to mirror a 1160px band. Merging the two strips removes
-                one, and the trailing rule went with it.
-
-                ABOVE THE BAND, NOT OVER IT. The constraint that put these
-                below the artwork was that the banners carry near-white footer
-                strips, so a white pip on one is invisible and a scrim dark
-                enough to fix that covers the client's own QR code. Above sits
-                on the page's own surface and satisfies it just as well.
-
-                NO FAKE INDEX. "01 / FEATURED" was the review's suggestion and
-                the 01 would have meant nothing — there is no section 02. The
-                counter to its right is a real one. */}
-            <div class="hero__bar">
-              <p class="hero__frame-label">
-                Featured<span class="hero__bar-sep" aria-hidden="true">/</span>campaign
-              </p>
-
-              {/* THE WHOLE ROW IS ABSENT IN THE EMPTY STATE. A pause button with
-                  nothing to pause is the same dead affordance as the "browse
-                  files" link this component refuses, and WCAG 2.2.2 only asks
-                  for a control when something actually moves. */}
-            <div class="hero__controls">
-              {/* ONE ROW, ONE SYSTEM, since 2026-08-29. It was pips hard left
-                  and a Pause label hard right with `space-between` throwing the
-                  gap between them, which read as two unrelated widgets rather
-                  than as one control. Now: a counter, the pips as a continuous
-                  track, and the pause — left to right, like an instrument.
-
-                  STILL BELOW THE BAND, NEVER OVER IT. The banners carry
-                  near-white footer strips; a white pip on one is invisible, and
-                  a scrim dark enough to fix that covers the client's own QR
-                  code. That was found by looking at the rendered page.
-
-                  THE COUNTER IS aria-hidden WITH THE PIPS. The track is
-                  decorative and every product in it is a real link further down
-                  the page, so announcing "01 of 03" would narrate a carousel a
-                  screen reader has already been told to ignore. The total is
-                  derived, never typed — a fourth banner must not need an edit
-                  here. */}
-              <p class="hero__count" aria-hidden="true">
-                <span class="hero__count-now">01</span>
-                <span class="hero__count-sep">/</span>
-                <span class="hero__count-total">{String(BANNERS.length).padStart(2, '0')}</span>
-              </p>
-
-              <div class="hero__pips" aria-hidden="true">
-                {BANNERS.map(() => (
-                  <span class="hero__pip" />
-                ))}
-              </div>
-
-              <label class="hero__pause" for="hero-carousel-pause">
-                Pause
-              </label>
-            </div>
-            </div>
-
             <figure class="hero__frame">
               <div class="hero__track" aria-hidden="true">
                 {SLIDES.map((banner, i) => (
                   <div class="hero__slide">
-                                        <Picture
+                    <Picture
                       src={banner.src}
                       alt=""
                       widths={WIDTHS}
                       sizes={SIZES}
                       formats={['avif', 'webp']}
-                      fallbackFormat="jpg"
-                      quality={42}
                       loading={i === 0 ? 'eager' : 'lazy'}
-                      fetchpriority={i === 0 ? 'high' : 'auto'}
                       decoding="async"
                     />
                   </div>
@@ -471,207 +244,401 @@ const settings = await getSiteSettings();
               </div>
             </figure>
 
+            {/* The label row sits UNDER the band now, on the page surface.
+                Over the artwork was rejected long ago: the banners carry
+                near-white footer strips and a scrim dark enough to fix that
+                covers the client's own QR code. */}
+            <div class="hero__bar">
+              <p class="hero__frame-label">
+                Featured<span class="hero__bar-sep" aria-hidden="true">/</span>campaign
+              </p>
+
+              <div class="hero__controls">
+                {/* aria-hidden with the pips: the track is decorative and every
+                    product on it is a real link further down the page. */}
+                <p class="hero__count" aria-hidden="true">
+                  <span class="hero__count-now">01</span>
+                  <span class="hero__count-sep">/</span>
+                  <span class="hero__count-total">{String(BANNERS.length).padStart(2, '0')}</span>
+                </p>
+
+                <div class="hero__pips" aria-hidden="true">
+                  {BANNERS.map(() => (
+                    <span class="hero__pip" />
+                  ))}
+                </div>
+
+                <label class="hero__pause" for="hero-carousel-pause">
+                  Pause
+                </label>
+              </div>
+            </div>
           </>
         )
       }
-    </div>
-
-    {/* THE CLOSING ROW — actions left, proof right, one full-measure line.
-
-        The spec strip lived directly under the lede for one revision and cost
-        the fold dearly: it pushed the banner and both CTAs ~78px down, putting
-        BROWSE CATALOGUE below the crease of an 850px laptop — while the CTA
-        row's right half sat empty. Pairing them solves both at once, and it is
-        the stronger composition anyway: the visitor is asked to act at the
-        exact moment the counted totals argue they should, and the row spans
-        wrap edge to wrap edge like everything above it.
-
-        The dl is unchanged — same counted values, same tests. Geometry only. */}
-    <div class="hero__actions">
-      <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-      <PillButton href="/enquiry">Request a quote</PillButton>
-
-      <dl class="hero__index">
-        <div class="hero__index-row">
-          <dt>Products</dt>
-          <dd>{String(products.length).padStart(2, '0')}</dd>
-        </div>
-        <div class="hero__index-row">
-          <dt>Categories</dt>
-          <dd>{String(categories.length).padStart(2, '0')}</dd>
-        </div>
-        {/* WAS "DIVISIONS / 02" — a review called it a weak statistic that made
-            the range sound unintentionally small, and the divisions are already
-            named in the masthead. The founding year is the one credibility
-            figure on file; the suggested replacements (dealers, markets,
-            territories) are all unsourceable here and refused under rule 1. */}
-        <div class="hero__index-row">
-          <dt>Established</dt>
-          <dd>{settings.established}</dd>
-        </div>
-      </dl>
     </div>
   </div>
 </section>
 
 <style>
-  /*
-   * THE CLOCK. Six slides, seven seconds each. Every animation below is 42s and
-   * differs only by delay, which is what keeps the pips locked to the track
-   * without any script. Changing the slide count means changing this, the
-   * keyframe percentages, and the pip delay — they are one system.
-   */
-  /* 760px, up from the helmet hero's 660px. The helmet was a transparent PNG
-     whose dome stopped well short of its own canvas edge, so a 660px stage could
-     overlap the absolutely positioned header and nothing showed. A banner is an
-     opaque rectangle with a hard top edge: at 660px it ran from y=0 to y=660 and
-     the nav rendered directly on top of the artwork — measured, "Industries" and
-     "Contact" sat over the poster's own headline. The card now lives entirely in
-     the band below the header, and the hero is as tall as that band needs to be
-     for a 4:5 portrait to have any presence beside a 76px headline. */
-  /* THE CENTRED STACK — the client's mockup, adopted 2026-08-20.
-
-     Everything here used to be geometry for a stage that floated to the right
-     of the copy: a 760px min-height so a 4:5 portrait had presence beside a
-     76px headline, an absolutely positioned stage with a negative top margin,
-     and a two-row grid with align-content to stop the CTAs drifting to the
-     bottom edge. None of it survives a single centred column, and keeping any
-     of it would have been geometry defending a layout that no longer exists.
-
-     The height is now whatever the content needs. padding-top clears the
-     absolutely positioned chrome above it — an 84px nav plus its 2px progress
-     rule is 86px, and the extra is the mockup's breathing room above the
-     eyebrow. */
+  /* ------------------------------------------------------------ the band --
+   *
+   * The header is `position: absolute` over this band and occupies y 0–86
+   * (84px nav + 2px progress rule), so `--hero-chrome` is what the padding
+   * clears. docs/TRAPS.md: these numbers are one arithmetic chain with
+   * Header.astro and nothing but this comment connects them.
+   *
+   * The bottom padding reserves room for the campaign band, which is pulled
+   * up by 12.5% of its own width (half of a 4:1 frame's height). The stage's
+   * width is the wrap's content width, so the same expression is written
+   * here rather than a number that would drift the moment --wrap-max moved. */
   .hero {
     position: relative;
-    background: var(--surface-alt);
-    overflow: hidden;
-    /* 86px of chrome plus 22px of breathing room above the eyebrow — the same
-       22px the old 152/130 pair carried before the utility bar was removed. */
-    padding: 108px 0 76px;
-    /* WAS `center`. Every child inherited it and the result was a column of
-       centred strips — eyebrow, headline, rule, sentence, band — which a design
-       review on 2026-08-29 named as the single biggest source of blandness on
-       the page. Left is the axis now, and the imbalance is built on top of it
-       deliberately rather than avoided. */
-    text-align: left;
-
-    /* WHERE THE HEADER CHROME ENDS, and every decoration below starts there.
-
-       The hero runs from y=0 because the nav is absolutely positioned over it,
-       so without this the dot field and the crop marks run up behind the logo
-       and the nav links. Measured rather than assumed: the nav occupies 0 to
-       84 and its progress rule 84 to 86.
-
-       It was 130 while a 44px utility bar sat above the nav. That bar is gone
-       (2026-08-29) and this moved with it.
-
-       THESE THREE NUMBERS ARE ONE ARITHMETIC CHAIN — this constant, `.hero`'s
-       padding-top, and the padding-top in the `max-width: 1180px` block below.
-       Change the header's height without changing all three and the dot field
-       paints behind the nav again, with every gate still green. */
-    --hero-chrome: 86px;
-
-    /* THE HERO'S VERTICAL SCALE, added 2026-08-29.
-
-       Five hand-tuned margins (22 / 26 / 30 / 14 / 28) became four names on a
-       4px grid, so a relationship can be reasoned about rather than nudged.
-       Read top to bottom: gaps tighten as the eye moves down inside a group
-       and open between groups. Anything that changes one of these should be
-       able to say which group boundary it is moving. */
-    --hero-gap-tight: 12px;   /* inside a group: rule to lede, band to controls */
-    --hero-gap-close: 20px;   /* headline to its own rule */
-    --hero-gap-step: 32px;    /* group to group: eyebrow to headline, lede to stage */
-    --hero-gap-open: 40px;    /* the stage group to the CTA row */
+    background: var(--surface-page);
   }
 
-  /* The 80px graph paper behind everything. Decorative and very low contrast,
-     so it never competes with the copy. */
-  /* A 22px dot field, replacing the 80px white line grid the dark hero used.
-     It reads as a drawing sheet rather than graph paper, which is what the
-     client's mockup asked for, and it survives being scaled to a phone in a way
-     an 80px grid does not. */
-  /* STRONGER DOTS, BUT MASKED — the two go together and neither works alone.
+  .hero__band {
+    --hero-chrome: 86px;
+    --hero-stage-w: min(var(--wrap-max), 100vw - 2 * var(--wrap-pad));
+    position: relative;
+    overflow: hidden;
+    padding: calc(var(--hero-chrome) + 52px) 0 calc(var(--hero-stage-w) * 0.125 + 48px);
+  }
 
-     At --line (#e4e4e7, 1.27:1 against the band) the field was barely there on
-     a bright screen. Simply darkening it puts texture directly behind a 76px
-     headline and a dashed slot, and the page starts to read as busy rather
-     than considered.
-
-     So the dots are darker AND denser at the edges, fading out through the
-     middle where the content sits. The mask does the work: the type and the
-     slot land on clean ground, the frame keeps its drawing-sheet texture, and
-     the grid reads as a deliberate border treatment rather than wallpaper.
-
-     `--hero-dot` is a local token, not a semantic one. It is decoration with
-     no contrast requirement, so it has no place in the global scale, and
-     naming it here keeps the two dot rules below in step. */
-  .hero__grid {
+  .hero__bg {
     position: absolute;
-    /* Starts below the header, not at the top of the hero. The nav sits on
-       flat --surface-alt now instead of on texture. */
-    inset: var(--hero-chrome) 0 0 0;
-    --hero-dot: #c2c2ca;
-    background-image: radial-gradient(var(--hero-dot) 1.4px, transparent 1.4px);
-    background-size: 22px 22px;
-    /* The mask never reaches full transparency. A first attempt used
-       `transparent 38%` and cleared the dots across most of the visible band,
-       which made the field LESS present than the faint version it replaced.
-       Holding the centre at 30% alpha keeps the texture continuous across the
-       whole hero while still easing it behind the copy.
+    inset: 0 0 0 38%;
+    z-index: 0;
+  }
 
-       WIDENED AND LOWERED 2026-08-29, alpha untouched. The eased zone was
-       tuned when the column was eyebrow, headline, rule, banner; a supporting
-       sentence now sits between the rule and the banner and pushes the band
-       down. 62%/58% at 52% is the ellipse that still covers the copy AND the
-       artwork, which is what the design review asked for — the dots were
-       running at full strength directly behind the banner and competing with
-       it. The 30% floor is deliberately NOT reduced: that is the change the
-       comment above records as having already failed once. */
-    -webkit-mask-image: radial-gradient(
-      ellipse 62% 58% at 50% 52%,
-      rgb(0 0 0 / 30%) 0%,
-      #000 72%
-    );
-    mask-image: radial-gradient(ellipse 62% 58% at 50% 52%, rgb(0 0 0 / 30%) 0%, #000 72%);
+  .hero__bg :global(img) {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 60% 40%;
+  }
+
+  /* The scrim. Solid to 46% of the band so the copy column sits on flat
+     black; the photograph shows through on the right and is held dark at the
+     top so the header reads on it. A vertical fade at the foot lands the
+     proof strip on the same black. */
+  .hero__bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        var(--color-black) 0%,
+        rgba(8, 8, 10, 0.96) 12%,
+        rgba(8, 8, 10, 0.7) 40%,
+        rgba(8, 8, 10, 0.42) 70%,
+        rgba(8, 8, 10, 0.6) 100%
+      ),
+      linear-gradient(180deg, rgba(8, 8, 10, 0.9) 0%, transparent 28%),
+      linear-gradient(0deg, var(--color-black) 0%, rgba(8, 8, 10, 0.6) 18%, transparent 46%);
+  }
+
+  .hero__wrap {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ------------------------------------------------------------- the head --
+   *
+   * The masthead on the left axis and the section numeral on the wrap's right
+   * edge — the same two cells every section head on the page has, which is
+   * what keeps the hero the system's first instance rather than its
+   * exception. `home.spec.ts` asserts every numeral ends on one vertical
+   * line and that this one is the largest. */
+  .hero__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-8);
+  }
+
+  .hero__head :global(.section-index) {
+    font-size: calc(clamp(40px, 5.6vw, 76px) * 2.1);
+    line-height: 0.7;
+    margin-top: -0.06em;
+  }
+
+  .hero__masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 10px;
+    margin: 0;
+    padding-top: 6px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-meta);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    /* --text-muted resolves to --color-grey inside .on-dark: 5.2:1 on
+       --color-black, clear of the 4.5:1 floor for this 12px. */
+    color: var(--text-muted);
+    animation: hero-rise 0.4s var(--ease-out) both;
+  }
+
+  .hero__masthead-item {
+    white-space: nowrap;
+  }
+
+  .hero__masthead-reg {
+    font-size: 0.7em;
+    vertical-align: super;
+    letter-spacing: 0;
+  }
+
+  /* Small red text on dark takes --accent-text, which .on-dark resolves to
+     --color-red-light (5.08:1 on --color-black). Rule 4. */
+  .hero__masthead-sep {
+    color: var(--accent-text);
+  }
+
+  /* --------------------------------------------------------- the headline --
+   *
+   * The client's approved line, in the drawn italic, two lines on one left
+   * axis. The staircase is gone: it was the composition's most visible idea
+   * and the thing four reviews called "loud". Two lines that start together
+   * read as one statement.
+   *
+   * Sized off the viewport, capped where line one ("HOME AND INDUSTRIAL",
+   * 9.375x its font size in this face) still fits the 60% column at 1360:
+   * 76px x 9.375 = 712px against an 816px column. */
+  .hero__title {
+    position: relative;
+    z-index: 1;
+    max-width: 62%;
+    margin: var(--space-6) 0 0;
+    font-family: var(--font-hero);
+    font-size: clamp(40px, 5.6vw, 76px);
+    font-weight: 800;
+    font-style: italic;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: var(--text);
+    animation: hero-rise 0.4s var(--ease-out) 0.06s both;
+  }
+
+  .hero__title-a,
+  .hero__title-b {
+    display: block;
+  }
+
+  /* Brand red on --color-black is 4.65:1 — legal for large text only, and
+     this line's floor is 40px. */
+  .hero__title-b {
+    color: var(--accent);
+  }
+
+  /* #bfbfc6 on --color-black: 11.1:1. The division pages use the same lede
+     colour on the same scrim. */
+  .hero__lede {
+    max-width: 46ch;
+    margin: var(--space-6) 0 0;
+    font-size: clamp(16px, 1.2vw, 18px);
+    line-height: 1.55;
+    color: #bfbfc6;
+    text-wrap: balance;
+    animation: hero-rise 0.4s var(--ease-out) 0.1s both;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+    animation: hero-rise 0.4s var(--ease-out) 0.14s both;
+  }
+
+  /* The pair are drawn as a matched pair here — same case, same family, same
+     shape — because side by side the primitives' defaults read as two
+     controls from two designs. Scoped to the hero; PillButton is used on six
+     other pages. 15px of type plus 18px of padding clears the 44px floor. */
+  .hero__actions :global(.solid) {
+    padding: 18px 34px;
+    font-size: var(--fs-body);
+    letter-spacing: 0.05em;
+  }
+
+  .hero__actions :global(.pill) {
+    border-radius: 0;
+    padding: 17px 30px;
+    font-family: var(--font-display);
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border-color: rgba(255, 255, 255, 0.55);
+    color: var(--text);
+  }
+
+  .hero__actions :global(.pill:hover) {
+    border-color: var(--accent);
+  }
+
+  /* ------------------------------------------------------------ the doors --
+   *
+   * Two cards on a hairline, boundary turning accent on hover — the site's
+   * card cue, on the dark surface. The fill is 4% white so the cards read as
+   * panels on the photograph without hiding it. */
+  .hero__doors {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    max-width: 760px;
+    margin: var(--space-12) 0 0;
+    padding: 0;
+    list-style: none;
+    animation: hero-rise 0.4s var(--ease-out) 0.18s both;
+  }
+
+  .hero__door {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    height: 100%;
+    padding: 20px 22px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(6px);
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      background var(--dur-base) var(--ease-out);
+  }
+
+  .hero__door:hover,
+  .hero__door:focus-visible {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .hero__door-kicker {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+  }
+
+  .hero__door-name {
+    font-family: var(--font-display);
+    font-size: var(--fs-title-sm);
+    font-weight: var(--fw-subhead);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  /* #bfbfc6, the division pages' lede grey: 11.1:1 on --color-black. 14px
+     over a photograph wants the headroom --text-muted (5.2:1) does not have,
+     and the sweep in theme-sweep.test.ts bans --color-grey-lt off the footer. */
+  .hero__door-blurb {
+    font-size: var(--fs-body-sm);
+    line-height: 1.5;
+    color: #bfbfc6;
+  }
+
+  .hero__door-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .hero__door-chev {
+    color: var(--accent-text);
+    font-size: var(--fs-body);
+    line-height: 1;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .hero__door:hover .hero__door-chev {
+    transform: translateX(3px);
+  }
+
+  /* ------------------------------------------------------ the proof strip --
+   *
+   * Four cells on a hairline, the numerals in the display face. Landing on
+   * the dark band's last row, where the vertical scrim has already resolved
+   * to flat black. */
+  .hero__proof {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: var(--space-14) 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    animation: hero-rise 0.4s var(--ease-out) 0.22s both;
+  }
+
+  .hero__proof-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: 22px 24px 0 0;
+  }
+
+  .hero__proof-cell + .hero__proof-cell {
+    padding-left: 24px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .hero__proof dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .hero__proof dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2.4vw, 34px);
+    font-weight: var(--fw-section);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  /* ------------------------------------------------------ the campaign band --
+   *
+   * Pulled up over the dark band by half the frame's height: margin-top as a
+   * percentage resolves against the containing block's WIDTH, and the stage
+   * is the wrap's full width, so -12.5% is exactly half of a 4:1 frame. */
+  .hero__stage-wrap {
+    position: relative;
+    z-index: 3;
   }
 
   .hero__stage {
-    /* WRAP EDGE TO WRAP EDGE — the >=901px cap at 93.5% is gone. It made the
-       band stop short of the measure "to give ~6% back", which left its right
-       edge meeting nothing: an orphan sliver of dot grid between the artwork
-       and the margin, in a client screenshot, aligned with nothing. The hero
-       has exactly two vertical edges now and the band lands on both. Its
-       dominance is governed by what it always really was: the fixed 4:1 ratio
-       and the frame. */
-    /* FULL COLUMN WIDTH HERE, AND THE ~6% GIVEN BACK ONLY ON A WIDE SCREEN.
-
-       The band used to cap at 1160px against a 1240px wrap — the ~6% it gave
-       back so uploaded campaign artwork could not set the visual temperature
-       of the page. When the wrap widened to 1360 that fixed number would have
-       silently handed the 6% back, so it became the ratio it always was.
-
-       A RATIO BINDS EVERYWHERE, WHICH A FIXED WIDTH DID NOT, and that was the
-       bug: 93.5% of a 320px phone column is 299px, so the band stopped
-       spanning the column on a phone. `tests/e2e/hero-mobile.spec.ts` measures
-       exactly that and caught it. On a phone there is no surplus width to give
-       back and nothing to protect the page from — the band IS the column. */
-    max-width: 100%;
     position: relative;
     width: 100%;
-    margin-top: var(--hero-gap-step);
-    z-index: 1;
+    margin-top: -12.5%;
   }
 
-  /* THE EMPTY SLOT.
-
-     4:1 wherever there is width to hold it. Below 720px a 4:1 band is under
-     90px tall on a phone — too short to read as a banner and too short to hold
-     its own label — so it opens out to 3:2, which is the proportion the mobile
-     mockup draws. That is a real tension worth stating rather than hiding: a
-     single 2800 x 700 artwork cannot fill both — which is why only the EMPTY
-     slot opens out. See the media query below: `.hero__frame` holds 4:1 at
-     every width so a real banner is never cropped. */
+  /* 4:1 wherever there is width. Below 720px the EMPTY slot opens to 3:2 so
+     its icon and label fit; the real frame does not — docs/TRAPS.md records
+     the client decision that keeps an 84px band on a phone. */
   .hero__slot {
     display: flex;
     flex-direction: column;
@@ -683,6 +650,7 @@ const settings = await getSiteSettings();
     background: var(--surface-page);
     color: var(--text-muted);
     padding: 24px;
+    box-shadow: 0 24px 48px rgba(8, 8, 10, 0.14);
   }
 
   .hero__slot-icon {
@@ -700,78 +668,7 @@ const settings = await getSiteSettings();
     white-space: nowrap;
   }
 
-  /* Carried over from the helmet stage so the card is not a bright rectangle
-     sitting on flat black with nothing between them. Sized to the card rather
-     than to the old 540px circle, and softer — the artwork supplies its own
-     colour now, so this only has to lift the card off the background. */
-  /* Centred on the CARD rather than on the stage, because the stage now carries
-     a control row underneath and centring on the whole thing would push the halo
-     low. `bottom: 44px` is that row's height plus its gap. */
-
-  /* The card. `aspect-ratio` rather than a height, so the box is the slot's
-     shape and the control row can simply follow it in normal flow.
-
-     4 / 1, AND IT MUST MATCH `.hero__slot` ABOVE. It was `1261 / 1561` until
-     2026-08-23 — the native ratio of the six portrait posters, correct when
-     they were the artwork and left behind when the hero was redesigned around a
-     4:1 band. The empty slot was rebuilt to 4:1 and this was not, and because
-     no banner existed to render, nothing showed it: the first real upload came
-     back cropped to a tall centre slice of itself.
-
-     The two ratios are one decision. If the slot's shape ever changes, change
-     it here in the same commit. */
-  /* Sits on the frame's top-left corner, in the technical register the crop
-     marks and the slide counter already speak. The rule running off to the
-     right is what makes it read as a drawing label rather than as a heading. */
-  /* THE BAR — label left, controls right, one row above the band.
-
-     `align-items: end` so the label's baseline and the counter's sit on the
-     same line despite different sizes. */
-  .hero__bar {
-    display: flex;
-    /* `wrap` is load-bearing, not defensive. The label and the control rail
-       total ~380px at their floors; a 360px phone rendered the PAUSE button
-       half off the edge, and the hero's own `overflow: hidden` swallowed the
-       evidence — no scrollbar, just a clipped control. Wrapped, the rail drops
-       to its own line and stays whole. */
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: 10px 24px;
-    margin-bottom: 12px;
-  }
-
-  /* THE TRAILING RULE IS GONE. This label used to end in a hairline running
-     off to the right edge of the band — one of four horizontal rules a design
-     review counted in a hero about 600px tall. The bar's own layout separates
-     the label from the controls; a line to do the same job was decoration
-     wearing a structural costume. */
-  /* THE LABEL KEEPS ITS WORDS AND GAINS NO NUMBER.
-
-     The third review suggested "01 / FEATURED CAMPAIGN". It would have been
-     the third "01" above the fold — the section index behind the headline, the
-     slide counter to the right of this very label, and then this. That is the
-     same redundancy the review had just asked us to remove from the giant
-     numeral, arriving from a different direction. The slide counter is the
-     number this module needs and it already has it. */
-  .hero__frame-label {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-
-  /* Matches the masthead's separator exactly, which is what ties the two
-     technical lines together as one system rather than two ideas. */
-  .hero__bar-sep {
-    margin: 0 8px;
-    color: var(--accent-text);
-  }
-
-
+  /* 4 / 1, AND IT MUST MATCH `.hero__slot`. The two ratios are one decision. */
   .hero__frame {
     position: relative;
     width: 100%;
@@ -779,31 +676,14 @@ const settings = await getSiteSettings();
     margin: 0;
     overflow: hidden;
     border: 1px solid var(--line);
-    /* 2px, down from 4px on 2026-08-29, and not one more. The rectangle is
-       this design's whole argument; the radius exists only to stop the corner
-       reading as a clipping error. Rounded SaaS cards would make it worse. */
     border-radius: 2px;
     background: var(--surface-raised);
-    /* Re-tuned for a white page. The dark hero carried 0.75-alpha black plus a
-       red bloom; both were reading the black behind them. On white that shadow
-       is grey mud and the bloom is the glow this theme deleted, so the frame
-       now lifts with a single soft shadow and nothing else. */
-    box-shadow: 0 24px 48px rgba(8, 8, 10, 0.14);
+    box-shadow: 0 24px 48px rgba(8, 8, 10, 0.18);
   }
 
-  /*
-   * The sliding track.
-   *
-   * `display: flex` with each slide at `flex: 0 0 100%` makes the track exactly
-   * as wide as the frame while its seven children overflow it, so one
-   * `translateX(-100%)` is exactly one slide. Setting an explicit 700% width
-   * instead would make the percentages resolve against the track and every
-   * number here would need dividing by seven.
-   */
   .hero__track {
     display: flex;
     height: 100%;
-    /* Duration is generated from the slide count; see the inline style block. */
     animation: hero-carousel var(--ease-out, cubic-bezier(0.4, 0, 0.2, 1)) infinite;
     animation-duration: 42s;
   }
@@ -813,11 +693,6 @@ const settings = await getSiteSettings();
     height: 100%;
   }
 
-  /* `<Picture>` wraps the img in a real <picture>, which is inline by default —
-     an inline box would sit on the text baseline and leave a strip of card
-     showing under every slide. Both the wrapper and the img have to be told to
-     fill. `:global` because Astro's scoping cannot reach inside a child
-     component's rendered markup. */
   .hero__slide :global(picture) {
     display: block;
     width: 100%;
@@ -831,41 +706,41 @@ const settings = await getSiteSettings();
     object-fit: cover;
   }
 
-  /* The control row: pips left, pause right, on the hero's own black. */
-  /* A rail, not three scattered parts. `space-between` is gone deliberately:
-     it was what pushed the pips and the pause to opposite edges of a 940px
-     band. The pips take the free space instead, so the row reads as one
-     instrument at any width.
+  .hero__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 24px;
+    margin-top: 14px;
+  }
 
-     NO max-width HERE. It was written with one at 940px — the measure the
-     crest and the closing rule use — and that is the copy column, not the
-     band: measured at 1440, the rail came out 940 wide against a 1176 frame
-     and sat visibly inset from the artwork it controls. The stage is the
-     parent, so inheriting its width is what keeps the two edges aligned at
-     every viewport, and no number has to be kept in sync with anything. */
-  /* COMPRESSED TO ~340px, down from the band's full width.
+  .hero__frame-label {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
 
-     The rail used to span all 1160px of the frame, and a design review put it
-     plainly: there is no reason a progress indicator has to mirror the width
-     of the thing it indexes. At full width the three segments read as another
-     horizontal rule across the page — the fourth in a hero that had too many.
-     At 340 it reads as an instrument.
+  .hero__bar-sep {
+    margin: 0 8px;
+    color: var(--accent-text);
+  }
 
-     It sits in `.hero__bar` now, so it has no margin of its own; the bar
-     places it. */
+  /* One instrument: counter, pips as a track, pause — left to right. Inherits
+     the stage's width so its two edges align with the frame's. */
   .hero__controls {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
     gap: var(--space-3);
-    /* 340 -> 300 at the ceiling, and the gap with it: a third review still
-       found the assembly loose. Roughly 12% out of the whole unit. */
     width: clamp(185px, 22vw, 300px);
     height: 24px;
   }
 
-  /* Data, not language — a slide index is exactly what --font-mono is for, and
-     tabular figures stop the row twitching as the number changes. */
   .hero__count {
     display: flex;
     align-items: baseline;
@@ -880,8 +755,6 @@ const settings = await getSiteSettings();
     color: var(--text-muted);
   }
 
-  /* --accent-text, NOT --accent. 11px is far below the 24px large-text bar and
-     brand red is 4.30:1 on this surface; --accent-text is 9.07:1. Rule 4. */
   .hero__count-now {
     color: var(--accent-text);
   }
@@ -890,8 +763,6 @@ const settings = await getSiteSettings();
     opacity: 0.5;
   }
 
-  /* The pips fill the rail rather than clustering at one end, so the row reads
-     as a progress track rather than as three dots beside a button. */
   .hero__pips {
     display: flex;
     flex: 1 1 auto;
@@ -900,39 +771,9 @@ const settings = await getSiteSettings();
     min-width: 0;
   }
 
-  /* Non-text UI, which WCAG 1.4.11 holds to 3:1 against what is adjacent rather
-     than to 4.5:1. This is only decidable because the row sits on a known
-     surface — over the artwork, where these started, no ratio could be stated at
-     all.
-
-     The dark-theme pair was #5c5c66 and #ffffff on --color-black, and the
-     history is worth keeping: this shipped for an hour at #3a3a42, a value
-     picked to look right and asserted at "3.2:1" from memory when it actually
-     measured 1.79:1. That is exactly what rule 4 means by "colour is measured,
-     not chosen", and it got past a green axe run — axe does not evaluate 1.4.11
-     on decorative-looking custom elements.
-
-     Re-measured for the white theme against --surface-alt #f6f6f7, not carried
-     over and not estimated:
-
-       inactive --line-control #8a8a92 on #f6f6f7   3.17:1   passes the 3:1 bar
-       active   --accent       #eb2927 on #f6f6f7   3.99:1   passes the 3:1 bar
-
-     The active pip is brand red rather than ink: it is non-text UI at 3.99:1,
-     well clear of its bar, and red is what the client's mockup shows. */
-  /* GEOMETRY CHANGED 2026-08-29, TIMING DID NOT. `width: 18px` became a flex
-     segment so the pips span the rail; the animation and its duration are
-     carried across untouched. They are the clock — the slide count, the
-     keyframe percentages and the per-pip delays are one system, described at
-     the top of this style block and generated at the foot of this file.
-
-     THE KEYFRAME HAD TO CHANGE WITH THE GEOMETRY, and for a while it did not.
-     It animated `width` between 26px and 18px, which a flex item with
-     `flex-basis: 0` ignores completely — so for one revision the only thing
-     distinguishing the active segment was its colour, and a third review said
-     the progress state read as too subtle. It was. The keyframe animates
-     `flex-grow` now, so the current segment is visibly wider AND red, which is
-     what a progress rail is supposed to look like. */
+  /* Measured on white: inactive --line-control 3.43:1, active --accent
+     4.30:1, both over the 3:1 non-text bar. The keyframe animates flex-grow
+     so the current segment is visibly wider as well as red. */
   .hero__pip {
     flex: 1 1 0;
     min-width: 0;
@@ -943,14 +784,8 @@ const settings = await getSiteSettings();
     animation-duration: 42s;
   }
 
-  /* The per-pip delays are GENERATED from the slide count -- see the inline
-     style block at the foot of this file. They were six literals here until
-     2026-08-19, which meant a seventh banner would light the wrong pip. */
-
-  /* The checkbox itself is never seen; the label is the button. Not
-     `display: none` — that would take it out of the tab order and off every
-     assistive technology, which is the whole control gone. This keeps it
-     focusable and reachable while the label carries the pixels. */
+  /* Visually hidden, never `display: none` — that would take the switch out
+     of the tab order and off assistive technology. */
   .hero__toggle {
     position: absolute;
     width: 1px;
@@ -977,9 +812,6 @@ const settings = await getSiteSettings();
     font-weight: var(--fw-label);
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    /* grey-lt on card measures 8.90:1. `--color-grey` would be 4.14:1 here,
-       which fails AA for text this size — 11px is nowhere near the 24px large
-       bar. handoff.md §3. */
     color: var(--text-muted);
     cursor: pointer;
   }
@@ -989,8 +821,6 @@ const settings = await getSiteSettings();
     width: 7px;
     height: 8px;
     background: var(--accent-text);
-    /* Two bars — the pause glyph — drawn rather than typed, so no font has to
-       carry it and no text alternative is implied. */
     clip-path: polygon(0 0, 2px 0, 2px 8px, 0 8px, 5px 0, 7px 0, 7px 8px, 5px 8px);
   }
 
@@ -999,41 +829,14 @@ const settings = await getSiteSettings();
     color: var(--text);
   }
 
-  /* The checkbox is visually hidden but still focusable, so the focus ring has
-     to be drawn on the label the user can actually see. `:has()` again, because
-     the label is not a sibling of the input any more — it is inside the control
-     row, two levels down. */
   .hero__stage:has(.hero__toggle:focus-visible) .hero__pause {
     outline: 2px solid var(--accent-text);
     outline-offset: 2px;
   }
 
-  /* THE PAUSE ITSELF. `:has()` lets the checked state reach back up to the stage
-     and stop both the track and the pips — they have to stop together or the lit
-     pip drifts away from the visible slide.
-
-     There used to be a third moving thing here — a pulsing red glow behind the
-     stage, deliberately left running because it was ambient rather than
-     informational. It was deleted with the white theme on 2026-08-20: a red
-     radial bloom is a dark-surface device and on white it reads as a pink
-     smudge. Nothing now moves in this hero except the track and the pips, and
-     the pause control stops both. */
-  /* THERE IS DELIBERATELY NO HOVER-PAUSE ON THIS CAROUSEL.
-
-     One was added on 2026-08-29 — the design database's rule for auto-rotating
-     media is to stop on hover, focus and reduced motion — and it was removed
-     the same day, because `tests/e2e/hero-carousel.spec.ts` caught what it
-     actually did: `.hero__controls` sits INSIDE `.hero__stage`, so the pointer
-     that clicks Pause is hovering the stage, and pressing the control a second
-     time left the band stopped. The toggle became a one-way door, which is the
-     spec's own words for the thing that test exists to prevent.
-
-     The band also has no links in it, so nothing here is a moving target the
-     way the category ticker's names are — that is why `Ticker.astro` keeps its
-     hover-pause and this does not. Generic carousel advice lost to a specific
-     tested contract. Do not re-add it without moving the controls out of the
-     hovered element first. */
-
+  /* The track and the pips stop TOGETHER, or the lit pip walks on alone. No
+     hover-pause: the controls sit inside the stage, so a hover rule turned
+     the toggle into a one-way door once already (hero-carousel.spec.ts). */
   .hero__stage:has(.hero__toggle:checked) .hero__track,
   .hero__stage:has(.hero__toggle:checked) .hero__pip {
     animation-play-state: paused;
@@ -1045,682 +848,116 @@ const settings = await getSiteSettings();
   }
 
   .hero__stage:has(.hero__toggle:checked) .hero__pause::before {
-    /* A right-pointing triangle: the control now says "Play". */
     clip-path: polygon(0 0, 7px 4px, 0 8px);
   }
 
-  .hero__wrap {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    /* `center` until 2026-08-29, which shrink-wrapped every child to its own
-       content width and then centred it. `stretch` is what lets the
-       composition below own the full measure and place things within it. */
-    align-items: stretch;
-  }
-
-  /* THE CREST, THE HEXAGONAL BADGE AND THE CLOSING UNDERLINE ARE GONE — all
-     three removed 2026-08-29.
-
-     They were the mockup's character and they were also three of the four
-     competing horizontal rules a design review counted in a hero that is only
-     about 600px tall: two red arms flanking the badge, and a notched red bar
-     under the headline. Each was well made. Together they cut the composition
-     into stripes and left nothing for the eye to travel along.
-
-     What carries that job now is one VERTICAL red rule on the index, plus the
-     masthead's slashes. If any of this comes back, something else has to go.
-
-     ------------------------------------------------------------------------
-     THE MASTHEAD — the technical system line that replaced the badge. */
-  .hero__masthead {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 10px;
-    margin: 0;
-    font-family: var(--font-mono);
-    /* 12px, up from 11. A third review said this line was one you had to
-       search for, and offered two remedies: raise the size by about a pixel,
-       OR raise the contrast by 15-20%. Not both.
-
-       SIZE IS THE ONE TO TAKE HERE, and the reason is rule 4 rather than
-       preference. --text-muted is 4.96:1 on --surface-alt, which clears the
-       4.5:1 floor for normal-size text with very little room to spare in the
-       other direction; there is no darker muted token, so "raise the contrast"
-       would have meant inventing a colour and measuring it. A pixel is free
-       and it is reversible. */
-    font-size: var(--fs-meta);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    animation: hero-rise 0.4s var(--ease-out) both;
-  }
-
-  .hero__masthead-item {
-    white-space: nowrap;
-  }
-
-  .hero__masthead-reg {
-    font-size: 0.7em;
-    vertical-align: super;
-    letter-spacing: 0;
-  }
-
-  /* The only red at this size anywhere in the hero, and it is three glyphs.
-     --accent-text, not brand red: 11px is normal-size text and --accent is
-     4.30:1 on white. Rule 4. */
-  .hero__masthead-sep {
-    color: var(--accent-text);
-  }
-
-  /* ------------------------------------------------------------------------
-     THE COMPOSITION — headline left, counted totals right.
-
-     `auto` on the second column, not a fraction: the index is as wide as its
-     own numerals and never steals measure from the headline. Below 900px it
-     drops under the type block and the whole thing becomes one left-aligned
-     column, which is the phone layout and needs no separate rules. */
-  .hero__composition {
-    display: grid;
-    /* The right column was `auto` — the numeral's own two digits and nothing
-       else — which is what left the hole this rail now fills. It is a real
-       column with a real minimum, so the headline keeps the larger share of the
-       measure and the composition still has exactly two vertical edges. */
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
-    /* `stretch`, so the rail is as tall as the headline and can pin one child
-       to each end of it. */
-    align-items: stretch;
-    gap: 0 clamp(20px, 4vw, 56px);
-    /* --hero-gap-close, not step: the masthead is an 11px line and 32px under
-       it read as a hole once the stats strip left this block. */
-    margin-top: var(--hero-gap-close);
-  }
-
-  /* The hero's numeral: same flow treatment as every section head, scaled by
-     the same rule — a multiple of its own headline's clamp, so it is the
-     largest on the page by construction and never by a hand-picked number.
-     Its cap-top aligns with the headline's; its right edge is the wrap's,
-     which the banner below now shares. */
-  .hero__composition :global(.section-index) {
-    justify-self: end;
-    align-self: start;
-    font-size: calc(clamp(36px, 5.4vw, 72px) * 2.4);
-  }
-
-  /* A container, so the headline can be sized from the column it is in rather
-     than from the viewport. With a fixed-width rail beside it, the column
-     narrows faster than `vw` does — which is why a viewport-based clamp fitted
-     at 1440 and wrapped line one at 1280. */
-  .hero__type {
-    position: relative;
-    min-width: 0;
-    container-type: inline-size;
-  }
-
-  /* The rail stacks the numeral over the lede and pins both to the wrap's right
-     edge. `align-items: end` is what does the pinning — the numeral is as wide
-     as its digits and the lede is as wide as its measure, so without it they
-     would ragged-left against each other and the edge would stop being an
-     edge. */
-  .hero__rail {
-    display: flex;
-    flex-direction: column;
-    /* The numeral's cap-top on the headline's cap-top, the lede's last line on
-       the headline's baseline. Two shared edges rather than two distances —
-       §44's rule, applied inside the block instead of only at its sides. The
-       pair share a left edge with each other, which is what makes the rail read
-       as a column and not as two floating objects. */
-    justify-content: space-between;
-    min-width: 0;
-  }
-
-  /* The numeral stretches to the rail and pushes its digits to the far side, so
-     its box ends on the wrap's right edge — the same line every other section's
-     numeral ends on, which `home.spec.ts` asserts across all nine. Left-aligning
-     it inside the rail broke that line, and the numbering system is a system
-     precisely because no instance is allowed its own geometry. */
-  .hero__rail :global(.section-index) {
-    /* `width: 100%` rather than `align-self: stretch`: the flow variant already
-       resolves to `align-self: start`, and an explicit width settles it without
-       a specificity argument with the primitive. */
-    width: 100%;
-    text-align: right;
-  }
-
-  /* THE OUTLINED PRODUCT COUNT. See the note in the markup for why this is the
-     only element allowed to break the plane.
-
-     `color: transparent` is load-bearing, not a trick: a browser with no
-     `-webkit-text-stroke` support paints nothing, which is the failure this
-     wants. Filling it and hoping would put a black slab over the headline.
-
-     Right-anchored and pushed up behind the first line, so it never sits under
-     "SOLUTIONS." — the red word is the one piece of type here whose contrast
-     has the least headroom, and stacking texture behind it is how a measured
-     ratio quietly stops being true. */
-
-  /* ------------------------------------------------------------------------
-     THE INDEX — the counted totals as the composition's counterweight.
-
-     No horizontal rules between the rows. The temptation is a hairline per row
-     and it is exactly what the review was complaining about; spacing separates
-     them perfectly well and the single red vertical keeps them a group. */
-  /* Pushed to the row's far end: the CTAs own the left edge, the totals own
-     the right, and the red rule that leads them mirrors the numeral above on
-     the same wrap edge. On a narrow screen `flex-wrap` drops the strip to its
-     own line and `margin-left: auto` stops mattering. */
-  .hero__index {
-    display: grid;
-    grid-auto-flow: column;
-    justify-content: start;
-    gap: 0 clamp(24px, 3vw, 44px);
-    margin: 0 0 0 auto;
-    padding-left: 22px;
-    border-left: 2px solid var(--accent);
-    animation: hero-rise 0.4s var(--ease-out) 0.14s both;
-  }
-
-  .hero__index-row {
-    display: grid;
-    gap: 2px;
-  }
-
-  .hero__index dt {
-    font-family: var(--font-mono);
-    font-size: var(--fs-micro);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-
-  /* Tabular figures, because these are data and a proportional 1 would leave
-     the column visibly ragged against the 9s and 4s beside it. */
-  .hero__index dd {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(30px, 3.2vw, 44px);
-    font-weight: var(--fw-section);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  /* One sentence, one measure, and deliberately NOT the display face — the
-     hero's job above this line is volume, and its job here is to be read.
-     --text-muted is 4.96:1 on --surface-alt, clear of the 4.5:1 floor. */
-  .hero__lede {
-    position: relative;
-    z-index: 1;
-    /* 62ch -> 52ch -> 470px. A third review wanted roughly 430-480px: the line
-       was travelling far enough horizontally to weaken the shape of the
-       left-hand block the headline had just established.
-
-       A pixel measure rather than `ch` on purpose. `ch` is the width of a "0"
-       in the current face at the current size, and this rule's size is a
-       clamp — so a `ch` cap silently changes measure at every viewport, which
-       is the opposite of the fixed footprint being asked for. `min()` keeps it
-       from overflowing a narrow column.
-
-       The cap is the rail's width now rather than 470px: in the rail it is the
-       column, so a measure narrower than its own container would re-open a
-       smaller version of the hole it was moved here to close. The 430-480px the
-       review asked for is what `minmax(300px, 400px)` plus the gap resolves to
-       on a desktop measure anyway. */
-    max-width: 100%;
-    margin: var(--hero-gap-step) 0 0;
-    color: var(--text-muted);
-    font-family: var(--font-body);
-    font-size: clamp(15px, 1.25vw, 17.5px);
-    font-weight: var(--fw-body);
-    line-height: 1.6;
-    text-wrap: balance;
-  }
-
-  /*
-   * FIRA SANS ITALIC, AND THE SKEW IS GONE WITH IT.
-   *
-   * The client supplied Fira Sans on 2026-08-29 for this headline. It is set
-   * here and nowhere else — --font-display (Archivo) still serves every other
-   * heading on the site, so this is one element, not a re-typesetting.
-   *
-   * The slant is now DRAWN rather than sheared. This rule used to carry
-   * `transform: skewX(-9deg)`, which mechanically slanted upright Archivo, and
-   * that transform brought two traps with it: it lost to any animation that
-   * also set transform (hence a bespoke `hero-rise-lean` keyframe), and the
-   * `font-style: oblique` attempt before it reported a slant Chrome never
-   * synthesised. A real italic file removes the cause of both. The bespoke
-   * keyframe is gone too — this is back on the shared `hero-rise`.
-   *
-   * WEIGHT 800 IS TWO THINGS AT ONCE. It exceeds --fw-display (500) on purpose,
-   * which handoff.md §12 permits as "a ceiling per band, not a mandate" and §27
-   * records. It is ALSO the weight the font file is pinned to: the axis is
-   * pinned, not clipped, so any other value is silently clamped and renders
-   * 800 anyway. tools/subset-hero-font.test.ts fails if this number moves
-   * without the font being rebuilt.
-   */
-  /* THE HEADLINE IS A COMPOSITION NOW, NOT A CENTRED BLOCK.
-
-     Two spans on one source line rather than a wrap point. It used to rely on
-     `max-width: 940px` to push " SOLUTIONS." onto a second line — a measured
-     cap, re-measured whenever the face changed, and still only a hint. The
-     lines are explicit blocks now, which is what lets the second one be
-     OFFSET and LARGER rather than merely underneath.
-
-     The offset is the whole idea. Line one starts at the left margin; line two
-     is pushed right and set at 1.18x, so the pair leans instead of stacking.
-     Negative leading closes the gap between them until they nearly touch,
-     which is what turns two lines of type into one shape. */
-  .hero__title {
-    position: relative;
-    z-index: 1;
-    margin: 0;
-    font-family: var(--font-hero);
-    /* Ceiling 68px, down from 76px on 2026-08-29. The headline was never too
-       big in isolation — it was too big relative to a 38px logo and an 11px
-       nav, both of which went UP in the same pass. 68px is still comfortably
-       "large text" by WCAG's definition, so --accent stays legal on it.
-
-       The floor is untouched: 38px is what the phone was measured at. */
-    /* The BASE size — line one. Line two multiplies it below.
-
-       68 -> 72 at the ceiling, and the composition carries far more weight
-       than the extra 4px suggests: line two lands at 85px. The review asked
-       for roughly 62-70 and 82-94, which is where this sits. */
-    /* 72px -> 92px at the cap, 2026-08-30. With the lede moved into the right
-       rail the type column is its own width and the headline was filling barely
-       half of it — 675px of an 840px column, which is what left a hole between
-       its last letter and the rail. The staircase is `width: fit-content`, so
-       the only way to make it hold its column is to set it larger.
-
-       88px, NOT MORE, AND THE CEILING IS STRUCTURAL. Line one has to stay on
-       one line: the staircase is "line two's last letter under line one's last
-       letter", and a wrapped line one turns that alignment into a three-line
-       stack with nothing to align to. At 92px "Home and industrial " measured
-       wider than the 840px column and wrapped, which is exactly what
-       home.spec.ts caught.
-
-       `cqw`, NOT `vw`, AND THAT IS THE WHOLE FIX. Line one's width is 9.375x
-       its font size in this face, so the size that exactly fills the column is
-       10.67cqw. 10.4cqw fills 97.5% of it and leaves the wrap headroom at every
-       width, where a viewport unit could only ever be tuned for one. */
-    font-size: clamp(36px, 10.4cqw, 88px);
-    font-weight: 800;
-    font-style: italic;
-    /* 0.96 -> 0.84 -> 0.74. The second step came from a third review: the two
-       lines still read as "two formatted lines of an H1" rather than as one
-       shape, and the fix it asked for was 8-12px of vertical separation taken
-       out. At the 72px ceiling 0.84 gives a 60.5px line box and 0.74 gives
-       53.3, so this is 7.2px at the top end and proportionally less below.
-
-       It does not clip. The face is uppercase throughout — no descenders — and
-       cap height is around 0.7em, so 0.74 still leaves the line box larger
-       than the ink it carries. */
-    line-height: 0.74;
-    /* Fira's italic caps are wider than Archivo's at the same tracking, so this
-       is looser than the -0.035em Archivo needed — see the measured table on
-       max-width below, which is what set it. */
-    letter-spacing: -0.045em;
-    text-transform: uppercase;
-    color: var(--text);
-    /* THE MEASURED WRAP POINT IS GONE, AND SO IS THE TABLE THAT SET IT.
-
-       This rule used to carry `max-width: 940px` with a measured table of
-       line-one and whole-string widths per face and tracking, because the cap
-       was the only thing forcing " SOLUTIONS." onto its own line without a
-       hard <br> that would be wrong on a phone.
-
-       The lines are their own elements now, so the break is structural and
-       cannot drift when the face or the tracking changes. What the cap used to
-       protect is protected better. */
-    /* `fit-content` is the staircase's whole mechanism. The h1 shrinks to its
-       longest line — "HOME AND INDUSTRIAL" — and line two right-aligns inside
-       that box, so the red word's last letter lands exactly under the black
-       line's last letter at every viewport and every font size. The previous
-       version pushed line two right by `clamp(0px, 7vw, 118px)`, a number that
-       aligned with nothing and had to be hand-collapsed on phones. An edge
-       shared with another element is a composition; a distance is a guess. */
-    width: fit-content;
-    animation: hero-rise 0.4s var(--ease-out) 0.06s both;
-  }
-
-  .hero__title-a,
-  .hero__title-b {
-    display: block;
-  }
-
-  .hero__title-b {
-    text-align: right;
-    /* Line two is bigger than line one — equal lines read as a stack, unequal
-       lines that lean read as a composition. The offset itself is now the
-       flush-right alignment above, not a margin. */
-    font-size: 1.22em;
-    /* Brand red is correct here — display type far over the 24px large-text
-       bar where --accent's 4.30:1 is legal. */
-    color: var(--accent);
-  }
-
-  .hero__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-4);
-    margin-top: var(--hero-gap-step);
-    animation: hero-rise 0.4s var(--ease-out) 0.12s both;
-  }
-
-  /* THE TWO CTAs NOW READ AS ONE PAIR.
-
-     SolidButton is uppercase display type in a square box; PillButton is
-     sentence-case body type in a rounded one. Side by side that is three
-     differences at once (case, family, shape), and it read as two controls
-     from two different designs rather than a primary and a secondary. The
-     client's mockup draws them as a matched pair.
-
-     SCOPED TO THE HERO ON PURPOSE. PillButton is used on six other pages, and
-     restyling the primitive would restyle all of them for a complaint about
-     this one. `:global()` is required because the button is a child component
-     and Astro's scoping does not reach into it. */
-  /* THE HERO'S BUTTONS ARE BIGGER THAN THE SITE'S, and only here.
-
-     After a 68px headline and a full-width banner, the primitives' default
-     13.5px at 14px of padding read as a footnote — the two most valuable
-     actions on the page were the smallest interactive things above the fold.
-     The same button inside a card grid does not have that problem, so this is
-     a hero override and NOT a change to SolidButton or PillButton.
-
-     The 44px target floor is cleared by construction: 15px of type plus 18px
-     of padding top and bottom is 51px. */
-  .hero__actions :global(.solid) {
-    padding: 18px 34px;
-    font-size: var(--fs-body);
-    letter-spacing: 0.05em;
-  }
-
-  .hero__actions :global(.pill) {
-    border-radius: 0;
-    padding: 17px 30px;
-    font-family: var(--font-display);
-    font-size: var(--fs-body-sm);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    border-color: var(--text);
-  }
-
-  .hero__actions :global(.pill:hover) {
-    border-color: var(--accent);
-  }
-
-  /*
-   * `@keyframes hero-carousel` AND `@keyframes hero-pip` ARE GENERATED, in the
-   * inline <style> at the foot of this file, because Astro's scoped styles
-   * cannot interpolate a frontmatter value and the stops depend on the slide
-   * count. At six banners they compute to exactly what used to be written here:
-   * stops at 14.286% and 16.667%, a 42s cycle, and the last step landing on the
-   * duplicate slide at -600%.
-   *
-   * There is deliberately no hold at 100%. A hold there would show the
-   * duplicate for a beat and make the loop stutter once per cycle.
-   */
-
-  /*
-   * `hero-pip`'s window is one slide's share of the cycle -- 16.667% at six
-   * banners -- so it too is generated. Stepped rather than eased because a pip
-   * that fades is ambiguous about which slide is actually showing.
-   */
-
-  /* THE FOUR USERS OF THIS RUN 0.4s, AND THEY USED TO RUN 0.7s. With
-     `animation-fill-mode: both` the `from` state holds through the delay, so
-     the longest chain — 0.7s plus a 0.2s delay — left the headline, the two
-     CTAs and the counts fully transparent for the first ~0.9s of the page. A
-     screenshot taken on load photographed an empty hero, and that is not a
-     camera artefact: it is what a visitor on a slow device sees, and what
-     Largest Contentful Paint records.
-
-     0.4s with delays of 0.06 / 0.12 / 0.14 keeps the stagger legible and puts
-     the worst case at ~0.54s. The delays stay proportional so the order still
-     reads as one gesture rather than four separate ones.
-
-     Do not answer this by deleting the opacity from the keyframes: both
-     keyframes must keep a `transform`, or any `transform` declared on the same
-     element is silently overwritten — docs/TRAPS.md has the case that cost. */
+  /* Keyframes must keep a `transform`, or a transform declared on the same
+     element is silently overwritten — docs/TRAPS.md. */
   @keyframes hero-rise {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Below this width the stage and the copy cannot coexist side by side.
-
-     1180px, NOT the helmet's 1080px, and this is the one number the carousel
-     genuinely had to move. The helmet's floor was measured on GLYPH pixels — the
-     lit dome reaching the pill CTA's actual letterforms — and a transparent PNG
-     whose mass stops well inside its own canvas can sit closer to the copy than
-     an opaque rectangle can. Measured across widths with the card in place, the
-     gap between the copy's rightmost ink and the card's left edge:
-
-         1081px   -47px   the card sits ON the headline
-         1100px   -28px   still overlapping
-         1128px     0px   the crossover
-         1160px   +32px   clear, but tight
-         1240px  +112px   and constant above this, both sides being centred
-
-     So 1080px would have shipped a card printed across the word "SOLUTIONS" on
-     any window between 1081 and 1128 — an opaque poster over 76px display type,
-     which is unreadable rather than merely tight. 1180px puts ~52px of clearance
-     at the boundary. **A green axe run and a green verify both passed this**;
-     it was found by measuring, which is the only thing that finds it.
-
-     Stacking is the fix rather than shrinking the card, for the same reason the
-     helmet chose stacking over a lower opacity: nothing is layered over anything
-     here, so the card runs at full opacity and the copy sits on flat black.
-
-     Stacking is the fix rather than a lower opacity. Nothing is layered over
-     anything here, so the card runs at full opacity and the copy sits on flat
-     black — which is what keeps the headline at 21:1 instead of measuring it
-     against artwork.
-
-     The stage also goes back into flow. Absolutely positioned it could not push
-     the hero taller, so `overflow: hidden` would cut the card off.
-
-     136px of top padding, not 96. The header is `position: absolute` and
-     occupies y 0-128, so the hero's own padding-top is the only thing that
-     clears it. 136px clears that box with 8px and the visible logo by 31px. */
-  /* The strip tightens where the measure does — and gives up its right-edge
-     anchor. `margin-left: auto` right-aligns it beside the CTAs on a desktop;
-     on a phone the row has wrapped, the strip is alone on its line, and
-     right-aligning a 350px group in a 320px column pushed "ESTABLISHED / 2015"
-     past the edge where the hero's `overflow: hidden` clipped it without a
-     scrollbar to confess. Left edge, tightened type, fits with room. */
-  @media (max-width: 560px) {
-    .hero__index {
-      margin-left: 0;
-      gap: 0 16px;
-      padding-left: 14px;
+    from {
+      opacity: 0;
+      transform: translateY(16px);
     }
-
-    .hero__index dt {
-      font-size: var(--fs-micro);
-      letter-spacing: 0.12em;
-    }
-
-    .hero__index dd {
-      font-size: var(--fs-head-sm);
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
-  @media (max-width: 1180px) {
-    .hero {
-      /* 86px of chrome plus 8px, matching the tighter 136/128 relationship
-         this breakpoint carried before the utility bar was removed. */
-      padding: 94px 0 64px;
+  /* ---------------------------------------------------------- breakpoints -- */
+
+  @media (max-width: 1100px) {
+    .hero__title {
+      max-width: 72%;
     }
   }
 
-  /* THE RAIL COMES APART BELOW 900px, AND `display: contents` IS WHAT DOES IT.
-     The rail's 300px floor is right on a desktop measure and impossible on a
-     phone: at 375px it claimed the whole wrap and left the headline's column at
-     0px, with the h1 overflowing a column that no longer existed.
-
-     Dissolving the rail promotes the numeral and the lede to grid items in
-     their own right, which restores exactly the arrangement this block had
-     before the rail existed — headline and numeral side by side, lede on its
-     own full-measure row beneath. No second copy of the layout, and nothing to
-     keep in sync: the mobile case is the desktop case with one box removed. */
+  /* Below 900px the photograph becomes a full-width backdrop under a heavier
+     scrim, the headline takes the whole measure and the doors stack. */
   @media (max-width: 900px) {
-    .hero__composition {
-      grid-template-columns: minmax(0, 1fr) auto;
+    .hero__band {
+      padding-top: calc(var(--hero-chrome) + 32px);
     }
 
-    .hero__rail {
-      display: contents;
+    .hero__bg {
+      inset: 0;
     }
 
-    .hero__lede {
-      grid-column: 1 / -1;
-      max-width: min(470px, 100%);
-      margin-top: var(--hero-gap-close);
+    .hero__bg :global(img) {
+      object-position: 50% 30%;
+    }
+
+    .hero__bg::after {
+      background:
+        linear-gradient(180deg, rgba(8, 8, 10, 0.94) 0%, rgba(8, 8, 10, 0.8) 45%, var(--color-black) 100%),
+        linear-gradient(90deg, rgba(8, 8, 10, 0.5), transparent 60%);
+    }
+
+    .hero__head :global(.section-index) {
+      font-size: calc(clamp(40px, 5.6vw, 76px) * 1.6);
+    }
+
+    .hero__title {
+      max-width: none;
+    }
+
+    .hero__doors {
+      grid-template-columns: 1fr;
+      max-width: none;
+      margin-top: var(--space-9);
+    }
+
+    .hero__proof {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: var(--space-10);
+    }
+
+    .hero__proof-cell:nth-child(3) {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .hero__proof-cell:nth-child(n + 3) {
+      margin-top: 18px;
     }
   }
 
-  /* THE EMPTY SLOT OPENS OUT ON A PHONE, AND A FILLED ONE DOES NOT.
-     `.hero__slot` only — `.hero__frame` keeps 4:1 at every width.
-
-     The empty slot holds an icon and a line of label, and 84px is too short for
-     either, so it takes the 3:2 the mobile mockup draws. A real banner has no
-     such need and a great deal to lose: cropping 4:1 artwork into 3:2 discards
-     about 60% of its width, which on the eye-protection banner means losing
-     either the logo and headline or most of the products. Measured at 390px the
-     band is 350 x 88 and the whole artwork is visible.
-
-     DECIDED 2026-08-23, when the first real banner arrived and the comment that
-     used to sit here said this would become a decision rather than a detail. It
-     did. A short but complete band beats a tall crop of one sixth of the
-     artwork. If a phone-shaped banner is ever wanted, it is a second upload and
-     a second slot, not a crop of this one. */
   @media (max-width: 720px) {
     .hero__slot {
       aspect-ratio: 3 / 2;
     }
   }
 
-  /* PHONE WIDTHS ONLY — stacked and full-bleed. Wrapping in a row gave two
-     rectangles of different widths with no shared edge. A column at the default
-     `stretch` gives both the same width and a wider thumb target.
-
-     560px, not 1080px: the two buttons need 392px to sit side by side, and
-     stretching them across the copy's full 660px cap produced a 660px-wide
-     button on a tablet. */
+  /* Two buttons need 392px to sit side by side; below that they stack into a
+     column of equal width, which is also a wider thumb target. */
   @media (max-width: 560px) {
     .hero__actions {
       flex-direction: column;
       align-items: stretch;
       gap: var(--space-3);
     }
+
+    .hero__proof dd {
+      font-size: var(--fs-head-sm);
+    }
   }
 
-
-  /* SHORT SCREENS BUY THE PRIMARY CTA BACK BY SPENDING CARD.
-     Putting the CTAs under the stage costs above-the-fold visibility on a 667px
-     screen. The helmet stage paid for that by shrinking to 58vw; a 4:5 portrait
-     card is ~24% taller than that landscape stage at the same width AND the
-     carousel added a 44px control row that WCAG 2.2.2 will not let us drop, so
-     58vw no longer pays for it and the CTA lands 17px past the fold.
-
-     38vw plus tightened gaps is what closes it. Measured on a 360x640 — the tighter of the two
-     screens this has to hold on — the primary CTA's bottom edge lands at 612px
-     against a 640px fold, with the same 20px and 24px margin trims the helmet
-     version used. `tests/e2e/hero-mobile.spec.ts` asserts that edge on both
-     screens, so the claim is checked rather than asserted.
-
-     Keyed on HEIGHT, because this is a vertical-budget problem: a 390x844 phone
-     has the room and keeps the larger card. It also catches a phone held in
-     landscape, which has even less height and wants the same treatment. */
-  /* THIS BLOCK OVERRIDES THE --hero-gap-* SCALE ON PURPOSE. The values below
-     are not steps on that scale; they are trims measured against a 640px fold.
-     Keep them literal — naming them would imply they move with the scale, and
-     they must not. */
-  @media (max-width: 1180px) and (max-height: 700px) {
-    /* THE HEADER RESTYLE SPENT THIS BUDGET AND NOBODY NOTICED, because the
-       suite that measures it could not run — see handoff.md §29. The crest, the
-       three-line oblique headline and the closing rule arrived on 2026-08-23
-       and pushed the primary CTA's bottom edge to 646px against a 640px fold:
-       the one control the site converts on, 6px under the crease, on the
-       tighter of the two screens this block exists for. CI caught it on
-       2026-08-27, four commits later.
-
-       THE TRIM COMES FROM RHYTHM, NOT FROM ANY OF THE THREE NEW ELEMENTS. The
-       crest, the headline's slant and the rule are the mockup's character and
-       the client asked for them; shrinking one to buy pixels would be undoing
-       the design to satisfy a test. What these two margins carry is 48px of
-       space between them at every height, which is generous on a desktop and
-       extravagant on a screen with 640px in total. They are the only numbers
-       here that are taste rather than structure.
-
-       Not the hero's own 94px top padding: the header's bottom edge is at
-       86px on this screen, so that padding is clearance, and spending it
-       would put the eyebrow under the header. Not the stage either — its 3:2
-       ratio below 720px is pinned by a test and was a deliberate call.
-
-       Measured after the trim on a 360x640: the primary CTA's bottom edge lands
-       at 620px, restoring the 20px of clearance the block was written with.
-       `tests/e2e/hero-mobile.spec.ts` asserts that edge on both screens. */
-    /* The composition carries the top gap now; the headline sits inside it and
-       no longer has a margin of its own to trim. */
-    .hero__composition {
-      margin-top: var(--space-3);
-    }
-
-    /* The index sits under the type on one column here, so it needs its own
-       gap rather than the grid's. */
-    .hero__index {
-      gap: var(--space-3);
-      margin-top: var(--space-5);
-    }
-
-    /* The band is full-width now, so there is no card width left to shrink —
-       only vertical gaps. The stage keeps its ratio and the trims come out of
-       the space around it. */
-    .hero__stage {
+  /* SHORT SCREENS. `tests/e2e/hero-mobile.spec.ts` asserts the primary CTA
+     clears a 640px fold on a 360-wide phone. The lede sets tighter and the
+     CTAs hand back their extra padding; the content is not cut. */
+  @media (max-width: 900px) and (max-height: 700px) {
+    .hero__title {
       margin-top: var(--space-4);
     }
 
-    /* The control row is a WCAG 2.2.2 requirement whenever a carousel is
-       actually running, so it cannot be dropped to buy space; its gap can be
-       tightened instead. */
-    /* The bar carries the gap now, not the controls. On the narrowest screens
-       the label and the rail stack rather than squeezing to nothing. */
-    .hero__bar {
-      margin-bottom: 8px;
+    .hero__lede {
+      margin-top: var(--space-3);
+      font-size: var(--fs-body-sm);
+      line-height: 1.45;
     }
 
     .hero__actions {
-      margin-top: var(--space-4);
-    }
-
-    /* THE 2026-08-29 PASS SPENT THIS BUDGET AND PAID IT BACK HERE.
-
-       Removing the utility bar returned 42px of top padding (136 -> 94). The
-       supporting sentence then took roughly 55 of it and the taller CTAs
-       another 8, so without these two rules the primary CTA's bottom edge
-       lands past the 640px crease again — the exact regression the block above
-       records from 2026-08-23.
-
-       The sentence is NOT dropped on a phone. It is the change that answers
-       "what does this company sell?", and a phone is where that question gets
-       asked most. It is set tighter instead, and the CTAs hand back the
-       padding they gained, which is a size change rather than a content one.
-
-       Measured, not estimated: see the note above. Re-measure both screens if
-       any of these move. */
-    .hero__lede {
-      margin-top: var(--space-2);
-      font-size: var(--fs-body-sm);
-      line-height: 1.45;
+      margin-top: var(--space-5);
     }
 
     .hero__actions :global(.solid),
@@ -1729,26 +966,10 @@ const settings = await getSiteSettings();
     }
   }
 
-  /* Nothing moves, and the entrance animations resolve to their end state rather
-     than never running — `both` on a cancelled animation would leave the copy at
-     opacity 0.
-
-     `src/styles/global.css` also collapses every animation site-wide here with
-     `!important`, but it only forces animation-duration and iteration-count. The
-     `animation: none` shorthand below sets animation-name, which that rule does
-     not touch, so these declarations still take effect.
-
-     THE CAROUSEL STOPS ON SLIDE ONE, and the pause control is hidden with it.
-     A control that pauses something already stopped is a lie about what it does,
-     and it was the only thing in the hero that could take focus and do nothing.
-     Ticker.astro hides its own control here for the same reason. */
+  /* Cancelled, never left at opacity 0. The carousel stops on slide one and
+     the pause control goes with it — a control that pauses something already
+     stopped is a lie about what it does. `tests/e2e/motion.spec.ts`. */
   @media (prefers-reduced-motion: reduce) {
-    /* `.hero__glow` was the third selector in this list until 2026-08-20.
-       Deleting it took the closing brace with it and left `.hero__track` and
-       `.hero__pip` dangling onto the rule below — so the carousel kept
-       animating for a visitor who had asked it not to, while the page still
-       looked correct. tests/e2e/motion.spec.ts caught it; nothing else would
-       have. */
     .hero__track,
     .hero__pip {
       animation: none;
@@ -1758,54 +979,28 @@ const settings = await getSiteSettings();
       background: var(--accent);
       width: 26px;
     }
+
     .hero__pause,
     .hero__toggle {
       display: none;
     }
-    /* THIS LIST HAS TO TRACK EVERY ANIMATED ELEMENT IN THE HERO, and nothing
-       fails when it does not — the element simply keeps animating for a
-       visitor who asked their device for less motion, and the page still looks
-       correct to everyone else. `tests/e2e/motion.spec.ts` is the only thing
-       that catches it.
 
-       `.hero__crest` and `.hero__underline` left on 2026-08-29 with the
-       elements themselves; `.hero__masthead` and `.hero__index` arrived in the
-       same pass and carry `hero-rise` now. */
     .hero__masthead,
-    .hero__index,
     .hero__title,
-    .hero__actions {
+    .hero__lede,
+    .hero__actions,
+    .hero__doors,
+    .hero__proof {
       animation: none;
       opacity: 1;
       transform: none;
     }
-
-    .hero__stage {
-      transition: none;
-    }
   }
 </style>
-
-{/*
-  THE GENERATED CLOCK.
-
-  `is:inline` so Astro emits it verbatim: a processed <style> is hoisted into
-  the bundle and scoped, and neither is wanted here -- the rules have to carry
-  values computed in the frontmatter, and Astro's scoped styles cannot
-  interpolate one. That is the same constraint that forces the retained-artwork
-  hero's PORTRAIT media query to be written out twice.
-
-  IT COSTS NO CSP HASH, and that is worth knowing rather than assuming:
-  `style-src` is `'self' 'unsafe-inline'`, where `script-src` is hash-based
-  with no 'unsafe-inline' at all. A generated script tag here would be a very
-  different proposition.
-
-  IT RENDERS TO AN EMPTY STRING WHEN THERE ARE NO BANNERS. `carouselCss` is
-  built from the clock, and the clock is null when the stage is empty, so this
-  emits nothing at all rather than a stylesheet full of keyframes for slides
-  that do not exist.
-
-  Every selector is prefixed `[data-hero-stage]`, because this block is NOT
-  scoped by Astro and would otherwise be global.
-*/}
+{/* THE GENERATED CLOCK. `is:inline` so Astro emits it verbatim — a processed
+    <style> is hoisted and scoped, and the rules carry frontmatter values that
+    a scoped style cannot interpolate. Costs no CSP hash: `style-src` is
+    'unsafe-inline' where `script-src` is hash-based. Empty when there are no
+    banners. Every selector is prefixed `[data-hero-stage]`, because this
+    block is NOT scoped. */}
 <style is:inline set:html={carouselCss}></style>

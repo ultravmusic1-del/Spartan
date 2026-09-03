@@ -1,0 +1,60 @@
+---
+/**
+ * SELECTED PRODUCTS — replaces FeaturedLines on the landing page, 2026-09-03.
+ *
+ * The featured strip drew its own card: image, kicker, name, "View product".
+ * The catalogue's card carries the same things PLUS the three printed specs
+ * and the "Add to enquiry" button — the site's entire conversion mechanism.
+ * A landing page whose product cards cannot fill the basket sends the buyer
+ * one page further than it needs to, so this section renders `ProductGrid`
+ * with the same `ProductCard` the catalogue uses. One card language, and the
+ * enquiry starts here.
+ *
+ * The division tabs went with the old card. They were an inline script (a
+ * CSP hash) filtering eight cards into four, and a buyer can see eight cards
+ * at once. The eight still come from `src/lib/featured.ts`, four per division.
+ */
+import SectionHeading from '../primitives/SectionHeading.astro';
+import ProductGrid from '../catalog/ProductGrid.astro';
+import { getFeaturedProducts } from '../../lib/featured';
+import { getProducts } from '../../lib/catalog';
+
+const [featured, products] = await Promise.all([getFeaturedProducts(), getProducts()]);
+---
+
+<section class="sp">
+  <div class="wrap">
+    <SectionHeading
+      n="03"
+      eyebrow="Selected products"
+      title="A cross-section of both divisions."
+      lede={`${featured.length} of ${products.length} products, four from each division, with the specifications printed for each. Add any of them to an enquiry from here.`}
+    >
+      <a slot="action" class="sp__all" href="/catalogue">Browse all ›</a>
+    </SectionHeading>
+
+    <ProductGrid products={featured} class="sp__grid" />
+  </div>
+</section>
+
+<style>
+  .sp {
+    background: var(--surface-page);
+    padding: var(--section-pad) 0;
+  }
+
+  .sp__all {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 10px;
+    margin-inline: -10px;
+    font-family: var(--font-display);
+    font-size: var(--fs-meta);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+  }
+</style>

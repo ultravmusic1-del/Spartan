@@ -1,16 +1,17 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * The redesigned home page.
+ * The home page, as rebuilt on 2026-09-03
+ * (docs/superpowers/specs/2026-09-03-landing-redesign-design.md).
  *
- * `src/pages/index.astro` renders Hero, Ticker, CategoryGrid and FeaturedLines
- * before the retained editorial sections. This file covers those four: the
- * headline (now real text, not artwork), the fifteen-category shelf and its
- * two honest empty tiles, and the featured strip's server-rendered cards plus
- * its client-side division filter — mouse, keyboard and no-JavaScript.
+ * `src/pages/index.astro` renders Hero, CategoryGrid, SelectedProducts,
+ * EnquirySteps, About, Faq and EnquiryCta. This file covers the hero's
+ * composition and proposition, the fifteen-category directory and its honest
+ * empty tile, the eight product cards, the header, and the section numbering
+ * system that runs across all of them.
  *
- * motion.spec.ts covers the ticker's pause control and prefers-reduced-motion
- * separately; this file does not touch either.
+ * hero-carousel.spec.ts covers the campaign band; motion.spec.ts covers
+ * prefers-reduced-motion; quick-enquiry.spec.ts covers the closing form.
  */
 
 test.describe('the hero headline', () => {
@@ -142,138 +143,45 @@ test.describe('the category shelf', () => {
   });
 });
 
-test.describe('featured lines', () => {
-  test('server-renders eight cards, four per division', async ({ page }) => {
+test.describe('selected products', () => {
+  /*
+   * The featured strip used to draw its own card and filter it with an inline
+   * script. Since 2026-09-03 the section renders `ProductGrid` — the
+   * catalogue's own card, specs and enquiry button included — so the basket
+   * can start on the landing page. No tabs, no script, no CSP hash.
+   */
+  test('server-renders eight catalogue cards, each linking to its product', async ({ page }) => {
     await page.goto('/');
-
-    await expect(page.locator('.fl__grid li')).toHaveCount(8);
+    const cards = page.locator('.sp__grid > li');
+    await expect(cards).toHaveCount(8);
+    for (let i = 0; i < 8; i += 1) {
+      await expect(cards.nth(i).locator('a.card__link')).toHaveAttribute('href', /^\/products\//);
+    }
+    await expect(page.locator('[data-featured-tabs]')).toHaveCount(0);
   });
 
-  test('reveals the tab row and filters by division on click', async ({ page }) => {
+  test('carries the enquiry button on every card once hydrated', async ({ page }) => {
     await page.goto('/');
-
-    const tabs = page.locator('[data-featured-tabs]');
-    const items = page.locator('.fl__grid li:not([hidden])');
-
-    // Server-rendered with `hidden` on the tab row; the script removes it.
-    // Asserting "visible" here is safe precisely because it is false first —
-    // the row starts hidden and only becomes visible once the island runs.
-    await expect(tabs).toBeVisible();
-
-    await tabs.getByRole('button', { name: 'Electricals' }).click();
-    // Four of the eight curated cards are Electricals by construction
-    // (src/lib/featured.ts). Unfiltered is 8, so waiting on 4 here cannot
-    // settle instantly against the pre-filter state.
-    await expect(items).toHaveCount(4);
-
-    await tabs.getByRole('button', { name: 'All' }).click();
-    await expect(items).toHaveCount(8);
-  });
-
-  test('filters on Enter when a tab is activated by keyboard', async ({ page }) => {
-    await page.goto('/');
-
-    const tabs = page.locator('[data-featured-tabs]');
-    await expect(tabs).toBeVisible();
-
-    const items = page.locator('.fl__grid li:not([hidden])');
-    const safetyTab = tabs.getByRole('button', { name: 'Safety' });
-
-    // Keyboard activation of a <button>, not a click. This project's tab and
-    // pill controls have a history of harnesses that never synthesised a
-    // click from Enter on a real <button> element — Playwright does, so this
-    // is the test that would have caught it.
-    await safetyTab.focus();
-    await page.keyboard.press('Enter');
-
-    await expect(items).toHaveCount(4);
-    await expect(safetyTab).toHaveAttribute('aria-pressed', 'true');
+    // `client:visible` islands hydrate on scroll — docs/TRAPS.md. Scroll the
+    // grid into view before counting, or the buttons legitimately do not exist.
+    await page.locator('.sp__grid').scrollIntoViewIfNeeded();
+    await expect(page.locator('.sp__grid > li button')).toHaveCount(8);
   });
 });
 
-test.describe('featured lines without JavaScript', () => {
+test.describe('selected products without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
-  test('shows all eight cards and keeps the tab row hidden', async ({ page }) => {
+  test('still lists all eight cards', async ({ page }) => {
     await page.goto('/');
-
-    // The script that unhides the tab row and wires the filter never runs.
-    // Showing a filter that cannot filter would be worse than showing none,
-    // so all eight cards stay, unfiltered, and the tab row stays hidden
-    // rather than sitting inert on the page.
-    await expect(page.locator('.fl__grid li')).toHaveCount(8);
-    await expect(page.locator('.fl__grid li[hidden]')).toHaveCount(0);
-    await expect(page.locator('[data-featured-tabs]')).toBeHidden();
+    await expect(page.locator('.sp__grid > li')).toHaveCount(8);
   });
 });
 
-/**
- * THE 2026-08-29 DESIGN PASS.
- *
- * A review of the above-the-fold experience found it visually strong and
- * semantically quiet: a first-time visitor could read the whole first screen
- * without discovering what Spartan supplies, the primary navigation was the
- * smallest type on the page, the catalogue's search box was two clicks away,
- * and fifteen category names scrolled past in a band that could not be
- * clicked. Everything below covers a change made in answer to one of those.
- *
- * Markup-only assertions live in `src/components/sections/Hero.test.ts`, which
- * needs no browser. What is here is what genuinely needs one: a form actually
- * navigating, an island actually seeding itself, and an animation actually
- * stopping.
- */
 test.describe('the hero proposition', () => {
-  test('states what Spartan supplies in words, and the totals as an index', async ({ page }) => {
-    await page.goto('/');
-
-    const lede = page.locator('.hero__lede');
-    await expect(lede).toBeVisible();
-    await expect(lede).toContainText('PPE and workwear');
-
-    // 94 and 15 are the catalogue's real totals and they are COUNTED, not
-    // typed — `tools/catalogue-snapshot.json` is what makes changing them a
-    // deliberate act. If this fails after a genuine catalogue change, these
-    // numbers are what is stale, not the hero.
-    const index = page.locator('.hero__index');
-    await expect(index).toContainText('94');
-    await expect(index).toContainText('15');
-
-    // The third row was "DIVISIONS / 02" until a review called it a weak
-    // statistic that made the range sound unintentionally small. The
-    // replacements suggested — dealers, markets, territories — are all
-    // unsourceable here, so the founding year took the slot: on file, already
-    // published on the About page, and the one credibility figure that is not
-    // an invention.
-    await expect(index).toContainText('2015');
-    await expect(index).not.toContainText('Divisions');
-  });
-
-  test('runs the composition off a left axis rather than centring it', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 950 });
-    await page.goto('/');
-
-    /*
-     * THE HERO'S BLANDNESS WAS MEASURABLE, so this guards against it coming
-     * back. A design review found the composition "killing the energy" with
-     * five centred strips stacked down the middle.
-     *
-     * THE LEDE LEFT THE LEFT AXIS ON 2026-08-30, at the client's explicit
-     * instruction, and this test changed with it rather than being deleted.
-     * The old arrangement — masthead, headline and lede all on one left edge,
-     * numeral alone on the right — measured a 463 x 190 hole between the
-     * headline's last letter and that numeral, the largest empty region on the
-     * page. The lede is real content and now fills it.
-     *
-     * What is asserted instead is stricter than what it replaced: the block is
-     * still driven off the left axis, and the rail's two members each share a
-     * real edge with the headline rather than sitting at a chosen distance
-     * from it.
-     */
-    /* Wait for `hero-rise` before measuring anything. It starts at
-       translateY(16px), the headline carries it and the numeral does not, so a
-       geometry read taken straight after `goto` compares a settled element with
-       one still 16px low — which is exactly what this assertion caught the
-       first time it was written. docs/TRAPS.md records the same hazard. */
+  const settled = async (page: import('@playwright/test').Page) => {
+    /* `hero-rise` starts at translateY(16px); measure after the finite
+       animations end or a box is read mid-motion. docs/TRAPS.md. */
     await page.evaluate(async () => {
       const finite = document.getAnimations().filter((a) => {
         const t = a.effect?.getComputedTiming();
@@ -281,86 +189,109 @@ test.describe('the hero proposition', () => {
       });
       await Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
     });
+  };
+
+  test('states what Spartan supplies in words, and the proof as sourced facts', async ({ page }) => {
+    await page.goto('/');
+
+    const lede = page.locator('.hero__lede');
+    await expect(lede).toBeVisible();
+    await expect(lede).toContainText('PPE and workwear');
+
+    // 94 and 15 are COUNTED through the seam; `tools/catalogue-snapshot.json`
+    // is what makes changing them deliberate. The year and the manufacturing
+    // statement are the only other facts on this site with a source.
+    const proof = page.locator('.hero__proof');
+    await expect(proof).toContainText('94');
+    await expect(proof).toContainText('15');
+    await expect(proof).toContainText('2015');
+    await expect(proof).toContainText('India & China');
+    await expect(proof).not.toContainText('Divisions');
+    await expect(proof.locator('.hero__proof-cell')).toHaveCount(4);
+  });
+
+  test('opens both divisions from the hero with counted totals', async ({ page }) => {
+    await page.goto('/');
+    const doors = page.locator('.hero__door');
+    await expect(doors).toHaveCount(2);
+    await expect(doors.nth(0)).toHaveAttribute('href', '/electricals');
+    await expect(doors.nth(1)).toHaveAttribute('href', '/safety');
+    // Fifteen categories split across the two doors, and every product is in
+    // exactly one — the totals on the doors must add up to the proof strip's.
+    const text = await doors.allTextContents();
+    const numbers = text.map((t) => [...t.matchAll(/(\d+) (categor|product)/g)].map((m) => Number(m[1])));
+    expect(numbers[0][0] + numbers[1][0]).toBe(15);
+    expect(numbers[0][1] + numbers[1][1]).toBe(94);
+  });
+
+  test('runs the composition off one left axis and closes on the wrap', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 950 });
+    await page.goto('/');
+    await settled(page);
 
     const box = async (sel: string) => (await page.locator(sel).boundingBox())!;
 
     const masthead = await box('.hero__masthead');
     const title = await box('.hero__title');
     const lede = await box('.hero__lede');
-    const numeral = await box('.hero__composition .section-index');
+    const actions = await box('.hero__actions');
+    const doors = await box('.hero__doors');
 
-    // The left axis survives: masthead and headline still start together.
-    expect(Math.round(title.x)).toBe(Math.round(masthead.x));
+    // One left axis: masthead, headline, lede, actions and doors start together.
+    for (const b of [title, lede, actions, doors]) {
+      expect(Math.round(b.x)).toBe(Math.round(masthead.x));
+    }
 
-    // The lede is in the right rail, clear of the headline's column.
-    expect(lede.x).toBeGreaterThan(title.x + title.width);
-
-    // A shared edge, not a distance: the numeral starts on the headline's line.
-    expect(Math.round(numeral.y)).toBe(Math.round(title.y));
-
-    // The rail closes on the wrap's right edge, which is the hero's second
-    // vertical edge and the line every section numeral on the page ends on.
-    const wrapRight = await page
-      .locator('.hero__composition')
+    // The numeral ends on the wrap's right edge — the line every section
+    // numeral on the page ends on.
+    const headRight = await page
+      .locator('.hero__head')
       .evaluate((el) => Math.round(el.getBoundingClientRect().right));
-    expect(Math.round(numeral.x + numeral.width)).toBe(wrapRight);
-    expect(Math.round(lede.x + lede.width)).toBe(wrapRight);
+    const numeral = await box('.hero__head .section-index');
+    expect(Math.round(numeral.x + numeral.width)).toBe(headRight);
 
-    // The lede is below the numeral in the rail, not beside it.
-    expect(lede.y).toBeGreaterThan(numeral.y + numeral.height);
+    // Two doors of equal width, below the actions.
+    const doorBoxes = await page
+      .locator('.hero__door')
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()));
+    expect(Math.round(doorBoxes[0].width)).toBe(Math.round(doorBoxes[1].width));
+    expect(doorBoxes[0].y).toBeGreaterThan(actions.y + actions.height);
 
-    // And the counted index still anchors the opposite end of the CTA row.
-    const index = await box('.hero__index');
-    expect(index.x).toBeGreaterThan(title.x + 600);
+    // The campaign band bridges the dark band and the page: it starts inside
+    // the dark band and ends below it.
+    const band = await box('.hero__band');
+    const stage = await box('.hero__stage');
+    const bandBottom = band.y + band.height;
+    expect(stage.y).toBeLessThan(bandBottom);
+    expect(stage.y + stage.height).toBeGreaterThan(bandBottom);
   });
 
-  test("steps the second headline line right, flush to the first line's end", async ({
-    page,
-  }) => {
+  test('sets both headline lines on one edge, the second in the accent', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 950 });
     await page.goto('/');
 
-    /*
-     * THE STAIRCASE IS AN ALIGNMENT NOW, NOT A DISTANCE. The h1 is
-     * `fit-content` and line two is right-aligned inside it, so the red word's
-     * last letter lands under the black line's last letter at every width —
-     * an edge shared with another element instead of a margin that aligned
-     * with nothing. Both spans are full-width blocks, so the assertion has to
-     * measure the rendered TEXT via a Range; the span boxes are identical by
-     * construction and would pass vacuously.
-     */
     const ink = async (sel: string) =>
       await page.locator(sel).evaluate((el) => {
         const range = document.createRange();
         range.selectNodeContents(el);
-        const r = range.getBoundingClientRect();
-        return { left: r.left, right: r.right };
+        return range.getBoundingClientRect().left;
       });
 
-    const a = await ink('.hero__title-a');
-    const b = await ink('.hero__title-b');
+    // No staircase since 2026-09-03: the two lines start on the same axis.
+    expect(Math.abs((await ink('.hero__title-a')) - (await ink('.hero__title-b')))).toBeLessThan(3);
 
-    // Flush right: the two line-ends agree to within a couple of pixels of
-    // italic overhang. Stepped left: line two starts well inside line one.
-    expect(Math.abs(a.right - b.right)).toBeLessThan(4);
-    expect(b.left).toBeGreaterThan(a.left + 60);
-
-    const sizeA = await page
-      .locator('.hero__title-a')
-      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    const sizeB = await page
+    // Brand red on --color-black, 4.65:1 — legal because the line is >=40px.
+    await expect(page.locator('.hero__title-b')).toHaveCSS('color', 'rgb(235, 41, 39)');
+    const size = await page
       .locator('.hero__title-b')
       .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(sizeB).toBeGreaterThan(sizeA * 1.1);
+    expect(size).toBeGreaterThanOrEqual(40);
   });
 
-  test('keeps the staircase coherent on a narrow screen', async ({ page }) => {
+  test('keeps the headline inside a narrow screen', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 640 });
     await page.goto('/');
 
-    // No off-screen ink: the flush-right mechanism self-limits to the h1's
-    // own width, where the old margin-based offset needed a hand-written
-    // collapse below 640px and once shipped without one.
     const box = await page.locator('.hero__title').boundingBox();
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.x + box!.width).toBeLessThanOrEqual(360);
@@ -440,86 +371,6 @@ test.describe('the header phone affordance', () => {
   });
 });
 
-test.describe('the category band as navigation', () => {
-  test('every category is a real link, and only one copy is reachable', async ({ page }) => {
-    await page.goto('/');
-
-    // Fifteen reachable, and the duplicates that make the loop seamless carry
-    // tabindex="-1" inside aria-hidden containers — out of the tab order and
-    // out of the accessibility tree. A focusable element inside aria-hidden
-    // would be a violation in its own right.
-    const reachable = page.locator('.ticker a:not([tabindex="-1"])');
-    await expect(reachable).toHaveCount(15);
-    await expect(page.locator('.ticker a[tabindex="-1"]')).toHaveCount(45);
-
-    await expect(reachable.first()).toHaveAttribute('href', /^\/catalogue\/[a-z0-9-]+$/);
-  });
-
-  test('stops under the pointer so a name can be read and clicked', async ({ page }, testInfo) => {
-    /*
-     * SKIPPED ON THE MOBILE PROJECT, and a viewport change cannot fix it.
-     * The rule is inside `@media (hover: hover) and (pointer: fine)`, and the
-     * Pixel 5 device profile sets touch — so `hover` is `none` there no matter
-     * how wide the window is. That is deliberate: a hover rule that can latch
-     * on a tap would leave the band stopped with no way to restart it, which
-     * is the trap `Ticker.astro` records for the touch case.
-     */
-    test.skip(testInfo.project.name === 'mobile', 'hover does not exist on a touch device');
-
-    await page.goto('/');
-
-    const track = page.locator('.ticker__track');
-    await expect(track).toHaveCSS('animation-play-state', 'running');
-
-    // Without this the links are a moving target: a buyer reaching for "Hand
-    // Protection" lands on "Safety Footwear". It is a convenience, NOT the
-    // WCAG 2.2.2 mechanism — that is still the checkbox, because hover does
-    // not exist on a touch screen.
-    await page.locator('.ticker').hover();
-    await expect(track).toHaveCSS('animation-play-state', 'paused');
-  });
-
-  test('lands on the category page it names', async ({ page }, testInfo) => {
-    /*
-     * DESKTOP ONLY, and the reason is a decision rather than a shortcut.
-     *
-     * On a touch device the band has no pause mechanism at all — a known,
-     * client-accepted WCAG 2.2.2 failure recorded in `Ticker.astro` — and the
-     * hover rule that stops it cannot apply either. Clicking a marquee that
-     * cannot be stopped is racy by construction, and a test that flakes is
-     * worse than a test that says what it does not cover. That the links exist
-     * and point at real category pages IS covered on both projects, by the
-     * test above.
-     */
-    test.skip(testInfo.project.name === 'mobile', 'no way to stop the band on touch');
-
-    await page.goto('/');
-
-    const first = page.locator('.ticker a:not([tabindex="-1"])').first();
-    const href = await first.getAttribute('href');
-
-    /*
-     * WAIT FOR IT TO ACTUALLY STOP BEFORE CLICKING.
-     *
-     * The first version hovered and clicked in the next statement. It passed
-     * alone and failed under ten workers: hovering pauses a track that is
-     * mid-animation, and the click can still land after it has travelled. The
-     * assertion between the two is the synchronisation — not decoration.
-     *
-     * `.check()` on the pause switch is NOT the alternative it looks like: the
-     * input carries `pointer-events: none`, so even a forced click leaves it
-     * unchanged. It is reachable by keyboard, which is what it is for.
-     */
-    await page.locator('.ticker').hover();
-    await expect(page.locator('.ticker__track')).toHaveCSS('animation-play-state', 'paused');
-
-    await first.click();
-
-    await expect(page).toHaveURL(new RegExp(`${href}$`));
-    await expect(page.locator('h1')).toBeVisible();
-  });
-});
-
 test.describe('the carousel control rail', () => {
   test('aligns with the banner it controls', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -577,7 +428,7 @@ test.describe('the section numbering system', () => {
     const numerals = await page.locator('.section-index').allTextContents();
     const trimmed = numerals.map((t) => t.trim());
 
-    expect(trimmed.length).toBeGreaterThanOrEqual(8);
+    expect(trimmed.length).toBeGreaterThanOrEqual(7);
 
     // Zero-padded to two digits, ascending by one, starting at 01. Written as
     // the expected array rather than as a loop so a failure prints the actual
@@ -595,9 +446,9 @@ test.describe('the section numbering system', () => {
     const numerals = await page.locator('.section-index').count();
     expect(numerals).toBe(heads + 1);
 
-    // The category ticker is a band, not a section: no heading, no number.
+    // The campaign band inside the hero has no heading and takes no number.
     // If it ever gains one, that is a decision, not a default.
-    expect(await page.locator('.ticker .section-index').count()).toBe(0);
+    expect(await page.locator('.hero__stage .section-index').count()).toBe(0);
   });
 
   test('keeps every numeral out of the accessibility tree', async ({ page }) => {
@@ -636,7 +487,7 @@ test.describe('the numbering system holds its geometry', () => {
       els.map((el) => Math.round(el.getBoundingClientRect().right)),
     );
 
-    expect(rights.length).toBeGreaterThanOrEqual(9);
+    expect(rights.length).toBeGreaterThanOrEqual(7);
     expect(new Set(rights).size).toBe(1);
   });
 

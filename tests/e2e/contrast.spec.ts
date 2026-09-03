@@ -39,7 +39,10 @@ import { expect, test } from '@playwright/test';
  * deleted case is a pairing nobody measures again.
  */
 const CASES = [
-  { path: '/', selector: '.card__title', what: 'ServiceCards card title (19px red on white)' },
+  { path: '/', selector: '.hero__lede', what: 'hero lede (#bfbfc6 on the dark band)' },
+  { path: '/', selector: '.hero__proof dt', what: 'hero proof-strip label (10px mono on the dark band)' },
+  { path: '/', selector: '.cg__count', what: 'category tile count (11px red on white)' },
+  { path: '/', selector: '.steps__body', what: 'enquiry step body (14px muted on white)' },
   { path: '/why-spartan', selector: '.rs__title', what: 'why-spartan reason title (19px red on white)' },
   { path: '/about', selector: '.dv__name', what: 'about division name (21px, inherits h3 weight)' },
   // Moved from --color-black to --surface-alt. Measures 3.99:1 there and passes

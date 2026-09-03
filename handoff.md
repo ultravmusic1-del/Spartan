@@ -4909,3 +4909,81 @@ layout to satisfy a sentence, so the sentence went. What is asserted now is what
 is there — the left axis, the numeral's cap-top on the headline's, both rail
 members closing on the wrap's right edge, and the lede below the numeral rather
 than beside it.
+
+## 46. The landing page redesign — 2026-09-03
+
+**Status: implemented on branch `redesign/landing-2026-09`, not merged.**
+`verify 18/18 · 394 unit · 147 public e2e locally (9 skipped for the throwaway
+stack), 0 failing.` Spec: `docs/superpowers/specs/2026-09-03-landing-redesign-design.md`.
+
+### The instruction
+
+The client had received repeated comments that the landing page's layout
+"looks off" and could be more streamlined and more on-brand, and asked for a
+thorough redesign with complete creative freedom over every element, researched
+against top-tier industrial supplier sites, on a branch. Permission was given to
+break any prior rule in a text file that blocked the objective. Four rules were
+kept anyway because they are not design rules: no invented product facts, the
+honest enquiry signal, the admin seam, and measured colour.
+
+### What the research found, in one paragraph
+
+Seventeen industrial home pages (McMaster-Carr, RS, uvex, Delta Plus, Portwest,
+Milwaukee, DeWalt, MSA and the rest) plus Baymard and NN/G, summarised in the
+spec. The polished ones share five things: the catalogue is visible as tiles
+within one scroll; one headline and one idea, with no carousel beside it; a
+stat strip of verifiable numbers under the hero; trust after the categories;
+one job per section. The `ui-ux-pro-max` database had no industrial or B2B
+pattern at all and was not used beyond confirming that.
+
+### What changed
+
+Nine numbered sections became seven, and the order now leads with the
+catalogue:
+
+| Was | Is |
+|---|---|
+| Hero (masthead, staircase headline, dot grid, carousel with control rail, stat index) | **Hero**: dark band on the client's `safety.jpg` under the division pages' scrim; the approved headline on one left axis; lede; two CTAs; **two division doors** with counted totals; a **proof strip** of four sourced facts. The **campaign band** keeps its whole mechanism and moves below the strip, overlapping the band's foot. |
+| Ticker | gone — a second moving band above the fold; every category is a tile in 02 |
+| CategoryGrid, 5 × 3 portrait tiles | **The range**: grouped Electricals / Safety, landscape directory tiles three across, head-to-toe order from the catalogue's own `order` |
+| FeaturedLines, bespoke card + inline filter script | **Selected products**: `ProductGrid` with the catalogue's own card and its enquiry button, so the basket starts here. One CSP hash fewer. |
+| About (two helmet cut-outs), ServiceCards, TrustBand, Spotlight | **How enquiries work** (three steps + the three confirmed claims) and **About** (the unused `workwear.jpg`, the copy, three `/why-spartan` points, the industries row) |
+| Faq | two columns |
+| EnquiryCta | the same wired form; claims moved up to 04 so nothing is said twice |
+
+Page height 8,186 → 7,443 at 1440; 14,360 → 12,031 at 390. On a 375×667 both
+hero CTAs are above the fold, where before only one was.
+
+**One fix outside the landing page.** `Header.astro` used the dark logo lockup
+on every surface, so on the division pages' scrimmed heroes the wordmark was
+invisible — exactly the §3 bug that "no gate can catch". `onMedia` now selects
+the light lockup. `/safety` shows it.
+
+### Decisions worth knowing before touching it
+
+- **The campaign band is still inside `Hero.astro` and `<section class="hero">`**
+  so every carousel selector, the clock, the reduced-motion branch and the 84px
+  phone decision keep their tests unchanged. Its `margin-top: -12.5%` is half a
+  4:1 frame's height, as a percentage of the wrap's width; the band's
+  `padding-bottom` reserves the same amount with the same expression.
+- **The doors and the proof strip count through the seam**; `Hero.test.ts`
+  mocks two divisions with different sizes so a door printing the site total
+  fails.
+- **`--color-grey-lt` cannot be used in the hero** even on black: the theme
+  sweep bans it outside the footer. The lede and door blurbs use `#bfbfc6`,
+  the division pages' lede grey, 11.1:1 on `--color-black`; small labels use
+  `--text-muted`, 5.2:1 there.
+- **Nothing was invented.** The proof strip's four cells are the only facts on
+  this site with a source; the steps section deliberately makes no
+  response-time promise.
+- `Ticker.astro`, `ServiceCards.astro`, `Spotlight.astro`, `FeaturedLines.astro`
+  and `TrustBand.astro` are unused by any page and left in place for the client
+  to see the before; delete them once the branch is approved.
+
+### Where to pick up
+
+1. Review the branch on a preview deploy; merge or return notes. `--full` has
+   not run on this machine (Docker, §36); CI runs it on push.
+2. Then delete the five unused section components above.
+3. The open client decisions in `BACKLOG.md` P1 are unchanged: the headline
+   wording, `Categories` vs `Products`, the placeholder contact details.

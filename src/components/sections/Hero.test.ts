@@ -64,13 +64,21 @@ vi.mock('../../lib/site-content', async (importOriginal) => {
  * pass whether the component counted or hard-coded, so it holds 7 and 3, and
  * the assertion below would fail the moment somebody types a literal in.
  */
+/* Three categories, two of them in Electricals; seven products spread over
+   the three, so the two divisions count differently (5 and 2) and a door that
+   printed the site total, or the other division's, would fail. */
 vi.mock('../../lib/catalog', () => ({
   getDivisions: async () => [
-    { id: 'electricals', slug: 'electricals', name: 'Spartan Electricals' },
-    { id: 'safety', slug: 'safety', name: 'Spartan Safety' },
+    { id: 'electricals', slug: 'electricals', name: 'Spartan Electricals', blurb: 'Lighting and more.' },
+    { id: 'safety', slug: 'safety', name: 'Spartan Safety', blurb: 'PPE and workwear.' },
   ],
-  getCategories: async () => Array.from({ length: 3 }, (_, i) => ({ id: `c${i}` })),
-  getProducts: async () => Array.from({ length: 7 }, (_, i) => ({ slug: `p${i}` })),
+  getCategories: async () =>
+    Array.from({ length: 3 }, (_, i) => ({
+      id: `c${i}`,
+      divisionId: i < 2 ? 'electricals' : 'safety',
+    })),
+  getProducts: async () =>
+    Array.from({ length: 7 }, (_, i) => ({ slug: `p${i}`, categoryId: `c${i % 3}` })),
 }));
 
 /** Renders Hero.astro against whatever `banners.current` holds. */
@@ -230,8 +238,9 @@ describe('with banners', () => {
     expect(html).toMatch(/class="[^"]*hero__track[^"]*"[^>]*aria-hidden="true"/);
     expect(countElements(html, 'hero__slide')).toBe(3);
 
+    // Three slides plus the band's photograph, which is decorative too.
     const alts = images(html);
-    expect(alts).toHaveLength(3);
+    expect(alts).toHaveLength(4);
     // Present on every image and empty on every image. An absent alt would be
     // three unlabelled images; a populated one would announce the banner's
     // admin-facing name to a visitor.
@@ -246,11 +255,13 @@ describe('with banners', () => {
    * is below the fold of the animation and must stay lazy, or a six-banner
    * carousel downloads six full-width images before the page settles.
    */
-  it('loads the first slide eagerly and at high priority, and the rest lazily', async () => {
+  it('loads the photograph and the first slide eagerly, and the rest lazily', async () => {
     banners.current = [banner(0), banner(1), banner(2)];
     const html = await renderHero();
 
-    expect((html.match(/loading="eager"/g) ?? []).length).toBe(1);
+    // The photograph is the LCP candidate and the only high-priority fetch;
+    // the first slide is eager because it lands inside the first viewport.
+    expect((html.match(/loading="eager"/g) ?? []).length).toBe(2);
     expect((html.match(/fetchpriority="high"/g) ?? []).length).toBe(1);
     // Three banners make four slides; the three after the first are lazy.
     expect((html.match(/loading="lazy"/g) ?? []).length).toBe(3);
@@ -293,9 +304,11 @@ describe('the proposition', () => {
     expect(html).toContain('Electricals + Safety');
   });
 
-  it('drops the "Spartan" prefix, which the logo above has just said', async () => {
+  it('drops the "Spartan" prefix from the masthead, which the logo above has just said', async () => {
     const html = await renderHero();
-    expect(html).not.toContain('Spartan Electricals');
+    const masthead = html.match(/class="[^"]*hero__masthead"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? '';
+    expect(masthead).toContain('Electricals + Safety');
+    expect(masthead).not.toContain('Spartan Electricals');
   });
 
   /**
@@ -336,52 +349,73 @@ describe('the proposition', () => {
   });
 
   /**
-   * THE INDEX COUNTS, IT DOES NOT STATE.
+   * THE PROOF STRIP — four sourced facts closing the dark band.
    *
-   * The fixture at the top of this file mocks the catalogue with 7 products
-   * and 3 categories precisely so a hard-coded "94" would fail here. Padded to
-   * two digits, which is the register the slide counter and the masthead both
-   * speak in.
+   * The fixture mocks the catalogue with 7 products and 3 categories precisely
+   * so a hard-coded "94" would fail here. The year comes from site.json and
+   * the manufacturing statement from the brochure; nothing else on this site
+   * has a source, so the strip has four cells and not the six a template
+   * would want (rule 1).
    */
-  it('renders the counted totals as an index of three padded pairs', async () => {
+  it('renders the proof strip as four sourced facts, two of them counted', async () => {
     const html = await renderHero();
 
-    expect(countElements(html, 'hero__index')).toBe(1);
-    expect(countElements(html, 'hero__index-row')).toBe(3);
+    expect(countElements(html, 'hero__proof')).toBe(1);
+    expect(countElements(html, 'hero__proof-cell')).toBe(4);
 
-    // `[^>]*` on both tags, not bare `<dt>`: Astro stamps a scope attribute
-    // onto every element it renders, so an exact-tag regex matches nothing
-    // and fails against markup that is correct.
-    expect(html).toMatch(/<dt[^>]*>Products<\/dt>\s*<dd[^>]*>07<\/dd>/);
-    expect(html).toMatch(/<dt[^>]*>Categories<\/dt>\s*<dd[^>]*>03<\/dd>/);
-    // Not padded: `padStart(2)` leaves a four-digit year alone, which is what
-    // makes it safe to apply to every row rather than case by case.
+    // `[^>]*` on both tags: Astro stamps a scope attribute onto every element.
+    expect(html).toMatch(/<dt[^>]*>Products<\/dt>\s*<dd[^>]*>7<\/dd>/);
+    expect(html).toMatch(/<dt[^>]*>Categories<\/dt>\s*<dd[^>]*>3<\/dd>/);
     expect(html).toMatch(/<dt[^>]*>Established<\/dt>\s*<dd[^>]*>2015<\/dd>/);
+    expect(html).toMatch(/<dt[^>]*>Manufactured in<\/dt>\s*<dd[^>]*>India (&amp;|&) China<\/dd>/);
+    // "2 divisions" was called a weak statistic by a review and is not a cell.
+    expect(html).not.toMatch(/<dt[^>]*>Divisions<\/dt>/);
   });
 
   /**
-   * THE OVERSIZED NUMERAL IS A SECTION INDEX, NOT A STATISTIC.
-   *
-   * It was the product count, and a review caught the flaw: an outlined 94 sat
-   * inches from a stated 94, so the same figure was read twice inside one
-   * cluster and the device was decoration and data at once.
-   *
-   * The tie-breaker is not taste. `SectionIndex` draws with
-   * `-webkit-text-stroke` over a transparent fill, so it renders as NOTHING in
-   * a browser without that property — the right failure for an ornament and a
-   * disqualifying one for information. A fact whose only carrier can vanish
-   * has not been stated. So the numeral is "01", it is aria-hidden, and every
-   * counted total lives in the index below as real text.
+   * THE DIVISION DOORS. Two links, each with its own counted totals. The
+   * fixture puts 2 of 3 categories and 5 of 7 products in Electricals, so a
+   * door printing the site total or the other division's figure fails.
+   */
+  it('opens one door per division, linking to it with its own counted totals', async () => {
+    const html = await renderHero();
+
+    expect(countElements(html, 'hero__door')).toBe(2);
+    expect(html).toMatch(/class="[^"]*hero__door[^"]*"[^>]*href="\/electricals"/);
+    expect(html).toMatch(/class="[^"]*hero__door[^"]*"[^>]*href="\/safety"/);
+    expect(html).toMatch(/2 categories\s*·\s*5 products/);
+    expect(html).toMatch(/1 category\s*·\s*2 products/);
+    expect(html).toContain('Lighting and more.');
+  });
+
+  /**
+   * THE OVERSIZED NUMERAL IS A SECTION INDEX, NOT A STATISTIC. `SectionIndex`
+   * draws with `-webkit-text-stroke` over a transparent fill, so it renders as
+   * NOTHING where that property is unsupported — the right failure for an
+   * ornament and a disqualifying one for information.
    */
   it('marks the hero as section 01, decoratively and out of the accessibility tree', async () => {
     const html = await renderHero();
 
     expect(countElements(html, 'section-index')).toBe(1);
     expect(html).toMatch(/class="[^"]*section-index[^"]*"[^>]*aria-hidden="true"[^>]*>\s*01\s*</);
+  });
 
-    // And it is no longer a copy of a statistic: the fixture's product count
-    // is 7, which must appear only in the index.
-    expect((html.match(/>07</g) ?? []).length).toBe(1);
+  /**
+   * The source order IS the phone layout. The campaign band closes the hero,
+   * after the doors and the proof strip, so the two actions follow the lede
+   * at every width — `tests/e2e/hero-mobile.spec.ts` measures the result.
+   */
+  it('stacks headline, actions, doors, proof, then the campaign stage', async () => {
+    banners.current = [banner(0), banner(1)];
+    const html = await renderHero();
+    const at = (needle: string) => html.indexOf(needle);
+
+    expect(at('<h1')).toBeGreaterThan(-1);
+    expect(at('hero__actions')).toBeGreaterThan(at('<h1'));
+    expect(at('hero__doors')).toBeGreaterThan(at('hero__actions'));
+    expect(at('hero__proof')).toBeGreaterThan(at('hero__doors'));
+    expect(at('data-hero-stage')).toBeGreaterThan(at('hero__proof'));
   });
 
   /**
