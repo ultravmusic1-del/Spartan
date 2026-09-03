@@ -5045,6 +5045,16 @@ out, and the numbering tests never see them because the rail's figures are
 is absent at 1440, present at 1920 with one link per numeral in the same
 order, every href resolving, and the spy following a scroll to About.
 
+**The numeral's fill is the section's surface colour, painted over the
+stroke.** A client screenshot showed "04" as a tangle: Fira Sans builds the 4
+from overlapping contours, and a hollow outline at 3px drew every inner edge,
+while the old -0.06em tracking ran the 4 through the 0. `SectionIndex` now
+tracks at +0.02em, strokes at 5px, and fills in `--si-fill` (default the page
+surface; `.cg`, `.steps` and `.faq` set it to `--surface-alt`) with
+`paint-order: stroke fill`, so only the outer 2.5px of the stroke shows. Where
+`-webkit-text-stroke` is unsupported the fill is the background's colour and
+nothing visible paints, which is still the right failure for an ornament.
+
 ### Where to pick up
 
 1. Review the branch on a preview deploy; merge or return notes. `--full` has

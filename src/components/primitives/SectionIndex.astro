@@ -68,10 +68,22 @@ const { n, flow = false } = Astro.props;
     font-weight: 800;
     font-style: italic;
     line-height: 0.7;
-    letter-spacing: -0.06em;
+    /* Was -0.06em. At a 3px stroke that tracking crossed the outlines of
+       adjacent figures ("04" drew the 4 through the 0); open tracking keeps
+       every figure its own closed shape. */
+    letter-spacing: 0.02em;
     /* Load-bearing. See the note above: transparent fill plus a stroke means
        "absent" is the failure mode, never a solid slab across the copy. */
-    color: transparent;
+    /* NOT transparent since the stroke went heavy. Fira Sans draws figures
+       like the 4 from overlapping contours, and a hollow outline shows every
+       inner edge. The fill is painted in the SECTION'S surface colour, over
+       the stroke (`paint-order`), so only the outer half of the stroke shows
+       and the inside reads as a clean shape. A section on --surface-alt sets
+       --si-fill to match; the default is the page surface. Where
+       `-webkit-text-stroke` is unsupported, this still paints nothing
+       visible — the fill is the background's colour. */
+    color: var(--si-fill, var(--surface-page));
+    paint-order: stroke fill;
     /* 15%, up from 11%. At 11% the stroke read as a printing artifact in the
        client's PDF export — secondary must not mean barely there, and this is
        the page's signature device. Still far below any contrast floor because
@@ -79,8 +91,9 @@ const { n, flow = false } = Astro.props;
     /* RED AND HEAVY SINCE 2026-09-03, at the client's request: the outline is
        the brand red itself, --color-red, at full strength and 3px — a
        drawn figure rather than a watermark. It is aria-hidden decoration, so
-       no contrast floor applies; the hairline it replaced was 15% of the ink. */
-    -webkit-text-stroke: 3px var(--color-red);
+       no contrast floor applies; the hairline it replaced was 15% of the ink.
+       5px because the fill above covers the inner half: 2.5px is what shows. */
+    -webkit-text-stroke: 5px var(--color-red);
     pointer-events: none;
     user-select: none;
   }
