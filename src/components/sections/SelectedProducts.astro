@@ -22,7 +22,7 @@ import { getProducts } from '../../lib/catalog';
 const [featured, products] = await Promise.all([getFeaturedProducts(), getProducts()]);
 ---
 
-<section class="sp">
+<section class="sp" id="products">
   <div class="wrap">
     <SectionHeading
       n="03"

@@ -205,6 +205,48 @@ function lifts(): void {
   }
 }
 
+/* THE RAIL'S SCROLL-SPY. Not motion, so it runs under reduced motion too:
+   the section whose top is nearest the upper third of the viewport is the
+   current one, and its rail link carries `aria-current`. The rail itself is
+   display: none below 1680px; observing sections costs nothing there. */
+function railSpy(): void {
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-rail-link]')];
+  if (links.length === 0) return;
+  const sections = links
+    .map((a) => document.getElementById(a.dataset.railLink ?? ''))
+    .filter((el): el is HTMLElement => el !== null);
+  if (sections.length === 0) return;
+
+  const setCurrent = () => {
+    const line = window.innerHeight * 0.34;
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= line) current = section;
+    }
+    for (const a of links) {
+      if (a.dataset.railLink === current.id) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
+    }
+  };
+
+  let ticking = false;
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setCurrent();
+        ticking = false;
+      });
+    },
+    { passive: true },
+  );
+  setCurrent();
+}
+
+railSpy();
+
 if (!reduced) {
   reveal();
   countUps();

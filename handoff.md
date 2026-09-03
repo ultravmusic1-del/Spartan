@@ -5024,6 +5024,27 @@ after the build. `tests/e2e/motion.spec.ts` asserts every section is visible
 after a scroll-through, the proof strip ends on its counted totals, and
 reduced motion leaves everything final from the first paint.
 
+### Heavier red numerals, and the side rails — later still
+
+Two more requests. The numerals now stroke at 3px in `--color-red` itself,
+full strength: a drawn figure, not a watermark. And the margins either side of
+the 1360px measure, which on a 1920px screen are 280px of nothing, carry two
+fixed rails from 1680px up (`src/components/sections/SideRails.astro`):
+
+- **Left, a section index.** The seven numbered sections as anchor links,
+  the current one lit red with a growing rule, labels that come out on hover
+  or when current. A scroll-spy in `landing-motion.ts` sets `aria-current`;
+  without JavaScript it is still a working table of contents. The sections
+  carry ids for it (`top`, `catalogue`, `products`, `how-it-works`, `about`,
+  `questions`, `enquiry`).
+- **Right, a vertical brand line** in the mono face between two rules.
+
+Below 1680px both are `display: none`, not hidden — a phone never lays them
+out, and the numbering tests never see them because the rail's figures are
+`.rail__n`, not `.section-index`. `tests/e2e/motion.spec.ts` asserts the rail
+is absent at 1440, present at 1920 with one link per numeral in the same
+order, every href resolving, and the spy following a scroll to About.
+
 ### Where to pick up
 
 1. Review the branch on a preview deploy; merge or return notes. `--full` has

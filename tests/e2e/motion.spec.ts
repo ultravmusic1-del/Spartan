@@ -107,3 +107,45 @@ test.describe('the motion layer', () => {
     expect(values.map((v) => v.trim())).toEqual(['94', '15', '2015', 'India & China']);
   });
 });
+
+test.describe('the side rails', () => {
+  /*
+   * Desktop-only furniture for the margins: a scroll-spy section index on the
+   * left and a brand line on the right, `display: none` below 1680px.
+   */
+  test('are absent on a phone and on a 1440 desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await expect(page.locator('[data-rail]')).toBeHidden();
+  });
+
+  test('list every numbered section as a working anchor, and follow the scroll', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto('/');
+    const rail = page.locator('[data-rail]');
+    await expect(rail).toBeVisible();
+
+    // One link per numbered section, in the same order and with the same
+    // numbers the page's own numerals carry.
+    const numerals = (await page.locator('.section-index').allTextContents()).map((t) => t.trim());
+    const railNumbers = (await rail.locator('.rail__n').allTextContents()).map((t) => t.trim());
+    expect(railNumbers).toEqual(numerals);
+
+    // Every href resolves to a real element.
+    const missing = await rail.locator('[data-rail-link]').evaluateAll((els) =>
+      els.map((a) => (a as HTMLAnchorElement).dataset.railLink ?? '').filter((id) => !document.getElementById(id)),
+    );
+    expect(missing).toEqual([]);
+
+    // The spy lights the section under the reader.
+    await expect(rail.locator('[aria-current="true"]')).toHaveAttribute('data-rail-link', 'top');
+    await page.locator('#about').scrollIntoViewIfNeeded();
+    await page.evaluate(() => {
+      const el = document.getElementById('about')!;
+      window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 40);
+    });
+    await expect(rail.locator('[aria-current="true"]')).toHaveAttribute('data-rail-link', 'about');
+  });
+});

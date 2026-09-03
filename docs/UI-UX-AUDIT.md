@@ -168,6 +168,14 @@ Before filing anything, answer both:
 If it is a decision you disagree with, the honest form is "this accepted cost
 is larger than recorded, here is the measurement" — not a defect report.
 
+### 8. Screenshot the home page wide as well
+
+Two of its features only exist from 1680px up — the side rails in the
+margins — and the motion layer hides below-fold sections until they are
+scrolled to. A 1440-wide capture cannot show the rails and an unscrolled
+capture shows empty sections; take a 1920 capture, and scroll through first
+(`docs/TRAPS.md`).
+
 ## Six things that lie when you look at them
 
 Each of these produced a wrong conclusion in a real session.

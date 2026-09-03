@@ -7,11 +7,25 @@ import EnquirySteps from '../components/sections/EnquirySteps.astro';
 import About from '../components/sections/About.astro';
 import Faq from '../components/sections/Faq.astro';
 import EnquiryCta from '../components/sections/EnquiryCta.astro';
+import SideRails from '../components/sections/SideRails.astro';
 import { getCategories, getProducts } from '../lib/catalog';
 import { organizationJsonLd, requireSite } from '../lib/seo';
 import { getSiteSettings } from '../lib/site-content';
 
 const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+
+/* The side rails' index. DOM order, and each `n` must match the number the
+   section passes to SectionHeading — `tests/e2e/motion.spec.ts` checks the
+   rail against the numerals it finds on the page. */
+const railSections = [
+  { id: 'top', n: '01', label: 'Overview' },
+  { id: 'catalogue', n: '02', label: 'The range' },
+  { id: 'products', n: '03', label: 'Products' },
+  { id: 'how-it-works', n: '04', label: 'Enquiries' },
+  { id: 'about', n: '05', label: 'About' },
+  { id: 'questions', n: '06', label: 'Questions' },
+  { id: 'enquiry', n: '07', label: 'Contact' },
+];
 
 const site = requireSite(Astro.site);
 
@@ -73,6 +87,9 @@ const description = `Lighting, ventilation and water management alongside protec
     <Faq />
     <EnquiryCta />
   </main>
+
+  {/* Desktop-only furniture for the margins: display: none below 1680px. */}
+  <SideRails sections={railSections} brand={`Spartan \u00ae \u2014 Electricals + Safety \u2014 Est. ${settings.established}`} />
 </BaseLayout>
 
 {/* THE MOTION LAYER. Bundled with anime.js into an external chunk, so it

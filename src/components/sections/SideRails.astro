@@ -1,0 +1,181 @@
+---
+/**
+ * THE SIDE RAILS — desktop-only furniture for the margins, added 2026-09-03.
+ *
+ * The page's measure is 1360px. On a 1920px screen that leaves a 280px margin
+ * each side doing nothing, and the client asked for an idea to use it that
+ * need not exist on a phone. Two fixed rails, shown only from 1680px up, where
+ * a margin is at least 160px wide:
+ *
+ *   LEFT  — a section index: the seven numbered sections as real anchor links,
+ *           the current one lit in the brand red by a scroll-spy in
+ *           `src/scripts/landing-motion.ts`. Without JavaScript it is still a
+ *           working table of contents.
+ *   RIGHT — a vertical brand line in the mono face, and nothing else.
+ *
+ * Below 1680px both are `display: none` — not visually hidden, gone — so a
+ * phone never lays them out and the numbering tests, which count
+ * `.section-index`, never see them: the rail's numerals are `.rail__n`.
+ *
+ * The section ids it targets are set on the sections themselves. Keep this
+ * list in DOM order; the numbers here must match the `n` each section passes
+ * to `SectionHeading`.
+ */
+interface Props {
+  sections: { id: string; n: string; label: string }[];
+  brand: string;
+}
+const { sections, brand } = Astro.props;
+---
+
+<nav class="rail rail--left" aria-label="Sections on this page" data-rail>
+  <ol class="rail__list">
+    {
+      sections.map((s) => (
+        <li>
+          <a class="rail__link" href={`#${s.id}`} data-rail-link={s.id}>
+            <span class="rail__n" aria-hidden="true">{s.n}</span>
+            <span class="rail__label">{s.label}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<div class="rail rail--right" aria-hidden="true">
+  <span class="rail__line"></span>
+  <span class="rail__brand">{brand}</span>
+  <span class="rail__line"></span>
+</div>
+
+<style>
+  .rail {
+    display: none;
+  }
+
+  /* 1680 = the 1360 measure plus two 160px margins. Below that the rails
+     would sit on the content. */
+  @media (min-width: 1680px) {
+    .rail {
+      position: fixed;
+      top: 50%;
+      z-index: 20;
+      transform: translateY(-50%);
+      display: flex;
+    }
+
+    /* Centred in the left margin: the margin is (100vw - measure) / 2 wide,
+       the rail starts a quarter of it in and is as wide as its longest label. */
+    .rail--left {
+      left: calc((100vw - var(--wrap-max)) / 4 - 8px);
+    }
+
+    .rail__list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rail__link {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      min-height: 32px;
+      padding: 4px 8px;
+      font-family: var(--font-mono);
+      font-size: var(--fs-label);
+      font-weight: var(--fw-label);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      /* 5.36:1 on white. */
+      color: var(--text-muted);
+      transition: color var(--dur-base) var(--ease-out);
+    }
+
+    .rail__n {
+      position: relative;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* The current marker: a rule that grows out to the left of the number,
+       in the brand red. Width, not opacity, so it reads as a pointer. */
+    .rail__n::before {
+      content: '';
+      position: absolute;
+      right: calc(100% + 8px);
+      top: 50%;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: translateY(-50%);
+      transition: width var(--dur-base) var(--ease-out);
+    }
+
+    .rail__label {
+      opacity: 0;
+      transform: translateX(-6px);
+      transition:
+        opacity var(--dur-base) var(--ease-out),
+        transform var(--dur-base) var(--ease-out);
+    }
+
+    /* Hovering the rail brings every label out; the current item's is
+       always out. */
+    .rail--left:hover .rail__label,
+    .rail--left:focus-within .rail__label,
+    .rail__link[aria-current='true'] .rail__label {
+      opacity: 1;
+      transform: none;
+    }
+
+    .rail__link:hover,
+    .rail__link[aria-current='true'] {
+      color: var(--text);
+    }
+
+    /* Small red text on light: --accent-text (9.07:1 on white). */
+    .rail__link[aria-current='true'] .rail__n {
+      color: var(--accent-text);
+    }
+
+    .rail__link[aria-current='true'] .rail__n::before {
+      width: 18px;
+    }
+
+    /* The right rail: a rule, the brand line set vertically, a rule. */
+    .rail--right {
+      right: calc((100vw - var(--wrap-max)) / 4 - 8px);
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .rail__line {
+      width: 1px;
+      height: 72px;
+      background: var(--line-control);
+    }
+
+    .rail__brand {
+      writing-mode: vertical-rl;
+      font-family: var(--font-mono);
+      font-size: var(--fs-label);
+      font-weight: var(--fw-label);
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail__label,
+    .rail__n::before,
+    .rail__link {
+      transition: none;
+    }
+  }
+</style>

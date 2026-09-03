@@ -243,6 +243,14 @@ viewport at load, never touches the hero's own CSS entrance, never transforms
 a numeral, and does nothing under `prefers-reduced-motion`. The section
 numerals stroke in `--accent` at 55% instead of `--text` at 15%.
 
+### Desktop margins
+
+From 1680px up, two fixed rails use the margins outside the 1360px measure
+(`SideRails.astro`): a scroll-spy section index on the left (anchor links,
+current item red, `aria-current` set by `landing-motion.ts`) and a vertical
+brand line on the right. `display: none` below 1680px. The section numerals
+stroke at 3px in `--color-red` at full strength.
+
 ### Tests
 
 Rewritten to match: `Hero.test.ts` (proposition assertions), `home.spec.ts`
