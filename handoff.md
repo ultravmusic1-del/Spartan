@@ -4989,8 +4989,10 @@ the light lockup. `/safety` shows it.
   this site with a source; the steps section deliberately makes no
   response-time promise.
 - `Ticker.astro`, `ServiceCards.astro`, `Spotlight.astro`, `FeaturedLines.astro`
-  and `TrustBand.astro` are unused by any page and left in place for the client
-  to see the before; delete them once the branch is approved.
+  and `TrustBand.astro` were left in place until the branch was approved and
+  **deleted on 2026-09-03 after the merge**, with their entries in
+  `src/styles/theme-sweep.test.ts` and the two `docs/TRAPS.md` passages that
+  named them.
 
 ### The motion layer, and the red folios — later the same day
 
@@ -5057,8 +5059,10 @@ nothing visible paints, which is still the right failure for an ornament.
 
 ### Where to pick up
 
-1. Review the branch on a preview deploy; merge or return notes. `--full` has
+1. ~~Review the branch on a preview deploy; merge or return notes.~~ Merged
+   fast-forward to `main` and live on 2026-09-03 after three localhost
+   reviews. `--full` has
    not run on this machine (Docker, §36); CI runs it on push.
-2. Then delete the five unused section components above.
+2. ~~Then delete the five unused section components above.~~ Done.
 3. The open client decisions in `BACKLOG.md` P1 are unchanged: the headline
    wording, `Categories` vs `Products`, the placeholder contact details.

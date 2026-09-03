@@ -114,8 +114,6 @@ describe('white theme sweep', () => {
   const WHITE_TEXT_IS_CORRECT = [
     'src/components/layout/Footer.astro', // inside .on-dark
     'src/components/primitives/SolidButton.astro', // on --accent-fill
-    'src/components/sections/Ticker.astro', // red band
-    'src/components/sections/TrustBand.astro', // red band
     'src/layouts/BaseLayout.astro', // skip link, on --accent-fill
     // Red-filled controls: the enquiry submit and add buttons, the drawer's
     // review button, the catalogue's selected filter chip and division tabs.
@@ -126,7 +124,6 @@ describe('white theme sweep', () => {
     'src/styles/enquiry.css',
     'src/pages/catalogue/index.astro',
     'src/pages/enquiry.astro',
-    'src/components/sections/FeaturedLines.astro',
     /*
      * THE FIRST ENTRY HERE THAT IS NOT A RED FILL, so the rule this list
      * encodes is worth restating: the surface has to be a known, dark-enough

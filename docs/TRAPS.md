@@ -217,13 +217,15 @@ in `handoff.md`; this file states the trap and moves on.
   to a dynamic route; do not reason about it from the number of URLs.**
 
 - **The home page is a product data view, so "product-page only" is not a
-  thing.** `Spotlight` imports `SpecTable` and `En388Table` and renders both in
-  full for Grip Guard GP5 on `/`. Anything scoped to "the catalogue's data
-  presentation" therefore lands on the page with the least performance headroom
-  on the site. This was assumed away once already: the mono font was introduced
-  on the reasoning that nothing on `/` would match it, and it cost 4 Lighthouse
-  points before the assumption was checked. Grep `Spotlight.astro`'s imports
-  before believing a component is off the home page.
+  thing.** Since 2026-09-03 `SelectedProducts` renders the catalogue's own
+  `ProductCard` eight times on `/`, specs and enquiry button included (before
+  that, `Spotlight` rendered `SpecTable` and `En388Table` there). Anything
+  scoped to "the catalogue's data presentation" therefore lands on the page
+  with the least performance headroom on the site. This was assumed away once
+  already: the mono font was introduced on the reasoning that nothing on `/`
+  would match it, and it cost 4 Lighthouse points before the assumption was
+  checked. Grep the home page's imports before believing a component is off
+  it.
 
 - **A weight change can move text across the WCAG large-text boundary, and
   nothing here would tell you.** "Large" is >=24px, **or** >=18.66px *and* bold
@@ -553,7 +555,8 @@ did not check. Changing one is a regression *you* would be introducing.
   second copy of the first. The animation runs 0 → −600% and restarts at 0, and
   that reset is invisible *only* because both frames are the same image — delete
   the duplicate and the loop either shows a blank frame or visibly rewinds
-  through five slides. `Ticker.astro` duplicates its track for the same reason.
+  through five slides. (The category ticker, deleted 2026-09-03, duplicated
+  its track for the same reason.)
 
   Changing the slide count means changing **four** things together, and three of
   them are silent if you miss them: the `hero-carousel` keyframe percentages,
