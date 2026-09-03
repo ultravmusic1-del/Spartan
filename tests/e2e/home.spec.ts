@@ -257,13 +257,17 @@ test.describe('the hero proposition', () => {
     expect(Math.round(doorBoxes[0].width)).toBe(Math.round(doorBoxes[1].width));
     expect(doorBoxes[0].y).toBeGreaterThan(actions.y + actions.height);
 
-    // The campaign band bridges the dark band and the page: it starts inside
-    // the dark band and ends below it.
+    // The photograph is a column beside the copy, not a backdrop behind it:
+    // it starts on the headline's line and its right edge is the wrap's.
+    const vis = await box('.hero__vis');
+    expect(vis.x).toBeGreaterThan(title.x + title.width - 8);
+    expect(Math.round(vis.x + vis.width)).toBe(headRight);
+    expect(Math.abs(vis.y - title.y)).toBeLessThan(4);
+
+    // The campaign band follows the hero band on the page surface.
     const band = await box('.hero__band');
     const stage = await box('.hero__stage');
-    const bandBottom = band.y + band.height;
-    expect(stage.y).toBeLessThan(bandBottom);
-    expect(stage.y + stage.height).toBeGreaterThan(bandBottom);
+    expect(stage.y).toBeGreaterThanOrEqual(band.y + band.height - 1);
   });
 
   test('sets both headline lines on one edge, the second in the accent', async ({ page }) => {

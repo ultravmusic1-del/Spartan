@@ -65,9 +65,10 @@ Measured from screenshots of production at 1440, 1280 and 390:
 
 ### Principles
 
-- **Light site, one dark band.** The hero is dark, on the client's approved
-  mockup direction and the same idiom the division pages already use; every
-  section below is light. Red marks action and brand, never a surface.
+- **Light site, light hero.** A first cut put the hero on a dark band in the
+  approved mockup's direction; the client asked for the white theme, so the
+  hero sits on `--surface-alt` with the photograph as a column beside the
+  copy. Red marks action and brand, never a surface.
 - **Seven sections, not nine.** Each has one job and at most one primary
   action.
 - **The catalogue leads, grouped by division.** The buyer meets what is sold
@@ -82,9 +83,9 @@ Measured from screenshots of production at 1440, 1280 and 390:
 
 | # | Section | Job | Surface |
 |---|---|---|---|
-| 01 | **Hero** | Say what Spartan is, offer the two divisions, offer the two actions | dark, photograph |
-| — | **Proof strip** | Four verifiable facts under the hero | dark (hero foot) |
-| — | **Campaign band** | The client's uploaded banners, one at a time, with pause | light, overlapping the hero's foot |
+| 01 | **Hero** | Say what Spartan is, offer the two divisions, offer the two actions | light alt, photograph column |
+| — | **Proof strip** | Four verifiable facts at the hero's foot | light alt |
+| — | **Campaign band** | The client's uploaded banners, one at a time, with pause | light, under the hero band |
 | 02 | **The range** | All 15 categories, grouped Electricals / Safety, head-to-toe within Safety | light alt |
 | 03 | **Selected products** | Eight real product cards with the enquiry button, so the landing page itself fills the basket | light |
 | 04 | **How enquiries work** | Three steps and the three confirmed claims; the conversion mechanism explained once | light alt |
@@ -101,45 +102,39 @@ index (moved to the proof strip). `Ticker.astro`, `ServiceCards.astro` and
 
 ### 01 Hero
 
-Full-bleed dark band, `.on-dark`, header in `onMedia` mode so the light logo
-lockup is used (handoff §3). Background is the client-supplied
-`src/assets/hero/safety.jpg` — PPE on a workbench with a crew behind — under
-the same three-layer scrim `DivisionPage.astro` uses, so the copy column sits
-on flat black and the photograph shows through on the right. Contrast is
-therefore against `--color-black`, which is measured (§3).
+On `--surface-alt`, the header in its default transparent mode with the dark
+lockup. A two-column grid inside the wrap: copy and doors on the left (58%),
+the client-supplied `src/assets/hero/safety.jpg` on the right (42%) as a real
+image column whose top edge is the headline's and whose bottom edge is the
+doors', its left edge masked into the band. Above the grid, the masthead and
+the section numeral `01` on one row.
 
-Left column, on the wrap's left edge, top to bottom:
+Left column, top to bottom:
 
-- **Eyebrow** (mono, `--fs-meta`): `Electricals + Safety · Since 2015`, both
-  read from the seam, nothing typed.
+- **Eyebrow** (mono, `--fs-meta`, `--text-muted`): `Spartan® / Electricals +
+  Safety`, the ranges read from the seam.
 - **Headline**: `Home and industrial solutions.` — the client's approved line,
   unchanged in words. Set in `--font-hero` (Fira Sans Italic 800), uppercase,
-  two lines: `HOME AND INDUSTRIAL` in white, `SOLUTIONS.` in `--accent`. Both
-  lines start on the left axis; no staircase. Size `clamp(40px, 6.4vw, 84px)`.
-- **Lede** (`--fs-body`/17px, `#bfbfc6` as the division pages use): the
-  existing sentence, "Lighting, ventilation, water management, PPE and
-  workwear for contractors and distributors."
+  two lines on one left axis: `HOME AND INDUSTRIAL` in `--text`, `SOLUTIONS.`
+  in `--accent` (3.99:1 on `--surface-alt`, legal at ≥40px). No staircase.
+  Size `clamp(40px, 5.6vw, 76px)`.
+- **Lede** (`--text-muted`, 4.96:1): the existing sentence.
 - **Actions**: `Browse catalogue` (solid red) and `Request a quote` (outline,
-  white on dark). A row above 560px, a stretched column below.
-- **Division doors**: two equal cards side by side, each a link — `Spartan
-  Electricals` → `/electricals`, `Spartan Safety` → `/safety` — carrying the
-  division blurb, "N categories · N products" counted through the seam, and a
-  chevron. Cards are `rgba(255,255,255,.04)` on a hairline, boundary turns
-  red on hover, exactly the card cue in `global.css`.
+  on the raised surface). A row above 560px, a stretched column below.
+- **Division doors**: two equal `.card-surface` cards side by side, each a
+  link — `Spartan Electricals` → `/electricals`, `Spartan Safety` → `/safety`
+  — carrying the division blurb, "N categories · N products" counted through
+  the seam, and a chevron.
 
-Right column: the photograph, revealed by the scrim. The section numeral `01`
-sits top-right of the wrap in the flow head position the system expects
-(`SectionIndex`), stroked at 15% white.
-
-**Proof strip** across the hero's foot, inside the dark band, a hairline above:
-four cells — `94 Products`, `15 Categories`, `Since 2015`, `Made in India &
+**Proof strip** across the hero's foot, a `--line-control` rule above: four
+cells — `94 Products`, `15 Categories`, `Since 2015`, `Made in India &
 China`. The first two are counted; the year and the manufacturing statement are
 from the brochure (already published on About and in the footer). Nothing else
 qualifies under rule 1, and the strip renders exactly what it has.
 
-**Mobile (≤900px)**: photograph as a full-width backdrop under a heavier scrim;
-eyebrow, headline, lede, both CTAs, then the two doors stacked, then the proof
-strip as a 2×2 grid. The primary CTA must clear the fold on 375×667 and 360×640
+**Mobile (≤900px)**: one column — eyebrow, headline, lede, both CTAs, the
+photograph as a 16:9 band, the two doors stacked, then the proof strip as a
+2×2 grid. The primary CTA must clear the fold on 375×667 and 360×640
 (`tests/e2e/hero-mobile.spec.ts` keeps asserting this).
 
 ### Campaign band
@@ -147,10 +142,8 @@ strip as a 2×2 grid. The primary CTA must clear the fold on 375×667 and 360×6
 The three uploaded banners keep their mechanism unchanged — `getHeroBanners`,
 `heroClock`, the generated `is:inline` keyframes, the checkbox pause, the pips,
 the counter, the 4:1 frame, the reduced-motion branch. What changes is where the
-band sits: below the proof strip, on the light page surface, pulled up over the
-hero's bottom edge by half its own height so it bridges dark and light. Its
-label row (`Featured / campaign`, counter, pips, Pause) sits under the frame on
-the light surface, where every colour in it is already measured.
+band sits: on the page surface directly under the hero band's hairline. Its
+label row (`Featured / campaign`, counter, pips, Pause) sits under the frame.
 
 It stays inside `Hero.astro` and inside `<section class="hero">` so that
 `Hero.test.ts`, `hero-carousel.spec.ts` and `home.spec.ts` keep their selectors
@@ -232,25 +225,17 @@ the largest.
 
 ### Colour and type
 
-No new tokens. New pairings, measured against the surface they sit on:
-
-- White text on `--color-black`: 19.6:1.
-- `#bfbfc6` lede on `--color-black`: 11.1:1 (already used on division pages).
-- `--accent` `#eb2927` on `--color-black`: 4.65:1, large text only — the
-  `SOLUTIONS.` line is ≥40px.
-- `--color-red-light` for any small red text on dark (the eyebrow's separator,
-  the door chevrons): 5.08:1 on `--color-black`.
-- Hero card hairline `rgba(255,255,255,.14)` is decorative; hover boundary
-  `--accent` on black 4.65:1 clears the 3:1 non-text bar.
-
-Everything on light reuses pairs already in the §3 tables.
+No new tokens and no new pairings: every colour in the hero is one of the
+light pairs already measured in `handoff.md` §3 — `--text` and `--text-muted`
+on `--surface-alt` and `--surface-raised`, `--accent-text` for small red,
+`--accent` only on the ≥40px headline line (3.99:1 on `--surface-alt`).
 
 ### Tests
 
 Rewritten to match: `Hero.test.ts` (proposition assertions), `home.spec.ts`
 (hero composition, featured lines, ticker), `hero-mobile.spec.ts` (source
 order), `motion.spec.ts` (ticker parts), `contrast.spec.ts` (the ServiceCards
-case on `/` becomes the hero door title on dark). Nothing that pins a client
+case on `/` becomes the hero lede, proof label, tile count and step body). Nothing that pins a client
 decision is weakened: the 84px phone band, the two empty tiles, the headline
 text, the honest enquiry outcome.
 

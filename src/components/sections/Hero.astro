@@ -5,17 +5,19 @@
  *
  * Two bands in one section:
  *
- *   1. The dark band: a client-supplied photograph under the division pages'
- *      scrim, the approved headline, the lede, the two actions, and two
- *      "division doors" — real links into /electricals and /safety carrying
- *      counted totals. A proof strip of four sourced facts closes it.
+ *   1. The hero band, on --surface-alt like the rest of the light site: the
+ *      approved headline, the lede, the two actions and two "division doors"
+ *      — real links into /electricals and /safety carrying counted totals —
+ *      in the left column; a client-supplied photograph in the right; a proof
+ *      strip of four sourced facts underneath.
  *   2. The campaign band: the client's uploaded banners, carousel machinery
- *      UNCHANGED from the previous hero, pulled up over the dark band's foot so
- *      it bridges the two surfaces instead of competing with the headline.
+ *      UNCHANGED from the previous hero, on the page surface below.
  *
- * The research behind the order (17 industrial home pages, Baymard, NN/G) is
- * summarised in the spec: one headline and one idea, no carousel beside it,
- * the catalogue reachable within one scroll, trust as counted numbers.
+ * IT WAS A DARK BAND FOR ONE REVIEW ROUND. The first cut of this redesign put
+ * the photograph behind the copy under the division pages' scrim; the client
+ * asked for the light theme instead, so the picture is a column beside the
+ * copy, the doors are the site's standard white card, and every colour pair
+ * is one already measured on the light surfaces (handoff.md §3).
  *
  * WHAT DID NOT CHANGE, on purpose: the carousel's clock (`heroClock`), the
  * generated `is:inline` keyframes and their `[data-hero-stage]` prefix, the
@@ -103,24 +105,7 @@ const proof = [
 ---
 
 <section class="hero">
-  <div class="hero__band on-dark">
-    {/* The photograph is the division pages' idiom: a real image element
-        under a three-layer scrim, so the copy column resolves against flat
-        --color-black and every ratio is the measured one from handoff.md §3.
-        It only occupies the right of the band above 900px — the source is a
-        1225px portrait, and covering the full width would upscale it. */}
-    <div class="hero__bg" aria-hidden="true">
-      <Image
-        src={heroPhoto}
-        alt=""
-        widths={[640, 900, 1225]}
-        sizes="(min-width: 901px) 62vw, 100vw"
-        loading="eager"
-        fetchpriority="high"
-        decoding="async"
-      />
-    </div>
-
+  <div class="hero__band">
     <div class="wrap hero__wrap">
       <div class="hero__head">
         {/* Every segment is its own span: a bare text node in a flex row
@@ -133,49 +118,68 @@ const proof = [
         <SectionIndex n="01" flow />
       </div>
 
-      {/* ONE LINE IN THE SOURCE, ON PURPOSE. `tests/e2e/home.spec.ts` reads
-          `textContent` directly, because "Home andindustrial" has shipped
-          once already. The trailing space belongs INSIDE the first span. */}
-      <h1 class="hero__title"><span class="hero__title-a">Home and industrial </span><span class="hero__title-b">solutions.</span></h1>
+      <div class="hero__grid">
+        <div class="hero__copy">
+          {/* ONE LINE IN THE SOURCE, ON PURPOSE. `tests/e2e/home.spec.ts` reads
+              `textContent` directly, because "Home andindustrial" has shipped
+              once already. The trailing space belongs INSIDE the first span. */}
+          <h1 class="hero__title"><span class="hero__title-a">Home and industrial </span><span class="hero__title-b">solutions.</span></h1>
 
-      <p class="hero__lede">
-        Lighting, ventilation, water management, PPE and workwear for
-        contractors and distributors.
-      </p>
+          <p class="hero__lede">
+            Lighting, ventilation, water management, PPE and workwear for
+            contractors and distributors.
+          </p>
 
-      <div class="hero__actions">
-        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-        <PillButton href="/enquiry">Request a quote</PillButton>
+          <div class="hero__actions">
+            <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+            <PillButton href="/enquiry">Request a quote</PillButton>
+          </div>
+        </div>
+
+        {/* The photograph is a column, not a backdrop: it starts on the
+            headline's top edge and ends on the doors' bottom edge, and the
+            left-hand fade lets it sit against the copy without a hard rule.
+            aria-hidden — a decorative scene; the h1 and the doors carry the
+            meaning. */}
+        <figure class="hero__vis" aria-hidden="true">
+          <Image
+            src={heroPhoto}
+            alt=""
+            widths={[480, 720, 960, 1225]}
+            sizes="(min-width: 901px) 42vw, 100vw"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+        </figure>
+
+        {/* THE DIVISION DOORS. The single most-repeated finding in four client
+            reviews was that a visitor could not tell what Spartan sells. Two
+            links, each naming a division, its blurb from the seam, and its
+            counted size, answer that above the fold and route the buyer one
+            level down without a menu. The site's standard card. */}
+        <ul class="hero__doors">
+          {
+            doors.map((door) => (
+              <li>
+                <a class="hero__door card-surface" href={`/${door.slug}`}>
+                  <span class="hero__door-kicker">Division</span>
+                  <span class="hero__door-name">{door.name}</span>
+                  <span class="hero__door-blurb">{door.blurb}</span>
+                  <span class="hero__door-meta">
+                    <span>
+                      {plural(door.categoryCount, 'category', 'categories')} ·{' '}
+                      {plural(door.productCount, 'product', 'products')}
+                    </span>
+                    <span class="hero__door-chev" aria-hidden="true">›</span>
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
       </div>
 
-      {/* THE DIVISION DOORS. The single most-repeated finding in four client
-          reviews was that a visitor could not tell what Spartan sells. Two
-          links, each naming a division, its blurb from the seam, and its
-          counted size, answer that above the fold and route the buyer one
-          level down without a menu. */}
-      <ul class="hero__doors">
-        {
-          doors.map((door) => (
-            <li>
-              <a class="hero__door" href={`/${door.slug}`}>
-                <span class="hero__door-kicker">Division</span>
-                <span class="hero__door-name">{door.name}</span>
-                <span class="hero__door-blurb">{door.blurb}</span>
-                <span class="hero__door-meta">
-                  <span>
-                    {plural(door.categoryCount, 'category', 'categories')} ·{' '}
-                    {plural(door.productCount, 'product', 'products')}
-                  </span>
-                  <span class="hero__door-chev" aria-hidden="true">›</span>
-                </span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
-
-    <div class="wrap">
       <dl class="hero__proof">
         {
           proof.map((cell) => (
@@ -189,10 +193,10 @@ const proof = [
     </div>
   </div>
 
-  {/* THE CAMPAIGN BAND. Same stage, same contract, new position: it sits on
-      the light page surface and is pulled up over the dark band's foot by
-      half its own height. Everything in it that has a colour sits on the
-      light surface, where the pairs are the measured ones. */}
+  {/* THE CAMPAIGN BAND. Same stage, same contract, new position: on the page
+      surface directly under the hero band, its label row beneath the frame.
+      Everything in it that has a colour sits on the light surface, where the
+      pairs are the measured ones. */}
   <div class="wrap hero__stage-wrap">
     <div class="hero__stage" data-hero-stage>
       {
@@ -244,10 +248,10 @@ const proof = [
               </div>
             </figure>
 
-            {/* The label row sits UNDER the band now, on the page surface.
-                Over the artwork was rejected long ago: the banners carry
-                near-white footer strips and a scrim dark enough to fix that
-                covers the client's own QR code. */}
+            {/* The label row sits UNDER the band, on the page surface. Over
+                the artwork was rejected long ago: the banners carry near-white
+                footer strips and a scrim dark enough to fix that covers the
+                client's own QR code. */}
             <div class="hero__bar">
               <p class="hero__frame-label">
                 Featured<span class="hero__bar-sep" aria-hidden="true">/</span>campaign
@@ -286,12 +290,7 @@ const proof = [
    * The header is `position: absolute` over this band and occupies y 0–86
    * (84px nav + 2px progress rule), so `--hero-chrome` is what the padding
    * clears. docs/TRAPS.md: these numbers are one arithmetic chain with
-   * Header.astro and nothing but this comment connects them.
-   *
-   * The bottom padding reserves room for the campaign band, which is pulled
-   * up by 12.5% of its own width (half of a 4:1 frame's height). The stage's
-   * width is the wrap's content width, so the same expression is written
-   * here rather than a number that would drift the moment --wrap-max moved. */
+   * Header.astro and nothing but this comment connects them. */
   .hero {
     position: relative;
     background: var(--surface-page);
@@ -299,50 +298,10 @@ const proof = [
 
   .hero__band {
     --hero-chrome: 86px;
-    --hero-stage-w: min(var(--wrap-max), 100vw - 2 * var(--wrap-pad));
     position: relative;
-    overflow: hidden;
-    padding: calc(var(--hero-chrome) + 52px) 0 calc(var(--hero-stage-w) * 0.125 + 48px);
-  }
-
-  .hero__bg {
-    position: absolute;
-    inset: 0 0 0 38%;
-    z-index: 0;
-  }
-
-  .hero__bg :global(img) {
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    object-fit: cover;
-    object-position: 60% 40%;
-  }
-
-  /* The scrim. Solid to 46% of the band so the copy column sits on flat
-     black; the photograph shows through on the right and is held dark at the
-     top so the header reads on it. A vertical fade at the foot lands the
-     proof strip on the same black. */
-  .hero__bg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(
-        90deg,
-        var(--color-black) 0%,
-        rgba(8, 8, 10, 0.96) 12%,
-        rgba(8, 8, 10, 0.7) 40%,
-        rgba(8, 8, 10, 0.42) 70%,
-        rgba(8, 8, 10, 0.6) 100%
-      ),
-      linear-gradient(180deg, rgba(8, 8, 10, 0.9) 0%, transparent 28%),
-      linear-gradient(0deg, var(--color-black) 0%, rgba(8, 8, 10, 0.6) 18%, transparent 46%);
-  }
-
-  .hero__wrap {
-    position: relative;
-    z-index: 2;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--line);
+    padding: calc(var(--hero-chrome) + 48px) 0 56px;
   }
 
   /* ------------------------------------------------------------- the head --
@@ -377,8 +336,7 @@ const proof = [
     font-weight: var(--fw-label);
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    /* --text-muted resolves to --color-grey inside .on-dark: 5.2:1 on
-       --color-black, clear of the 4.5:1 floor for this 12px. */
+    /* 4.96:1 on --surface-alt. */
     color: var(--text-muted);
     animation: hero-rise 0.4s var(--ease-out) both;
   }
@@ -393,10 +351,29 @@ const proof = [
     letter-spacing: 0;
   }
 
-  /* Small red text on dark takes --accent-text, which .on-dark resolves to
-     --color-red-light (5.08:1 on --color-black). Rule 4. */
+  /* Small red text on light takes --accent-text, 8.40:1 on --surface-alt. */
   .hero__masthead-sep {
     color: var(--accent-text);
+  }
+
+  /* ------------------------------------------------------------- the grid --
+   *
+   * Copy and doors in the left column, the photograph in the right, spanning
+   * both rows so its top edge is the headline's and its bottom edge the
+   * doors'. Two vertical edges — the wrap's — and everything lands on one. */
+  .hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+    grid-template-areas:
+      'copy vis'
+      'doors vis';
+    gap: var(--space-10) clamp(32px, 4vw, 64px);
+    margin-top: var(--space-4);
+  }
+
+  .hero__copy {
+    grid-area: copy;
+    min-width: 0;
   }
 
   /* --------------------------------------------------------- the headline --
@@ -407,13 +384,12 @@ const proof = [
    * read as one statement.
    *
    * Sized off the viewport, capped where line one ("HOME AND INDUSTRIAL",
-   * 9.375x its font size in this face) still fits the 60% column at 1360:
-   * 76px x 9.375 = 712px against an 816px column. */
+   * 9.375x its font size in this face) still fits the 58% column at 1360:
+   * 76px x 9.375 = 712px against a 730px column. */
   .hero__title {
     position: relative;
     z-index: 1;
-    max-width: 62%;
-    margin: var(--space-6) 0 0;
+    margin: 0;
     font-family: var(--font-hero);
     font-size: clamp(40px, 5.6vw, 76px);
     font-weight: 800;
@@ -430,20 +406,19 @@ const proof = [
     display: block;
   }
 
-  /* Brand red on --color-black is 4.65:1 — legal for large text only, and
+  /* Brand red on --surface-alt is 3.99:1 — legal for large text only, and
      this line's floor is 40px. */
   .hero__title-b {
     color: var(--accent);
   }
 
-  /* #bfbfc6 on --color-black: 11.1:1. The division pages use the same lede
-     colour on the same scrim. */
+  /* --text-muted, 4.96:1 on --surface-alt. */
   .hero__lede {
     max-width: 46ch;
     margin: var(--space-6) 0 0;
     font-size: clamp(16px, 1.2vw, 18px);
     line-height: 1.55;
-    color: #bfbfc6;
+    color: var(--text-muted);
     text-wrap: balance;
     animation: hero-rise 0.4s var(--ease-out) 0.1s both;
   }
@@ -475,25 +450,50 @@ const proof = [
     font-weight: var(--fw-label);
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    border-color: rgba(255, 255, 255, 0.55);
-    color: var(--text);
+    border-color: var(--text);
+    background: var(--surface-raised);
   }
 
   .hero__actions :global(.pill:hover) {
     border-color: var(--accent);
   }
 
+  /* ------------------------------------------------------ the photograph --
+   *
+   * A client-supplied portrait, cropped to the column. The mask fades its
+   * left edge into the band so it sits against the copy without a rule. */
+  .hero__vis {
+    grid-area: vis;
+    position: relative;
+    margin: 0;
+    min-height: 420px;
+    overflow: hidden;
+    background: var(--surface-page);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
+    animation: hero-rise 0.5s var(--ease-out) 0.1s both;
+  }
+
+  .hero__vis :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    object-position: 55% 40%;
+  }
+
   /* ------------------------------------------------------------ the doors --
    *
-   * Two cards on a hairline, boundary turning accent on hover — the site's
-   * card cue, on the dark surface. The fill is 4% white so the cards read as
-   * panels on the photograph without hiding it. */
+   * Two of the site's standard cards (`.card-surface`: raised surface,
+   * hairline, boundary turning accent on hover). */
   .hero__doors {
+    grid-area: doors;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-4);
-    max-width: 760px;
-    margin: var(--space-12) 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
     animation: hero-rise 0.4s var(--ease-out) 0.18s both;
@@ -505,18 +505,6 @@ const proof = [
     gap: var(--space-2);
     height: 100%;
     padding: 20px 22px 18px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(6px);
-    transition:
-      border-color var(--dur-base) var(--ease-out),
-      background var(--dur-base) var(--ease-out);
-  }
-
-  .hero__door:hover,
-  .hero__door:focus-visible {
-    border-color: var(--accent);
-    background: rgba(255, 255, 255, 0.07);
   }
 
   .hero__door-kicker {
@@ -537,13 +525,11 @@ const proof = [
     color: var(--text);
   }
 
-  /* #bfbfc6, the division pages' lede grey: 11.1:1 on --color-black. 14px
-     over a photograph wants the headroom --text-muted (5.2:1) does not have,
-     and the sweep in theme-sweep.test.ts bans --color-grey-lt off the footer. */
+  /* --text-muted on --surface-raised: 5.36:1. */
   .hero__door-blurb {
     font-size: var(--fs-body-sm);
     line-height: 1.5;
-    color: #bfbfc6;
+    color: var(--text-muted);
   }
 
   .hero__door-meta {
@@ -553,7 +539,7 @@ const proof = [
     gap: var(--space-3);
     margin-top: var(--space-2);
     padding-top: var(--space-3);
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid var(--line);
     font-family: var(--font-mono);
     font-size: var(--fs-label);
     font-weight: var(--fw-label);
@@ -575,16 +561,14 @@ const proof = [
 
   /* ------------------------------------------------------ the proof strip --
    *
-   * Four cells on a hairline, the numerals in the display face. Landing on
-   * the dark band's last row, where the vertical scrim has already resolved
-   * to flat black. */
+   * Four cells on a rule, the numerals in the display face. The top rule is
+   * --line-control (a boundary that means something) and the cell dividers
+   * --line (decorative hairlines), the same pair the enquiry steps use. */
   .hero__proof {
-    position: relative;
-    z-index: 2;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin: var(--space-14) 0 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    margin: var(--space-12) 0 0;
+    border-top: 1px solid var(--line-control);
     animation: hero-rise 0.4s var(--ease-out) 0.22s both;
   }
 
@@ -592,12 +576,12 @@ const proof = [
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    padding: 22px 24px 0 0;
+    padding: 20px 24px 0 0;
   }
 
   .hero__proof-cell + .hero__proof-cell {
     padding-left: 24px;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 1px solid var(--line);
   }
 
   .hero__proof dt {
@@ -622,18 +606,16 @@ const proof = [
 
   /* ------------------------------------------------------ the campaign band --
    *
-   * Pulled up over the dark band by half the frame's height: margin-top as a
-   * percentage resolves against the containing block's WIDTH, and the stage
-   * is the wrap's full width, so -12.5% is exactly half of a 4:1 frame. */
+   * On the page surface, directly under the band's hairline, with the same
+   * breathing room a section head gets. */
   .hero__stage-wrap {
     position: relative;
-    z-index: 3;
+    padding-top: var(--space-10);
   }
 
   .hero__stage {
     position: relative;
     width: 100%;
-    margin-top: -12.5%;
   }
 
   /* 4:1 wherever there is width. Below 720px the EMPTY slot opens to 3:2 so
@@ -650,7 +632,6 @@ const proof = [
     background: var(--surface-page);
     color: var(--text-muted);
     padding: 24px;
-    box-shadow: 0 24px 48px rgba(8, 8, 10, 0.14);
   }
 
   .hero__slot-icon {
@@ -678,7 +659,7 @@ const proof = [
     border: 1px solid var(--line);
     border-radius: 2px;
     background: var(--surface-raised);
-    box-shadow: 0 24px 48px rgba(8, 8, 10, 0.18);
+    box-shadow: 0 18px 40px rgba(8, 8, 10, 0.1);
   }
 
   .hero__track {
@@ -866,45 +847,36 @@ const proof = [
 
   /* ---------------------------------------------------------- breakpoints -- */
 
-  @media (max-width: 1100px) {
-    .hero__title {
-      max-width: 72%;
-    }
-  }
-
-  /* Below 900px the photograph becomes a full-width backdrop under a heavier
-     scrim, the headline takes the whole measure and the doors stack. */
+  /* Below 900px the grid is one column: copy, then the photograph as a 16:9
+     band, then the doors stacked. The CTAs stay directly under the lede so
+     the fold tests in hero-mobile.spec.ts hold on a 640px screen. */
   @media (max-width: 900px) {
     .hero__band {
       padding-top: calc(var(--hero-chrome) + 32px);
-    }
-
-    .hero__bg {
-      inset: 0;
-    }
-
-    .hero__bg :global(img) {
-      object-position: 50% 30%;
-    }
-
-    .hero__bg::after {
-      background:
-        linear-gradient(180deg, rgba(8, 8, 10, 0.94) 0%, rgba(8, 8, 10, 0.8) 45%, var(--color-black) 100%),
-        linear-gradient(90deg, rgba(8, 8, 10, 0.5), transparent 60%);
     }
 
     .hero__head :global(.section-index) {
       font-size: calc(clamp(40px, 5.6vw, 76px) * 1.6);
     }
 
-    .hero__title {
-      max-width: none;
+    .hero__grid {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'copy'
+        'vis'
+        'doors';
+      gap: var(--space-8);
+    }
+
+    .hero__vis {
+      min-height: 0;
+      aspect-ratio: 16 / 9;
+      -webkit-mask-image: none;
+      mask-image: none;
     }
 
     .hero__doors {
       grid-template-columns: 1fr;
-      max-width: none;
-      margin-top: var(--space-9);
     }
 
     .hero__proof {
@@ -946,8 +918,8 @@ const proof = [
      clears a 640px fold on a 360-wide phone. The lede sets tighter and the
      CTAs hand back their extra padding; the content is not cut. */
   @media (max-width: 900px) and (max-height: 700px) {
-    .hero__title {
-      margin-top: var(--space-4);
+    .hero__grid {
+      margin-top: var(--space-2);
     }
 
     .hero__lede {
@@ -989,6 +961,7 @@ const proof = [
     .hero__title,
     .hero__lede,
     .hero__actions,
+    .hero__vis,
     .hero__doors,
     .hero__proof {
       animation: none;

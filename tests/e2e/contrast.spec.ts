@@ -39,8 +39,8 @@ import { expect, test } from '@playwright/test';
  * deleted case is a pairing nobody measures again.
  */
 const CASES = [
-  { path: '/', selector: '.hero__lede', what: 'hero lede (#bfbfc6 on the dark band)' },
-  { path: '/', selector: '.hero__proof dt', what: 'hero proof-strip label (10px mono on the dark band)' },
+  { path: '/', selector: '.hero__lede', what: 'hero lede (muted on --surface-alt)' },
+  { path: '/', selector: '.hero__proof dt', what: 'hero proof-strip label (10px mono muted on --surface-alt)' },
   { path: '/', selector: '.cg__count', what: 'category tile count (11px red on white)' },
   { path: '/', selector: '.steps__body', what: 'enquiry step body (14px muted on white)' },
   { path: '/why-spartan', selector: '.rs__title', what: 'why-spartan reason title (19px red on white)' },

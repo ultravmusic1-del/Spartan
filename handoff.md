@@ -4943,7 +4943,7 @@ catalogue:
 
 | Was | Is |
 |---|---|
-| Hero (masthead, staircase headline, dot grid, carousel with control rail, stat index) | **Hero**: dark band on the client's `safety.jpg` under the division pages' scrim; the approved headline on one left axis; lede; two CTAs; **two division doors** with counted totals; a **proof strip** of four sourced facts. The **campaign band** keeps its whole mechanism and moves below the strip, overlapping the band's foot. |
+| Hero (masthead, staircase headline, dot grid, carousel with control rail, stat index) | **Hero**: on `--surface-alt`; the approved headline on one left axis; lede; two CTAs; **two division doors** (standard cards) with counted totals; the client's `safety.jpg` as a column beside the copy; a **proof strip** of four sourced facts. The **campaign band** keeps its whole mechanism and sits on the page surface below. |
 | Ticker | gone — a second moving band above the fold; every category is a tile in 02 |
 | CategoryGrid, 5 × 3 portrait tiles | **The range**: grouped Electricals / Safety, landscape directory tiles three across, head-to-toe order from the catalogue's own `order` |
 | FeaturedLines, bespoke card + inline filter script | **Selected products**: `ProductGrid` with the catalogue's own card and its enquiry button, so the basket starts here. One CSP hash fewer. |
@@ -4954,6 +4954,12 @@ catalogue:
 Page height 8,186 → 7,443 at 1440; 14,360 → 12,031 at 390. On a 375×667 both
 hero CTAs are above the fold, where before only one was.
 
+**The hero was dark for one review round.** The first cut put the photograph
+behind the copy under the division pages' scrim, in the approved mockup's
+direction; the client saw it on localhost and asked for the white theme. The
+composition is the same; the surface is `--surface-alt`, the photograph is a
+grid column, and the doors are `.card-surface`.
+
 **One fix outside the landing page.** `Header.astro` used the dark logo lockup
 on every surface, so on the division pages' scrimmed heroes the wordmark was
 invisible — exactly the §3 bug that "no gate can catch". `onMedia` now selects
@@ -4963,16 +4969,12 @@ the light lockup. `/safety` shows it.
 
 - **The campaign band is still inside `Hero.astro` and `<section class="hero">`**
   so every carousel selector, the clock, the reduced-motion branch and the 84px
-  phone decision keep their tests unchanged. Its `margin-top: -12.5%` is half a
-  4:1 frame's height, as a percentage of the wrap's width; the band's
-  `padding-bottom` reserves the same amount with the same expression.
+  phone decision keep their tests unchanged.
 - **The doors and the proof strip count through the seam**; `Hero.test.ts`
   mocks two divisions with different sizes so a door printing the site total
   fails.
-- **`--color-grey-lt` cannot be used in the hero** even on black: the theme
-  sweep bans it outside the footer. The lede and door blurbs use `#bfbfc6`,
-  the division pages' lede grey, 11.1:1 on `--color-black`; small labels use
-  `--text-muted`, 5.2:1 there.
+- **`--color-grey-lt` cannot be used in the hero** even on a dark surface: the
+  theme sweep bans it outside the footer. On the light hero nothing needs it.
 - **Nothing was invented.** The proof strip's four cells are the only facts on
   this site with a source; the steps section deliberately makes no
   response-time promise.
