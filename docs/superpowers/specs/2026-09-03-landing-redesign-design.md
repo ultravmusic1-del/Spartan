@@ -65,10 +65,11 @@ Measured from screenshots of production at 1440, 1280 and 390:
 
 ### Principles
 
-- **Light site, light hero.** A first cut put the hero on a dark band in the
-  approved mockup's direction; the client asked for the white theme, so the
-  hero sits on `--surface-alt` with the photograph as a column beside the
-  copy. Red marks action and brand, never a surface.
+- **Light site, light hero, centred.** A first cut put the hero on a dark
+  band in the approved mockup's direction; the client asked for the white
+  theme. A second put the client's photograph beside the copy; the client
+  asked for the carousel on the first page instead and a symmetrical layout.
+  Red marks action and brand, never a surface.
 - **Seven sections, not nine.** Each has one job and at most one primary
   action.
 - **The catalogue leads, grouped by division.** The buyer meets what is sold
@@ -83,9 +84,9 @@ Measured from screenshots of production at 1440, 1280 and 390:
 
 | # | Section | Job | Surface |
 |---|---|---|---|
-| 01 | **Hero** | Say what Spartan is, offer the two divisions, offer the two actions | light alt, photograph column |
-| — | **Proof strip** | Four verifiable facts at the hero's foot | light alt |
-| — | **Campaign band** | The client's uploaded banners, one at a time, with pause | light, under the hero band |
+| 01 | **Hero** | Say what Spartan is, show the campaign, offer the two divisions and the two actions | light, centred |
+| — | **Proof strip** | Four verifiable facts at the hero's foot | light |
+| — | **Campaign band** | The client's uploaded banners, one at a time, with pause; closes the first screen | inside the hero |
 | 02 | **The range** | All 15 categories, grouped Electricals / Safety, head-to-toe within Safety | light alt |
 | 03 | **Selected products** | Eight real product cards with the enquiry button, so the landing page itself fills the basket | light |
 | 04 | **How enquiries work** | Three steps and the three confirmed claims; the conversion mechanism explained once | light alt |
@@ -102,54 +103,55 @@ index (moved to the proof strip). `Ticker.astro`, `ServiceCards.astro` and
 
 ### 01 Hero
 
-On `--surface-alt`, the header in its default transparent mode with the dark
-lockup. A two-column grid inside the wrap: copy and doors on the left (58%),
-the client-supplied `src/assets/hero/safety.jpg` on the right (42%) as a real
-image column whose top edge is the headline's and whose bottom edge is the
-doors', its left edge masked into the band. Above the grid, the masthead and
-the section numeral `01` on one row.
+**Third cut, 2026-09-03 afternoon**, after the client saw the first two on
+localhost: no photograph on the first page, the campaign carousel on it, a
+symmetrical composition, permission to replace the headline.
 
-Left column, top to bottom:
+One centred column on the page surface, inside the wrap:
 
-- **Eyebrow** (mono, `--fs-meta`, `--text-muted`): `Spartan® / Electricals +
-  Safety`, the ranges read from the seam.
-- **Headline**: `Home and industrial solutions.` — the client's approved line,
-  unchanged in words. Set in `--font-hero` (Fira Sans Italic 800), uppercase,
-  two lines on one left axis: `HOME AND INDUSTRIAL` in `--text`, `SOLUTIONS.`
-  in `--accent` (3.99:1 on `--surface-alt`, legal at ≥40px). No staircase.
-  Size `clamp(40px, 5.6vw, 76px)`.
-- **Lede** (`--text-muted`, 4.96:1): the existing sentence.
-- **Actions**: `Browse catalogue` (solid red) and `Request a quote` (outline,
-  on the raised surface). A row above 560px, a stretched column below.
-- **Division doors**: two equal `.card-surface` cards side by side, each a
-  link — `Spartan Electricals` → `/electricals`, `Spartan Safety` → `/safety`
-  — carrying the division blurb, "N categories · N products" counted through
-  the seam, and a chevron.
+- **Head row**: a three-cell grid: empty, the masthead centred (`Spartan® /
+  Electricals + Safety`, mono, `--text-muted`), the section numeral `01` on
+  the wrap's right edge as every section's is.
+- **Headline**: `Built for the job. Ready for industry.`, the line a
+  2026-08-29 review proposed and `BACKLOG.md` carried under "Sign off or
+  replace the hero headline", now adopted with the client's permission. Set in
+  `--font-hero` (Fira Sans Italic 800), uppercase, two lines centred on one
+  axis: line one in `--text`, line two in `--accent` (4.30:1 on white, legal
+  at >=38px). Size `clamp(38px, 5.2vw, 72px)`.
+- **Lede** (`--text-muted`, 5.36:1, <=52ch): the existing sentence.
+- **Actions**: `Browse catalogue` (solid red) and `Request a quote` (outline),
+  drawn as one matched pair at equal width, centred. A stretched column below
+  560px.
+- **Campaign band**: the wrap's full width, 4:1, directly under the actions;
+  the first screen ends on it at 1440x900. Its control row sits under the
+  frame with the controls on the LEFT and the label on the right, because the
+  floating WhatsApp button owns the bottom-right of every viewport.
+- **Division doors**: two equal `.card-surface` cards, each a link into its
+  division with the blurb, counted totals and one circled chevron on the
+  trailing edge.
 
-**Proof strip** across the hero's foot, a `--line-control` rule above: four
-cells — `94 Products`, `15 Categories`, `Since 2015`, `Made in India &
-China`. The first two are counted; the year and the manufacturing statement are
-from the brochure (already published on About and in the footer). Nothing else
-qualifies under rule 1, and the strip renders exactly what it has.
+- **Proof strip** across the hero's foot, a `--line-control` rule above, cells
+  centred: `94 Products`, `15 Categories`, `Since 2015`, `Made in India &
+  China`. The first two are counted; the year and the manufacturing statement
+  are from the brochure. Nothing else qualifies under rule 1.
 
-**Mobile (≤900px)**: one column — eyebrow, headline, lede, both CTAs, the
-photograph as a 16:9 band, the two doors stacked, then the proof strip as a
-2×2 grid. The primary CTA must clear the fold on 375×667 and 360×640
-(`tests/e2e/hero-mobile.spec.ts` keeps asserting this).
+**Mobile (<=900px)**: left-aligned, one column: masthead and numeral on one
+row, headline, lede, both CTAs, the campaign band, the two doors stacked, then
+the proof strip as a 2x2 grid. The primary CTA must clear the fold on 375x667
+and 360x640 (`tests/e2e/hero-mobile.spec.ts` keeps asserting this).
 
 ### Campaign band
 
-The three uploaded banners keep their mechanism unchanged — `getHeroBanners`,
+The three uploaded banners keep their mechanism unchanged: `getHeroBanners`,
 `heroClock`, the generated `is:inline` keyframes, the checkbox pause, the pips,
-the counter, the 4:1 frame, the reduced-motion branch. What changes is where the
-band sits: on the page surface directly under the hero band's hairline. Its
-label row (`Featured / campaign`, counter, pips, Pause) sits under the frame.
+the counter, the 4:1 frame, the reduced-motion branch. It sits inside the hero
+column between the actions and the doors.
 
 It stays inside `Hero.astro` and inside `<section class="hero">` so that
 `Hero.test.ts`, `hero-carousel.spec.ts` and `home.spec.ts` keep their selectors
 (`.hero__stage`, `.hero__frame`, `.hero__track`, `.hero__pip`, `.hero__toggle`,
 `.hero__pause`, `[data-hero-stage]`). The one assertion that changes is source
-order: headline → actions → stage, not headline → stage → actions.
+order: headline, actions, stage, doors, proof.
 
 On a phone the band is still 4:1 and ~84px tall. That is the client's recorded
 decision (`docs/TRAPS.md`) and the test that pins it stays.

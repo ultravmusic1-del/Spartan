@@ -487,7 +487,11 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P1 — discoverability and hardening
 
-- [ ] **Sign off or replace the hero headline.** From the 2026-08-29 design
+- [x] **Sign off or replace the hero headline.** Replaced 2026-09-03 with the
+      client's explicit permission: the hero now reads "Built for the job.
+      Ready for industry." (`handoff.md` section 46). Original entry kept below.
+
+      From the 2026-08-29 design
       review (`handoff.md` §38), whose first and highest-priority finding was
       that the hero is visually loud and semantically quiet. The pass kept
       `Home and industrial solutions.` because it is the client's approved line

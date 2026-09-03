@@ -1,23 +1,21 @@
 ---
 /**
- * THE HERO — rebuilt 2026-09-03. See
- * docs/superpowers/specs/2026-09-03-landing-redesign-design.md.
+ * THE HERO — rebuilt 2026-09-03, and re-cut twice the same day on client
+ * review. See docs/superpowers/specs/2026-09-03-landing-redesign-design.md.
  *
- * Two bands in one section:
+ * The shape now: one centred column on the page surface. Masthead, headline,
+ * lede, the two actions, then the client's campaign carousel at the wrap's
+ * full width — the first screen ends on it — then two division doors side by
+ * side and a proof strip of four sourced facts. Symmetrical by construction:
+ * every row is either centred or an even grid, and the only thing that is not
+ * is the section numeral, which is a folio in the corner like every other
+ * section's.
  *
- *   1. The hero band, on --surface-alt like the rest of the light site: the
- *      approved headline, the lede, the two actions and two "division doors"
- *      — real links into /electricals and /safety carrying counted totals —
- *      in the left column; a client-supplied photograph in the right; a proof
- *      strip of four sourced facts underneath.
- *   2. The campaign band: the client's uploaded banners, carousel machinery
- *      UNCHANGED from the previous hero, on the page surface below.
- *
- * IT WAS A DARK BAND FOR ONE REVIEW ROUND. The first cut of this redesign put
- * the photograph behind the copy under the division pages' scrim; the client
- * asked for the light theme instead, so the picture is a column beside the
- * copy, the doors are the site's standard white card, and every colour pair
- * is one already measured on the light surfaces (handoff.md §3).
+ * WHAT WENT: the client's photograph (asked off the first page), the dark band
+ * (asked off the day before), and the approved 2026-08 headline "Home and
+ * industrial solutions.", replaced with permission by the line a 2026-08-29
+ * review proposed and BACKLOG.md carried — "Built for the job. Ready for
+ * industry." It says what the products are for; the lede says what they are.
  *
  * WHAT DID NOT CHANGE, on purpose: the carousel's clock (`heroClock`), the
  * generated `is:inline` keyframes and their `[data-hero-stage]` prefix, the
@@ -26,13 +24,12 @@
  * name the tests reach for. `Hero.test.ts`, `tests/e2e/hero-carousel.spec.ts`
  * and `tests/e2e/hero-mobile.spec.ts` cover both states.
  */
-import { Image, Picture } from 'astro:assets';
+import { Picture } from 'astro:assets';
 import SolidButton from '../primitives/SolidButton.astro';
 import SectionIndex from '../primitives/SectionIndex.astro';
 import PillButton from '../primitives/PillButton.astro';
 import { getHeroBanners, getSiteSettings, heroClock } from '../../lib/site-content';
 import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
-import heroPhoto from '../../assets/hero/safety.jpg';
 
 const BANNERS = await getHeroBanners();
 /* The last slide is a second copy of the first so the loop's reset is
@@ -107,9 +104,11 @@ const proof = [
 <section class="hero">
   <div class="hero__band">
     <div class="wrap hero__wrap">
+      {/* Three cells: an empty one, the masthead centred, the numeral on the
+          wrap's right edge — so the masthead is centred on the page and the
+          numeral ends where every section numeral ends. */}
       <div class="hero__head">
-        {/* Every segment is its own span: a bare text node in a flex row
-            becomes an anonymous item and picks up the row's gap. */}
+        <span class="hero__head-spacer" aria-hidden="true"></span>
         <p class="hero__masthead">
           <span class="hero__masthead-item">Spartan<span class="hero__masthead-reg">&#174;</span></span>
           <span class="hero__masthead-sep" aria-hidden="true">/</span>
@@ -118,67 +117,141 @@ const proof = [
         <SectionIndex n="01" flow />
       </div>
 
-      <div class="hero__grid">
-        <div class="hero__copy">
-          {/* ONE LINE IN THE SOURCE, ON PURPOSE. `tests/e2e/home.spec.ts` reads
-              `textContent` directly, because "Home andindustrial" has shipped
-              once already. The trailing space belongs INSIDE the first span. */}
-          <h1 class="hero__title"><span class="hero__title-a">Home and industrial </span><span class="hero__title-b">solutions.</span></h1>
+      <div class="hero__copy">
+        {/* ONE LINE IN THE SOURCE, ON PURPOSE. `tests/e2e/home.spec.ts` reads
+            `textContent` directly, because two words have run together once
+            already. The trailing space belongs INSIDE the first span. */}
+        <h1 class="hero__title"><span class="hero__title-a">Built for the job. </span><span class="hero__title-b">Ready for industry.</span></h1>
 
-          <p class="hero__lede">
-            Lighting, ventilation, water management, PPE and workwear for
-            contractors and distributors.
-          </p>
+        <p class="hero__lede">
+          Lighting, ventilation, water management, PPE and workwear for
+          contractors and distributors.
+        </p>
 
-          <div class="hero__actions">
-            <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-            <PillButton href="/enquiry">Request a quote</PillButton>
-          </div>
+        <div class="hero__actions">
+          <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+          <PillButton href="/enquiry">Request a quote</PillButton>
         </div>
-
-        {/* The photograph is a column, not a backdrop: it starts on the
-            headline's top edge and ends on the doors' bottom edge, and the
-            left-hand fade lets it sit against the copy without a hard rule.
-            aria-hidden — a decorative scene; the h1 and the doors carry the
-            meaning. */}
-        <figure class="hero__vis" aria-hidden="true">
-          <Image
-            src={heroPhoto}
-            alt=""
-            widths={[480, 720, 960, 1225]}
-            sizes="(min-width: 901px) 42vw, 100vw"
-            loading="eager"
-            fetchpriority="high"
-            decoding="async"
-          />
-        </figure>
-
-        {/* THE DIVISION DOORS. The single most-repeated finding in four client
-            reviews was that a visitor could not tell what Spartan sells. Two
-            links, each naming a division, its blurb from the seam, and its
-            counted size, answer that above the fold and route the buyer one
-            level down without a menu. The site's standard card. */}
-        <ul class="hero__doors">
-          {
-            doors.map((door) => (
-              <li>
-                <a class="hero__door card-surface" href={`/${door.slug}`}>
-                  <span class="hero__door-kicker">Division</span>
-                  <span class="hero__door-name">{door.name}</span>
-                  <span class="hero__door-blurb">{door.blurb}</span>
-                  <span class="hero__door-meta">
-                    <span>
-                      {plural(door.categoryCount, 'category', 'categories')} ·{' '}
-                      {plural(door.productCount, 'product', 'products')}
-                    </span>
-                    <span class="hero__door-chev" aria-hidden="true">›</span>
-                  </span>
-                </a>
-              </li>
-            ))
-          }
-        </ul>
       </div>
+
+      {/* THE CAMPAIGN BAND — the client's uploaded banners, closing the first
+          screen. Same stage, same contract as it has always had. */}
+      <div class="hero__stage" data-hero-stage>
+        {
+          BANNERS.length === 0 ? (
+            /* THE EMPTY SLOT. aria-hidden, because it is a note to whoever
+               supplies the artwork and not content. No "browse files" link:
+               an affordance that does nothing is a defect this repository has
+               already removed twice. */
+            <div class="hero__slot" aria-hidden="true">
+              <svg class="hero__slot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <circle cx="8.5" cy="9.5" r="1.6" />
+                <path d="m3.5 17 4.8-4.4a1.8 1.8 0 0 1 2.4 0L16 17" />
+                <path d="m14 14.4 1.7-1.5a1.8 1.8 0 0 1 2.4 0l2.4 2.1" />
+              </svg>
+              <p class="hero__slot-label">
+                Drop the horizontal hero banner —{' '}
+                <span class="hero__slot-dim">2800 &times; 700 (4:1)</span>
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* The checkbox is the state and the label is the control, so the
+                  pause works with no JavaScript at all. Its accessible name
+                  STARTS with the visible label text, or it is a 2.5.3 failure. */}
+              <input
+                class="hero__toggle"
+                type="checkbox"
+                id="hero-carousel-pause"
+                role="switch"
+                aria-label="Pause the rotating product banners"
+              />
+
+              <figure class="hero__frame">
+                <div class="hero__track" aria-hidden="true">
+                  {SLIDES.map((banner, i) => (
+                    <div class="hero__slide">
+                      <Picture
+                        src={banner.src}
+                        alt=""
+                        widths={WIDTHS}
+                        sizes={SIZES}
+                        formats={['avif', 'webp']}
+                        loading={i === 0 ? 'eager' : 'lazy'}
+                        fetchpriority={i === 0 ? 'high' : undefined}
+                        decoding="async"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </figure>
+
+              {/* The label row sits UNDER the band. Over the artwork was
+                  rejected long ago: the banners carry near-white footer strips
+                  and a scrim dark enough to fix that covers the client's own QR
+                  code.
+
+                  CONTROLS LEFT, LABEL RIGHT — the reverse of the previous cut,
+                  and not for looks. The floating WhatsApp button is fixed to
+                  the bottom-right of every viewport, and on a 1440 x 900 screen
+                  the Pause control at the bar's right end sat exactly under it:
+                  `hero-carousel.spec.ts` could not click it, and neither could
+                  a person. The frame's left edge is the one place nothing
+                  floats over. */}
+              <div class="hero__bar">
+                <div class="hero__controls">
+                  {/* aria-hidden with the pips: the track is decorative and every
+                      product on it is a real link further down the page. */}
+                  <p class="hero__count" aria-hidden="true">
+                    <span class="hero__count-now">01</span>
+                    <span class="hero__count-sep">/</span>
+                    <span class="hero__count-total">{String(BANNERS.length).padStart(2, '0')}</span>
+                  </p>
+
+                  <div class="hero__pips" aria-hidden="true">
+                    {BANNERS.map(() => (
+                      <span class="hero__pip" />
+                    ))}
+                  </div>
+
+                  <label class="hero__pause" for="hero-carousel-pause">
+                    Pause
+                  </label>
+                </div>
+
+                <p class="hero__frame-label">
+                  Featured<span class="hero__bar-sep" aria-hidden="true">/</span>campaign
+                </p>
+              </div>
+            </>
+          )
+        }
+      </div>
+
+      {/* THE DIVISION DOORS. The single most-repeated finding in four client
+          reviews was that a visitor could not tell what Spartan sells. Two
+          links, each naming a division, its blurb from the seam, and its
+          counted size, route the buyer one level down without a menu. The
+          site's standard card, as a symmetrical pair. */}
+      <ul class="hero__doors">
+        {
+          doors.map((door) => (
+            <li>
+              <a class="hero__door card-surface" href={`/${door.slug}`}>
+                <span class="hero__door-kicker">Division</span>
+                <span class="hero__door-name">{door.name}</span>
+                <span class="hero__door-blurb">{door.blurb}</span>
+                <span class="hero__door-meta">
+                  {plural(door.categoryCount, 'category', 'categories')} ·{' '}
+                  {plural(door.productCount, 'product', 'products')}
+                </span>
+                <span class="hero__door-chev" aria-hidden="true">›</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
 
       <dl class="hero__proof">
         {
@@ -192,96 +265,6 @@ const proof = [
       </dl>
     </div>
   </div>
-
-  {/* THE CAMPAIGN BAND. Same stage, same contract, new position: on the page
-      surface directly under the hero band, its label row beneath the frame.
-      Everything in it that has a colour sits on the light surface, where the
-      pairs are the measured ones. */}
-  <div class="wrap hero__stage-wrap">
-    <div class="hero__stage" data-hero-stage>
-      {
-        BANNERS.length === 0 ? (
-          /* THE EMPTY SLOT. aria-hidden, because it is a note to whoever
-             supplies the artwork and not content. No "browse files" link:
-             an affordance that does nothing is a defect this repository has
-             already removed twice. */
-          <div class="hero__slot" aria-hidden="true">
-            <svg class="hero__slot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="16" rx="2" />
-              <circle cx="8.5" cy="9.5" r="1.6" />
-              <path d="m3.5 17 4.8-4.4a1.8 1.8 0 0 1 2.4 0L16 17" />
-              <path d="m14 14.4 1.7-1.5a1.8 1.8 0 0 1 2.4 0l2.4 2.1" />
-            </svg>
-            <p class="hero__slot-label">
-              Drop the horizontal hero banner —{' '}
-              <span class="hero__slot-dim">2800 &times; 700 (4:1)</span>
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* The checkbox is the state and the label is the control, so the
-                pause works with no JavaScript at all. Its accessible name
-                STARTS with the visible label text, or it is a 2.5.3 failure. */}
-            <input
-              class="hero__toggle"
-              type="checkbox"
-              id="hero-carousel-pause"
-              role="switch"
-              aria-label="Pause the rotating product banners"
-            />
-
-            <figure class="hero__frame">
-              <div class="hero__track" aria-hidden="true">
-                {SLIDES.map((banner, i) => (
-                  <div class="hero__slide">
-                    <Picture
-                      src={banner.src}
-                      alt=""
-                      widths={WIDTHS}
-                      sizes={SIZES}
-                      formats={['avif', 'webp']}
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                      decoding="async"
-                    />
-                  </div>
-                ))}
-              </div>
-            </figure>
-
-            {/* The label row sits UNDER the band, on the page surface. Over
-                the artwork was rejected long ago: the banners carry near-white
-                footer strips and a scrim dark enough to fix that covers the
-                client's own QR code. */}
-            <div class="hero__bar">
-              <p class="hero__frame-label">
-                Featured<span class="hero__bar-sep" aria-hidden="true">/</span>campaign
-              </p>
-
-              <div class="hero__controls">
-                {/* aria-hidden with the pips: the track is decorative and every
-                    product on it is a real link further down the page. */}
-                <p class="hero__count" aria-hidden="true">
-                  <span class="hero__count-now">01</span>
-                  <span class="hero__count-sep">/</span>
-                  <span class="hero__count-total">{String(BANNERS.length).padStart(2, '0')}</span>
-                </p>
-
-                <div class="hero__pips" aria-hidden="true">
-                  {BANNERS.map(() => (
-                    <span class="hero__pip" />
-                  ))}
-                </div>
-
-                <label class="hero__pause" for="hero-carousel-pause">
-                  Pause
-                </label>
-              </div>
-            </div>
-          </>
-        )
-      }
-    </div>
-  </div>
 </section>
 
 <style>
@@ -293,50 +276,48 @@ const proof = [
    * Header.astro and nothing but this comment connects them. */
   .hero {
     position: relative;
-    background: var(--surface-page);
   }
 
   .hero__band {
     --hero-chrome: 86px;
     position: relative;
-    background: var(--surface-alt);
-    border-bottom: 1px solid var(--line);
-    padding: calc(var(--hero-chrome) + 48px) 0 56px;
+    background: var(--surface-page);
+    padding: calc(var(--hero-chrome) + 36px) 0 56px;
   }
 
   /* ------------------------------------------------------------- the head --
    *
-   * The masthead on the left axis and the section numeral on the wrap's right
-   * edge — the same two cells every section head on the page has, which is
-   * what keeps the hero the system's first instance rather than its
-   * exception. `home.spec.ts` asserts every numeral ends on one vertical
-   * line and that this one is the largest. */
+   * A three-cell grid so the masthead is centred on the PAGE, not on the
+   * space left of the numeral, and the numeral ends on the wrap's right edge
+   * — the line every section numeral on the page ends on. */
   .hero__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-8);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: start;
   }
 
   .hero__head :global(.section-index) {
-    font-size: calc(clamp(40px, 5.6vw, 76px) * 2.1);
+    justify-self: end;
+    font-size: calc(clamp(30px, 4vw, 46px) * 2.6);
     line-height: 0.7;
-    margin-top: -0.06em;
+    margin-top: -0.04em;
   }
 
   .hero__masthead {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     align-items: baseline;
     gap: 0 10px;
     margin: 0;
-    padding-top: 6px;
+    padding-top: 8px;
     font-family: var(--font-mono);
     font-size: var(--fs-meta);
     font-weight: var(--fw-label);
     letter-spacing: 0.2em;
+    text-align: center;
     text-transform: uppercase;
-    /* 4.96:1 on --surface-alt. */
+    /* 5.36:1 on white. */
     color: var(--text-muted);
     animation: hero-rise 0.4s var(--ease-out) both;
   }
@@ -351,52 +332,37 @@ const proof = [
     letter-spacing: 0;
   }
 
-  /* Small red text on light takes --accent-text, 8.40:1 on --surface-alt. */
+  /* Small red text on light takes --accent-text, 9.07:1 on white. */
   .hero__masthead-sep {
     color: var(--accent-text);
   }
 
-  /* ------------------------------------------------------------- the grid --
+  /* ------------------------------------------------------------- the copy --
    *
-   * Copy and doors in the left column, the photograph in the right, spanning
-   * both rows so its top edge is the headline's and its bottom edge the
-   * doors'. Two vertical edges — the wrap's — and everything lands on one. */
-  .hero__grid {
-    display: grid;
-    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
-    grid-template-areas:
-      'copy vis'
-      'doors vis';
-    gap: var(--space-10) clamp(32px, 4vw, 64px);
-    margin-top: var(--space-4);
-  }
-
+   * Centred and measured: the headline holds its own width, the lede is
+   * capped at a comfortable line, the actions sit centred under both. */
   .hero__copy {
-    grid-area: copy;
-    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: var(--space-2);
   }
 
-  /* --------------------------------------------------------- the headline --
-   *
-   * The client's approved line, in the drawn italic, two lines on one left
-   * axis. The staircase is gone: it was the composition's most visible idea
-   * and the thing four reviews called "loud". Two lines that start together
-   * read as one statement.
-   *
-   * Sized off the viewport, capped where line one ("HOME AND INDUSTRIAL",
-   * 9.375x its font size in this face) still fits the 58% column at 1360:
-   * 76px x 9.375 = 712px against a 730px column. */
+  /* The drawn italic, uppercase, two lines that start and end on the same
+     centre. Line one is the claim, line two the promise, in the accent.
+     Sized so line two ("READY FOR INDUSTRY.", ~9.9x its font size) holds
+     the measure at 1360: 72px x 9.9 = 713px. */
   .hero__title {
-    position: relative;
-    z-index: 1;
     margin: 0;
     font-family: var(--font-hero);
-    font-size: clamp(40px, 5.6vw, 76px);
+    font-size: clamp(38px, 5.2vw, 72px);
     font-weight: 800;
     font-style: italic;
-    line-height: 0.9;
-    letter-spacing: -0.04em;
+    line-height: 0.92;
+    letter-spacing: -0.035em;
     text-transform: uppercase;
+    text-wrap: balance;
     color: var(--text);
     animation: hero-rise 0.4s var(--ease-out) 0.06s both;
   }
@@ -406,16 +372,16 @@ const proof = [
     display: block;
   }
 
-  /* Brand red on --surface-alt is 3.99:1 — legal for large text only, and
-     this line's floor is 40px. */
+  /* Brand red on white is 4.30:1 — legal for large text only, and this
+     line's floor is 38px. */
   .hero__title-b {
     color: var(--accent);
   }
 
-  /* --text-muted, 4.96:1 on --surface-alt. */
+  /* --text-muted, 5.36:1 on white. */
   .hero__lede {
-    max-width: 46ch;
-    margin: var(--space-6) 0 0;
+    max-width: 52ch;
+    margin: var(--space-5) 0 0;
     font-size: clamp(16px, 1.2vw, 18px);
     line-height: 1.55;
     color: var(--text-muted);
@@ -426,30 +392,30 @@ const proof = [
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     gap: var(--space-4);
-    margin-top: var(--space-8);
+    margin-top: var(--space-7);
     animation: hero-rise 0.4s var(--ease-out) 0.14s both;
   }
 
   /* The pair are drawn as a matched pair here — same case, same family, same
-     shape — because side by side the primitives' defaults read as two
-     controls from two designs. Scoped to the hero; PillButton is used on six
-     other pages. 15px of type plus 18px of padding clears the 44px floor. */
-  .hero__actions :global(.solid) {
-    padding: 18px 34px;
-    font-size: var(--fs-body);
+     shape, same width — because side by side the primitives' defaults read
+     as two controls from two designs. Scoped to the hero; PillButton is used
+     on six other pages. 15px of type plus 17px of padding clears 44px. */
+  .hero__actions :global(.solid),
+  .hero__actions :global(.pill) {
+    min-width: 240px;
+    padding: 17px 32px;
+    font-family: var(--font-display);
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-label);
     letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
 
   .hero__actions :global(.pill) {
     border-radius: 0;
-    padding: 17px 30px;
-    font-family: var(--font-display);
-    font-size: var(--fs-body-sm);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
     border-color: var(--text);
     background: var(--surface-raised);
   }
@@ -458,164 +424,14 @@ const proof = [
     border-color: var(--accent);
   }
 
-  /* ------------------------------------------------------ the photograph --
-   *
-   * A client-supplied portrait, cropped to the column. The mask fades its
-   * left edge into the band so it sits against the copy without a rule. */
-  .hero__vis {
-    grid-area: vis;
-    position: relative;
-    margin: 0;
-    min-height: 420px;
-    overflow: hidden;
-    background: var(--surface-page);
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
-    animation: hero-rise 0.5s var(--ease-out) 0.1s both;
-  }
-
-  .hero__vis :global(img) {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    object-fit: cover;
-    object-position: 55% 40%;
-  }
-
-  /* ------------------------------------------------------------ the doors --
-   *
-   * Two of the site's standard cards (`.card-surface`: raised surface,
-   * hairline, boundary turning accent on hover). */
-  .hero__doors {
-    grid-area: doors;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    animation: hero-rise 0.4s var(--ease-out) 0.18s both;
-  }
-
-  .hero__door {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    height: 100%;
-    padding: 20px 22px 18px;
-  }
-
-  .hero__door-kicker {
-    font-family: var(--font-mono);
-    font-size: var(--fs-micro);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--accent-text);
-  }
-
-  .hero__door-name {
-    font-family: var(--font-display);
-    font-size: var(--fs-title-sm);
-    font-weight: var(--fw-subhead);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    color: var(--text);
-  }
-
-  /* --text-muted on --surface-raised: 5.36:1. */
-  .hero__door-blurb {
-    font-size: var(--fs-body-sm);
-    line-height: 1.5;
-    color: var(--text-muted);
-  }
-
-  .hero__door-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: var(--space-3);
-    margin-top: var(--space-2);
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--line);
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-
-  .hero__door-chev {
-    color: var(--accent-text);
-    font-size: var(--fs-body);
-    line-height: 1;
-    transition: transform var(--dur-base) var(--ease-out);
-  }
-
-  .hero__door:hover .hero__door-chev {
-    transform: translateX(3px);
-  }
-
-  /* ------------------------------------------------------ the proof strip --
-   *
-   * Four cells on a rule, the numerals in the display face. The top rule is
-   * --line-control (a boundary that means something) and the cell dividers
-   * --line (decorative hairlines), the same pair the enquiry steps use. */
-  .hero__proof {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin: var(--space-12) 0 0;
-    border-top: 1px solid var(--line-control);
-    animation: hero-rise 0.4s var(--ease-out) 0.22s both;
-  }
-
-  .hero__proof-cell {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: 20px 24px 0 0;
-  }
-
-  .hero__proof-cell + .hero__proof-cell {
-    padding-left: 24px;
-    border-left: 1px solid var(--line);
-  }
-
-  .hero__proof dt {
-    font-family: var(--font-mono);
-    font-size: var(--fs-micro);
-    font-weight: var(--fw-label);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-
-  .hero__proof dd {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(24px, 2.4vw, 34px);
-    font-weight: var(--fw-section);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-    line-height: 1;
-    color: var(--text);
-  }
-
   /* ------------------------------------------------------ the campaign band --
    *
-   * On the page surface, directly under the band's hairline, with the same
-   * breathing room a section head gets. */
-  .hero__stage-wrap {
-    position: relative;
-    padding-top: var(--space-10);
-  }
-
+   * The wrap's full width, closing the first screen. */
   .hero__stage {
     position: relative;
     width: 100%;
+    margin-top: var(--space-10);
+    animation: hero-rise 0.5s var(--ease-out) 0.18s both;
   }
 
   /* 4:1 wherever there is width. Below 720px the EMPTY slot opens to 3:2 so
@@ -629,7 +445,7 @@ const proof = [
     gap: var(--space-3);
     aspect-ratio: 4 / 1;
     border: 1px dashed var(--line-control);
-    background: var(--surface-page);
+    background: var(--surface-alt);
     color: var(--text-muted);
     padding: 24px;
   }
@@ -659,7 +475,7 @@ const proof = [
     border: 1px solid var(--line);
     border-radius: 2px;
     background: var(--surface-raised);
-    box-shadow: 0 18px 40px rgba(8, 8, 10, 0.1);
+    box-shadow: 0 20px 44px rgba(8, 8, 10, 0.1);
   }
 
   .hero__track {
@@ -711,8 +527,7 @@ const proof = [
     color: var(--accent-text);
   }
 
-  /* One instrument: counter, pips as a track, pause — left to right. Inherits
-     the stage's width so its two edges align with the frame's. */
+  /* One instrument: counter, pips as a track, pause — left to right. */
   .hero__controls {
     display: flex;
     align-items: center;
@@ -832,6 +647,144 @@ const proof = [
     clip-path: polygon(0 0, 7px 4px, 0 8px);
   }
 
+  /* ------------------------------------------------------------ the doors --
+   *
+   * Two of the site's standard cards (`.card-surface`: raised surface,
+   * hairline, boundary turning accent on hover), an even pair. */
+  .hero__doors {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: var(--space-10) 0 0;
+    padding: 0;
+    list-style: none;
+    animation: hero-rise 0.4s var(--ease-out) 0.22s both;
+  }
+
+  .hero__door {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'kicker chev'
+      'name chev'
+      'blurb chev'
+      'meta chev';
+    column-gap: var(--space-6);
+    row-gap: var(--space-1);
+    align-items: center;
+    height: 100%;
+    padding: 20px 24px;
+  }
+
+  .hero__door-kicker {
+    grid-area: kicker;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+  }
+
+  .hero__door-name {
+    grid-area: name;
+    font-family: var(--font-display);
+    font-size: var(--fs-title);
+    font-weight: var(--fw-subhead);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  /* --text-muted on --surface-raised: 5.36:1. */
+  .hero__door-blurb {
+    grid-area: blurb;
+    margin-top: 2px;
+    font-size: var(--fs-body-sm);
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .hero__door-meta {
+    grid-area: meta;
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* One arrow on the card's trailing edge, vertically centred across all
+     four rows. */
+  .hero__door-chev {
+    grid-area: chev;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: var(--fs-title-sm);
+    line-height: 1;
+    color: var(--accent-text);
+    transition:
+      border-color var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+  }
+
+  .hero__door:hover .hero__door-chev {
+    border-color: var(--accent);
+    transform: translateX(3px);
+  }
+
+  /* ------------------------------------------------------ the proof strip --
+   *
+   * Four cells on a rule, centred, the numerals in the display face. The top
+   * rule is --line-control (a boundary that means something) and the cell
+   * dividers --line (decorative hairlines), the pair the enquiry steps use. */
+  .hero__proof {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: var(--space-10) 0 0;
+    border-top: 1px solid var(--line-control);
+    animation: hero-rise 0.4s var(--ease-out) 0.26s both;
+  }
+
+  .hero__proof-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 22px 16px 0;
+    text-align: center;
+  }
+
+  .hero__proof-cell + .hero__proof-cell {
+    border-left: 1px solid var(--line);
+  }
+
+  .hero__proof dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .hero__proof dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2.4vw, 34px);
+    font-weight: var(--fw-section);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--text);
+  }
+
   /* Keyframes must keep a `transform`, or a transform declared on the same
      element is silently overwritten — docs/TRAPS.md. */
   @keyframes hero-rise {
@@ -847,41 +800,66 @@ const proof = [
 
   /* ---------------------------------------------------------- breakpoints -- */
 
-  /* Below 900px the grid is one column: copy, then the photograph as a 16:9
-     band, then the doors stacked. The CTAs stay directly under the lede so
-     the fold tests in hero-mobile.spec.ts hold on a 640px screen. */
   @media (max-width: 900px) {
     .hero__band {
-      padding-top: calc(var(--hero-chrome) + 32px);
+      padding-top: calc(var(--hero-chrome) + 28px);
+    }
+
+    /* The numeral shares the row with the masthead on a phone: two cells,
+       masthead left, numeral right, so the head does not spend a third of the
+       screen on an empty column. */
+    .hero__head {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .hero__head-spacer {
+      display: none;
     }
 
     .hero__head :global(.section-index) {
-      font-size: calc(clamp(40px, 5.6vw, 76px) * 1.6);
+      font-size: calc(clamp(30px, 4vw, 46px) * 1.8);
     }
 
-    .hero__grid {
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        'copy'
-        'vis'
-        'doors';
-      gap: var(--space-8);
+    .hero__masthead {
+      justify-content: flex-start;
+      text-align: left;
     }
 
-    .hero__vis {
-      min-height: 0;
-      aspect-ratio: 16 / 9;
-      -webkit-mask-image: none;
-      mask-image: none;
+    .hero__copy {
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .hero__title {
+      max-width: none;
+    }
+
+    .hero__actions {
+      justify-content: flex-start;
+    }
+
+    .hero__stage {
+      margin-top: var(--space-8);
     }
 
     .hero__doors {
       grid-template-columns: 1fr;
+      margin-top: var(--space-8);
     }
 
     .hero__proof {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-top: var(--space-10);
+      margin-top: var(--space-8);
+    }
+
+    .hero__proof-cell {
+      align-items: flex-start;
+      text-align: left;
+      padding: 18px 16px 0 0;
+    }
+
+    .hero__proof-cell + .hero__proof-cell {
+      padding-left: 16px;
     }
 
     .hero__proof-cell:nth-child(3) {
@@ -890,7 +868,7 @@ const proof = [
     }
 
     .hero__proof-cell:nth-child(n + 3) {
-      margin-top: 18px;
+      margin-top: 14px;
     }
   }
 
@@ -900,13 +878,19 @@ const proof = [
     }
   }
 
-  /* Two buttons need 392px to sit side by side; below that they stack into a
-     column of equal width, which is also a wider thumb target. */
+  /* Two 240px buttons need 496px to sit side by side; below that they stack
+     into a column of equal width, which is also a wider thumb target. */
   @media (max-width: 560px) {
     .hero__actions {
       flex-direction: column;
       align-items: stretch;
       gap: var(--space-3);
+      width: 100%;
+    }
+
+    .hero__actions :global(.solid),
+    .hero__actions :global(.pill) {
+      min-width: 0;
     }
 
     .hero__proof dd {
@@ -918,10 +902,6 @@ const proof = [
      clears a 640px fold on a 360-wide phone. The lede sets tighter and the
      CTAs hand back their extra padding; the content is not cut. */
   @media (max-width: 900px) and (max-height: 700px) {
-    .hero__grid {
-      margin-top: var(--space-2);
-    }
-
     .hero__lede {
       margin-top: var(--space-3);
       font-size: var(--fs-body-sm);
@@ -961,7 +941,7 @@ const proof = [
     .hero__title,
     .hero__lede,
     .hero__actions,
-    .hero__vis,
+    .hero__stage,
     .hero__doors,
     .hero__proof {
       animation: none;

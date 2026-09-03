@@ -4943,7 +4943,8 @@ catalogue:
 
 | Was | Is |
 |---|---|
-| Hero (masthead, staircase headline, dot grid, carousel with control rail, stat index) | **Hero**: on `--surface-alt`; the approved headline on one left axis; lede; two CTAs; **two division doors** (standard cards) with counted totals; the client's `safety.jpg` as a column beside the copy; a **proof strip** of four sourced facts. The **campaign band** keeps its whole mechanism and sits on the page surface below. |
+| Hero (masthead, staircase headline, dot grid, carousel with control rail, stat index) | **Hero**: one centred column: masthead, the new headline, lede, two matched CTAs, the **campaign band** (mechanism unchanged) closing the first screen, **two division doors** (standard cards) with counted totals, a **proof strip** of four sourced facts. |
+
 | Ticker | gone — a second moving band above the fold; every category is a tile in 02 |
 | CategoryGrid, 5 × 3 portrait tiles | **The range**: grouped Electricals / Safety, landscape directory tiles three across, head-to-toe order from the catalogue's own `order` |
 | FeaturedLines, bespoke card + inline filter script | **Selected products**: `ProductGrid` with the catalogue's own card and its enquiry button, so the basket starts here. One CSP hash fewer. |
@@ -4954,11 +4955,20 @@ catalogue:
 Page height 8,186 → 7,443 at 1440; 14,360 → 12,031 at 390. On a 375×667 both
 hero CTAs are above the fold, where before only one was.
 
-**The hero was dark for one review round.** The first cut put the photograph
-behind the copy under the division pages' scrim, in the approved mockup's
-direction; the client saw it on localhost and asked for the white theme. The
-composition is the same; the surface is `--surface-alt`, the photograph is a
-grid column, and the doors are `.card-surface`.
+**Three cuts in one day, each on the client's localhost review.** The first
+put the photograph behind the copy on a dark band, in the approved mockup's
+direction; the client asked for the white theme. The second put the photograph
+beside the copy on the light surface; the client asked for no photograph on the
+first page, the carousel on it, symmetry, and gave permission to change the
+headline. The third is what ships: centred, carousel-first, and the headline
+is **"Built for the job. Ready for industry."**, the line the 2026-08-29
+review proposed, carried in `BACKLOG.md` as a client decision since, and now
+taken. `tests/e2e/home.spec.ts` and `Hero.test.ts` pin the new text.
+
+**The campaign bar's controls are on the LEFT now**, and that came out of a
+test: at 1440 x 900 the Pause control at the bar's right end sat exactly under
+the fixed WhatsApp button, and `hero-carousel.spec.ts` could not click it.
+Neither could a person.
 
 **One fix outside the landing page.** `Header.astro` used the dark logo lockup
 on every surface, so on the division pages' scrimmed heroes the wordmark was

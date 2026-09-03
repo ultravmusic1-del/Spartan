@@ -29,13 +29,16 @@ test.describe('the hero headline', () => {
      * `.textContent`, read directly, not Playwright's `toHaveText` — that
      * matcher collapses internal whitespace before comparing, which would
      * paper over exactly the defect this test exists to catch. The markup is
-     * `Home and <br />industrial <br /><span>solutions.</span>`: a space was
-     * added before each `<br />` because without it `textContent` runs the
-     * words together ("Home andindustrial solutions.") — that has shipped
-     * once already.
+     * two spans on one source line with the space INSIDE the first; without
+     * it `textContent` runs the words together, which has shipped once.
+     *
+     * THE LINE CHANGED ON 2026-09-03 with the client's permission: "Home and
+     * industrial solutions." became the review-proposed "Built for the job.
+     * Ready for industry." (BACKLOG.md, "Sign off or replace the hero
+     * headline").
      */
     const text = await h1.evaluate((el) => el.textContent);
-    expect(text).toBe('Home and industrial solutions.');
+    expect(text).toBe('Built for the job. Ready for industry.');
   });
 });
 
@@ -224,53 +227,53 @@ test.describe('the hero proposition', () => {
     expect(numbers[0][1] + numbers[1][1]).toBe(94);
   });
 
-  test('runs the composition off one left axis and closes on the wrap', async ({ page }) => {
+  test('centres the composition and closes its edges on the wrap', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 950 });
     await page.goto('/');
     await settled(page);
 
     const box = async (sel: string) => (await page.locator(sel).boundingBox())!;
+    const centre = (b: { x: number; width: number }) => Math.round(b.x + b.width / 2);
 
+    const wrap = await box('.hero__wrap');
     const masthead = await box('.hero__masthead');
     const title = await box('.hero__title');
     const lede = await box('.hero__lede');
     const actions = await box('.hero__actions');
-    const doors = await box('.hero__doors');
 
-    // One left axis: masthead, headline, lede, actions and doors start together.
-    for (const b of [title, lede, actions, doors]) {
-      expect(Math.round(b.x)).toBe(Math.round(masthead.x));
+    // One vertical axis: masthead, headline, lede and actions share the
+    // wrap's centre, to within a couple of pixels of italic overhang.
+    for (const b of [masthead, title, lede, actions]) {
+      expect(Math.abs(centre(b) - centre(wrap))).toBeLessThanOrEqual(3);
     }
 
     // The numeral ends on the wrap's right edge — the line every section
     // numeral on the page ends on.
-    const headRight = await page
-      .locator('.hero__head')
-      .evaluate((el) => Math.round(el.getBoundingClientRect().right));
+    // The wrap's CONTENT edge: `.hero__head` fills it, so its box is the
+    // measure without the wrap's own padding.
+    const head = await box('.hero__head');
+    const wrapRight = Math.round(head.x + head.width);
     const numeral = await box('.hero__head .section-index');
-    expect(Math.round(numeral.x + numeral.width)).toBe(headRight);
+    expect(Math.round(numeral.x + numeral.width)).toBe(wrapRight);
 
-    // Two doors of equal width, below the actions.
+    // The campaign band spans the wrap, directly under the actions, and is
+    // the first screen's last element on a 950px viewport.
+    const stage = await box('.hero__stage');
+    expect(Math.round(stage.x)).toBe(Math.round(head.x));
+    expect(Math.round(stage.x + stage.width)).toBe(wrapRight);
+    expect(stage.y).toBeGreaterThan(actions.y + actions.height);
+    const frame = await box('.hero__frame');
+    expect(frame.y + frame.height).toBeLessThanOrEqual(950);
+
+    // Two doors of equal width, an even pair below the band.
     const doorBoxes = await page
       .locator('.hero__door')
       .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()));
     expect(Math.round(doorBoxes[0].width)).toBe(Math.round(doorBoxes[1].width));
-    expect(doorBoxes[0].y).toBeGreaterThan(actions.y + actions.height);
-
-    // The photograph is a column beside the copy, not a backdrop behind it:
-    // it starts on the headline's line and its right edge is the wrap's.
-    const vis = await box('.hero__vis');
-    expect(vis.x).toBeGreaterThan(title.x + title.width - 8);
-    expect(Math.round(vis.x + vis.width)).toBe(headRight);
-    expect(Math.abs(vis.y - title.y)).toBeLessThan(4);
-
-    // The campaign band follows the hero band on the page surface.
-    const band = await box('.hero__band');
-    const stage = await box('.hero__stage');
-    expect(stage.y).toBeGreaterThanOrEqual(band.y + band.height - 1);
+    expect(doorBoxes[0].y).toBeGreaterThan(stage.y + stage.height);
   });
 
-  test('sets both headline lines on one edge, the second in the accent', async ({ page }) => {
+  test('sets both headline lines on one centre, the second in the accent', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 950 });
     await page.goto('/');
 
@@ -278,18 +281,19 @@ test.describe('the hero proposition', () => {
       await page.locator(sel).evaluate((el) => {
         const range = document.createRange();
         range.selectNodeContents(el);
-        return range.getBoundingClientRect().left;
+        const r = range.getBoundingClientRect();
+        return r.left + r.width / 2;
       });
 
-    // No staircase since 2026-09-03: the two lines start on the same axis.
-    expect(Math.abs((await ink('.hero__title-a')) - (await ink('.hero__title-b')))).toBeLessThan(3);
+    // No staircase since 2026-09-03: the two lines share one centre.
+    expect(Math.abs((await ink('.hero__title-a')) - (await ink('.hero__title-b')))).toBeLessThan(4);
 
-    // Brand red on --color-black, 4.65:1 — legal because the line is >=40px.
+    // Brand red on white, 4.30:1 — legal because the line is >=38px.
     await expect(page.locator('.hero__title-b')).toHaveCSS('color', 'rgb(235, 41, 39)');
     const size = await page
       .locator('.hero__title-b')
       .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(size).toBeGreaterThanOrEqual(40);
+    expect(size).toBeGreaterThanOrEqual(38);
   });
 
   test('keeps the headline inside a narrow screen', async ({ page }) => {

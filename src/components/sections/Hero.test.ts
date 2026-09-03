@@ -238,9 +238,8 @@ describe('with banners', () => {
     expect(html).toMatch(/class="[^"]*hero__track[^"]*"[^>]*aria-hidden="true"/);
     expect(countElements(html, 'hero__slide')).toBe(3);
 
-    // Three slides plus the band's photograph, which is decorative too.
     const alts = images(html);
-    expect(alts).toHaveLength(4);
+    expect(alts).toHaveLength(3);
     // Present on every image and empty on every image. An absent alt would be
     // three unlabelled images; a populated one would announce the banner's
     // admin-facing name to a visitor.
@@ -255,13 +254,12 @@ describe('with banners', () => {
    * is below the fold of the animation and must stay lazy, or a six-banner
    * carousel downloads six full-width images before the page settles.
    */
-  it('loads the photograph and the first slide eagerly, and the rest lazily', async () => {
+  it('loads the first slide eagerly and at high priority, and the rest lazily', async () => {
     banners.current = [banner(0), banner(1), banner(2)];
     const html = await renderHero();
 
-    // The photograph is the LCP candidate and the only high-priority fetch;
-    // the first slide is eager because it lands inside the first viewport.
-    expect((html.match(/loading="eager"/g) ?? []).length).toBe(2);
+    // The first slide is the LCP candidate and the only high-priority fetch.
+    expect((html.match(/loading="eager"/g) ?? []).length).toBe(1);
     expect((html.match(/fetchpriority="high"/g) ?? []).length).toBe(1);
     // Three banners make four slides; the three after the first are lazy.
     expect((html.match(/loading="lazy"/g) ?? []).length).toBe(3);
@@ -406,16 +404,16 @@ describe('the proposition', () => {
    * after the doors and the proof strip, so the two actions follow the lede
    * at every width — `tests/e2e/hero-mobile.spec.ts` measures the result.
    */
-  it('stacks headline, actions, doors, proof, then the campaign stage', async () => {
+  it('stacks headline, actions, the campaign stage, doors, then proof', async () => {
     banners.current = [banner(0), banner(1)];
     const html = await renderHero();
     const at = (needle: string) => html.indexOf(needle);
 
     expect(at('<h1')).toBeGreaterThan(-1);
     expect(at('hero__actions')).toBeGreaterThan(at('<h1'));
-    expect(at('hero__doors')).toBeGreaterThan(at('hero__actions'));
+    expect(at('data-hero-stage')).toBeGreaterThan(at('hero__actions'));
+    expect(at('hero__doors')).toBeGreaterThan(at('data-hero-stage'));
     expect(at('hero__proof')).toBeGreaterThan(at('hero__doors'));
-    expect(at('data-hero-stage')).toBeGreaterThan(at('hero__proof'));
   });
 
   /**
@@ -427,6 +425,6 @@ describe('the proposition', () => {
   it('keeps the headline text exact across the two composed lines', async () => {
     const html = await renderHero();
     const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '';
-    expect(h1.replace(/<[^>]+>/g, '')).toBe('Home and industrial solutions.');
+    expect(h1.replace(/<[^>]+>/g, '')).toBe('Built for the job. Ready for industry.');
   });
 });
