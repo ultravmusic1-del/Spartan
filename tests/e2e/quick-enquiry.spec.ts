@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ENQUIRY_OUTCOME, TEST_DB_UP } from './stack';
+import { expectEnquiryBody, TEST_DB_UP } from './stack';
 
 /**
  * The two compact enquiry forms — the home page CTA and the general enquiry
@@ -14,8 +14,10 @@ import { ENQUIRY_OUTCOME, TEST_DB_UP } from './stack';
  * tests/preview-server.mjs, and what it answers depends on what this run has:
  * with no credentials both channels report `unconfigured` and it says nothing
  * holds the enquiry; with the throwaway Supabase stack up (`npm run
- * test:db:start`) the row is genuinely written and it says so. `ENQUIRY_OUTCOME`
- * in tests/e2e/stack.ts derives which, and both branches are asserted in full.
+ * test:db:start`) the row is genuinely written, it says so, and the response
+ * carries the row's id as a reference. `expectEnquiryBody` in
+ * tests/e2e/stack.ts derives which, and asserts both branches in full —
+ * including that the reference is present exactly when a row exists.
  * What is never accepted is a claim that does not match what happened.
  *
  * Mail is unconfigured either way — playwright.config.ts blanks the Resend
@@ -64,7 +66,7 @@ test.describe('the compact enquiry forms', () => {
     expect(response.status()).toBe(200);
     // Exhaustive on purpose: a field silently appearing in or vanishing from the
     // response contract is exactly what the two clients key their honesty off.
-    expect(await response.json()).toEqual(ENQUIRY_OUTCOME);
+    expectEnquiryBody(await response.json());
 
     // The one assertion this file exists for: the form says what actually
     // happened to the enquiry. Which branch applies depends on whether this run

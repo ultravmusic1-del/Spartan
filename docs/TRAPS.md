@@ -888,3 +888,36 @@ did not check. Changing one is a regression *you* would be introducing.
   as a single-element locator. The absorb hook is the separate
   `[data-rail-absorb]`, which is on both; widening `data-rail` breaks those two
   tests with a strict-mode violation rather than an assertion failure.
+
+## The gap that hid a red CI for two weeks, found 2026-09-11
+
+- **`npm run verify` green does NOT mean CI will be green, and the gap is
+  Docker.** `--full` refuses to run without the throwaway Supabase stack, that
+  stack needs Docker, and Docker does not run on the machine this is developed
+  on. So every local run asserts `TEST_DB_UP === false` and CI asserts `true` —
+  two different branches of `tests/e2e/stack.ts`, and only one of them is ever
+  executed here. **A change to the enquiry outcome, the success receipt or
+  anything under `/admin` is unverified until CI reports.** Say so rather than
+  reporting the local green as cover.
+
+- **The enquiry response body is compared EXHAUSTIVELY, so adding a field to it
+  breaks the e2e suite.** `expectEnquiryBody` in `tests/e2e/stack.ts` splits off
+  `reference` and `toEqual`s the rest; anything new arriving in that body fails
+  three tests. That is deliberate — the two clients key their honesty off the
+  contract — so **when you add a field, come here**. `toMatchObject` would make
+  the failure go away and delete the property at the same time.
+
+- **`reference` appears in the response only when a row was written**, so it is
+  invisible to every local run. This is what kept CI red for 18 runs from
+  2026-08-30: the field was added at the route, the exhaustive compare saw a
+  fourth key on every DB-backed run, and nothing on this machine could reproduce
+  it. `withReference` in `src/lib/enquiry-outcome.ts` now holds that rule as a
+  pure function and `enquiry-outcome.test.ts` pins the **key set** on both
+  branches — locally, with no container. **Pin a response contract in a unit
+  test; an e2e test that needs a container is not a gate you can run.**
+
+- **Actions logs are 403 without a token even though the repo is public.** Run
+  and job metadata, conclusions and check-run annotations all read fine
+  unauthenticated from `api.github.com`, and that is enough to find WHICH step
+  failed and WHEN it started — the annotation itself only says "exit code 1".
+  For the actual error, either `gh auth login` or read it in the browser.

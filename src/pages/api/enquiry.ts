@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { enquiryPayloadSchema, toFieldErrors, type EnquiryPayload } from '../../lib/enquiry-schema';
-import { decideOutcome, type ChannelState } from '../../lib/enquiry-outcome';
+import { decideOutcome, withReference, type ChannelState } from '../../lib/enquiry-outcome';
 import { markNotified, recordEnquiry } from '../../lib/enquiry-store';
 import { sendEnquiryMail } from '../../lib/enquiry-mail';
 import { configured, env } from '../../lib/env';
@@ -230,7 +230,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
    * the "reported as sent when it was not" this endpoint is built to avoid. So
    * it is absent, and the screen simply does not offer one.
    */
-  const body = stored.id ? { ...outcome.body, reference: stored.id } : outcome.body;
+  const body = withReference(outcome.body, stored.id);
 
   return json(body, outcome.status);
 };

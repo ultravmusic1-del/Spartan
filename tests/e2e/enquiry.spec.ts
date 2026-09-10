@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { ENQUIRY_OUTCOME, TEST_DB_UP } from './stack';
+import { expectEnquiryBody, TEST_DB_UP } from './stack';
 
 /**
  * The enquiry basket — the site's only conversion path.
@@ -354,7 +354,7 @@ test.describe('/enquiry', () => {
      * configured" paragraph must NOT appear, because it would send a buyer
      * chasing an email for an enquiry that was already captured.
      */
-    expect(await response.json()).toEqual(ENQUIRY_OUTCOME);
+    expectEnquiryBody(await response.json());
     const pending = page.locator('.ef-done__pending');
     if (TEST_DB_UP) {
       await expect(pending).toHaveCount(0);
@@ -422,7 +422,7 @@ test.describe('/enquiry', () => {
     ]);
 
     expect(response.status()).toBe(200);
-    expect(await response.json()).toEqual(ENQUIRY_OUTCOME);
+    expectEnquiryBody(await response.json());
     await expect(page.getByRole('heading', { name: 'Enquiry received.' })).toBeVisible();
   });
 });

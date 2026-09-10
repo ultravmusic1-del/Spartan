@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { decideOutcome, type ChannelState } from './enquiry-outcome';
+import { decideOutcome, withReference, type ChannelState } from './enquiry-outcome';
 
 /**
  * All nine combinations, asserted directly. The whole reason `decideOutcome` is
@@ -91,5 +91,44 @@ describe('decideOutcome', () => {
         expect(outcome.body.delivered).toBe(email === 'ok');
       }
     }
+  });
+});
+
+/**
+ * THE RESPONSE CONTRACT, PINNED WHERE IT COSTS NOTHING TO CHECK.
+ *
+ * `reference` was added to the endpoint's body on 2026-08-30 and no local
+ * command could see it. The field appears only when a row was written, a row
+ * only exists when the throwaway Supabase stack is up, and that stack needs
+ * Docker — which does not run on the machine this is developed on. So
+ * `npm run verify` reported 18/18 green while every CI run failed, because the
+ * e2e suite compares the body EXHAUSTIVELY and saw a fourth key. Eighteen runs
+ * and two weeks.
+ *
+ * These assert the key SET, not just the values. A test that only checked
+ * `reference` would have missed the actual failure, which was an extra key
+ * arriving in a compare that tolerates none.
+ */
+describe('withReference', () => {
+  const body = { ok: true, recorded: true, delivered: false } as const;
+
+  it('adds the reference when a row was written, and changes nothing else', () => {
+    const out = withReference(body, '3f2a9c4e-1b7d-4f8a-9e6c-2d5b8a1c7e40');
+    expect(out).toEqual({ ...body, reference: '3f2a9c4e-1b7d-4f8a-9e6c-2d5b8a1c7e40' });
+    expect(Object.keys(out).sort()).toEqual(['delivered', 'ok', 'recorded', 'reference']);
+  });
+
+  it('adds nothing at all when there is no row', () => {
+    for (const id of [null, undefined, '']) {
+      const out = withReference(body, id);
+      expect(Object.keys(out).sort()).toEqual(['delivered', 'ok', 'recorded']);
+      expect('reference' in out).toBe(false);
+    }
+  });
+
+  it('does not mutate the outcome it was handed', () => {
+    const original = { ...body };
+    withReference(body, 'a0000000-0000-4000-8000-000000000000');
+    expect(body).toEqual(original);
   });
 });

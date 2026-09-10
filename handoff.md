@@ -5490,3 +5490,74 @@ Two file headers that described all three details as placeholders were corrected
 rather than left to rot: `src/pages/contact.astro` and `src/pages/enquiry.astro`.
 
 `verify 18/18 · 396 unit · 354 public e2e, 0 failing.`
+
+## 53. Why CI had been red for two weeks — 2026-09-11
+
+The client reported repeated verify-workflow failure notices. The workflow had
+failed on **every run since 2026-08-30** — 18 in a row — and none of it was
+recent work.
+
+### Finding it without being able to read the logs
+
+The GitHub CLI is not signed in on this machine and Actions **logs are 403
+without a token even for a public repo**. What *is* readable unauthenticated is
+run and job metadata, which was enough:
+
+- last green: run 67, `88a608f`, 2026-08-30 12:51
+- first red: run 68, `da32ce3`, 2026-08-30 13:05 — *"the success screen becomes
+  a receipt the buyer can keep"*
+- the failing step, on every red run: `npm run verify -- --full`.
+  `npm run test:db:start` succeeded each time, so the stack was up.
+
+The check-run annotation says only `Process completed with exit code 1`, so the
+cause came from reading `da32ce3` against `tests/e2e/stack.ts`.
+
+### The cause
+
+That commit added `reference: stored.id` to the endpoint's response body, **only
+when a row was written** — correctly, and it says why at length. What it did not
+do was tell the test that compares that body.
+
+`tests/e2e/stack.ts` builds the expected outcome from whether a database is
+present, and three specs do an **exhaustive** `toEqual` on it. With no database
+there is no row, so no reference, so three keys and a pass. With a database
+there are four keys and `toEqual` fails. That is the compare doing exactly its
+job: its own comment says a field silently appearing in the contract is the
+thing it exists to catch. It caught it. Nobody was listening.
+
+### Why it survived 18 runs
+
+**`--full` cannot run on the machine this is developed on.** It refuses without
+the throwaway Supabase stack, the stack needs Docker, and Docker does not work
+here — confirmed by the client on 2026-09-11. So every local run took the
+`TEST_DB_UP === false` branch and every CI run took the other one, and the
+commit that introduced this was verified locally the only way available:
+`npm run verify` 18/18, which the commit message records. Green, and blind to
+the half that mattered.
+
+### The fix, and the part that matters more
+
+`expectEnquiryBody` in `tests/e2e/stack.ts` replaces the three bare `toEqual`
+calls. It splits `reference` off, keeps the rest **exhaustive**, and makes the
+reference itself part of the contract: present and a real UUID when a row
+exists, absent when none does. `toMatchObject` would have made the red go away
+and deleted the property at the same time, so it was not used.
+
+**The durable half is that the contract is now pinned in a unit test.**
+`withReference` moved out of the route into `src/lib/enquiry-outcome.ts` as a
+pure function, beside `decideOutcome` and deliberately not folded into it, and
+`enquiry-outcome.test.ts` asserts the **key set** on both branches. That runs in
+`npm run verify`, on this machine, in milliseconds, with no container. A test
+that only checked the value of `reference` would have missed the actual
+failure — an extra key arriving in a compare that tolerates none.
+
+### What is verified and what is not
+
+`verify 18/18 · 399 unit · 354 public e2e, 0 failing.` The unit tests prove the
+body-building rule directly. The public e2e suite proves the no-database branch.
+
+**The database branch cannot be run here at all**, so whether this clears the
+workflow is for CI to say and not for this note to claim. If run 78 is still
+red, the log — via `gh auth login` or the browser — is the next step, because
+there may be a second cause behind the first that eighteen runs of the same
+failure were hiding.
