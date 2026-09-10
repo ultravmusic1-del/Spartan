@@ -103,8 +103,10 @@ test.describe('the motion layer', () => {
     await page.goto('/');
     await page.locator('.hero__proof').scrollIntoViewIfNeeded();
     await page.waitForTimeout(1800);
+    // 14 categories, not the catalogue's 15: the strip counts what a buyer can
+    // reach, and Electrical Accessories stocks nothing (docs/TRAPS.md).
     const values = await page.locator('.hero__proof dd').allTextContents();
-    expect(values.map((v) => v.trim())).toEqual(['94', '15', '2015', 'India & China']);
+    expect(values.map((v) => v.trim())).toEqual(['94', '14', '2015', 'India & China']);
   });
 });
 

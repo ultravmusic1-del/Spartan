@@ -58,6 +58,41 @@ export async function getCategory(slug: string): Promise<Category | undefined> {
   return (await getCategories()).find((c) => c.slug === slug);
 }
 
+/**
+ * True when a category is one the site offers a buyer a route to.
+ *
+ * Both conditions, not either — `status: 'expanding'` is an editorial flag and
+ * `productCount` is the fact. A range marked expanding that has since been
+ * stocked is listed again with no code change, and a range emptied by an admin
+ * edit drops out the same way. `buildCategoryGroups` in src/lib/nav.ts already
+ * pairs the two for the same reason.
+ */
+export function isListedCategory(category: Category): boolean {
+  return !(category.status === 'expanding' && category.productCount === 0);
+}
+
+/**
+ * The categories a buyer is offered a route to, which is what every
+ * buyer-facing surface reads: the header and mobile nav, the footer, both
+ * category shelves, the division pages, the catalogue filter, and every
+ * category count rendered beside them.
+ *
+ * Counts come from this list rather than from `getCategories()` on purpose. A
+ * division door reading "6 categories" above a shelf of five tiles is the
+ * inconsistency this replaces, and it was visible on one screen.
+ *
+ * It is deliberately NOT what `getStaticPaths` reads. The page for an unlisted
+ * range is still built and still answers on its own URL — withdrawing it from
+ * navigation is a merchandising decision, and 404ing an address somebody may
+ * already hold is a different and larger one. `getCategories()` stays the whole
+ * catalogue and is what the page builder, the admin and every name lookup use.
+ */
+export async function getListedCategories(
+  opts: { divisionId?: string; status?: Category['status'] } = {},
+): Promise<Category[]> {
+  return (await getCategories(opts)).filter(isListedCategory);
+}
+
 export async function getProducts(
   opts: { categoryId?: string; divisionId?: string; limit?: number } = {},
 ): Promise<Product[]> {

@@ -8,7 +8,7 @@ import SolidButton from '../primitives/SolidButton.astro';
 import PillButton from '../primitives/PillButton.astro';
 import CategoryTile from '../catalog/CategoryTile.astro';
 import ProductGrid from '../catalog/ProductGrid.astro';
-import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+import { getListedCategories, getDivisions, getProducts } from '../../lib/catalog';
 
 /**
  * DivisionPage — the whole of `/electricals` and `/safety`, including the
@@ -72,7 +72,7 @@ const SELECTED: Record<string, string[]> = {
 
 const [divisions, categories, products] = await Promise.all([
   getDivisions(),
-  getCategories({ divisionId: divisionSlug }),
+  getListedCategories({ divisionId: divisionSlug }),
   getProducts({ divisionId: divisionSlug }),
 ]);
 
@@ -114,7 +114,6 @@ const tiles = await Promise.all(
 
 const productCount = products.length;
 const categoryCount = categories.length;
-const expanding = categories.filter((c) => c.status === 'expanding').length;
 ---
 
 <BaseLayout
@@ -171,21 +170,11 @@ const expanding = categories.filter((c) => c.status === 'expanding').length;
     <section class="dc">
       <div class="wrap">
         <h2 class="dc__title">Categories in this division</h2>
-        <p class="dc__lede">
-          {categoryCount} categories, {productCount} products.
-          {
-            /* Both expanding ranges are listed rather than hidden, and the tile
-               says "Range expanding" instead of a count. Saying so here as well
-               keeps the difference between the two totals honest. */
-            expanding > 0 && (
-              <>
-                {' '}
-                {expanding === 1 ? 'One range is' : `${expanding} ranges are`} still expanding and
-                has no products listed yet.
-              </>
-            )
-          }
-        </p>
+        {/* No "one range is still expanding" note any more. This page reads
+            through `getListedCategories()`, so a range with nothing in it is
+            not on the shelf and is not in either total — there is no longer a
+            difference between the two numbers to reconcile. */}
+        <p class="dc__lede">{categoryCount} categories, {productCount} products.</p>
 
         <ul class="dc__grid">
           {

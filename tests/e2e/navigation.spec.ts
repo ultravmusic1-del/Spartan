@@ -21,8 +21,9 @@ const PANEL = 'header .nav__panel';
 
 // Pinned, as in tests/e2e/catalogue.spec.ts. A category that stops appearing in
 // the menu is the failure being guarded, so the number cannot be read off the
-// menu itself.
-const TOTAL_CATEGORIES = 15;
+// menu itself. LISTED, not total: the catalogue holds 15 and Electrical
+// Accessories stocks nothing, so it is not offered anywhere a buyer looks.
+const LISTED_CATEGORIES = 14;
 
 test.describe('the primary navigation', () => {
   test('is five items, with Categories heading the product routes', async ({ page }) => {
@@ -123,9 +124,9 @@ test.describe('the Categories dropdown', () => {
     // Every category, exactly once. A range silently dropped from the menu is
     // the whole reason this spec exists.
     const subs = panel.locator('.nav__sub');
-    await expect(subs).toHaveCount(TOTAL_CATEGORIES);
+    await expect(subs).toHaveCount(LISTED_CATEGORIES);
     const hrefs = await subs.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-    expect(new Set(hrefs).size).toBe(TOTAL_CATEGORIES);
+    expect(new Set(hrefs).size).toBe(LISTED_CATEGORIES);
     expect(hrefs.every((h) => h!.startsWith('/catalogue/'))).toBe(true);
 
     await expect(panel.locator('.nav__all')).toHaveAttribute('href', '/catalogue');
@@ -200,24 +201,30 @@ test.describe('the Categories dropdown', () => {
       await page.goto('/');
 
       await expect(page.locator('html')).not.toHaveAttribute('data-js', /.*/);
-      await expect(page.locator(`${PANEL} .nav__sub`)).toHaveCount(TOTAL_CATEGORIES);
+      await expect(page.locator(`${PANEL} .nav__sub`)).toHaveCount(LISTED_CATEGORIES);
 
       await page.locator('header .nav__item--menu').hover();
       await expect(page.locator(PANEL)).toBeVisible();
     });
   });
 
-  test('marks the one range that stocks nothing, and only that one', async ({ page }) => {
+  test('offers no range that stocks nothing', async ({ page }) => {
     await page.goto('/');
 
-    // Electrical Accessories is `status: expanding` with productCount 0. Spill
-    // Control was the second such category until seven SKUs landed, which is
-    // exactly why the marker keys off the count and not the flag alone.
-    const marked = page.locator(`${PANEL} .nav__soon`);
-    await expect(marked).toHaveCount(1);
-    await expect(page.locator(`${PANEL} .nav__sub`, { hasText: 'Electrical Accessories' })).toContainText(
-      'Soon',
-    );
+    /*
+     * Until 2026-09-10 this menu carried Electrical Accessories with a "Soon"
+     * marker, on the reasoning in src/lib/nav.ts: the range is real and a nav
+     * entry indistinguishable from the stocked ones is a small untrue claim
+     * about stock. Withdrawing it answers the same objection more plainly.
+     *
+     * The marker's machinery is still there and still keys off the count
+     * rather than the flag alone, so a range that is listed while empty would
+     * light it — which is what the zero below guards.
+     */
+    await expect(page.locator(`${PANEL} .nav__soon`)).toHaveCount(0);
+    await expect(
+      page.locator(`${PANEL} .nav__sub`, { hasText: 'Electrical Accessories' }),
+    ).toHaveCount(0);
   });
 });
 
@@ -295,7 +302,7 @@ test.describe('the mobile panel', () => {
      * breakpoint and missing on the other is the hardest version of this bug to
      * notice, because whichever one you happen to be testing looks correct.
      */
-    await expect(panel.locator('.mnav-sub')).toHaveCount(TOTAL_CATEGORIES);
+    await expect(panel.locator('.mnav-sub')).toHaveCount(LISTED_CATEGORIES);
   });
 
   test('gives every sub-item a 44px touch target', async ({ page }, testInfo) => {
@@ -307,7 +314,7 @@ test.describe('the mobile panel', () => {
     const heights = await page
       .locator('.mnav-sub')
       .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
-    expect(heights).toHaveLength(TOTAL_CATEGORIES);
+    expect(heights).toHaveLength(LISTED_CATEGORIES);
     // WCAG 2.5.5. Fifteen links in a scrolling panel on a phone is exactly where
     // a cramped target costs a tap.
     for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);

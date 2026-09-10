@@ -111,21 +111,24 @@ test.describe('the hero banner band', () => {
 });
 
 test.describe('the category shelf', () => {
-  test('lists fifteen categories with exactly one marked empty', async ({ page }) => {
+  test('lists the fourteen stocked categories and nothing empty', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('.cg__grid li')).toHaveCount(15);
-
-    // Electrical Accessories stocks nothing. The design mockup filled its tile
-    // with a borrowed product photo from another category — a picture in a
-    // range that has no stock is a false claim, so it must render the
-    // marked-empty state instead.
-    //
-    // This was 2 until 2026-08-17: Spill Control stocked nothing either, until
-    // the campaign banners supplied a real seven-SKU range for it. The count is
-    // asserted rather than the mere presence of an empty tile, so a category
-    // quietly acquiring or losing stock fails here.
-    await expect(page.locator('.cg__empty')).toHaveCount(1);
+    /*
+     * Fourteen of the catalogue's fifteen. Electrical Accessories stocks
+     * nothing and was withdrawn from every buyer-facing surface on 2026-09-10;
+     * its page is still live at its own URL.
+     *
+     * The shelf carried it until then, marked "Range expanding" and with NO
+     * product image — the design mockup had filled it with a borrowed photo
+     * from another category, and a picture in a range that has no stock is a
+     * false claim. That reasoning has not changed and is why `.cg__empty` is
+     * asserted at zero here rather than the assertion simply being deleted: a
+     * tile that reappears must either carry real stock or fail this test.
+     */
+    await expect(page.locator('.cg__grid li')).toHaveCount(14);
+    await expect(page.locator('.cg__empty')).toHaveCount(0);
+    await expect(page.locator('.cg__grid li', { hasText: 'Electrical Accessories' })).toHaveCount(0);
   });
 
   test('shows the catalogue-derived count on the Fans & Ventilation tile', async ({ page }) => {
@@ -219,11 +222,14 @@ test.describe('the hero proposition', () => {
     await expect(doors).toHaveCount(2);
     await expect(doors.nth(0)).toHaveAttribute('href', '/electricals');
     await expect(doors.nth(1)).toHaveAttribute('href', '/safety');
-    // Fifteen categories split across the two doors, and every product is in
-    // exactly one — the totals on the doors must add up to the proof strip's.
+    // The fourteen LISTED categories split across the two doors, and every
+    // product is in exactly one — the totals on the doors must add up to the
+    // proof strip's. Fourteen and not the catalogue's fifteen because the
+    // doors sit directly above the shelf that renders them, and a door reading
+    // 6 over five tiles is the inconsistency `getListedCategories()` removes.
     const text = await doors.allTextContents();
     const numbers = text.map((t) => [...t.matchAll(/(\d+) (categor|product)/g)].map((m) => Number(m[1])));
-    expect(numbers[0][0] + numbers[1][0]).toBe(15);
+    expect(numbers[0][0] + numbers[1][0]).toBe(14);
     expect(numbers[0][1] + numbers[1][1]).toBe(94);
   });
 

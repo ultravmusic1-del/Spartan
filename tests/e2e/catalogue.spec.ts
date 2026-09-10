@@ -22,7 +22,13 @@ import { expect, test, type Page } from '@playwright/test';
 // 72 from the brochure + 13 from the datasheet PDFs (7 industrial fans, 3
 // portable air coolers, 3 consumer fans) + 10 from the campaign banners.
 const TOTAL_PRODUCTS = 94;
-const TOTAL_CATEGORIES = 15;
+/**
+ * LISTED, not total. The catalogue holds 15 categories and Electrical
+ * Accessories is not one a buyer is offered a route to — it stocks nothing, so
+ * `getListedCategories()` withdraws it from every shelf, menu and filter while
+ * its own page stays live. 15 here would pass only if that range came back.
+ */
+const LISTED_CATEGORIES = 14;
 
 /*
  * Named rather than inline, because the combined-filter test below compares
@@ -45,14 +51,14 @@ test.describe('catalogue index', () => {
     await page.goto('/catalogue');
 
     const tiles = page.locator('li[data-category-tile] a');
-    await expect(tiles).toHaveCount(TOTAL_CATEGORIES);
+    await expect(tiles).toHaveCount(LISTED_CATEGORIES);
 
     const hrefs = await tiles.evaluateAll((links) =>
       links.map((link) => (link as HTMLAnchorElement).getAttribute('href') ?? ''),
     );
 
     // Every tile points somewhere distinct under /catalogue/.
-    expect(new Set(hrefs).size).toBe(TOTAL_CATEGORIES);
+    expect(new Set(hrefs).size).toBe(LISTED_CATEGORIES);
     for (const href of hrefs) expect(href).toMatch(/^\/catalogue\/[a-z0-9-]+$/);
 
     const statuses = await Promise.all(
@@ -194,16 +200,24 @@ test.describe('catalogue index', () => {
     await expect(page.locator('.cf__count')).toHaveText(`Showing 0 of ${TOTAL_PRODUCTS} products`);
   });
 
-  test('an empty range still blames the range, not the search', async ({ page }) => {
+  test('the filter does not offer a range that stocks nothing', async ({ page }) => {
     await page.goto('/catalogue');
     await filtersReady(page);
 
-    // Electrical Accessories is the only category with no published products.
-    await page.locator('#cf-category').selectOption('electrical-accessories');
+    /*
+     * This replaced two tests that reached Electrical Accessories THROUGH this
+     * dropdown to check the empty-range panel. That route is gone by design:
+     * the filter is built from `getListedCategories()`, so an empty range is
+     * not selectable and the panel behind it is unreachable from here. The
+     * honest gate is therefore the absence, and it is asserted two ways —
+     * a missing option and a stable option count — so that re-adding an empty
+     * range fails here rather than quietly restoring a dead branch.
+     */
+    const options = page.locator('#cf-category option');
+    await expect(options.filter({ hasText: 'Electrical Accessories' })).toHaveCount(0);
 
-    await expect(page.locator('[data-product-none]')).toBeVisible();
-    await expect(page.locator('[data-product-none]')).toContainText('No products in this range yet');
-    await expect(page.locator('[data-product-none-search]')).toBeHidden();
+    // Every listed category, plus the "All categories" default.
+    await expect(options).toHaveCount(LISTED_CATEGORIES + 1);
   });
 
   test('filters narrow the visible products and clearing restores them all', async ({ page }) => {
@@ -236,18 +250,6 @@ test.describe('catalogue index', () => {
     );
   });
 
-  test('filtering to an expanding range shows the empty panel, not an empty grid', async ({
-    page,
-  }) => {
-    await page.goto('/catalogue');
-    await filtersReady(page);
-
-    await page.locator('#cf-category').selectOption('electrical-accessories');
-    await expect(page.locator('li[data-product]:not([hidden])')).toHaveCount(0);
-    await expect(page.locator('[data-product-grid]')).toBeHidden();
-    await expect(page.locator('[data-product-none]')).toBeVisible();
-    await expect(page.locator('[data-product-none]')).toContainText('No products in this range yet');
-  });
 });
 
 test.describe('catalogue index without JavaScript', () => {
@@ -262,7 +264,7 @@ test.describe('catalogue index without JavaScript', () => {
     await expect(products).toHaveCount(TOTAL_PRODUCTS);
     await expect(products.first()).toBeVisible();
     await expect(products.nth(TOTAL_PRODUCTS - 1)).toBeVisible();
-    await expect(page.locator('li[data-category-tile]')).toHaveCount(TOTAL_CATEGORIES);
+    await expect(page.locator('li[data-category-tile]')).toHaveCount(LISTED_CATEGORIES);
 
     // `data-js` is set by an inline script, so without script it is never there
     // and the bar collapses instead of sitting inert.

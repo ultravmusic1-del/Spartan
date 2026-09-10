@@ -72,10 +72,18 @@ vi.mock('../../lib/catalog', () => ({
     { id: 'electricals', slug: 'electricals', name: 'Spartan Electricals', blurb: 'Lighting and more.' },
     { id: 'safety', slug: 'safety', name: 'Spartan Safety', blurb: 'PPE and workwear.' },
   ],
-  getCategories: async () =>
+  /*
+   * The hero reads `getListedCategories`, not `getCategories` — it counts what
+   * a buyer can reach. All three fixtures stock something, so the two are the
+   * same list here and the door totals below are unaffected; the distinction
+   * itself is covered in src/lib/catalog.test.ts.
+   */
+  getListedCategories: async () =>
     Array.from({ length: 3 }, (_, i) => ({
       id: `c${i}`,
       divisionId: i < 2 ? 'electricals' : 'safety',
+      status: 'active',
+      productCount: 2,
     })),
   getProducts: async () =>
     Array.from({ length: 7 }, (_, i) => ({ slug: `p${i}`, categoryId: `c${i % 3}` })),

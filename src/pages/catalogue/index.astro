@@ -9,7 +9,7 @@ import CatalogueFilters, {
   type FilterCategory,
   type FilterDivision,
 } from '../../components/catalog/CatalogueFilters.tsx';
-import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+import { getListedCategories, getDivisions, getProducts } from '../../lib/catalog';
 /*
  * The same rule `searchProducts` uses, baked into each card's `data-search` at
  * build time. The island searches the DOM rather than calling the repository,
@@ -35,7 +35,7 @@ import { productSearchText } from '../../lib/search';
  * No hero, so `overlayHeader={false}` gives the solid sticky header.
  */
 const [categories, divisions, products] = await Promise.all([
-  getCategories(),
+  getListedCategories(),
   getDivisions(),
   getProducts(),
 ]);

@@ -8,11 +8,11 @@ import About from '../components/sections/About.astro';
 import Faq from '../components/sections/Faq.astro';
 import EnquiryCta from '../components/sections/EnquiryCta.astro';
 import SideRails from '../components/sections/SideRails.astro';
-import { getCategories, getProducts } from '../lib/catalog';
+import { getListedCategories, getProducts } from '../lib/catalog';
 import { organizationJsonLd, requireSite } from '../lib/seo';
 import { getSiteSettings } from '../lib/site-content';
 
-const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+const [products, categories] = await Promise.all([getProducts(), getListedCategories()]);
 
 /* The side rails' index. DOM order, and each `n` must match the number the
    section passes to SectionHeading — `tests/e2e/motion.spec.ts` checks the

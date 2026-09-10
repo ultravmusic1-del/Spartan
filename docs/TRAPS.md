@@ -580,15 +580,35 @@ did not check. Changing one is a regression *you* would be introducing.
 - **`build.inlineStylesheets: 'always'`.** Considered and rejected: it
   inlines ~41 KB into every page, losing cross-page CSS caching.
 
-- **The two empty categories, and the empty tiles on the home shelf.** Spill
-  Control and Electrical Accessories have no products because the brochure has
-  none — `productCount: 0`, `heroProductSlug: null`. On the home page's
-  category shelf they render a marked "Range expanding" tile with **no product
-  image**. The design mockup filled both with photographs borrowed from other
-  categories; a product image in a category that stocks nothing is an untrue
-  claim about stock, which on this site is the same class of error as an
-  invented specification. `tests/e2e/home.spec.ts` asserts that exactly two
-  tiles render the empty state.
+- **Electrical Accessories is missing from every shelf, menu and filter, and
+  its page still answers.** It has no products because the brochure has none —
+  `productCount: 0`, `heroProductSlug: null` — and on 2026-09-10 it was
+  withdrawn from everything a buyer looks at. The seam is
+  `getListedCategories()` in `src/lib/catalog.ts`; `getCategories()` is still
+  the whole catalogue and is what `getStaticPaths`, the admin and every name
+  lookup read, which is why `/catalogue/electrical-accessories` is still built
+  and still returns 200. **Do not "fix" the mismatch by pointing the page
+  builder at the listed set** — that turns a withdrawn range into a 404 for
+  anyone holding the link.
+
+  It follows that **the site's rendered category counts are 14, not 15**, and
+  the two are meant to differ. Every buyer-facing count is derived from the
+  same list it sits beside, so a division door reading 6 above a shelf of 5 is
+  the failure this arrangement prevents. `src/data/categories.json` still holds
+  fifteen and `npm run verify` still checks fifteen.
+
+  Until that date the category was listed with a "Range expanding" tile
+  carrying **no product image**. The reasoning behind the missing image has not
+  changed and still binds anything that brings such a tile back: the design
+  mockup filled it with a photograph borrowed from another category, and a
+  product image in a category that stocks nothing is an untrue claim about
+  stock — the same class of error as an invented specification.
+  `tests/e2e/home.spec.ts` now asserts zero empty tiles rather than deleting
+  the check, so a tile that reappears must carry real stock.
+
+  Spill Control was the second such category until 2026-08-17, when the
+  campaign banners supplied a real seven-SKU range for it. That is why every
+  test of this keys off `productCount` and not the `expanding` flag alone.
 
 - **RLS enabled with zero policies on `enquiries`.** Supabase's linter
   reports `rls_enabled_no_policy` at INFO forever. Do not "fix" it by adding

@@ -40,7 +40,7 @@ import logoLight from '../../assets/brand/spartan-logo-light.svg';
 import MobileNav from './MobileNav.tsx';
 import EnquiryBadge from '../enquiry/EnquiryBadge.tsx';
 import EnquiryDrawer from '../enquiry/EnquiryDrawer.tsx';
-import { getCategories, getDivisions } from '../../lib/catalog';
+import { getListedCategories, getDivisions } from '../../lib/catalog';
 import { buildCategoryGroups, isCurrentNavItem, normalisePath, type NavItem } from '../../lib/nav';
 
 interface Props {
@@ -77,7 +77,7 @@ const logo = onMedia ? logoLight : logoDark;
  * admin route touches, so every page rendering it is prerendered and this read
  * happens at build time like every other catalogue read.
  */
-const [divisions, categories] = await Promise.all([getDivisions(), getCategories()]);
+const [divisions, categories] = await Promise.all([getDivisions(), getListedCategories()]);
 const groups = buildCategoryGroups(divisions, categories);
 
 /*

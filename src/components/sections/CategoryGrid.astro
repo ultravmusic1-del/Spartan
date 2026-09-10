@@ -14,19 +14,22 @@
  * Head-to-toe order inside Safety is the catalogue's own `order` field, so
  * nothing here re-sorts data.
  *
- * The two `.cg__grid` lists still hold fifteen `<li>` between them and the
- * empty categories still render a marked "Range expanding" tile with NO
- * product image — a photograph in a category that stocks nothing is an untrue
- * claim about stock (docs/TRAPS.md). `tests/e2e/home.spec.ts` pins both.
+ * IT READS `getListedCategories()`, so a range with nothing in it is not on
+ * this shelf at all. That is a change from the shelf's first version, which
+ * carried every category and marked the empty ones "Range expanding" — the
+ * reasoning behind the marked tile still stands and is in docs/TRAPS.md, but
+ * the call on 2026-09-10 was to withdraw an empty range rather than advertise
+ * it. What must never come back either way is a borrowed photograph
+ * on a category that stocks nothing: that is an untrue claim about stock.
  */
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+import { getListedCategories, getDivisions, getProducts } from '../../lib/catalog';
 import SectionHeading from '../primitives/SectionHeading.astro';
 
 const [divisions, categories, products] = await Promise.all([
   getDivisions(),
-  getCategories(),
+  getListedCategories(),
   getProducts(),
 ]);
 const bySlug = new Map(products.map((p) => [p.slug, p]));

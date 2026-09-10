@@ -24,7 +24,7 @@ import safetyImage from '../assets/hero/safety.jpg';
 import { getSiteSettings } from '../lib/site-content';
 
 const site = await getSiteSettings();
-import { getCategories, getDivisions, getProducts } from '../lib/catalog';
+import { getListedCategories, getDivisions, getProducts } from '../lib/catalog';
 
 /**
  * About — the brochure's own story and nothing else.
@@ -45,7 +45,7 @@ import { getCategories, getDivisions, getProducts } from '../lib/catalog';
  */
 const [divisions, categories, products] = await Promise.all([
   getDivisions(),
-  getCategories(),
+  getListedCategories(),
   getProducts(),
 ]);
 
@@ -58,7 +58,7 @@ const divisionRows = await Promise.all(
   divisions.map(async (division) => ({
     division,
     photo: divisionPhotos[division.slug],
-    categories: (await getCategories({ divisionId: division.id })).length,
+    categories: (await getListedCategories({ divisionId: division.id })).length,
     products: (await getProducts({ divisionId: division.id })).length,
   })),
 );

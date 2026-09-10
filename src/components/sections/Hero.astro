@@ -29,7 +29,7 @@ import SolidButton from '../primitives/SolidButton.astro';
 import SectionIndex from '../primitives/SectionIndex.astro';
 import PillButton from '../primitives/PillButton.astro';
 import { getHeroBanners, getSiteSettings, heroClock } from '../../lib/site-content';
-import { getCategories, getDivisions, getProducts } from '../../lib/catalog';
+import { getListedCategories, getDivisions, getProducts } from '../../lib/catalog';
 
 const BANNERS = await getHeroBanners();
 /* The last slide is a second copy of the first so the loop's reset is
@@ -66,7 +66,7 @@ const SIZES = '(min-width: 1424px) 1296px, calc(100vw - 2 * var(--wrap-pad, 32px
 
 const [divisions, categories, products, settings] = await Promise.all([
   getDivisions(),
-  getCategories(),
+  getListedCategories(),
   getProducts(),
   getSiteSettings(),
 ]);

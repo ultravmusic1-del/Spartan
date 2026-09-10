@@ -4,7 +4,7 @@ import Chevron from '../components/primitives/Chevron.astro';
 import Eyebrow from '../components/primitives/Eyebrow.astro';
 import SolidButton from '../components/primitives/SolidButton.astro';
 import PillButton from '../components/primitives/PillButton.astro';
-import { getCategories, getDivisions, getProducts } from '../lib/catalog';
+import { getListedCategories, getDivisions, getProducts } from '../lib/catalog';
 
 /**
  * 404. Static output emits this to `dist/404.html`, which the host serves for
@@ -20,7 +20,7 @@ import { getCategories, getDivisions, getProducts } from '../lib/catalog';
  */
 const [divisions, categories, products] = await Promise.all([
   getDivisions(),
-  getCategories(),
+  getListedCategories(),
   getProducts(),
 ]);
 ---

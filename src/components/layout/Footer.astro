@@ -2,7 +2,7 @@
 /**
  * Footer — contact strip, main link block, bottom bar.
  *
- * Category links are read through `getCategories()` so the footer follows the
+ * Category links are read through `getListedCategories()` so the footer follows the
  * catalogue: no page or component may reach into `src/data/` for products,
  * categories or divisions. (`site.json` is chrome, not catalogue content, and
  * is exempt.)
@@ -24,10 +24,10 @@ import { getSiteSettings } from '../../lib/site-content';
 
 const site = await getSiteSettings();
 import logoLight from '../../assets/brand/spartan-logo-light.svg';
-import { getCategories } from '../../lib/catalog';
+import { getListedCategories } from '../../lib/catalog';
 
-const electricals = await getCategories({ divisionId: 'electricals' });
-const safety = await getCategories({ divisionId: 'safety' });
+const electricals = await getListedCategories({ divisionId: 'electricals' });
+const safety = await getListedCategories({ divisionId: 'safety' });
 
 const company = [
   { href: '/about', label: 'About Spartan' },

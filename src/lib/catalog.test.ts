@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  getDivisions, getDivision, getCategories, getCategory,
+  getDivisions, getDivision, getCategories, getCategory, getListedCategories, isListedCategory,
   getProducts, getProduct, getRelatedProducts, searchProducts,
 } from './catalog';
 
@@ -63,6 +63,32 @@ describe('catalog repository', () => {
     const spill = await getCategory('spill-control');
     expect(spill?.productCount).toBe(7);
     expect(spill?.status).toBe('active');
+  });
+
+  it('withdraws an empty expanding range from the listed set, and keeps it in the catalogue', async () => {
+    const all = await getCategories();
+    const listed = await getListedCategories();
+
+    expect(all).toHaveLength(15);
+    expect(listed).toHaveLength(14);
+    expect(all.map((c) => c.slug)).toContain('electrical-accessories');
+    expect(listed.map((c) => c.slug)).not.toContain('electrical-accessories');
+
+    // The page is built from getCategories(), so withdrawing it from the
+    // navigation must not take its own URL away.
+    expect(await getCategory('electrical-accessories')).toBeDefined();
+  });
+
+  it('keys listing off both the flag and the count, not the flag alone', () => {
+    const base = { slug: 's', name: 'n', divisionId: 'd', description: '', heroProductSlug: null, order: 1, id: 'i' };
+
+    // Both conditions. A range marked expanding that has since been stocked is
+    // listed again with no code change; that is what happened to Spill Control
+    // on 2026-08-17 and it is why the flag alone is not the test.
+    expect(isListedCategory({ ...base, status: 'expanding', productCount: 0 } as never)).toBe(false);
+    expect(isListedCategory({ ...base, status: 'expanding', productCount: 7 } as never)).toBe(true);
+    expect(isListedCategory({ ...base, status: 'active', productCount: 0 } as never)).toBe(true);
+    expect(isListedCategory({ ...base, status: 'active', productCount: 3 } as never)).toBe(true);
   });
 
   it('finds a product by slug', async () => {

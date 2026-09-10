@@ -5066,3 +5066,79 @@ nothing visible paints, which is still the right failure for an ornament.
 2. ~~Then delete the five unused section components above.~~ Done.
 3. The open client decisions in `BACKLOG.md` P1 are unchanged: the headline
    wording, `Categories` vs `Products`, the placeholder contact details.
+
+## 47. An empty range stops being advertised — 2026-09-10
+
+Electrical Accessories stocks nothing — `productCount: 0`,
+`heroProductSlug: null` — because the brochure has nothing to put in it, and
+that has been true since the catalogue was first entered. Until today the site
+listed it anyway: a tile on the home shelf and on `/electricals` marked "Range
+expanding" with no product image, a "Soon" entry in the desktop menu and the
+mobile panel, a footer link, and an option in the catalogue filter.
+
+That arrangement was itself reasoned, in §6 and in `docs/TRAPS.md`: the range is
+real, the design mockup had filled its tile with a photograph borrowed from
+another category, and a picture in a range that has no stock is an untrue claim
+about stock — the same class of error as an invented specification. Listing it
+honestly, marked and imageless, answered that. **Withdrawing it answers the same
+objection more plainly, and that was the call today.** Nothing about the
+photograph reasoning is retracted; it still binds anything that brings such a
+tile back, and the tests now assert zero empty tiles rather than dropping the
+check.
+
+### The seam is one predicate, and it is not the page builder
+
+`src/lib/catalog.ts` grew `isListedCategory` and `getListedCategories()`. A
+category is listed when it is NOT both `status: 'expanding'` and empty. **Both
+conditions, not either** — the flag is editorial and the count is the fact, and
+Spill Control is the reason: it was the second empty category until 2026-08-17,
+when the campaign banners supplied a real seven-SKU range, and a rule keyed on
+the flag alone would have kept hiding a range that had stock.
+`buildCategoryGroups` in `src/lib/nav.ts` already paired them the same way for
+the same reason, so the two now agree by construction.
+
+Every buyer-facing surface reads the listed set: the header and mobile nav, the
+footer, the home shelf, both division pages, the catalogue filter, the 404, and
+the About, Why Spartan and catalogue index pages.
+
+**`getStaticPaths` deliberately does not.** `/catalogue/electrical-accessories`
+is still built and still returns 200, and its own page still says the range is
+expanding. Withdrawing a range from navigation is a merchandising decision;
+404ing an address somebody may already hold is a larger and different one, and
+nothing today asked for it. `getCategories()` remains the whole catalogue and is
+what the page builder, the admin and every name lookup read.
+
+### The counts had to follow, and that is the part worth remembering
+
+Each page derives its category count from the same array it renders, so pointing
+the page at the listed set moved the number with the tiles. **Every rendered
+category count is now 14 while `src/data/categories.json` still holds 15, and
+the two are meant to differ.** The alternative was visible on one screen: the
+Electricals door on the home page read "6 categories" directly above a shelf of
+five tiles.
+
+Four numbers moved and each was pinned by a test, which is how they were found —
+the hero proof strip, the hero division doors, the division page lede and stat
+block, and the catalogue index. `npm run verify` still checks fifteen, because
+it checks the data.
+
+### Two pieces of copy were describing behaviour that no longer happens
+
+- **About, "Gaps shown as gaps"** promised that a range still expanding *is
+  listed with no products*. That is now the opposite of what the site does. It
+  became "No placeholder products", which is the part that is still true and was
+  always the point.
+- **The FAQ's "Do you supply spill control products?"** was already wrong before
+  today: it said the spill control range "has no products listed yet", and seven
+  SKUs landed in it on 2026-08-17. It was rewritten as "Is everything you supply
+  listed on this site?", which answers the question the withdrawal actually
+  raises. **This one is a reminder that prose describing data goes stale in
+  silence** — no gate reads an FAQ answer against the catalogue, and this one
+  had been false on the live site for three weeks.
+
+### Reversing it
+
+Give the category a product and it comes back everywhere, with no code change.
+To bring it back empty, revert the call sites to `getCategories()`; the "Range
+expanding" tile, the "Soon" nav marker and the catalogue index's empty-range
+panel are all still in place and still work.
