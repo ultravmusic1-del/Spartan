@@ -2,22 +2,31 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "spartan-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 4321
-    },
-    {
-      "name": "spartan-admin-testdb",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:test"],
-      "port": 4321
+      "name": "spartan-preview-attached",
+      "url": "http://localhost:4321",
+      "port": 4321,
+      "autoPort": false
     },
     {
       "name": "spartan-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview"],
-      "port": 4321
+      "port": 4321,
+      "autoPort": false
+    },
+    {
+      "name": "spartan-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 4321,
+      "autoPort": false
+    },
+    {
+      "name": "spartan-admin-testdb",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:test"],
+      "port": 4321,
+      "autoPort": false
     }
   ]
 }
