@@ -5470,3 +5470,23 @@ footer's top — at four scroll positions, and again under reduced motion.
 Asserting that a mask exists would pass just as well with the cut frozen wrong.
 
 `verify 18/18 · 396 unit · 354 public e2e, 0 failing.`
+
+## 52. The email address becomes real — 2026-09-11
+
+`Spartan@kavalani.com`, given by the client as the official address, replaces
+`sales@spartan.example` in `src/data/site.json`. It reaches the footer's contact
+strip, the contact page and the enquiry page from that one edit, because none of
+them types it in — which is the whole reason the detail lives in `site.json`.
+
+**`npm run verify` now names two outstanding contact details rather than
+three.** The check was not touched: it tests the placeholder *shape*
+(`endsWith('.example')`), not one address, so it went quiet on its own and would
+speak up again if the value regressed. The phone number and the postal address
+are still placeholders and still blocked on the client — and the standing
+instruction in `BACKLOG.md` holds, that a plausible-looking value must not be
+invented for either to make the site feel finished.
+
+Two file headers that described all three details as placeholders were corrected
+rather than left to rot: `src/pages/contact.astro` and `src/pages/enquiry.astro`.
+
+`verify 18/18 · 396 unit · 354 public e2e, 0 failing.`

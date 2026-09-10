@@ -175,14 +175,23 @@ see `handoff.md`). Priorities are P0 highest.
       been anything but a placeholder. The phone number is still blocked on the
       client.
 
-      **Do not put a plausible-looking value into the three that remain to make
+      **The email landed on 2026-09-11: `Spartan@kavalani.com`**, given by the
+      client as the official address. It is a Kavalani mailbox, which is what
+      2026-08-17 proposed in the meantime. `npm run verify` now names **two**
+      unset details rather than three. It reaches the footer's contact strip,
+      the contact page and the enquiry page from one edit to `site.json`,
+      because none of them types it in.
+
+      **Phone and address remain, and both are still blocked on the client.**
+
+      **Do not put a plausible-looking value into the two that remain to make
       the site feel finished** — that is the specific thing the gate exists to
       catch.
 
       Page for page these are worse than the temporary domain: a buyer who taps
-      the header phone number or the footer email gets nothing at all, on a site
-      whose only purpose is getting them to make contact. The domain costs
-      ranking; this costs the lead.
+      the header phone number gets nothing at all, on a site whose only purpose
+      is getting them to make contact. The domain costs ranking; this costs the
+      lead.
 - [x] **Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel.** Done
       2026-08-13. Enquiries are being written to Postgres in production.
 

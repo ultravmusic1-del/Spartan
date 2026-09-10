@@ -528,12 +528,17 @@ let unitSuitePassed = false;
  * not been supplied, so this cannot fail a build without failing every build.
  * But it must not go quiet either, and until now nothing said it at all.
  *
- * These are worse than the domain, page for page. `+971 00 000 0000` renders as
- * a live `tel:` link in the header of all 119 pages and `sales@spartan.example`
- * is a `mailto:` in every footer — so a buyer who tries either gets a dead
- * number or an undeliverable address, on a site whose entire purpose is getting
- * them to make contact. The domain being temporary costs search ranking; these
- * cost the lead itself.
+ * These are worse than the domain, page for page. A buyer who tries a
+ * placeholder gets nothing back, on a site whose entire purpose is getting them
+ * to make contact: the domain being temporary costs search ranking, these cost
+ * the lead itself.
+ *
+ * THE EMAIL WAS THE WORST OF THEM AND IS NOW REAL. `sales@spartan.example` was
+ * a `mailto:` in every footer until 2026-09-11, when the client supplied
+ * `Spartan@kavalani.com`. The check stays exactly as it was — it tests the
+ * placeholder shape, not that one address — so it goes quiet on its own and
+ * would speak up again if the value ever regressed. `+971 00 000 0000` and
+ * `Address line, City, Country` are still outstanding.
  *
  * `whatsapp` is listed as missing rather than placeholder-valued: it is an empty
  * string in site.json, which renders nothing at all, which is the honest state
