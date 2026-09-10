@@ -5142,3 +5142,116 @@ Give the category a product and it comes back everywhere, with no code change.
 To bring it back empty, revert the call sites to `getCategories()`; the "Range
 expanding" tile, the "Soon" nav marker and the catalogue index's empty-range
 panel are all still in place and still work.
+
+## 48. The mobile audit, and the two widths it fixed — 2026-09-10
+
+The landing page was audited at 320, 360, 375 and 390px in both Chromium and
+WebKit, against the built output through `npm run preview` and never the dev
+server. `verify 18/18 · 396 unit · 348 public e2e, 0 failing.`
+
+Most of the page was already right, and it is worth saying so because it is why
+the finding list was short: CLS 0.00, 564 KB first load, 26 of 29 images lazy,
+every form input 16px so iOS does not zoom on focus, no `100vh` anywhere in the
+stylesheet, and the menu drawer's scroll lock holding under a real wheel gesture.
+
+**Two findings were fixed. Both were the same mistake in different components:
+a column count that stepped down for tablets and then stopped.**
+
+### The section head kept its desktop proportions on a phone
+
+`SectionHeading` is `grid-template-columns: minmax(0, 1fr) auto`, and the `auto`
+column does not shrink with the viewport. The numeral is 72px below a 750px
+viewport — the clamp sits at its 30px floor, times the 2.4 ratio — an action
+like "All 94 products" is wider still, and the 32px gap is charged on top. That
+fixed ~160px is 12% of the measure at 1360px and **41% at 390px**.
+
+Measured on the home page before the change, headings rendered at **42–61% of
+the content width** and wrapped to three lines. The ledes inherit the same
+column and that is the part that actually hurt: the trade-enquiries paragraph
+ran **nine lines at ~18 characters** at 390px, and eleven lines at ~15
+characters at 360px, against a comfortable measure of 45–75.
+
+Below 700px the head is now one column: numeral, body, action.
+
+- **`display: contents` on `.sec__side`** promotes the numeral and the action
+  into the head's grid so each can take its own row. It also means
+  `.sec--side > .section-index` **matches nothing** — box generation changed,
+  the DOM did not, and `.sec__side` is still the span's parent. That was written
+  as a child combinator first and **failed half-correctly**: auto-placement
+  still put the numeral in row 1 once `.sec__body` was pinned to row 2, so the
+  order looked right and only the alignment was wrong. Caught by looking at the
+  render, not by any gate.
+- **The order is numeral, body, action rather than the DOM's body, numeral,
+  action**, and the action staying last is the point: it is the only focusable
+  thing in the head, so focus order still matches visual order. The numeral is
+  `aria-hidden` and takes part in neither. Lifting the whole side row to the top
+  instead would have put "Browse all" above the heading and broken that.
+- **The numeral is flush LEFT here**, against the "always at the right edge of
+  the measure" rule a few lines above it in the same file. That rule is about
+  the two-column head, where the numeral counterweights the text beside it; in
+  one column there is nothing to counterweight and a right-aligned numeral is
+  stranded opposite empty space. Flush left makes numeral, eyebrow rule, heading
+  and lede one aligned column.
+- **The 2.4x ratio was deliberately not reduced.** It is a stated rule and it
+  holds at every width; shrinking it on mobile would have been a second change
+  with no measurement behind it.
+
+Headings now render at **88–90%** of the content width at every phone size, and
+the trade-enquiries lede is four lines at ~41 characters at 390px.
+
+### The product grid stayed two-up, and the clamp started eating specifications
+
+`ProductGrid` stepped 4 → 3 → 2 and held 2 all the way to 320px. A two-up card
+is **174px at a 390px viewport and 159px at 360px**, and at that width
+`-webkit-line-clamp: 2` on a spec row stops trimming and starts cutting:
+**6 of 24 spec rows at 390px, 8 of 24 at 360px.** What it cut was the useful
+half — `Power — 10W | 20W | 30W | 50W | 100W…`, `Models — MP-40 | MP-158…`,
+`Colors — Red | White | Blue | Orange…` — so a buyer read a range that appeared
+to end at the ellipsis.
+
+**That is worse here than it would be elsewhere.** It is not rule 1: nothing was
+invented. But it is the same family, because the section's own lede promises
+"with the specifications printed for each" directly above the cards that were
+not printing them.
+
+One column below **600px**, and the threshold was worked back from the card
+rather than picked off a device list: a two-up card clears ~280px at a 600px
+viewport, which is where a two-line clamp holds ~70 characters and stops biting.
+At 390px the card is now 348px and every one of the 24 rows fits.
+
+It also removed the last horizontal scroll on the site. Two columns needed 336px
+to fit, so **every viewport from 320 to 335px scrolled sideways** — 13px of
+overhang at 320, 1px at 332. Nothing else on the page overflowed at any width.
+
+There is no `--pg-cols-xs`. The other three counts are `Math.min(n, cols)` so a
+short grid does not stretch its hairlines across empty cells; at one column the
+minimum is 1 for every grid that renders at all.
+
+**The cost is height and it was accepted knowingly: 11,852px → 13,250px at
+390px.** Printing a whole specification is worth 1,400px. If it has to come
+down, the lever is showing fewer products at the phone breakpoint, not narrowing
+the card again — narrowing it is what caused this.
+
+### Eight things were checked and cleared rather than filed
+
+Recorded so the next audit does not spend its session there. The 88px campaign
+band and the floating WhatsApp button's overlaps are both settled decisions and
+were not re-filed. The rest were false alarms with a measurement behind each:
+the red numerals report 1:1 to an automated contrast pass because the glyph's
+fill IS the background — the visible 5px stroke measures 4.30:1 and 3.99:1 at
+54–72px, where 3:1 applies; the drawer's scroll lock looks broken to a scripted
+`scrollTo` and holds under a real wheel gesture; the floating button's flat 16px
+bottom offset is `calc(16px + env(safe-area-inset-bottom, 0px))` resolving the
+inset to zero in a headless browser; the stray 215×26 "Website" input is the
+spam honeypot, off-screen and `aria-hidden`; and the 1×1 skip link becomes
+106×26 with a focus ring on the first Tab.
+
+### One documentation defect came out of it
+
+`docs/TRAPS.md` still claimed the hero's CTAs sit after the carousel and that
+only the primary one is above the fold on a 375×667 or 360×640. The 2026-09-03
+redesign moved them above the campaign band — measured on the built page, the
+CTAs are at y 362–418 and the band starts at 520, and **both clear the fold at
+390×844, 375×667 and 360×640.** The entry is marked superseded rather than
+deleted: its reasoning about source order and the `.wrap` split is still how the
+hero is built.

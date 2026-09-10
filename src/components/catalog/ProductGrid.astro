@@ -114,4 +114,42 @@ const cols = { lg: Math.min(n, 4), md: Math.min(n, 3), sm: Math.min(n, 2) };
       max-width: calc(var(--pg-cols-sm) / 2 * 100%);
     }
   }
+
+  /* ONE COLUMN ON A PHONE, AND THE THRESHOLD IS A MEASUREMENT.
+     Added 2026-09-10; the ladder used to stop at two and stay there to 320px.
+
+     A two-up card is 174px wide at a 390px viewport and 159px at 360px, and at
+     that width `-webkit-line-clamp: 2` on a spec row stops trimming values and
+     starts eating them: 6 of the 24 spec rows on the home page were cut at
+     390px and 8 of 24 at 360px. What it cuts is the useful half — "Power —
+     10W | 20W | 30W | 50W | 100W…", "Models — MP-40 | MP-158 | MP-185…" — so a
+     buyer reads a range that appears to end at the ellipsis. On a catalogue
+     whose whole promise is the printed specification that is the wrong thing
+     to lose, and the home section's own lede says "with the specifications
+     printed for each" directly above it.
+
+     600px, worked back from the card rather than picked from a device list: a
+     2-up card clears ~280px at a 600px viewport, which is where a two-line
+     clamp holds ~70 characters and stops biting. Below that, one column — at
+     390px the card goes to ~350px and the same rows fit in two lines with room
+     to spare.
+
+     It also removes the last horizontal scroll on the site. Two columns needed
+     336px to fit, so every viewport from 320px to 335px scrolled sideways: 13px
+     of overhang at 320px, 1px at 332px. Nothing else on the page overflowed at
+     any width.
+
+     No `--pg-cols-xs`: the other three counts are clamped to the number of
+     products so a short grid does not stretch its rules across empty cells,
+     and at one column `Math.min(n, 1)` is 1 for every grid that renders at all.
+
+     THE COST IS HEIGHT, and it is real: the home page's eight-product section
+     roughly doubles. If that becomes a problem the honest lever is showing
+     fewer products at this breakpoint, not narrowing the card again. */
+  @media (max-width: 600px) {
+    .grid {
+      grid-template-columns: 1fr;
+      max-width: 100%;
+    }
+  }
 </style>

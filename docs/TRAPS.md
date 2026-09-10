@@ -526,6 +526,17 @@ did not check. Changing one is a regression *you* would be introducing.
   the only thing clearing it — at 96px the badge collided with the header logo
   at every width from 375 to 1024.
 
+- **SUPERSEDED 2026-09-10 — the passage below describes the hero as it was
+  before the 2026-09-03 redesign, and its headline claim is now false.** The
+  redesign (`handoff.md` §46) moved the actions ABOVE the campaign band, so the
+  order is masthead, headline, lede, both CTAs, band, doors, proof. Measured on
+  the built page: the CTAs sit at y 362–418 and the band starts at 520, and
+  **both CTAs are above the fold on a 390×844, a 375×667 and a 360×640** — the
+  cost this entry was written to record is no longer being paid. Kept because
+  the reasoning about source order, the `.wrap` split and why `order` cannot
+  express it is still how the hero is built, and because the shrink numbers
+  below are still the ones in the stylesheet.
+
 - **The hero source order IS the mobile layout, and the CTAs deliberately sit
   after the carousel.** Below 1180px `.hero` is `display: block`, so the DOM
   decides the stack: badge and headline, then the stage, then the actions. That
@@ -740,3 +751,40 @@ did not check. Changing one is a regression *you* would be introducing.
   same applies to the proof strip's numbers, which read "0" for the first
   second after they enter the viewport.
 
+
+## The phone layout, since 2026-09-10
+
+- **`SectionHeading` is one column below 700px, and `.sec__side` is
+  `display: contents` there.** That promotes the numeral and the action into
+  the head's own grid so each can be placed on its own row — numeral, body,
+  action. **`display: contents` changes box generation, not the DOM**, so
+  `.sec--side > .section-index` matches nothing: `.sec__side` is still the
+  span's parent element. Write the descendant form. The child form fails
+  *silently and half-correctly* — auto-placement still drops the numeral into
+  row 1 once `.sec__body` is pinned to row 2, so the order looks right and only
+  the alignment is wrong, which is exactly the kind of near-miss that gets
+  shipped.
+
+- **The numeral is flush LEFT on a phone and flush RIGHT everywhere else, and
+  both are deliberate.** `SectionHeading`'s own comments say the numeral is
+  "always at the right edge of the measure"; that is the two-column head, where
+  it counterweights the text beside it. In one column there is nothing to
+  counterweight. Do not "restore" the right edge on mobile.
+
+- **`ProductGrid` goes to one column below 600px, and 600 is derived, not
+  chosen.** A two-up card clears ~280px at a 600px viewport, which is where
+  `-webkit-line-clamp: 2` on a spec row holds ~70 characters and stops cutting
+  values. Below that the clamp ate real specifications: 6 of 24 spec rows at
+  390px, 8 of 24 at 360px, and what it cut was the model list and the power
+  range. **Narrowing this card again reintroduces that**, and the section's own
+  lede promises "the specifications printed for each".
+
+- **There is no `--pg-cols-xs`, and that is not an oversight.** The other three
+  counts are `Math.min(n, cols)` so a grid holding fewer products than columns
+  does not stretch its hairlines across empty cells. At one column the minimum
+  is always 1 for any grid that renders at all.
+
+- **The home page is ~13,250px tall at 390px, up from ~11,850px, and the single
+  product column is why.** That was the accepted cost of printing whole
+  specifications. If it needs to come down, show fewer products at the phone
+  breakpoint — do not narrow the card.

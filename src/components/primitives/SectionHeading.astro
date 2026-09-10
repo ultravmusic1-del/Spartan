@@ -199,4 +199,80 @@ const hasAction = Astro.slots.has('action');
   .sec--center p {
     margin-inline: auto;
   }
+
+  /* ON A PHONE THE HEAD IS ONE COLUMN, AND THE NUMERAL BECOMES A FOLIO.
+     Added 2026-09-10 after measuring the rendered page at four phone widths.
+
+     The two-column head is right at 1360px and wrong at 390px, because the
+     right-hand column does not shrink with the viewport: the numeral is 72px
+     below a 750px viewport (the clamp is at its 30px floor, times 2.4), an
+     action like "All 94 products" is wider still, and the 32px gap is charged
+     on top. That is a fixed ~160px, so the narrower the screen the larger the
+     share it takes — 12% of the measure at 1360px and 41% at 390px.
+
+     Measured on the home page at 390px, the headings were rendering at 42-61%
+     of the content width and wrapping to three lines. The ledes inherit the
+     same column, and that is the part that actually hurts: the trade-enquiries
+     paragraph ran NINE lines at ~18 characters at 390px, and eleven lines at
+     ~15 characters at 360px, against a comfortable measure of 45-75.
+
+     700px, because that is about where the fixed side column stops being a
+     counterweight and starts being a quarter of the line.
+
+     WHY THE ORDER IS NUMERAL, BODY, ACTION rather than the DOM's body, numeral,
+     action. `display: contents` promotes the side's two children into this
+     grid so they can be placed on separate rows — the numeral leads as a folio,
+     and the action stays AFTER the lede, which is both the sensible reading
+     order and what keeps focus order matching visual order. The numeral is
+     `aria-hidden`, so it takes no part in either and moving it visually costs
+     nothing. Putting the whole side row first would have lifted the action
+     above the heading and broken that match.
+
+     THE NUMERAL GOES FLUSH LEFT HERE, and that is a deliberate departure from
+     "always at the right edge of the measure" a few rules up. That rule earns
+     its keep in the two-column head, where the numeral is the counterweight to
+     the text block beside it. In one column there is nothing to counterweight:
+     right-aligning it strands it opposite empty space, while flush left makes
+     the whole head — numeral, eyebrow rule, heading, lede — one aligned column.
+     It is stated explicitly rather than left to the grid's default, because a
+     default is not a decision.
+
+     The 2.4x ratio is deliberately NOT reduced here: it is the rule stated
+     above and it holds at every width. */
+  @media (max-width: 700px) {
+    .sec--side {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .sec__side {
+      display: contents;
+    }
+
+    /* Global because the numeral is a child COMPONENT's root element, which
+       never carries this file's scope attribute. Bounded by the scoped
+       `.sec__side` on its left so it cannot reach another one.
+
+       DESCENDANT, NOT CHILD, and the difference is not cosmetic. `display:
+       contents` changes box generation, not the DOM — `.sec__side` is still
+       this span's parent element, so `.sec--side > .section-index` matches
+       nothing. It failed silently: the numeral still landed in row 1 because
+       auto-placement put it in the first free slot once `.sec__body` was
+       pinned to row 2, so the layout looked correct and only the alignment
+       was wrong. */
+    .sec__side :global(.section-index) {
+      grid-row: 1;
+      justify-self: start;
+    }
+
+    .sec__body {
+      grid-row: 2;
+    }
+
+    .sec__action {
+      grid-row: 3;
+      justify-self: start;
+      margin-top: var(--space-4);
+    }
+  }
 </style>
