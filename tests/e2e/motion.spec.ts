@@ -179,4 +179,82 @@ test.describe('the side rails', () => {
     });
     await expect(rail.locator('[aria-current="true"]')).toHaveAttribute('data-rail-link', 'about');
   });
+
+  /*
+   * THE RAILS MUST NEVER PAINT OVER THE FOOTER. Both are `position: fixed` and
+   * centred on the viewport, so at the bottom of the page they used to print
+   * light grey mono type across the near-black footer. `railAbsorb()` masks
+   * each one at the footer's own top edge.
+   *
+   * The assertion is the invariant rather than the mechanism: the lowest
+   * painted pixel of a rail is its top plus `--rail-cut`, and that must not
+   * pass the footer's top. Asserting the mask exists would pass just as well
+   * with the cut frozen at a wrong value.
+   */
+  const railsClearTheFooter = async (page: import('@playwright/test').Page) => {
+    return page.evaluate(() => {
+      const footerTop = document.querySelector('footer')!.getBoundingClientRect().top;
+      return [...document.querySelectorAll<HTMLElement>('[data-rail-absorb]')].map((rail) => {
+        const box = rail.getBoundingClientRect();
+        const cut = parseFloat(getComputedStyle(rail).getPropertyValue('--rail-cut'));
+        return {
+          side: rail.className.includes('left') ? 'left' : 'right',
+          overshoot: Math.round(box.top + cut - footerTop),
+          opacity: Number(getComputedStyle(rail).opacity),
+        };
+      });
+    });
+  };
+
+  test('are eaten by the footer rather than printed over it', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto('/');
+    await expect(page.locator('[data-rail]')).toBeVisible();
+
+    const stops = await page.evaluate(() => {
+      const max = document.body.scrollHeight - window.innerHeight;
+      return [0, max - 520, max - 260, max];
+    });
+
+    for (const y of stops) {
+      await page.evaluate((yy) => window.scrollTo(0, yy), y);
+      await page.waitForTimeout(260);
+      for (const rail of await railsClearTheFooter(page)) {
+        // 1px of slack for sub-pixel rounding in the mask stop.
+        expect(rail.overshoot, `${rail.side} rail at scrollY ${y}`).toBeLessThanOrEqual(1);
+      }
+    }
+
+    /*
+     * And the left rail is GONE at the bottom, not merely clipped. It is a
+     * numbered list: the mask eats it from the bottom up, which at the end of
+     * the page removes exactly the entries the scroll-spy has lit, leaving an
+     * index whose current item is the one you cannot see. The right rail is a
+     * continuous line and stays — running under the footer edge is the effect.
+     */
+    const atBottom = await railsClearTheFooter(page);
+    expect(atBottom.find((r) => r.side === 'left')!.opacity).toBe(0);
+    expect(atBottom.find((r) => r.side === 'right')!.opacity).toBe(1);
+  });
+
+  test.describe('under reduced motion', () => {
+    // `contextOptions.reducedMotion`, never the top-level key — docs/TRAPS.md.
+    test.use({ contextOptions: { reducedMotion: 'reduce' } });
+
+    test('the footer still absorbs them, because the overlap is a defect not a flourish', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await page.goto('/');
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(300);
+
+      // `railAbsorb()` sits outside landing-motion's `if (!reduced)` branch.
+      // Moving it inside would restore the bleed for exactly the readers who
+      // asked for less, and every other test here would still pass.
+      for (const rail of await railsClearTheFooter(page)) {
+        expect(rail.overshoot, `${rail.side} rail`).toBeLessThanOrEqual(1);
+      }
+    });
+  });
 });

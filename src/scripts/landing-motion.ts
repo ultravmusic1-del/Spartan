@@ -245,7 +245,69 @@ function railSpy(): void {
   setCurrent();
 }
 
+/* THE RAILS DISSOLVE INTO THE FOOTER instead of crossing it.
+ *
+ * Both rails are fixed and centred on the viewport, so at the bottom of the
+ * page they printed straight over the dark footer. `SideRails.astro` masks each
+ * one with a gradient whose cut-off is `--rail-cut`, measured from the rail's
+ * own top; this writes that distance from the footer's top edge on every
+ * scroll, so the rail is eaten from the bottom up as the footer arrives.
+ *
+ * NOT INSIDE THE `!reduced` BRANCH, and that is the point of this comment. The
+ * rails overlapping the footer is a layout defect, not decoration, so a reader
+ * who has asked for less motion still needs it fixed. `railSpy` sits outside
+ * for the same reason. Nothing here animates: the mask follows the scroll
+ * position exactly, with no easing and no transition of its own.
+ *
+ * Below 1680px the rails are `display: none`, so `getBoundingClientRect()`
+ * reports a zero-height box and the loop skips them without touching the
+ * property — the CSS default keeps the mask a no-op.
+ */
+function railAbsorb(): void {
+  const rails = [...document.querySelectorAll<HTMLElement>('[data-rail-absorb]')];
+  const footer = document.querySelector('footer');
+  if (rails.length === 0 || !footer) return;
+
+  const paint = () => {
+    const footerTop = footer.getBoundingClientRect().top;
+    for (const rail of rails) {
+      const box = rail.getBoundingClientRect();
+      if (box.height === 0) continue;
+      const cut = Math.max(0, Math.min(footerTop - box.top, box.height));
+      rail.style.setProperty('--rail-cut', `${Math.round(cut)}px`);
+
+      /* The left rail fades as well as being masked, and only it. A clipped
+         continuous line reads as running under the footer; a clipped NUMBERED
+         LIST reads as broken — and at the bottom of the page the mask eats
+         exactly the entries the scroll-spy has lit, leaving an index whose
+         current item is the one you cannot see. Gone beats truncated.
+         Full opacity until the footer touches it, nothing left once it has
+         taken 40%. */
+      if (rail.dataset.railAbsorb === 'fade') {
+        const remaining = cut / box.height;
+        const veil = Math.max(0, Math.min(1, (remaining - 0.6) / 0.4));
+        rail.style.setProperty('--rail-veil', veil.toFixed(3));
+      }
+    }
+  };
+
+  let ticking = false;
+  const schedule = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      paint();
+      ticking = false;
+    });
+  };
+
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule, { passive: true });
+  paint();
+}
+
 railSpy();
+railAbsorb();
 
 if (!reduced) {
   reveal();

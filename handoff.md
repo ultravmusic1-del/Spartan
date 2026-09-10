@@ -5426,3 +5426,47 @@ would be inventing content. If that is ever wanted, it needs either a short
 video, a frame sequence, or a photograph of the tool actually in use.
 
 `verify 18/18 · 396 unit · 350 public e2e, 0 failing.`
+
+## 51. The footer absorbs the side rails — 2026-09-11
+
+Both rails are `position: fixed` and centred on the viewport, so at the bottom
+of the page they sat on top of the dark footer: the seven-item section index
+printed across the contact strip, the vertical brand line down the other side,
+both in light grey mono on near-black. The client's phrasing was that they
+should "disappear upon contact with the footer like they are getting absorbed
+into the footer", which is a better description of the fix than a fade would
+have been.
+
+**The mechanism is a mask whose cut-off tracks the footer's own top edge.**
+`railAbsorb()` in `src/scripts/landing-motion.ts` writes `--rail-cut` — the
+distance from each rail's top to `footer.getBoundingClientRect().top` — on every
+scroll, rAF-throttled, and `SideRails.astro` masks the rail off at that distance
+with a 30px dissolve. The rail is eaten from the bottom up exactly as the footer
+arrives, so nothing ever paints past the boundary.
+
+Three decisions inside it:
+
+- **`--rail-cut` defaults to `4000px`, not `100%`.** The fade band is subtracted
+  from the cut, so a `100%` default would fade the bottom 30px of every rail
+  permanently — and permanently is literal for a reader with JavaScript off, who
+  never gets a corrected value. The default has to put both gradient stops past
+  the end of the box, where the mask is a no-op.
+- **It runs under reduced motion.** Rails printed over the footer is a layout
+  defect, not a flourish, so `railAbsorb()` sits outside landing-motion's
+  `if (!reduced)` branch alongside `railSpy()`. Nothing about it animates: the
+  mask follows the scroll position with no easing and no transition.
+- **The left rail also fades; the right rail only masks.** This came out of
+  looking at it. A clipped continuous line reads as running *under* the footer,
+  which is the effect asked for. A clipped numbered list reads as broken — and
+  at the very bottom the mask eats precisely the entries the scroll-spy has lit,
+  so the index was left showing a lone faint "01" while the reader was in
+  section 07. Gone beats truncated, so the left rail carries
+  `data-rail-absorb="fade"` and goes to `opacity: 0` once the footer has taken
+  40% of it.
+
+`tests/e2e/motion.spec.ts` asserts the invariant rather than the mechanism — the
+lowest painted pixel of each rail, its top plus `--rail-cut`, must not pass the
+footer's top — at four scroll positions, and again under reduced motion.
+Asserting that a mask exists would pass just as well with the cut frozen wrong.
+
+`verify 18/18 · 396 unit · 354 public e2e, 0 failing.`

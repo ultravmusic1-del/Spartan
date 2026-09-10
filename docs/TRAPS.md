@@ -851,3 +851,40 @@ did not check. Changing one is a regression *you* would be introducing.
   asserts all three names are `none` **and that the spin layer's opacity is 0** —
   its resting 0 is declared outside the keyframes, so `animation: none` is only
   enough while nobody gives that layer a fill mode.
+
+## The side rails and the footer, since 2026-09-11
+
+- **The rails are masked at the footer's top edge, and the mask is driven from
+  JavaScript.** Both are `position: fixed` and centred on the viewport, so at
+  the bottom of the page they printed light grey mono type across the near-black
+  footer. `railAbsorb()` in `src/scripts/landing-motion.ts` writes `--rail-cut`,
+  the distance from each rail's top to the footer's top, on every scroll;
+  `SideRails.astro` masks the rail off at that distance. **Change the footer's
+  markup and this still works — it measures `document.querySelector('footer')`
+  — but delete the `<footer>` element and the rails silently stop being masked.**
+
+- **`--rail-cut` defaults to `4000px`, not `100%`, and that is load-bearing.**
+  The fade band is subtracted from the cut, so a `100%` default would fade the
+  bottom 30px of every rail permanently — including for a reader with
+  JavaScript off, who never gets a corrected value. The default has to put both
+  gradient stops past the end of the box.
+
+- **`railAbsorb()` is OUTSIDE landing-motion's `if (!reduced)` branch, with
+  `railSpy()`.** Rails printed over the footer is a layout defect, not a
+  flourish, so a reader who asked for less motion still needs it fixed. Moving
+  it inside restores the bleed for exactly those readers and every other test
+  still passes; `tests/e2e/motion.spec.ts` has a reduced-motion case that fails
+  if anyone does.
+
+- **The left rail also fades out; the right rail only masks. Both are
+  deliberate.** A clipped continuous line reads as running under the footer,
+  which is the effect. A clipped NUMBERED LIST reads as broken — and at the
+  bottom of the page the mask eats precisely the entries the scroll-spy has lit,
+  leaving an index whose current item is the one you cannot see. So the left
+  rail carries `data-rail-absorb="fade"` and goes to `opacity: 0` rather than
+  standing truncated. Do not "fix" the asymmetry.
+
+- **`[data-rail]` still means the LEFT rail alone.** Two side-rail tests use it
+  as a single-element locator. The absorb hook is the separate
+  `[data-rail-absorb]`, which is on both; widening `data-rail` breaks those two
+  tests with a strict-mode violation rather than an assertion failure.

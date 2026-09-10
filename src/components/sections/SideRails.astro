@@ -28,7 +28,25 @@ interface Props {
 const { sections, brand } = Astro.props;
 ---
 
-<nav class="rail rail--left" aria-label="Sections on this page" data-rail>
+{/* `data-rail-absorb` is the script's hook and `data-rail` is the left rail's
+    identity — two attributes on purpose. The absorb applies to BOTH rails, and
+    widening `[data-rail]` to cover the right one would silently break the two
+    side-rail tests that use it as a single-element locator.
+
+    ITS VALUE IS `fade`, AND THE RIGHT RAIL'S IS NOT. The mask alone suits a
+    continuous line: the right rail's rule and brand text simply run under the
+    footer edge, which is the effect asked for. A NUMBERED LIST BEHAVES
+    DIFFERENTLY — clipped, it reads as broken rather than as absorbed, and at
+    the very bottom of the page it is the current section (07) that the mask
+    eats, leaving an index whose lit item is the one you cannot see. So this
+    rail also fades out as the footer takes it, and is gone rather than
+    truncated. */}
+<nav
+  class="rail rail--left"
+  aria-label="Sections on this page"
+  data-rail
+  data-rail-absorb="fade"
+>
   <ol class="rail__list">
     {
       sections.map((s) => (
@@ -43,7 +61,7 @@ const { sections, brand } = Astro.props;
   </ol>
 </nav>
 
-<div class="rail rail--right" aria-hidden="true">
+<div class="rail rail--right" aria-hidden="true" data-rail-absorb>
   <span class="rail__line"></span>
   <span class="rail__brand">{brand}</span>
   <span class="rail__line"></span>
@@ -57,12 +75,45 @@ const { sections, brand } = Astro.props;
   /* 1680 = the 1360 measure plus two 160px margins. Below that the rails
      would sit on the content. */
   @media (min-width: 1680px) {
+    /* THE RAILS DISSOLVE INTO THE FOOTER RATHER THAN CROSSING IT.
+       Added 2026-09-11 at the client's request.
+
+       Both rails are `position: fixed` and centred on the viewport, so at the
+       bottom of the page they sat on top of the dark footer — light grey mono
+       type over near-black, the section index printed across the contact strip.
+       It read as an overlay somebody forgot to switch off.
+
+       The fix is a mask whose cut-off tracks the footer's own top edge, so the
+       rail is eaten from the bottom up exactly as the footer arrives and is
+       gone by the time it would overlap. `--rail-cut` is the distance from the
+       rail's top to that edge, written by `railAbsorb()` in
+       src/scripts/landing-motion.ts on every scroll.
+
+       IT DEFAULTS TO A VALUE LARGER THAN ANY RAIL, not to 100%. The fade band
+       is subtracted from the cut, so a 100% default would fade the bottom 30px
+       of the rail permanently — including before the script has run, which is
+       the state a reader with JavaScript off keeps for good. 4000px puts both
+       gradient stops far below the box and the mask is a no-op. */
     .rail {
       position: fixed;
       top: 50%;
       z-index: 20;
       transform: translateY(-50%);
       display: flex;
+      --rail-cut: 4000px;
+      --rail-fade: 30px;
+      /* Only the left rail's script writes this; the right rail keeps the 1. */
+      opacity: var(--rail-veil, 1);
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        #000 calc(var(--rail-cut) - var(--rail-fade)),
+        transparent var(--rail-cut)
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        #000 calc(var(--rail-cut) - var(--rail-fade)),
+        transparent var(--rail-cut)
+      );
     }
 
     /* Centred in the left margin: the margin is (100vw - measure) / 2 wide,
