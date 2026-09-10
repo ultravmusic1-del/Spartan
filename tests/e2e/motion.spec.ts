@@ -73,6 +73,35 @@ test.describe('prefers-reduced-motion', () => {
     }
 
   });
+
+  test('the About drill stops working, on both halves of the motion', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#about').scrollIntoViewIfNeeded();
+
+    /*
+     * The drill's "in use" cue is THREE composed animations on three elements —
+     * the press on `.about__rig`, the chatter on `.about__shake` and the
+     * blurred chuck fading in on `.about__spin` — and `About.astro` turns them
+     * off in three separate rules rather than one shared selector list, because
+     * dropping a selector from a list takes the whole rule with it and the page
+     * still looks perfectly correct (docs/TRAPS.md, and it has happened here
+     * before with `.hero__glow`). Asserting each name is what makes that
+     * mistake fail.
+     */
+    await expect(page.locator('.about__rig')).toHaveCSS('animation-name', 'none');
+    await expect(page.locator('.about__shake')).toHaveCSS('animation-name', 'none');
+    await expect(page.locator('.about__spin')).toHaveCSS('animation-name', 'none');
+
+    /*
+     * And the blurred chuck has to be GONE, not merely paused. Its resting
+     * opacity is declared outside the keyframes, so `animation: none` leaves it
+     * at 0 — but that stops being true the moment anyone gives the spin layer a
+     * fill mode, and the drill would sit permanently out of focus for every
+     * reduced-motion reader while looking perfectly fine to everybody else.
+     */
+    await expect(page.locator('.about__spin')).toHaveCSS('opacity', '0');
+    await expect(page.locator('.about__still')).toBeVisible();
+  });
 });
 
 test.describe('the motion layer', () => {

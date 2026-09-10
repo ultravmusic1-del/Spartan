@@ -5255,3 +5255,174 @@ CTAs are at y 362–418 and the band starts at 520, and **both clear the fold at
 390×844, 375×667 and 360×640.** The entry is marked superseded rather than
 deleted: its reasoning about source order and the `.wrap` split is still how the
 hero is built.
+
+## 49. The About picture becomes a working drill — 2026-09-10
+
+The client asked for the About section's worker photograph to be replaced with
+a cut-out of a Spartan glove gripping a cordless drill, animated so the drill
+reads as being used, and sized to work on a phone as well as a desktop.
+
+### The image needed work before it could be used at all
+
+The supplied file was byte-identical to a ChatGPT export sitting in the same
+folder, so it is generated rather than photographed. That on its own is a
+labelling question, not a blocker — it is brand illustration, and it lives in
+`src/assets/hero/` with the section artwork rather than in
+`src/assets/products/`, where every file is a brochure photograph of a real
+item.
+
+**What was a blocker is what it printed.** On the back of the glove, legible at
+display size: a CE mark, the EN 388 shield, and `3131X`. The Latex Coated
+Gloves it resembles have **no recorded EN 388 rating** — `en388` is absent
+because brochure page 17 states none, and the product page honestly shows
+nothing. Publishing the image as supplied would have put a five-part protection
+rating on safety equipment, on the home page, sourced from an image generator,
+while the product's own page said there was no rating to give. That is rule 1's
+central case, and rule 1 says a fabricated protection rating is a hazard rather
+than a cosmetic defect.
+
+So the markings were painted out and the client was told why. The patch clones
+glove texture from **the same horizontal band 176px to its left** — chosen after
+a first attempt sampled from below and dragged in a sliver of blue latex along
+with knit running the wrong way, which left a visible rectangle. Same y band
+means the same shading and the same knit direction, and it sits clear of the
+blue latex (ends x 598) and the CE mark (starts x 780). The Spartan wordmark
+ends at y 690 and is untouched. At the size the image actually renders the
+patch is invisible; it is only findable at 2x on a 560px crop.
+
+The drill itself was raised too — Spartan sells no power tools, so a prominent
+one on the home page could read as a range that does not exist. **The client's
+call was to keep it**, on the reasoning that a tool in shot reads as the work
+being done rather than as stock. Recorded so it is not re-filed.
+
+### The plate, not the crop
+
+The picture it replaced was a photograph that filled its box, so 4:5 with
+`object-fit: cover` was right for it. A cut-out on transparency has no edges to
+fill and cropping it would cut the drill, so `.about__vis` is now square with
+`object-fit: contain`, centred on `--surface-alt` — which is how every product
+image on this site is already presented. Square on the phone too: a square
+subject letterboxed into the old 3:2 would have given up half the width. The
+plate is 513px on a 1440 desktop and 350px on a 390 phone.
+
+### Making a flat cut-out look like it is working
+
+A still cannot spin a chuck, so the cue is what a bystander sees: a burst of
+vibration, and the operator leaning in.
+
+- **It is a duty cycle, not a continuous wobble.** 0.72s of work, then two and a
+  half seconds of complete stillness. A drill that never stops reads as a broken
+  GIF, and the stillness is also what lets it sit on a page somebody is reading.
+- **Two animations on two elements**, composing into one motion: the vibration
+  on `.about__rig` and the press on the `<img>` inside it. Neither needs to know
+  about the other.
+- **The pivot is the wrist, at `86% 84%`**, where the forearm leaves the frame.
+  About the centre, the wrist swings as much as the bit and the whole picture
+  reads as rocking; about the wrist, the 0.4deg peak becomes roughly 3.5px of
+  travel at the bit and almost nothing at the cuff.
+- **Amplitudes are percentages**, so 0.32% is about 1.7px on the desktop plate
+  and 1.1px on the phone — proportionate rather than exaggerated on a small
+  screen.
+- **`linear`, not eased.** Eased segments round a vibration into a float.
+- Transform-only, so it is compositor work with no layout and no paint. It is
+  not gated to the viewport: one compositor transform on one element is cheap,
+  browsers do not paint what is off screen, and a scroll observer to start it
+  would be more moving parts than the thing it starts.
+
+**`.about__rig` is a real requirement, not a wrapper for tidiness.**
+`.about__vis` is in `RISE`, so anime.js writes an inline `transform` on it as
+the section scrolls in — and a CSS animation on the same element would win the
+cascade, because animations outrank inline styles, and eat the reveal.
+
+### Reduced motion, in two rules on purpose
+
+Both animations are switched off under `prefers-reduced-motion`, in two
+separate rules rather than one shared selector list. A list is one edit away
+from silently reviving the motion for everyone who asked for none, and the page
+looks perfectly correct either way — which is how `.hero__glow` got away once
+already. `tests/e2e/motion.spec.ts` now asserts both animation names resolve to
+`none`, which is the assertion that makes that mistake fail.
+
+`verify 18/18 · 396 unit · 350 public e2e, 0 failing.`
+
+## 50. The drill actually runs, and the rating goes back on — 2026-09-10
+
+Three changes to the About picture, same day as §49 and all on the client's
+instruction after seeing it live.
+
+### The grey plate is gone
+
+The cut-out ran on a `--surface-alt` plate, the way product images are presented
+elsewhere. The client asked for the grey to go, so it sits on the page's own
+white.
+
+**The red corner rule went with it, and that was mine to decide.** It was "the
+eyebrow's dash at the scale of the picture" — a mark on the top-left corner of a
+filled block. With no block there is no corner, and the drill's bit reaches into
+exactly that spot, so it rendered as a red bar crossing the tip of the tool.
+`overflow` on `.about__vis` is visible now for the same reason: no plate edge
+means nothing for the chatter to be clipped against.
+
+### The EN 388 markings are back, and this is a decision on the record
+
+§49 painted out the CE mark, the EN 388 shield and `3131X` because the Latex
+Coated Gloves carry no recorded rating — brochure page 17 states none, the
+`en388` field is absent, and the product page correctly shows nothing.
+
+**The client was given that measurement and asked for the markings back.** Done,
+and written down in three places — the component header, `docs/TRAPS.md` and
+here — so it reads as a decision rather than an oversight. What it costs is
+worth stating plainly: **the home page now displays a five-part protection
+rating that the product's own page declines to give**, and the only thing behind
+that rating is an image model.
+
+It is not settled, and brochure page 17 settles it. If the page prints `3131X`
+the honest fix is to fill in the product's `en388` and the site stops
+contradicting itself. If it prints anything else, the image is wrong.
+
+### The animation was rebuilt, because the first one was wrong about the cue
+
+The client's note was that it did not look like the drill was being used, and
+they were right. §49 shook the whole picture and leaned it in. That reads as a
+trembling page.
+
+**What tells you a drill is running is that its chuck loses its detail.** A
+cylinder spinning about its own axis keeps its outline and smears its surface.
+No amount of shaking substitutes for that, and shaking without it is just noise.
+
+So there is a second image — `glove-drill-spin.png`, the same frame with only
+the chuck blurred and everything else transparent — stacked exactly over the
+still one and cross-faded in while the tool runs. Three details in making it:
+
+- **The blur is masked by the region's own alpha, eroded well inside the
+  silhouette.** The first attempt blurred the region and masked it loosely; the
+  colour spread past the edge and left a grey haze on white that read as a
+  rendering fault, and the blur was strong enough to turn the chuck to mush.
+  Erode by more than the blur radius and the silhouette survives.
+- **Both ends of the region fade out**, so it meets the numbered clutch collar
+  without a seam. That collar is the torque ring and does not turn, so it stays
+  sharp — which is itself part of why the effect reads as rotation rather than
+  as a focus pull.
+- **The bit is left sharp.** Eroding a 15px-tall driver bit by 12px leaves
+  nothing to blur, and at the size this renders nobody reads it as wrong.
+
+The sequence over 4.4s is a real one: trigger on and the chuck spins up, the bit
+bites and kicks hard, the chatter decays to a sustain while the operator leans
+in, the trigger releases, then two and a half seconds of complete stillness. The
+chatter keyframes were **generated rather than hand-tuned**, so the envelope is
+an actual bite-and-decay instead of a metronome — 26 stops at about 12Hz, peak
+0.6% and 0.78deg at the bite, settling to roughly half that.
+
+The pivot is still the wrist at `86% 84%`: about the centre the cuff swings as
+much as the bit and it reads as the picture rocking.
+
+### Limits worth knowing before asking for more
+
+A single flat cut-out is one rigid bitmap, so everything here is either a
+transform of the whole frame or a pre-rendered second layer. **Real drilling
+motion — the bit advancing into material, chips, the workpiece — cannot be done
+from this image**, because there is no material in the frame and inventing one
+would be inventing content. If that is ever wanted, it needs either a short
+video, a frame sequence, or a photograph of the tool actually in use.
+
+`verify 18/18 · 396 unit · 350 public e2e, 0 failing.`

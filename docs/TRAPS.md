@@ -788,3 +788,66 @@ did not check. Changing one is a regression *you* would be introducing.
   product column is why.** That was the accepted cost of printing whole
   specifications. If it needs to come down, show fewer products at the phone
   breakpoint — do not narrow the card.
+
+## The About picture, since 2026-09-10
+
+- **`src/assets/hero/glove-drill.png` is a GENERATED image, and it prints an
+  EN 388 rating that has no source.** Legible on the back of the glove: a CE
+  mark, an EN 388 shield and `3131X`. The Latex Coated Gloves it resembles carry
+  **no** recorded EN 388 rating — brochure page 17 states none, so the field is
+  absent and the product page correctly shows nothing. **The home page therefore
+  displays a five-part protection rating that the product's own page declines to
+  give.**
+
+  The markings were painted out on 2026-09-10 and **restored the same day on the
+  client's explicit instruction**, after that measurement was put to them. It is
+  recorded as a decision, not an oversight. **It is not settled**: brochure
+  page 17 decides it. If the page prints `3131X`, fill in the product's `en388`
+  and the contradiction goes away; if it prints anything else, this image is
+  wrong. **Check any replacement for printed ratings before committing it;
+  nothing in `npm run verify` reads pixels.**
+
+- **It lives in `assets/hero/`, not `assets/products/`.** Everything in
+  `assets/products/` is a brochure photograph of a real item. Moving this file
+  there would put a generated picture into the catalogue's evidence.
+
+- **The drill is deliberate and is not a claim about the range.** Spartan sells
+  no power tools; the client's call on 2026-09-10 was that a tool in shot reads
+  as the work being done. Do not file it as a defect.
+
+- **There is no plate behind the picture and no red corner rule, both on
+  purpose.** It ran briefly on `--surface-alt` with the rule marking the
+  block's top-left corner. The client asked for the grey to go on 2026-09-10;
+  with no filled block there is no corner to mark, and the drill's bit reaches
+  into exactly that spot, so the rule rendered as a red bar across the tip of
+  the tool. `overflow` is visible on `.about__vis` for the same reason — there
+  is no plate edge to clip the chatter against.
+
+- **`.about__rig` exists because `.about__vis` belongs to the reveal.**
+  `.about__vis` is in `RISE` in `src/scripts/landing-motion.ts`, so anime.js
+  writes an inline `transform` on it. A CSS animation on the same element would
+  win — **animations outrank inline styles** — and swallow the reveal. The rig,
+  the shake and the spin layer all sit inside it, where the reveal never reaches.
+
+- **THE CUE IS THE BLURRED CHUCK, NOT THE SHAKE.** The first version shook the
+  whole picture and read as a trembling page rather than a running tool. What
+  says "this drill is on" is that the chuck loses its knurl — a cylinder
+  spinning about its own axis keeps its outline and smears its surface — so
+  `glove-drill-spin.png` is the same frame with only that chuck blurred, on
+  transparency, cross-faded over the still one. **If the picture is ever
+  replaced, that second file has to be regenerated with it** or the drill will
+  spin a chuck that is no longer there.
+
+- **The blur is masked by the region's own alpha eroded well inside the
+  silhouette.** Blur it without eroding and the colour spreads past the edge as
+  a grey haze on white, which reads as a rendering fault. Both ends of the
+  region fade out so it meets the numbered clutch collar — which does not turn —
+  without a seam.
+
+- **The motion is three animations on three elements, and reduced motion turns
+  them off in three separate rules.** One shared selector list would be a single
+  edit away from silently reviving the motion for everyone who asked for none,
+  which is exactly how `.hero__glow` got away once. `tests/e2e/motion.spec.ts`
+  asserts all three names are `none` **and that the spin layer's opacity is 0** —
+  its resting 0 is declared outside the keyframes, so `animation: none` is only
+  enough while nobody gives that layer a fill mode.

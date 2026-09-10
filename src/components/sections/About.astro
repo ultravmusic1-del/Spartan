@@ -17,7 +17,51 @@ import { Image } from 'astro:assets';
 import SectionHeading from '../primitives/SectionHeading.astro';
 import PillButton from '../primitives/PillButton.astro';
 import { getSiteSettings } from '../../lib/site-content';
-import workerPhoto from '../../assets/hero/workwear.jpg';
+/**
+ * THE PICTURE IS BRAND ILLUSTRATION, NOT A PRODUCT PHOTOGRAPH, AND IT IS
+ * GENERATED. Supplied by the client on 2026-09-10 and traceable to an image
+ * model, which is why it lives in `assets/hero/` with the section artwork and
+ * NOT in `assets/products/`, where every file is a brochure photograph of a
+ * real item.
+ *
+ * IT PRINTS A CE MARK, AN EN 388 SHIELD AND `3131X`, AND THAT RATING HAS NO
+ * SOURCE. Read this before touching the file.
+ *
+ * The Latex Coated Gloves this resembles carry NO recorded EN 388 rating: the
+ * `en388` field is absent because brochure page 17 states none, and the product
+ * page correctly shows nothing. So the home page displays a five-part
+ * protection rating that the product's own page declines to give, and the only
+ * thing behind that rating is an image model.
+ *
+ * The markings were painted out on 2026-09-10 for exactly that reason and
+ * **restored the same day on the client's explicit instruction**, given after
+ * the measurement above was put to them. It is their call and their client
+ * relationship; it is recorded here, in `docs/TRAPS.md` and in `handoff.md` §50
+ * so that it is a decision on the record rather than an oversight.
+ *
+ * **WHAT WOULD SETTLE IT:** brochure page 17. If it prints `3131X`, fill in the
+ * product's `en388` and the site stops contradicting itself. If it prints
+ * something else, this image is wrong and must be corrected.
+ *
+ * **If this image is ever replaced, check the replacement for printed ratings
+ * before committing it.** Nothing in `npm run verify` reads pixels.
+ *
+ * The drill is context rather than a claim — Spartan sells no power tools —
+ * and that was the client's call on 2026-09-10, on the reasoning that a tool
+ * in shot reads as the work being done, the way every PPE brand shows gloves.
+ */
+import gloveDrill from '../../assets/hero/glove-drill.png';
+/**
+ * The same frame with the chuck blurred and everything else transparent, so it
+ * can be cross-faded over the still one while the drill runs. Generated from
+ * the base image by blurring a 258x242 region at the front, masked by that
+ * region's own alpha eroded well inside the silhouette — a cylinder spinning
+ * about its axis keeps its outline and loses its surface detail, and a blur
+ * that reached past the edge would read as a rendering fault instead. Both ends
+ * of the region fade out, so it meets the numbered clutch collar (which does
+ * not turn) without a seam.
+ */
+import gloveDrillSpin from '../../assets/hero/glove-drill-spin.png';
 
 const site = await getSiteSettings();
 
@@ -51,16 +95,40 @@ const industries: string[] = site.industries;
 
   <div class="wrap about__inner">
     <figure class="about__vis">
-      {/* 4:5, cropped from a client-supplied portrait. The red rule is the
-          eyebrow's dash at the scale of the picture. */}
-      <Image
-        src={workerPhoto}
-        alt="A worker in Spartan workwear on a factory floor"
-        widths={[480, 720, 960]}
-        sizes="(min-width: 821px) 42vw, 100vw"
-        loading="lazy"
-        decoding="async"
-      />
+      {/* THE RIG IS A SEPARATE ELEMENT BECAUSE THE REVEAL OWNS THE FIGURE.
+          `.about__vis` is in `RISE` in src/scripts/landing-motion.ts, so
+          anime.js writes an inline `transform` on it as the section scrolls in.
+          A CSS animation on the same element would win the cascade — animations
+          outrank inline styles — and eat the reveal. The rig, the shake and the spin layer
+          all sit inside it and the reveal never reaches them. */}
+      <div class="about__rig">
+        <div class="about__shake">
+          <Image
+            class="about__still"
+            src={gloveDrill}
+            alt="A gloved hand gripping a cordless drill"
+            widths={[420, 640, 900, 1100]}
+            sizes="(min-width: 821px) 42vw, 100vw"
+            loading="lazy"
+            decoding="async"
+          />
+          {/* THE SPINNING CHUCK. Same frame, same size, stacked exactly over the
+              still one; only the chuck carries pixels and the rest is
+              transparent, so fading it in swaps a sharp knurl for a smooth one
+              and nothing else moves. Decorative — it states nothing the picture
+              beneath it does not already say. */}
+          <Image
+            class="about__spin"
+            src={gloveDrillSpin}
+            alt=""
+            aria-hidden="true"
+            widths={[420, 640, 900, 1100]}
+            sizes="(min-width: 821px) 42vw, 100vw"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
     </figure>
 
     <div class="about__copy">
@@ -118,30 +186,169 @@ const industries: string[] = site.industries;
     align-items: start;
   }
 
+  /* SQUARE, AND NO PLATE BEHIND IT. The picture it replaced was a photograph
+     that filled its box edge to edge, so 4:5 and `object-fit: cover` were right
+     for it. This one is a cut-out: it has no edges to fill and cropping it
+     would cut the drill, so the box is square and the subject sits in it.
+
+     It ran briefly on a `--surface-alt` plate, the way product images are
+     presented elsewhere on the site. The client's call on 2026-09-10 was to
+     drop it and let the cut-out sit on the page's own white — so **there is no
+     background here on purpose**, and `overflow` is visible with it, because
+     there is no longer a plate edge for the drill to be clipped against when
+     the chatter moves it a couple of pixels. */
   .about__vis {
     position: relative;
     margin: 0;
-    aspect-ratio: 4 / 5;
-    overflow: hidden;
-    background: var(--surface-alt);
+    aspect-ratio: 1 / 1;
   }
 
-  .about__vis::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 1;
-    width: 4px;
-    height: 96px;
-    background: var(--accent);
-  }
+  /* THE RED CORNER RULE WENT WITH THE PLATE, 2026-09-10, and it is not an
+     oversight. It was "the eyebrow's dash at the scale of the picture" — a mark
+     on the top-left corner of a filled block. With the plate gone there is no
+     corner for it to mark, and the drill's bit reaches into exactly that spot,
+     so it rendered as a red bar crossing the tip of the tool. The eyebrow's own
+     dash still carries the device four lines above. */
 
-  .about__vis :global(img) {
+  /* THE DRILL LOOKS LIKE IT IS BEING USED, IN THREE LAYERS.
+     Rebuilt 2026-09-10 after the first attempt read as a wobbling picture
+     rather than a running tool.
+
+     THE FIRST VERSION'S MISTAKE WAS THINKING VIBRATION IS THE CUE. It is not.
+     What tells you a drill is running is that its CHUCK LOSES ITS DETAIL —
+     a cylinder spinning about its own axis keeps its outline and smears its
+     surface. Shaking the whole picture without that just looks like the page
+     is trembling. So the chuck is a second image, blurred, cross-faded in over
+     the sharp one; `about__spin` is the layer that does the real work here and
+     the chatter is the supporting cue, not the other way round.
+
+     THE SEQUENCE IS A REAL ONE, over 4.4s: the trigger comes on and the chuck
+     spins up, the bit bites and kicks hard, the chatter decays to a sustain
+     while the operator leans in, the trigger releases, and then the tool is
+     completely still for two and a half seconds. The stillness is deliberate.
+     A drill that never stops reads as a broken GIF and makes the section
+     unreadable for anyone trying to read the copy beside it.
+
+     THREE ELEMENTS, THREE JOBS, composing into one motion: `.about__rig`
+     presses in along the drill's axis, `.about__shake` carries the chatter,
+     and `.about__spin` fades the blurred chuck over the sharp one. Nothing
+     needs to know about the others.
+
+     THE PIVOT IS THE WRIST, at 86% 84%, where the forearm leaves the frame.
+     About the centre the wrist swings as much as the bit and it reads as the
+     picture rocking; about the wrist, the 0.78deg bite becomes roughly 7px at
+     the bit and almost nothing at the cuff, which is how a real one moves.
+
+     AMPLITUDES ARE PERCENTAGES so they scale with the box rather than being
+     exaggerated on a phone. Everything is transform or opacity, so it is
+     compositor work with no layout and no paint.
+
+     It is not gated to the viewport: compositor animations on three elements
+     are cheap, browsers do not paint what is off screen, and a scroll observer
+     to start it would be more moving parts than the thing it starts. */
+  .about__rig {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: 50% 20%;
+    animation: about-drill-press 4.4s ease-in-out infinite;
+  }
+
+  .about__shake {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-origin: 86% 84%;
+    animation: about-drill-chatter 4.4s linear infinite;
+  }
+
+  /* Both frames stack exactly: same intrinsic size, same fit, same box. */
+  .about__vis :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .about__vis :global(.about__spin) {
+    opacity: 0;
+    animation: about-drill-spin 4.4s linear infinite;
+  }
+
+  /* Spun up just before the bit bites, and dropped as the trigger releases. */
+  @keyframes about-drill-spin {
+    0% { opacity: 0; }
+    5% { opacity: 0; }
+    8.5% { opacity: 1; }
+    34% { opacity: 1; }
+    38% { opacity: 0; }
+    100% { opacity: 0; }
+  }
+
+  /* In along the drill's own axis, which runs up and to the left at about 8
+     degrees, held while the bit is in, then released. */
+  @keyframes about-drill-press {
+    0% { transform: translate3d(0, 0, 0); }
+    5% { transform: translate3d(0, 0, 0); }
+    11% { transform: translate3d(-0.8%, 0.11%, 0); }
+    34% { transform: translate3d(-0.8%, 0.11%, 0); }
+    42% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+
+  /* `linear`, deliberately: eased segments round a vibration into a float.
+     Generated rather than hand-tuned, so the envelope is a real bite-and-decay
+     instead of a metronome. */
+  @keyframes about-drill-chatter {
+  9% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  9.96% { transform: translate3d(-0.600%, 0.180%, 0) rotate(-0.780deg); }
+  10.92% { transform: translate3d(0.577%, -0.173%, 0) rotate(0.750deg); }
+  11.88% { transform: translate3d(-0.524%, 0.157%, 0) rotate(-0.681deg); }
+  12.85% { transform: translate3d(0.471%, -0.141%, 0) rotate(0.612deg); }
+  13.81% { transform: translate3d(-0.418%, 0.125%, 0) rotate(-0.543deg); }
+  14.77% { transform: translate3d(0.365%, -0.110%, 0) rotate(0.475deg); }
+  15.73% { transform: translate3d(-0.312%, 0.094%, 0) rotate(-0.406deg); }
+  16.69% { transform: translate3d(0.214%, -0.064%, 0) rotate(0.279deg); }
+  17.65% { transform: translate3d(-0.284%, 0.085%, 0) rotate(-0.370deg); }
+  18.62% { transform: translate3d(0.330%, -0.099%, 0) rotate(0.429deg); }
+  19.58% { transform: translate3d(-0.273%, 0.082%, 0) rotate(-0.355deg); }
+  20.54% { transform: translate3d(0.211%, -0.063%, 0) rotate(0.275deg); }
+  21.50% { transform: translate3d(-0.249%, 0.075%, 0) rotate(-0.324deg); }
+  22.46% { transform: translate3d(0.323%, -0.097%, 0) rotate(0.420deg); }
+  23.42% { transform: translate3d(-0.306%, 0.092%, 0) rotate(-0.398deg); }
+  24.38% { transform: translate3d(0.228%, -0.068%, 0) rotate(0.296deg); }
+  25.35% { transform: translate3d(-0.222%, 0.066%, 0) rotate(-0.288deg); }
+  26.31% { transform: translate3d(0.298%, -0.089%, 0) rotate(0.387deg); }
+  27.27% { transform: translate3d(-0.327%, 0.098%, 0) rotate(-0.425deg); }
+  28.23% { transform: translate3d(0.259%, -0.078%, 0) rotate(0.336deg); }
+  29.19% { transform: translate3d(-0.210%, 0.063%, 0) rotate(-0.273deg); }
+  30.15% { transform: translate3d(0.264%, -0.079%, 0) rotate(0.343deg); }
+  31.12% { transform: translate3d(-0.260%, 0.078%, 0) rotate(-0.338deg); }
+  32.08% { transform: translate3d(0.173%, -0.052%, 0) rotate(0.225deg); }
+  33.04% { transform: translate3d(-0.087%, 0.026%, 0) rotate(-0.112deg); }
+  34% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  }
+
+  /* Both named, not a shared selector list. Dropping one from a list takes the
+     whole rule with it and the page still looks right — docs/TRAPS.md. */
+  @media (prefers-reduced-motion: reduce) {
+    .about__rig {
+      animation: none;
+    }
+
+    .about__shake {
+      animation: none;
+    }
+
+    /* The blurred chuck must go back to fully transparent, not merely stop
+       animating: `animation: none` on an element whose resting opacity is 0
+       is only correct because that 0 is declared outside the keyframes. If the
+       spin layer is ever given a fill mode, this rule stops being enough and
+       the drill would sit permanently blurred for reduced-motion readers. */
+    .about__vis :global(.about__spin) {
+      animation: none;
+      opacity: 0;
+    }
   }
 
   .about__body {
@@ -228,8 +435,11 @@ const industries: string[] = site.industries;
       gap: var(--space-9);
     }
 
+    /* Stays square on a phone. 3:2 suited the photograph that used to fill it;
+       a square subject letterboxed into a landscape plate would give up half
+       the width and render the drill smaller than the copy beside it was. */
     .about__vis {
-      aspect-ratio: 3 / 2;
+      aspect-ratio: 1 / 1;
     }
 
     .about__points li {
