@@ -333,6 +333,42 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     left: 0;
     right: 0;
     z-index: 25;
+    /* Only `transform` — NOT `will-change: transform`. Both make this element a
+       containing block for `position: fixed` DESCENDANTS, and the mobile nav
+       panel is one of them (docs/TRAPS.md). A permanent `will-change` would
+       therefore re-anchor a full-screen panel to an 86px bar for the life of
+       every page; a transform that is only present while the header is away is
+       survivable, and the two rules below make sure it is never present while
+       that panel is open. */
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  /* OUT OF THE WAY WHILE THE READER MOVES DOWN THE PAGE, back the instant they
+     move up. On a fifteen-screen phone page a permanent 86px bar is a tenth of
+     the screen spent on chrome nobody is using, sitting on top of the content
+     they are. `src/scripts/header-scroll.ts` owns when. */
+  .site-header.is-away {
+    transform: translateY(-100%);
+  }
+
+  /* THE PANEL LIVES INSIDE THIS ELEMENT, so the header must not be mid-transform
+     when it opens — the panel would be positioned against the header instead of
+     the viewport and hang off the top of the screen. The script already refuses
+     to hide while the menu is open; this closes the ~200ms window where the
+     transition is still running as the panel appears, and it needs no script at
+     all. */
+  .site-header:has([aria-expanded='true']) {
+    transform: none;
+    transition: none;
+  }
+
+  /* A bar that appears and disappears without the movement that explains it is
+     worse than one that never leaves, so under reduced motion the script keeps
+     it put and this makes sure nothing slides if it ever does. */
+  @media (prefers-reduced-motion: reduce) {
+    .site-header {
+      transition: none;
+    }
   }
 
   /* Over a hero: out of flow, and pinned to the VIEWPORT.

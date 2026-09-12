@@ -16,6 +16,24 @@
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; padding: 0; }
 
+/* IN-PAGE ANCHORS MUST NOT LAND UNDER THE HEADER.
+   Added 2026-09-12, and it had been wrong on every page since the header first
+   became sticky: a jump to `#about` put the section's top edge at y=0, where the
+   header covers the first 87px of it — so the heading you asked for was the one
+   thing you could not see. It affected the skip link ("Skip to content" landing
+   behind the chrome is its own small joke), the home page's side rail, and every
+   `#id` link anyone adds later.
+
+   `scroll-padding-top` on the scrolling element is the whole fix: it belongs to
+   the CONTAINER, so it applies to every anchor, to `scrollIntoView`, and to
+   keyboard focus scrolling, without a single target needing to know about it.
+   The alternative, `scroll-margin-top` on each target, is the same value copied
+   as many times as there are targets. 12px of air on top so the heading does not
+   sit flush against the bar. */
+html {
+  scroll-padding-top: calc(var(--header-h) + 12px);
+}
+
 body {
   font-family: var(--font-body);
   background: var(--surface-page);

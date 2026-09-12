@@ -5708,3 +5708,74 @@ knowing that the symptom is "the feature silently does nothing", not an error.
 
 `verify 18/18 · 399 unit · 376 public e2e, 0 failing.` Six of those e2e tests are
 new, including the no-JavaScript fallback and the lockup pair.
+
+## 56. The header gets a real relationship with the page — 2026-09-12
+
+§55 pinned the header to the viewport and the client immediately reported the
+next problem, with a screenshot: scrolling a little put the hero's masthead and
+the "01" numeral straight through the header, colliding with the logo and the
+menu button.
+
+### The cause, and it was mine
+
+§55 turned the bar opaque only past its own height, on the stated reasoning that
+"the hero reserves precisely that much top padding, so nothing legible can pass
+beneath it while it is still transparent". **That reasoning was wrong about its
+own number.** The hero's padding is `--hero-chrome + 28px`, so the masthead
+begins at 114px and spends the first 86px of scroll inside a transparent fixed
+bar. The fix is one pixel: the bar goes opaque the moment the page moves.
+
+### What was built instead of just moving the threshold
+
+The client asked for the interaction, not the patch, so the header now has three
+states and every page uses the same three:
+
+- **at rest** — scrollY 0, sitting over the page, transparent on the three
+  overlay pages.
+- **engaged** — the page has moved at all, so the bar is opaque, because content
+  is passing under something that no longer moves with the document.
+- **away** — the reader is moving down, so it lifts out of view; any upward
+  movement brings it straight back.
+
+**"Away" is the part worth arguing for.** On a fifteen-screen phone page a
+permanent 86px bar is a tenth of the screen spent on chrome the reader is not
+using, sitting on top of the content they are. Hiding it while they move away
+and returning it the instant they move back is also, exactly, what the client
+described wanting in §55 before it had a name: they were scrolling up to get the
+header back.
+
+### The four things that make it not a toy
+
+- **It never hides while the mobile menu is open.** The panel is INSIDE the
+  header, so lifting the header takes the open menu with it. The script refuses,
+  and `:has([aria-expanded='true'])` clears the transform outright — which also
+  closes the ~200ms window where the transition is still running as the panel
+  appears.
+- **A transform on the header makes it the containing block for that
+  `position: fixed` panel.** This is why there is no `will-change: transform`
+  here: it would create the same containing block permanently, on every page, and
+  a full-screen menu would hang off an 86px bar for good.
+- **It never hides while something inside it has focus**, which would scroll a
+  control off screen while a keyboard user is on it.
+- **It does not hide at all under reduced motion**, in the script rather than
+  only in CSS. Killing the transition alone leaves a bar that vanishes and
+  reappears with nothing to explain the movement, which is worse than one that
+  never leaves. A 6px delta stops touch jitter flapping it.
+
+### Two things fixed on the way that were nobody's report
+
+**In-page anchors landed underneath the header on all 118 pages.** A jump to
+`#about` put the section's top edge at y=0 with the header covering the first
+87px — so the heading you asked for was the one thing you could not see. It
+affected the skip link too. `scroll-padding-top` on `html` fixes every anchor,
+`scrollIntoView` and focus scroll at once, because it belongs to the scrolling
+container rather than to each target.
+
+**`--header-h` is now a token.** `docs/TRAPS.md` recorded that the header height,
+the hero's clearance and this new scroll padding were "one arithmetic chain with
+Header.astro and nothing but this comment connects them". They are one token now,
+so the chain holds itself.
+
+`verify 18/18 · 399 unit · 382 public e2e, 0 failing.` Nine of those e2e tests
+are new and assert paint rather than classes — the reported fault was that page
+content showed through the bar, and a class assertion passes throughout that.

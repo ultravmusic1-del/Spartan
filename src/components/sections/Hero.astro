@@ -291,16 +291,20 @@ const proof = [
 <style>
   /* ------------------------------------------------------------ the band --
    *
-   * The header is `position: absolute` over this band and occupies y 0–86
-   * (84px nav + 2px progress rule), so `--hero-chrome` is what the padding
-   * clears. docs/TRAPS.md: these numbers are one arithmetic chain with
-   * Header.astro and nothing but this comment connects them. */
+   * The header is fixed over this band and occupies the top `--header-h`
+   * (84px nav + 2px progress rule), so that is what the padding clears.
+   *
+   * IT READS THE TOKEN NOW, 2026-09-12. It was a local `86px` literal, and
+   * docs/TRAPS.md recorded the consequence: "these numbers are one arithmetic
+   * chain with Header.astro and nothing but this comment connects them."
+   * `--header-h` in tokens.css is that connection, and `scroll-padding-top` is
+   * a third link in the same chain. */
   .hero {
     position: relative;
   }
 
   .hero__band {
-    --hero-chrome: 86px;
+    --hero-chrome: var(--header-h);
     position: relative;
     background: var(--surface-page);
     padding: calc(var(--hero-chrome) + 36px) 0 56px;

@@ -321,114 +321,180 @@ test.describe('the mobile panel', () => {
   });
 });
 
+
 /**
- * THE HEADER FOLLOWS THE READER, on every page.
+ * THE HEADER'S THREE STATES, and how they relate to the page under it.
  *
- * Three pages overlay the header on a hero — `/`, `/electricals`, `/safety` —
- * and until 2026-09-12 that mode was `position: absolute`, pinned to the
- * DOCUMENT. It scrolled away at 86px and did not come back until the reader
- * returned to the very top; on the home page that left 99.3% of a fifteen-screen
- * page with no navigation, no menu button and no sight of the enquiry basket.
- * It was reported as a phone fault and reproduced identically in both engines at
- * every width.
+ * at rest   scrollY 0. The header sits over the page; on the three pages that
+ *           overlay a hero it is transparent, which is that mode's whole point.
+ * engaged   the page has moved at all. Opaque, because content is now passing
+ *           underneath a bar that no longer moves with the document.
+ * away      the reader is moving DOWN. It lifts out of view and returns the
+ *           instant they move up.
  *
- * Every assertion here is about the VIEWPORT box, not a class or a property
- * name: the complaint was "I cannot see the header", and `top === 0` is the only
- * thing that answers it.
+ * TWO REAL FAULTS ARE BEHIND THIS BLOCK, both reported by the client.
+ *
+ * The first: the header was `position: absolute`, pinned to the document, so on
+ * `/`, `/electricals` and `/safety` it scrolled away at 86px and did not come
+ * back until the reader returned to the very top — 99.3% of a fifteen-screen
+ * page with no menu and no sight of the enquiry basket.
+ *
+ * The second, caused by fixing the first: it only turned opaque past its own
+ * height, on the reasoning that the hero reserves that much clearance. The hero
+ * reserves `--header-h + 28px`, so between 0 and 86px of scroll the masthead and
+ * the section numeral slid up into a still-transparent bar and collided with the
+ * logo and the menu button.
  */
-test.describe('the overlay header', () => {
+test.describe('the header and the page', () => {
   const OVERLAY = ['/', '/electricals', '/safety'];
 
+  /** Scroll as a gesture, in steps, so direction is real rather than a jump. */
+  const drag = (page: import('@playwright/test').Page, from: number, to: number) =>
+    page.evaluate(async ([a, b]) => {
+      const step = a < b ? 60 : -60;
+      for (let y = a; step > 0 ? y < b : y > b; y += step) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 16));
+      }
+      window.scrollTo(0, b);
+      await new Promise((r) => setTimeout(r, 240));
+    }, [from, to]);
+
+  const headerTop = (page: import('@playwright/test').Page) =>
+    page.locator('header').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+
+  const isClear = (c: string) => /rgba\(0, 0, 0, 0\)|transparent/.test(c);
+
   for (const path of OVERLAY) {
-    test(`stays on screen after scrolling down and back up on ${path}`, async ({ page }) => {
+    test(`nothing bleeds through the header on ${path}`, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(path);
+      await drag(page, 0, 120);
 
-      const top = () =>
-        page.locator('header').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+      /*
+       * 120px is the reported state, and the assertion is deliberately about
+       * PAINT rather than about a class: the complaint was that page content was
+       * showing through the bar, so what matters is which element is on top at a
+       * point inside it. A class assertion would have passed throughout the bug.
+       */
+      const topIsHeader = await page.evaluate(
+        () => (document.elementsFromPoint(120, 50)[0] as HTMLElement).closest('header') !== null,
+      );
+      expect(topIsHeader, 'the header is what you see inside the header band').toBe(true);
 
-      expect(await top()).toBe(0);
-
-      await page.evaluate(() => window.scrollTo(0, 2500));
-      await page.waitForTimeout(250);
-      expect(await top(), 'scrolled down').toBe(0);
-
-      // The exact gesture from the report: back up, but not to the top.
-      await page.evaluate(() => window.scrollTo(0, 1200));
-      await page.waitForTimeout(250);
-      expect(await top(), 'scrolled back up').toBe(0);
+      const bg = await page.locator('header').evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(isClear(bg), 'opaque once engaged').toBe(false);
     });
   }
 
-  test('takes a solid background once scrolled, and gives it up again at the top', async ({
-    page,
-  }) => {
+  test('is transparent at rest and opaque from the first pixel of scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const bg = () => page.locator('header').evaluate((el) => getComputedStyle(el).backgroundColor);
+
+    expect(isClear(await bg()), 'at rest').toBe(true);
+    await drag(page, 0, 40);
+    expect(isClear(await bg()), 'barely scrolled').toBe(false);
+    await drag(page, 40, 0);
+    expect(isClear(await bg()), 'back at rest').toBe(true);
+  });
+
+  test('lifts away going down and comes back going up', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    const bg = () => page.locator('header').evaluate((el) => getComputedStyle(el).backgroundColor);
-    const transparent = (c: string) => /rgba\(0, 0, 0, 0\)|transparent/.test(c);
+    await drag(page, 0, 2000);
+    expect(await headerTop(page), 'moving down').toBeLessThan(0);
 
-    /*
-     * Transparent at the top is the whole point of this mode. Opaque once
-     * scrolled is not decoration: the bar is fixed, so page content runs
-     * underneath it, and transparent chrome over moving text is unreadable.
-     */
-    expect(transparent(await bg()), 'at the top').toBe(true);
-
-    await page.evaluate(() => window.scrollTo(0, 2500));
-    await page.waitForTimeout(250);
-    expect(transparent(await bg()), 'scrolled').toBe(false);
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(250);
-    expect(transparent(await bg()), 'back at the top').toBe(true);
+    // The gesture the client was already making before this existed.
+    await drag(page, 2000, 1500);
+    expect(await headerTop(page), 'moving up').toBe(0);
   });
 
-  test('swaps the lockup with the surface, so the wordmark is never white on white', async ({
-    page,
-  }) => {
+  test('never lifts away while the menu it contains is open', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/electricals');
+    await page.goto('/');
+    await drag(page, 0, 2000);
+    await drag(page, 2000, 1700);
+
+    await page.locator('header button[aria-expanded]').first().click();
+    await page.waitForTimeout(400);
 
     /*
-     * THE FAILURE THIS EXISTS FOR IS INVISIBLE TO EVERY OTHER GATE. `/electricals`
-     * puts the header on a dark photograph, so it ships the white-wordmark
-     * lockup — and the moment the bar turns solid white, that wordmark is on a
-     * white background. It is still a rendered <img> with correct dimensions and
-     * a 200 (handoff.md section 3), so nothing else here would notice.
-     *
-     * Exactly one lockup is shown at a time and it is asserted as a pair: which
-     * one is visible, and that the other is not.
+     * THE PANEL IS INSIDE THE HEADER (docs/TRAPS.md), so a transform on the
+     * header makes it the containing block for a `position: fixed` panel — the
+     * full-screen menu would hang off an 86px bar. Both halves are asserted: the
+     * header stays put, and it carries no transform at all while the menu is up.
      */
-    const shown = () =>
-      page.evaluate(() => ({
-        dark: getComputedStyle(document.querySelector('.nav__logo-img--dark')!).display !== 'none',
-        light: getComputedStyle(document.querySelector('.nav__logo-img--light')!).display !== 'none',
-      }));
+    await expect(page.locator('header')).toHaveCSS('transform', 'none');
+    expect(await headerTop(page)).toBe(0);
 
-    expect(await shown(), 'over the photograph').toEqual({ dark: false, light: true });
-
-    await page.evaluate(() => window.scrollTo(0, 2500));
-    await page.waitForTimeout(250);
-    expect(await shown(), 'over the solid bar').toEqual({ dark: true, light: false });
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(250);
-    expect(await shown(), 'back over the photograph').toEqual({ dark: false, light: true });
+    const panel = await page.evaluate(() => {
+      const h = document.querySelector('header');
+      if (!h) return null;
+      for (const e of Array.from(h.querySelectorAll('div,nav,aside'))) {
+        const box = e.getBoundingClientRect();
+        if (getComputedStyle(e).position === 'fixed' && box.height > 300) {
+          return { top: Math.round(box.top), height: Math.round(box.height), vh: window.innerHeight };
+        }
+      }
+      return null;
+    });
+    expect(panel, 'the open panel').not.toBeNull();
+    expect(panel!.top).toBe(0);
+    expect(panel!.height).toBeGreaterThanOrEqual(panel!.vh - 2);
   });
 
-  test('leaves the other pages on their own sticky header', async ({ page }) => {
+  test('puts in-page anchors below the header, not underneath it', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    /*
+     * `scroll-padding-top` on `html`. Before 2026-09-12 a jump to `#about` put
+     * the section's top edge at y=0, where the header covers the first 87px — so
+     * the heading you asked for was the one thing you could not see. It was
+     * wrong on all 118 pages, not only the three that overlay.
+     */
+    for (const id of ['catalogue', 'about', 'enquiry']) {
+      const landed = await page.evaluate(async (target) => {
+        location.hash = '';
+        location.hash = '#' + target;
+        await new Promise((r) => setTimeout(r, 300));
+        const el = document.getElementById(target);
+        return el ? Math.round(el.getBoundingClientRect().top) : -1;
+      }, id);
+      expect(landed, `#${id} clears the header`).toBeGreaterThanOrEqual(86);
+    }
+  });
+
+  test('leaves the other pages sticky, and they engage too', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/catalogue');
 
-    // 115 of the 118 public pages were never affected and must not change.
+    // 115 of the 118 public pages use the solid mode and it is unchanged.
     await expect(page.locator('header')).toHaveCSS('position', 'sticky');
-    await page.evaluate(() => window.scrollTo(0, 2500));
-    await page.waitForTimeout(250);
-    expect(
-      await page.locator('header').evaluate((el) => Math.round(el.getBoundingClientRect().top)),
-    ).toBe(0);
+    await drag(page, 0, 2000);
+    expect(await headerTop(page), 'away going down').toBeLessThan(0);
+    await drag(page, 2000, 1500);
+    expect(await headerTop(page), 'back going up').toBe(0);
+  });
+
+  test.describe('under reduced motion', () => {
+    test.use({ contextOptions: { reducedMotion: 'reduce' } });
+
+    test('the header stays put rather than sliding in and out', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto('/');
+      await drag(page, 0, 2000);
+
+      /*
+       * A bar that appears and vanishes without the movement that explains it is
+       * worse than one that never leaves, so here it simply stops hiding. It is
+       * still opaque, so nothing bleeds through it.
+       */
+      expect(await headerTop(page)).toBe(0);
+      await expect(page.locator('header')).not.toHaveClass(/is-away/);
+    });
   });
 
   test.describe('without JavaScript', () => {
@@ -439,12 +505,11 @@ test.describe('the overlay header', () => {
       await page.goto('/');
 
       /*
-       * The background is written by a script, so with no script a FIXED
+       * Every state above is written by a script, so with none a fixed
        * transparent bar would sit over the page with content running under it and
        * both illegible. `@media (scripting: none)` puts it back to `absolute` —
-       * which is the defect this change fixes, and is strictly better than
-       * chrome nobody can read. It is also exactly what these pages shipped as
-       * until today, so it is a return to the status quo rather than a new state.
+       * the original defect, which is strictly better than chrome nobody can
+       * read, and exactly what these pages shipped as until 2026-09-12.
        */
       await expect(page.locator('header')).toHaveCSS('position', 'absolute');
     });

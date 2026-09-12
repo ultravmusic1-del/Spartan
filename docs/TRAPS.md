@@ -1010,3 +1010,38 @@ did not check. Changing one is a regression *you* would be introducing.
   never solidified. The CSP gate does catch it; the build and `astro check` do
   not. **Adding or editing a script here means `npm run csp` and committing
   `vercel.json`.**
+
+## The header's three states, since 2026-09-12
+
+- **The header is opaque from ONE pixel of scroll, not from its own height.**
+  The first attempt used its height as the threshold, reasoning that the hero
+  reserves exactly that much clearance. It does not — the hero's padding is
+  `--header-h + 28px` — so between 0 and 86px the masthead and the section
+  numeral slid up into a still-transparent fixed bar and collided with the logo
+  and the menu button. **Raising this threshold reintroduces that.**
+
+- **`transform` on the header makes it the containing block for the mobile nav
+  panel, which is INSIDE it.** The panel is `position: fixed` and would hang off
+  an 86px bar instead of covering the screen. Two things stop that: the script
+  refuses to hide while the menu is open, and
+  `.site-header:has([aria-expanded='true'])` clears the transform outright,
+  which also closes the ~200ms window where the transition is still running as
+  the panel appears. **Never add `will-change: transform` here** — it creates the
+  same containing block permanently, for every page.
+
+- **`is-away` is suppressed under reduced motion, in the script and not only in
+  CSS.** Removing the transition alone would leave a bar that vanishes and
+  reappears with nothing to explain the movement, which is worse than one that
+  never leaves.
+
+- **`scroll-padding-top` lives on `html` and is what keeps in-page anchors out
+  from under the header.** It was missing on all 118 pages: `#about` landed at
+  y=0 with the header covering the first 87px of it. It belongs on the scrolling
+  CONTAINER, so it covers every anchor, `scrollIntoView` and focus scrolling at
+  once — `scroll-margin-top` per target is the same number copied as many times
+  as there are targets.
+
+- **`--header-h` in tokens.css is the one number three things depend on**: the
+  hero's top padding, `scroll-padding-top`, and the header's own height. This
+  file used to say these were "one arithmetic chain and nothing but this comment
+  connects them". Now the token connects them — **do not re-inline it.**

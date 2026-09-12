@@ -140,6 +140,18 @@
   --section-pad: clamp(64px, 6.5vw, 92px);
   --wrap-pad: 32px;
 
+  /* THE HEIGHT OF THE HEADER, in one place, because three things depend on it
+     and nothing used to connect them: the hero's top padding has to clear it,
+     `scroll-padding-top` has to push in-page anchors below it, and the header
+     itself has to be exactly this tall. It is 84px of nav plus the 2px
+     scroll-progress rule.
+
+     `docs/TRAPS.md` recorded these as "one arithmetic chain with Header.astro
+     and nothing but this comment connects them". This is the connection.
+     Changing the nav's height means changing this, and then the chain holds by
+     itself. */
+  --header-h: 86px;
+
   /* -------------------------------------------------------------- spacing --
    *
    * ADDED 2026-08-30, ALONGSIDE THE TYPE SCALE AND FOR THE SAME REASON. Gaps
