@@ -2,10 +2,15 @@
 /**
  * Header — utility bar plus the 84px nav, in two modes.
  *
- * `transparent` (default) overlays a hero: this nav is
- * `position: absolute; top: 0`, so the hero's own padding-top clears it. It
- * must not sit in normal flow inside a flex hero — it would be treated as a
- * flex item and drop to the bottom of the viewport.
+ * `transparent` (default) overlays a hero: this nav is `position: fixed; top: 0`,
+ * out of flow so the hero's own padding-top clears it. It must not sit in normal
+ * flow — it would be treated as a flex item and drop to the bottom of the hero.
+ *
+ * IT WAS `absolute` UNTIL 2026-09-12, which pinned it to the document instead of
+ * the viewport: on the only three pages that use this mode it scrolled away at
+ * 86px and did not return until the reader went back to the very top. It takes a
+ * solid background once scrolled — `src/scripts/header-scroll.ts` — because a
+ * fixed transparent bar has content running underneath it.
  *
  * THERE IS NOTHING ABOVE IT ANY MORE. A 44px utility bar used to sit here
  * carrying "Follow Spartan" and three decorative marks that were not links,
@@ -61,9 +66,12 @@ const { mode = 'transparent', onMedia = false } = Astro.props;
    using the wrong one makes the wordmark invisible — a bug no gate can catch,
    because an invisible wordmark is still a rendered <img> with correct alt.
    Before 2026-09-03 this header used the dark lockup everywhere, so on the
-   division pages' scrimmed heroes the wordmark vanished. `onMedia` is exactly
-   the flag that says the surface is dark. */
-const logo = onMedia ? logoLight : logoDark;
+   division pages' scrimmed heroes the wordmark vanished.
+
+   SINCE 2026-09-12 BOTH LOCKUPS SHIP AND CSS PICKS ONE, rather than `onMedia`
+   choosing a single `<img>` here. The surface is no longer fixed for the life of
+   the page: the bar turns solid white as soon as it is scrolled, and a build-time
+   choice would have stranded the white wordmark on it. */
 
 /*
  * THE HEADER NOW READS CATALOGUE CONTENT, AND IT GOES THROUGH THE SEAM.
@@ -122,8 +130,32 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
 
 <header class:list={['site-header', `site-header--${mode}`, { 'on-dark': onMedia }]}>
   <div class="wrap nav">
-    <a class="nav__logo" href="/">
-      <img src={logo.src} width={logo.width} height={logo.height} alt="Spartan" />
+    {/* BOTH LOCKUPS SHIP AND CSS PICKS ONE. It used to be a single `<img>`
+        chosen at build time from `onMedia`, which could not survive this header
+        becoming solid mid-scroll: on `/electricals` and `/safety` the white
+        wordmark would have been left sitting on a white bar — invisible, and
+        still a rendered `<img>` with correct alt, dimensions and a 200, which
+        is the exact failure handoff.md §3 records as having shipped once
+        already. With both present the surface decides, and it cannot drift.
+
+        `alt=""` on both with the name on the link: whichever image is hidden is
+        not exposed, so putting the name on either one would leave the link
+        unnamed on the pages where that one is the hidden half. */}
+    <a class="nav__logo" href="/" aria-label="Spartan">
+      <img
+        class="nav__logo-img nav__logo-img--dark"
+        src={logoDark.src}
+        width={logoDark.width}
+        height={logoDark.height}
+        alt=""
+      />
+      <img
+        class="nav__logo-img nav__logo-img--light"
+        src={logoLight.src}
+        width={logoLight.width}
+        height={logoLight.height}
+        alt=""
+      />
     </a>
 
     <nav class="nav__menu" aria-label="Primary">
@@ -286,6 +318,16 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     nothing at all until it is opened. */}
 <EnquiryDrawer client:idle />
 
+{/* AN IMPORT, SO ASTRO BUNDLES IT TO A FILE — never inline. `npm run csp`
+    derives its hashes from `dist/client`, and this header renders on 118
+    prerendered pages; an inline script here would need a hash and would be one
+    more thing to regenerate. A bundled module is `script-src 'self'` and needs
+    none, which is why `landing-motion` is loaded the same way. The admin has
+    its own layout and never renders this component. */}
+<script>
+  import '../../scripts/header-scroll';
+</script>
+
 <style>
   .site-header {
     left: 0;
@@ -293,16 +335,58 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     z-index: 25;
   }
 
-  /* Over a hero: out of flow, at the top of the document.
+  /* Over a hero: out of flow, and pinned to the VIEWPORT.
 
      Was `top: 44px` to clear a utility bar that carried three decorative
      social marks and nothing else. That bar is gone (2026-08-29), so this is 0
      and the chrome is 86px tall at every width — 84px of nav plus the 2px
      progress rule. `Hero.astro`'s `--hero-chrome` IS that number and has to
-     move with it; docs/TRAPS.md records why nothing catches it if it does not. */
+     move with it; docs/TRAPS.md records why nothing catches it if it does not.
+
+     `fixed` SINCE 2026-09-12, AND IT WAS `absolute`. Absolute pins to the
+     document, so on the only three pages that use this mode — the home page,
+     Electricals and Safety — the header scrolled away at 86px and did not come
+     back until the reader returned to the very top. On the home page that left
+     99.3% of a 15-screen page with no navigation, no menu button and no view of
+     the enquiry basket, which is the mechanism the whole site converts on. The
+     client reported it as a phone fault; it reproduced identically in Chromium
+     and WebKit and on every width.
+
+     `fixed` and not `sticky` on purpose: sticky puts the header back in normal
+     flow, which would add 86px above the hero on top of the clearance the hero
+     already reserves for it. Fixed keeps it out of flow, so nothing about the
+     hero's geometry moves — the only change is what it is pinned to. */
   .site-header--transparent {
-    position: absolute;
+    position: fixed;
     top: 0;
+  }
+
+  /* ONCE THE PAGE HAS SCROLLED, THIS BECOMES THE HEADER EVERY OTHER PAGE HAS.
+     Transparent chrome over a hero is the point of this mode, but a fixed
+     transparent bar with content running underneath it is unreadable — so past
+     the hero's own clearance it takes the solid surface, the rule, and the dark
+     lockup, which is exactly `--solid`. `is-scrolled` is written by
+     src/scripts/header-scroll.ts.
+
+     The threshold is the header's own height, and that is not arbitrary: the
+     hero reserves precisely that much padding for it, so nothing legible can
+     pass beneath the bar while it is still transparent. */
+  .site-header--transparent.is-scrolled {
+    background: var(--surface-page);
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* WITHOUT JAVASCRIPT IT GOES BACK TO EXACTLY WHAT IT DID BEFORE, and that is
+     the safety net rather than a nicety. `is-scrolled` is the only thing that
+     gives this bar a background; with no script to add it, a FIXED transparent
+     header would sit over the page with content running underneath it and both
+     unreadable. Absolute restores the old behaviour — it scrolls away, which is
+     the defect this change fixes, but a defect is better than illegible chrome
+     and it is precisely the state these pages shipped in until today. */
+  @media (scripting: none) {
+    .site-header--transparent {
+      position: absolute;
+    }
   }
 
   /* No hero: opaque and pinned, so the white wordmark keeps its background. */
@@ -374,6 +458,27 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     align-items: center;
     flex-shrink: 0;
     padding-block: 3px;
+  }
+
+  /* THE SURFACE PICKS THE LOCKUP, and `on-dark` is the surface. The dark
+     wordmark is the default because every surface on this site is light except
+     the footer; the light one appears only while the header is genuinely over
+     photography.
+
+     It needs no `is-scrolled` qualifier, because the script TAKES `on-dark` OFF
+     when the bar solidifies — so the lockup, the link colours and everything
+     else that keys off dark photography revert together, as one state, rather
+     than being unpicked rule by rule here and drifting apart later. */
+  .nav__logo-img--light {
+    display: none;
+  }
+
+  .site-header.on-dark .nav__logo-img--dark {
+    display: none;
+  }
+
+  .site-header.on-dark .nav__logo-img--light {
+    display: inline-block;
   }
 
   /* 48px, up from 38px on 2026-08-29. The lockup was reading as navbar

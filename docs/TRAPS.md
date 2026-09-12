@@ -963,3 +963,50 @@ did not check. Changing one is a regression *you* would be introducing.
   **`toHaveCount` cannot tell that they are hidden** — `home.spec.ts` went on
   passing on the mobile project while measuring something invisible until it was
   pinned to a desktop viewport. Assert the box, not the count.
+
+## The overlay header, since 2026-09-12
+
+- **`.site-header--transparent` is `position: fixed`, and it was `absolute`.**
+  Absolute pinned it to the DOCUMENT, so on the only three pages that use this
+  mode — `/`, `/electricals`, `/safety` — it scrolled away at 86px and did not
+  return until the reader went back to the very top. **Do not "restore"
+  absolute**: the other 115 pages already have a header that follows the reader,
+  and on the home page this left 99.3% of a fifteen-screen page with no menu
+  button and no sight of the enquiry basket.
+
+- **`fixed`, NOT `sticky`.** Sticky puts the header back in normal flow, which
+  adds 86px above a hero that already reserves exactly that much padding to
+  clear it. Fixed keeps it out of flow, so no hero geometry moves.
+
+- **A fixed TRANSPARENT bar has page content running under it**, so it must take
+  a background once scrolled. `src/scripts/header-scroll.ts` adds `is-scrolled`
+  past the header's own height — which is the hero's reserved clearance, so
+  nothing legible passes beneath the bar while it is still transparent.
+
+- **The script REMOVES `on-dark` rather than overriding it**, and that is
+  deliberate. The class means "this header is over photography", which stops
+  being true the moment the bar turns white. Unpicking the dark-surface rules
+  one at a time in CSS would leave the next person to add one with a header
+  correct in three places and wrong in the fourth.
+
+- **Both logo lockups now ship and CSS picks one.** It used to be a single
+  `<img>` chosen at build time from `onMedia`, which cannot survive a surface
+  that changes mid-scroll: on the two division pages the white wordmark would
+  end up on a white bar. **That failure is invisible to every gate here** — an
+  invisible wordmark is still a rendered `<img>` with correct alt, dimensions
+  and a 200. `navigation.spec.ts` asserts the visible/hidden pair on both
+  surfaces.
+
+- **`@media (scripting: none)` puts it back to `absolute`.** The background is
+  written by a script; with no script, a fixed transparent bar would sit over
+  the page with content running under it and both illegible. The fallback is the
+  old defect, which is strictly better than unreadable chrome. **Do not delete
+  that block when tidying.**
+
+- **This header's `<script>` is INLINE, not bundled, and it needed a CSP hash.**
+  Astro inlines a small module rather than emitting a file, so adding it took
+  the hash count from 7 to 8 and the page was blocked at runtime until
+  `npm run csp` ran — the header rendered, nothing failed, and the bar simply
+  never solidified. The CSP gate does catch it; the build and `astro check` do
+  not. **Adding or editing a script here means `npm run csp` and committing
+  `vercel.json`.**

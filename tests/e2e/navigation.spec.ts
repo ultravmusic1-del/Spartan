@@ -320,3 +320,133 @@ test.describe('the mobile panel', () => {
     for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);
   });
 });
+
+/**
+ * THE HEADER FOLLOWS THE READER, on every page.
+ *
+ * Three pages overlay the header on a hero — `/`, `/electricals`, `/safety` —
+ * and until 2026-09-12 that mode was `position: absolute`, pinned to the
+ * DOCUMENT. It scrolled away at 86px and did not come back until the reader
+ * returned to the very top; on the home page that left 99.3% of a fifteen-screen
+ * page with no navigation, no menu button and no sight of the enquiry basket.
+ * It was reported as a phone fault and reproduced identically in both engines at
+ * every width.
+ *
+ * Every assertion here is about the VIEWPORT box, not a class or a property
+ * name: the complaint was "I cannot see the header", and `top === 0` is the only
+ * thing that answers it.
+ */
+test.describe('the overlay header', () => {
+  const OVERLAY = ['/', '/electricals', '/safety'];
+
+  for (const path of OVERLAY) {
+    test(`stays on screen after scrolling down and back up on ${path}`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(path);
+
+      const top = () =>
+        page.locator('header').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+
+      expect(await top()).toBe(0);
+
+      await page.evaluate(() => window.scrollTo(0, 2500));
+      await page.waitForTimeout(250);
+      expect(await top(), 'scrolled down').toBe(0);
+
+      // The exact gesture from the report: back up, but not to the top.
+      await page.evaluate(() => window.scrollTo(0, 1200));
+      await page.waitForTimeout(250);
+      expect(await top(), 'scrolled back up').toBe(0);
+    });
+  }
+
+  test('takes a solid background once scrolled, and gives it up again at the top', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    const bg = () => page.locator('header').evaluate((el) => getComputedStyle(el).backgroundColor);
+    const transparent = (c: string) => /rgba\(0, 0, 0, 0\)|transparent/.test(c);
+
+    /*
+     * Transparent at the top is the whole point of this mode. Opaque once
+     * scrolled is not decoration: the bar is fixed, so page content runs
+     * underneath it, and transparent chrome over moving text is unreadable.
+     */
+    expect(transparent(await bg()), 'at the top').toBe(true);
+
+    await page.evaluate(() => window.scrollTo(0, 2500));
+    await page.waitForTimeout(250);
+    expect(transparent(await bg()), 'scrolled').toBe(false);
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(250);
+    expect(transparent(await bg()), 'back at the top').toBe(true);
+  });
+
+  test('swaps the lockup with the surface, so the wordmark is never white on white', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/electricals');
+
+    /*
+     * THE FAILURE THIS EXISTS FOR IS INVISIBLE TO EVERY OTHER GATE. `/electricals`
+     * puts the header on a dark photograph, so it ships the white-wordmark
+     * lockup — and the moment the bar turns solid white, that wordmark is on a
+     * white background. It is still a rendered <img> with correct dimensions and
+     * a 200 (handoff.md section 3), so nothing else here would notice.
+     *
+     * Exactly one lockup is shown at a time and it is asserted as a pair: which
+     * one is visible, and that the other is not.
+     */
+    const shown = () =>
+      page.evaluate(() => ({
+        dark: getComputedStyle(document.querySelector('.nav__logo-img--dark')!).display !== 'none',
+        light: getComputedStyle(document.querySelector('.nav__logo-img--light')!).display !== 'none',
+      }));
+
+    expect(await shown(), 'over the photograph').toEqual({ dark: false, light: true });
+
+    await page.evaluate(() => window.scrollTo(0, 2500));
+    await page.waitForTimeout(250);
+    expect(await shown(), 'over the solid bar').toEqual({ dark: true, light: false });
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(250);
+    expect(await shown(), 'back over the photograph').toEqual({ dark: false, light: true });
+  });
+
+  test('leaves the other pages on their own sticky header', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/catalogue');
+
+    // 115 of the 118 public pages were never affected and must not change.
+    await expect(page.locator('header')).toHaveCSS('position', 'sticky');
+    await page.evaluate(() => window.scrollTo(0, 2500));
+    await page.waitForTimeout(250);
+    expect(
+      await page.locator('header').evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+    ).toBe(0);
+  });
+
+  test.describe('without JavaScript', () => {
+    test.use({ javaScriptEnabled: false });
+
+    test('falls back to the old behaviour rather than to unreadable chrome', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto('/');
+
+      /*
+       * The background is written by a script, so with no script a FIXED
+       * transparent bar would sit over the page with content running under it and
+       * both illegible. `@media (scripting: none)` puts it back to `absolute` —
+       * which is the defect this change fixes, and is strictly better than
+       * chrome nobody can read. It is also exactly what these pages shipped as
+       * until today, so it is a return to the status quo rather than a new state.
+       */
+      await expect(page.locator('header')).toHaveCSS('position', 'absolute');
+    });
+  });
+});

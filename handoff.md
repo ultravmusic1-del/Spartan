@@ -5634,3 +5634,77 @@ checks them at a width that shows them rather than dropping them from the list,
 which would have left the one element whose cancelled animation nothing asserts.
 
 `verify 18/18 · 399 unit · 362 public e2e, 0 failing.`
+
+## 55. The header follows the reader again — 2026-09-12
+
+The client reported that on a phone the header vanished after scrolling and only
+came back by dragging all the way to the top, and asked whether it was their
+device.
+
+### It was not their device, and the investigation is the useful half
+
+Reproduced identically in Chromium and WebKit, at every width, on exactly three
+pages: `/`, `/electricals` and `/safety`. The other 115 public pages were never
+affected.
+
+Those three are the only ones that overlay the header on a hero, and that mode
+was `position: absolute` — pinned to the **document**, not the viewport. It
+scrolled out of view at 86px and did not return until the reader was back at the
+top. The other 115 use `--solid`, which is `position: sticky` and stays.
+
+| Page | Length | Share with no header |
+|---|---|---|
+| `/` | 15.3 screens | 99.3% |
+| `/safety` | 10.0 screens | 99.0% |
+| `/electricals` | 8.0 screens | 98.7% |
+
+**The menu button and the enquiry basket badge both live in that header**, so for
+virtually the whole of the longest and most-visited page a phone reader had no
+navigation and could not see their basket — and the basket is the mechanism the
+site converts on.
+
+**It was not a decision.** The file explains why the header is `absolute` — in
+normal flow it would be a flex item and drop to the bottom of the hero — but
+nothing anywhere says it should stop following the reader. It reads as a side
+effect of solving the overlay problem.
+
+### The fix
+
+`position: fixed`, **not** `sticky`. Sticky returns the bar to normal flow and
+would add 86px above a hero that already reserves exactly that clearance for it;
+fixed keeps it out of flow, so no hero geometry moves at all. The only thing that
+changes is what it is pinned to.
+
+A fixed transparent bar has page content running underneath it, so
+`src/scripts/header-scroll.ts` gives it a background past the header's own
+height — the hero's reserved clearance, so nothing legible ever passes beneath
+it while it is still see-through. Past that point it looks exactly like the
+header on the other 115 pages, which is the answer to "what should it become":
+the thing it already is everywhere else.
+
+Three decisions inside it:
+
+- **The script removes `on-dark` rather than overriding it.** That class means
+  "this header is over photography", which stops being true the moment the bar
+  turns white. Taking it off reverts the lockup, the link colours and every
+  other dark-surface rule together, as one state, instead of being unpicked rule
+  by rule and drifting apart later.
+- **Both lockups ship and CSS picks one.** A single `<img>` chosen at build time
+  from `onMedia` cannot survive a surface that changes mid-scroll — on the two
+  division pages the white wordmark would have been left on a white bar. That is
+  the §3 failure that has shipped once before and that no gate here can see.
+- **`@media (scripting: none)` falls back to `absolute`.** With no script there
+  is no background, and a fixed transparent bar over moving content is
+  illegible. The fallback is the old defect, which is strictly better, and is
+  exactly what these pages shipped as until today.
+
+### It was blocked at runtime first, and only the console said so
+
+Astro **inlined** the module rather than emitting a file — it is small — so the
+CSP blocked it. The header rendered perfectly, the build passed, `astro check`
+passed, and the bar simply never solidified. `npm run csp` took the hash count
+from 7 to 8 and it worked. The CSP gate does catch this, and did; it is worth
+knowing that the symptom is "the feature silently does nothing", not an error.
+
+`verify 18/18 · 399 unit · 376 public e2e, 0 failing.` Six of those e2e tests are
+new, including the no-JavaScript fallback and the lockup pair.
