@@ -225,17 +225,24 @@ test.describe('what a phone does with a 4:1 banner', () => {
    * hero's meaning, which is why this costs presentation rather than a lead.
    *
    * DO NOT SILENTLY REVERSE IT, AND DO NOT DELETE THIS TEST. Reversing is the
-   * client's call and there are exactly two honest ways: crop the frame to 3:2
-   * with `object-fit: cover`, which fills the space and cuts the sides off the
-   * artwork; or supply a second, phone-shaped crop per banner. One 2800 x 700
-   * artwork cannot fill both shapes, so there is no third option that merely
-   * makes the band taller.
+   * client's call and there are exactly two honest ways to go further: crop the
+   * frame to 3:2 with `object-fit: cover`, which fills the space and cuts the
+   * sides off the artwork; or supply a second, phone-shaped crop per banner.
+   * One 2800 x 700 artwork cannot fill both shapes.
+   *
+   * THE ONE LEVER THAT COSTS NO ARTWORK IS WIDTH, and it was pulled on
+   * 2026-09-12: the band now runs edge to edge on a phone instead of sitting
+   * inside the wrap's 20px padding, which took 335 x 84 to 375 x 94 at this
+   * viewport. The RATIO is what the client's decision protects, and it is
+   * untouched. An earlier version of this comment said there was no third
+   * option that merely makes the band taller; there was, and it was worth about
+   * ten pixels.
    *
    * This asserts what ships so that a reversal breaks a test and gets read —
    * which is what the ORIGINAL pin was supposed to do and could not, because it
    * measured the empty slot production had already stopped rendering.
    */
-  test('is still 4:1 on a phone, which is 84px tall and is the accepted trade', async ({
+  test('is still 4:1 on a phone, edge to edge and uncropped, which is the accepted trade', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 812 });
@@ -244,6 +251,13 @@ test.describe('what a phone does with a 4:1 banner', () => {
     const box = await page.locator('.hero__frame').boundingBox();
     expect(box).not.toBeNull();
     expect(box!.width / box!.height).toBeCloseTo(4, 1);
+
+    // Full-bleed: the frame is the screen, not the column.
+    expect(box!.x).toBeCloseTo(0, 0);
+    expect(box!.width).toBeCloseTo(375, 0);
+
+    // Still short, because the ratio is still 4:1. This is the number the
+    // client accepted, now ten pixels better for free.
     expect(box!.height).toBeLessThan(100);
   });
 

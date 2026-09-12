@@ -62,7 +62,11 @@ ${clock!.pipDelays
 `.trim();
 
 const WIDTHS = [390, 700, 1176, 1600, 2352];
-const SIZES = '(min-width: 1424px) 1296px, calc(100vw - 2 * var(--wrap-pad, 32px))';
+/* The band goes edge to edge below 900px, so it asks for the whole viewport
+   there rather than the wrap's content width — otherwise every phone downloads
+   an image 40px narrower than the box it has to fill and upscales it. */
+const SIZES =
+  '(min-width: 1424px) 1296px, (max-width: 900px) 100vw, calc(100vw - 2 * var(--wrap-pad, 32px))';
 
 const [divisions, categories, products, settings] = await Promise.all([
   getDivisions(),
@@ -128,10 +132,27 @@ const proof = [
           contractors and distributors.
         </p>
 
-        <div class="hero__actions">
-          <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-          <PillButton href="/enquiry">Request a quote</PillButton>
-        </div>
+      </div>
+
+      {/* THE ACTIONS SIT OUTSIDE `.hero__copy`, AND THAT IS WHAT MAKES THE
+          PHONE ORDER EXPRESSIBLE AT ALL.
+
+          On a phone the campaign band goes ABOVE these two buttons (the client's
+          call, 2026-09-12) while on desktop it stays below them. CSS `order`
+          only reorders siblings, and the stage is a child of `.hero__wrap` — so
+          while the actions were a grandchild, nested inside `.hero__copy`, no
+          rule could interleave the two. Lifting them out costs nothing on
+          desktop, where `.hero__actions` centres itself either way, and it does
+          not move them in the document: they were the last thing in
+          `.hero__copy`, so they are still in exactly the same place in reading
+          order. `Hero.test.ts` asserts that order by document position and is
+          untouched by this.
+
+          The same split, for the same reason, is what the pre-September hero
+          used — docs/TRAPS.md records it. */}
+      <div class="hero__actions">
+        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+        <PillButton href="/enquiry">Request a quote</PillButton>
       </div>
 
       {/* THE CAMPAIGN BAND — the client's uploaded banners, closing the first
@@ -838,13 +859,91 @@ const proof = [
       justify-content: flex-start;
     }
 
-    .hero__stage {
-      margin-top: var(--space-8);
+    /* THE PHONE ORDER IS SET HERE, NOT IN THE DOCUMENT. Taken 2026-09-12: the
+       campaign band moves above the two buttons so it lands directly under the
+       headline, which is where a phone reader's eye already is. Desktop is
+       untouched and keeps the band below them.
+
+       `.hero__wrap` becomes a flex column purely so `order` has something to
+       act on; every child is a full-width block either way, so nothing else
+       about the stack changes. The orders are written out in full rather than
+       nudging one item, because a single `order: -1` somewhere is unreadable
+       six months later and this list says what the phone layout IS.
+
+       ONE THING IT COSTS: the stage paints before the actions while still
+       sitting after them in the document, so the band's Pause control is
+       reached by Tab AFTER the two buttons although it appears above them.
+       That is one control on the breakpoint where tabbing is rarest, and the
+       alternative — reordering the document — would put the same mismatch on
+       desktop, where keyboard use is common. Reading order is unaffected: the
+       slides are decorative with empty alt, so a screen reader hears headline,
+       lede, both CTAs, then a pause control, which is coherent. */
+    .hero__wrap {
+      display: flex;
+      flex-direction: column;
     }
 
-    .hero__doors {
-      grid-template-columns: 1fr;
+    .hero__head {
+      order: 1;
+    }
+
+    .hero__copy {
+      order: 2;
+    }
+
+    .hero__stage {
+      order: 3;
+    }
+
+    .hero__actions {
+      order: 4;
+    }
+
+    .hero__proof {
+      order: 5;
+    }
+
+    /* EDGE TO EDGE ON A PHONE, AND DELIBERATELY NOT CROPPED. The client asked
+       for a more prominent band on 2026-09-12; the honest way to give it one is
+       width, because the 4:1 ratio is itself a client decision — the artwork
+       carries a headline and a QR code that a taller crop cuts off the sides
+       (docs/TRAPS.md). Escaping the wrap's padding takes it from 350px to the
+       full 390 on a modern phone, and the reposition above does the rest.
+       `width: auto` matters: the rule's `width: 100%` would keep the old width
+       and simply shunt the box left, overflowing on the right. */
+    .hero__stage {
       margin-top: var(--space-8);
+      margin-inline: calc(var(--wrap-pad) * -1);
+      width: auto;
+    }
+
+    /* A border and a radius belong to a card sitting on a page, not to a band
+       running off both edges of the screen. */
+    .hero__frame,
+    .hero__slot {
+      border-inline: 0;
+      border-radius: 0;
+    }
+
+    /* THE PICTURE BLEEDS; THE CONTROLS DO NOT. `.hero__bar` is inside the stage,
+       so the negative margin above took it edge to edge along with the frame and
+       printed "01" hard against the left edge of the screen and "CAMPAIGN"
+       against the right. Artwork can touch the edge — type read as a label
+       cannot. This puts the row back on the measure every other line of the page
+       sits on. */
+    .hero__bar {
+      padding-inline: var(--wrap-pad);
+    }
+
+    /* THE DIVISION DOORS ARE HIDDEN ON PHONES, not deleted. The client called
+       them redundant on 2026-09-12 and they are: section 02 lists both
+       divisions with the same counted totals and a link each, one screen
+       further down, and on a phone the doors are two full-width cards
+       repeating it. Desktop keeps them, where they sit as a pair beside each
+       other and cost nothing. `display: none` rather than a markup change, so
+       the desktop layout and every unit test that counts them are untouched. */
+    .hero__doors {
+      display: none;
     }
 
     .hero__proof {

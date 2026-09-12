@@ -217,8 +217,17 @@ test.describe('the hero proposition', () => {
   });
 
   test('opens both divisions from the hero with counted totals', async ({ page }) => {
+    /*
+     * DESKTOP, EXPLICITLY. The doors are `display: none` on a phone since
+     * 2026-09-12, and every assertion below — count, href, text — reads the DOM
+     * rather than the layout, so this went on passing on the mobile project
+     * while measuring something invisible. A test that cannot tell whether its
+     * subject is on the page is not testing the page.
+     */
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
     const doors = page.locator('.hero__door');
+    await expect(doors.first()).toBeVisible();
     await expect(doors).toHaveCount(2);
     await expect(doors.nth(0)).toHaveAttribute('href', '/electricals');
     await expect(doors.nth(1)).toHaveAttribute('href', '/safety');

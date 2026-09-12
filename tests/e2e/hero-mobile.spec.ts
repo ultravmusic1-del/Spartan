@@ -48,28 +48,92 @@ async function heroSettled(page: Page): Promise<void> {
 }
 
 test.describe('the hero source order', () => {
-  test('stacks headline, then CTAs, then the campaign band', async ({ page }) => {
+  /** What the eye sees, top to bottom — not what the document says. */
+  const painted = (page: Page) =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('.hero h1, .hero__stage, .hero__actions')]
+        .map((n) => ({
+          key: n.tagName === 'H1' ? 'headline' : n.className.split(' ')[0],
+          top: n.getBoundingClientRect().top,
+        }))
+        .sort((a, b) => a.top - b.top)
+        .map((n) => n.key),
+    );
+
+  /*
+   * THIS ASSERTS PAINT ORDER, AND USED TO ASSERT DOCUMENT ORDER. The change is
+   * the point of the test now, so it is worth saying why.
+   *
+   * Since 2026-09-12 the two orders DIFFER on a phone: the band is lifted above
+   * the buttons by `order` in a media query while staying after them in the
+   * document, because `order` was the only way to do it without giving desktop
+   * the same mismatch. A document-order assertion would therefore have gone on
+   * passing while the phone layout was the exact opposite of what it claimed —
+   * green, and describing nothing.
+   */
+  test('puts the campaign band above the CTAs on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    expect(await painted(page)).toEqual(['headline', 'hero__stage', 'hero__actions']);
+  });
+
+  test('and keeps it below them on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
     /*
-     * Below 1080px `.hero` is `display: block`, so DOM order IS paint order and
-     * this is the layout. Asserted as document position rather than as
-     * coordinates so it holds at every width — on desktop the stage is
-     * absolutely positioned and the same order is a no-op.
+     * Unchanged since 2026-09-03, and the reason the phone change is a media
+     * query rather than a new document order: the band closing the hero is what
+     * keeps the primary CTA following the lede directly here.
      */
-    const order = await page.evaluate(() => {
-      const nodes = [...document.querySelectorAll('.hero h1, .hero__stage, .hero__actions')];
-      return nodes.map((n) => (n.tagName === 'H1' ? 'headline' : n.className.split(' ')[0]));
-    });
+    expect(await painted(page)).toEqual(['headline', 'hero__actions', 'hero__stage']);
+  });
+
+  test('the document order never moved, so reading order did not either', async ({ page }) => {
+    await page.goto('/');
 
     /*
-     * REVERSED ON 2026-09-03. The carousel used to sit between the headline
-     * and the actions, which is what pushed the primary CTA past the fold on
-     * short phones and needed a card-shrinking media query to buy it back.
-     * The campaign band now closes the hero, below the doors and the proof
-     * strip, so the two actions follow the lede directly at every width.
+     * `.hero__actions` was lifted out of `.hero__copy` to make the phone order
+     * expressible — `order` only reorders siblings. It was the last thing in
+     * `.hero__copy`, so it sits in exactly the same place in the document, and
+     * a screen reader hears headline, lede, both CTAs, then the band's pause
+     * control at every width.
      */
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll('.hero h1, .hero__stage, .hero__actions')].map((n) =>
+        n.tagName === 'H1' ? 'headline' : n.className.split(' ')[0],
+      ),
+    );
     expect(order).toEqual(['headline', 'hero__actions', 'hero__stage']);
+  });
+});
+
+test.describe('the division doors', () => {
+  /*
+   * Hidden on phones from 2026-09-12, kept on desktop. They repeat what section
+   * 02 says one screen further down — both divisions, the same counted totals, a
+   * link each — and on a phone they are two more full-width cards saying it
+   * again. `display: none`, so the markup and every unit test that counts them
+   * are untouched; a `toHaveCount` assertion cannot tell the difference, which
+   * is why this measures the box instead.
+   */
+  test('are gone on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await expect(page.locator('.hero__doors')).toBeHidden();
+    const boxes = await page
+      .locator('.hero__door')
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
+    expect(boxes.every((h) => h === 0)).toBe(true);
+  });
+
+  test('and still open both divisions on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    const doors = page.locator('.hero__door');
+    await expect(doors).toHaveCount(2);
+    await expect(doors.nth(0)).toBeVisible();
+    await expect(doors.nth(1)).toBeVisible();
   });
 });
 
@@ -147,18 +211,32 @@ test.describe('short screens buy the primary CTA back by spending card', () => {
       expect(box!.y + box!.height).toBeLessThanOrEqual(size.height);
     });
 
-    test(`the banner band spans the column on ${size.name}`, async ({ page }) => {
+    test(`the banner band spans the whole screen on ${size.name}`, async ({ page }) => {
       await page.setViewportSize({ width: size.width, height: size.height });
       await page.goto('/');
 
-      // Was "shrunk to 38vw", which pinned a card floating beside the copy. The
-      // centred stack of 2026-08-20 makes the band full-width, so what is worth
-      // checking is that it fills the column and does not overflow it — 20px of
-      // --wrap-pad each side below 640px.
-      const width = await page
+      /*
+       * WAS "spans the column" — 20px of --wrap-pad each side — until
+       * 2026-09-12, when the client asked for a more prominent band on the
+       * phone. It escapes the wrap's padding instead of being cropped taller:
+       * the 4:1 ratio is its own client decision, because the artwork carries a
+       * headline and a QR code that a taller crop cuts off the sides
+       * (docs/TRAPS.md). Width was the only lever that costs no artwork.
+       *
+       * Both halves matter. Edge to edge is the point, and NOT ONE PIXEL WIDER
+       * is what stops a negative margin quietly handing the whole page a
+       * sideways scroll — which is exactly how this technique usually fails.
+       */
+      const stage = await page
         .locator('.hero__stage')
-        .evaluate((el) => el.getBoundingClientRect().width);
-      expect(width).toBeCloseTo(size.width - 40, 0);
+        .evaluate((el) => { const b = el.getBoundingClientRect(); return { left: b.left, width: b.width }; });
+      expect(stage.left).toBeCloseTo(0, 0);
+      expect(stage.width).toBeCloseTo(size.width, 0);
+
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow).toBe(0);
     });
   }
 

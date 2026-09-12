@@ -5561,3 +5561,76 @@ workflow is for CI to say and not for this note to claim. If run 78 is still
 red, the log — via `gh auth login` or the browser — is the next step, because
 there may be a second cause behind the first that eighteen runs of the same
 failure were hiding.
+
+## 54. The phone hero: band first, wider, and no doors — 2026-09-12
+
+Three client tweaks, all mobile-only, desktop deliberately untouched.
+
+### The band moves above the two CTAs, on phones only
+
+`order` in the `max-width: 900px` block, with `.hero__wrap` made a flex column
+for no other purpose. All five children get an explicit order rather than one
+item being nudged, because the list then says what the phone layout *is*.
+
+**`.hero__actions` had to come out of `.hero__copy` for this to be expressible
+at all.** `order` reorders siblings, and the stage is a child of `.hero__wrap`;
+nested one level deeper, the actions could never be interleaved with it. That is
+the same split the pre-September hero used and `docs/TRAPS.md` already recorded.
+Lifting them out costs desktop nothing — `.hero__actions` centres itself either
+way — and **does not move them in the document**, because they were already the
+last thing in `.hero__copy`. `Hero.test.ts` asserts that order by document
+position and needed no change.
+
+**What it costs:** the band's Pause control is now reached by Tab after the two
+buttons while painting above them. One control, on the breakpoint where tabbing
+is rarest. The alternative was to reorder the document and hand the identical
+mismatch to desktop, where keyboard use is common. Reading order is unaffected —
+the slides are decorative with empty alt, so a screen reader hears headline,
+lede, both CTAs, then a pause control.
+
+**The risk that did not materialise, measured rather than assumed.** The 
+2026-09-03 redesign moved the band below the CTAs precisely because, above them,
+it pushed "Browse catalogue" past the fold on short phones and needed a
+card-shrinking media query to buy it back. Putting it back above was therefore
+expected to cost the fold again. It did not: the primary CTA's bottom edge is
+**559px on a 375 x 667 and 583px on a 360 x 640**, both comfortably inside. The
+redesign left more headroom than the old hero had. `hero-mobile.spec.ts` still
+asserts the fold on both sizes and both still pass.
+
+### The band goes edge to edge, and the ratio is untouched
+
+The client asked for a more prominent band. **The 4:1 shape is its own client
+decision** — the artwork carries a headline and a QR code that a taller crop
+cuts off the sides (2026-08-27) — so the only lever that costs no artwork is
+width. Escaping the wrap's padding takes it from **335 x 84 to 375 x 94** at a
+375px viewport, and combined with the reposition it reads far larger than ten
+pixels suggests. The three options that go further were put to the client and
+declined: a 3:1 crop, a 2:1 crop, and commissioning phone-shaped artwork.
+
+**One thing this broke and I had to look at the render to see it.** The negative
+margin takes everything inside `.hero__stage` edge to edge, including the
+control row — so "01" printed hard against the left edge of the screen and
+"CAMPAIGN" against the right. No test caught it and nothing overflowed; the
+measurement said zero. `.hero__bar` gets `--wrap-pad` back. Artwork may touch
+the edge of a screen; type read as a label may not.
+
+`sizes` gained a `(max-width: 900px) 100vw` clause, or every phone would download
+an image 40px narrower than the box it now has to fill.
+
+### The division doors are hidden on phones
+
+They repeat what section 02 says one screen further down — both divisions, the
+same counted totals, a link each — and on a phone they are two more full-width
+cards saying it again. `display: none` below 900px rather than a markup change,
+so desktop and every unit test that counts them are untouched.
+
+**That last part is the trap.** A hidden element is still in the DOM, so
+`toHaveCount`, `toHaveAttribute` and `allTextContents` all keep passing —
+`home.spec.ts`'s door test went on running green on the mobile project while
+measuring something invisible. It now sets a desktop viewport and asserts
+visibility first. The reduced-motion check in `motion.spec.ts` had the opposite
+problem and genuinely failed, because it asserts the doors are visible; it now
+checks them at a width that shows them rather than dropping them from the list,
+which would have left the one element whose cancelled animation nothing asserts.
+
+`verify 18/18 · 399 unit · 362 public e2e, 0 failing.`

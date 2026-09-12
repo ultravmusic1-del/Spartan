@@ -66,12 +66,22 @@ test.describe('prefers-reduced-motion', () => {
     // would stick them at the animation's 0%-keyframe (opacity: 0) forever —
     // Hero.astro's reduced-motion block sets opacity: 1 explicitly to avoid
     // exactly that.
-    for (const sel of ['.hero__title', '.hero__lede', '.hero__actions', '.hero__doors', '.hero__proof']) {
+    for (const sel of ['.hero__title', '.hero__lede', '.hero__actions', '.hero__proof']) {
       const el = page.locator(sel);
       await expect(el).toBeVisible();
       await expect(el).toHaveCSS('opacity', '1');
     }
 
+    /*
+     * The doors carry the same `hero-rise` and the same risk, but they are
+     * `display: none` on a phone since 2026-09-12 — so they are checked at a
+     * width that shows them rather than dropped from the list. Dropping them
+     * would have left the one element here whose animation is cancelled on a
+     * breakpoint where nothing asserts the reset.
+     */
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(page.locator('.hero__doors')).toBeVisible();
+    await expect(page.locator('.hero__doors')).toHaveCSS('opacity', '1');
   });
 
   test('the About drill stops working, on both halves of the motion', async ({ page }) => {

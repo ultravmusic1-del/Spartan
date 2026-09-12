@@ -921,3 +921,45 @@ did not check. Changing one is a regression *you* would be introducing.
   unauthenticated from `api.github.com`, and that is enough to find WHICH step
   failed and WHEN it started — the annotation itself only says "exit code 1".
   For the actual error, either `gh auth login` or read it in the browser.
+
+## The phone hero, since 2026-09-12
+
+- **The campaign band paints ABOVE the two CTAs on a phone and BELOW them on
+  desktop, and the document order matches desktop.** The swap is `order` in the
+  `max-width: 900px` block, where `.hero__wrap` becomes a flex column for no
+  other reason. **Do not "tidy" the orders away** — they are written out in full
+  for all five children on purpose, because one stray `order: -1` is unreadable
+  later.
+
+- **`.hero__actions` lives OUTSIDE `.hero__copy`, and that is load-bearing.**
+  `order` only reorders siblings, and the stage is a child of `.hero__wrap`;
+  while the actions were nested inside `.hero__copy` no rule could interleave
+  them. Putting them back inside silently kills the phone order — the page still
+  renders, just in the desktop order at every width. The same split, for the
+  same reason, is what the pre-September hero used.
+
+- **The band's Pause control is reached by Tab AFTER the two buttons although it
+  paints above them on a phone.** Known and accepted: one control, on the
+  breakpoint where tabbing is rarest. Reordering the document to fix it would
+  move the identical mismatch onto desktop, where keyboard use is common.
+  Reading order is unaffected — the slides are decorative with empty alt.
+
+- **The band is full-bleed on a phone but the CONTROL ROW is not.** The negative
+  margin on `.hero__stage` takes everything inside it edge to edge, which
+  printed "01" against the left edge of the screen and "CAMPAIGN" against the
+  right; `.hero__bar` gets `--wrap-pad` back. Artwork may touch the edge, type
+  read as a label may not. **Anything else added inside the stage needs the same
+  treatment.**
+
+- **Width was the lever, not a taller crop, and the 4:1 ratio is untouched.**
+  The client asked for a more prominent band; escaping the wrap's padding took
+  it from 335 x 84 to 375 x 94 at a 375px viewport with nothing cut. The ratio
+  is its own client decision because the artwork carries a headline and a QR
+  code — see the entry above. `hero-carousel.spec.ts` pins ratio, left edge and
+  width together.
+
+- **`.hero__doors` is `display: none` below 900px, not removed.** The markup and
+  every unit test that counts the doors are untouched, which means
+  **`toHaveCount` cannot tell that they are hidden** — `home.spec.ts` went on
+  passing on the mobile project while measuring something invisible until it was
+  pinned to a desktop viewport. Assert the box, not the count.
