@@ -5779,3 +5779,75 @@ so the chain holds itself.
 `verify 18/18 · 399 unit · 382 public e2e, 0 failing.` Nine of those e2e tests
 are new and assert paint rather than classes — the reported fault was that page
 content showed through the bar, and a class assertion passes throughout that.
+
+---
+
+## 57. The desktop hero puts its buttons under the band — 2026-09-13
+
+Client request, one line: on desktop, "Browse catalogue" and "Request a quote"
+go below the campaign banner. The phone has read that way since §54.
+
+### It was a document change, not a media query, and that is the decision
+
+§54 moved the band above the buttons on a phone with `order` inside the
+`max-width: 900px` block, and argued explicitly for that over changing the
+markup: the document said buttons-then-band, desktop still wanted
+buttons-then-band, and reordering the source would have handed desktop a focus
+order that disagreed with what it paints — on the breakpoint where keyboard use
+is common. The price was one mismatch on the phone, where tabbing is rarest:
+the band's Pause control appeared above the two CTAs and was reached by Tab
+after them.
+
+**That argument ends the moment both widths want the same order.** With desktop
+asking for band-then-buttons too, there is nothing left for `order` to express,
+so `.hero__actions` moved in the markup to sit directly after `.hero__stage`
+and the five `order` declarations are gone. The phone mismatch went with them.
+Tab now reaches Pause, then Browse catalogue, then Request a quote, at every
+width, which is the order both of them are drawn in.
+
+**`.hero__wrap` keeps `display: flex` on the phone**, and that is deliberate,
+not residue. It arrived in §54 purely to give `order` something to act on, but
+a flex container's children do not collapse their vertical margins and a block
+container's do. Every gap measured on a phone since 2026-09-12 has been the
+non-collapsing kind; taking the flex away with the `order` list would have
+quietly re-tightened the whole hero stack on the one breakpoint nobody was
+looking at.
+
+### What it costs, and it is not nothing
+
+**The primary CTA is no longer above the fold on a desktop first screen.** The
+band is 362px tall with its control row, so on 1440×900 the buttons run
+845–902px — two pixels under — and on 1280×800 they are comfortably below it at
+811–869px. Before this change the CTA sat at roughly 455px on both and the band
+was what closed the first screen; `tests/e2e/home.spec.ts` still asserts the
+band itself clears 950px, and it does. **The phone keeps its above-the-fold
+CTA** — `hero-mobile.spec.ts` measures 582px against a 640px fold on a 360-wide
+Android, unchanged, because the phone layout did not move at all.
+
+That trade is the client's to hold, and it is the same trade §54 took on the
+phone. It is recorded here so that whoever reads a conversion report in three
+months knows the desktop CTA moved below the fold on 2026-09-13 and why.
+
+**One thing that is now visible and was not: the floating WhatsApp button
+overlaps the right end of the carousel's label row at 1280×800** on an
+unscrolled first screen, clipping "CAMPAIGN". The band used to sit below that
+point and off the first screen at this size. It covers a decorative label, not
+a control — §54's reason for moving the Pause control to the bar's LEFT end was
+exactly this button, and Pause is still clear of it — and it scrolls out from
+under the button immediately. Left alone, and reported rather than fixed.
+
+### The tests that had to change, and why that is not weakening them
+
+Four assertions pinned the old order. Three are now the new one and the fourth
+is inverted:
+
+- `Hero.test.ts` — source order is now headline, stage, actions, doors, proof.
+- `hero-mobile.spec.ts` — the desktop paint-order test flipped, and the
+  document-order test now asserts that the document AGREES with the paint at
+  every width. That one is worth keeping rather than deleting: it is what stops
+  a future `order` reintroducing the split.
+- `home.spec.ts` — `actions.y > stage bottom`, was the reverse.
+
+`verify 18/18 · 399 unit · 108 e2e across hero-mobile, home, hero-carousel and
+motion, 0 failing.` The full Playwright run still needs Docker for the
+authenticated suite and this machine has none, so CI is the gate for the rest.

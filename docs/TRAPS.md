@@ -922,27 +922,41 @@ did not check. Changing one is a regression *you* would be introducing.
   failed and WHEN it started — the annotation itself only says "exit code 1".
   For the actual error, either `gh auth login` or read it in the browser.
 
-## The phone hero, since 2026-09-12
+## The hero band and its buttons, since 2026-09-13
 
-- **The campaign band paints ABOVE the two CTAs on a phone and BELOW them on
-  desktop, and the document order matches desktop.** The swap is `order` in the
-  `max-width: 900px` block, where `.hero__wrap` becomes a flex column for no
-  other reason. **Do not "tidy" the orders away** — they are written out in full
-  for all five children on purpose, because one stray `order: -1` is unreadable
-  later.
+- **The campaign band paints ABOVE the two CTAs at EVERY width, and the
+  document order says so.** Between 2026-09-12 and 09-13 this was `order` in the
+  `max-width: 900px` block, because only the phone wanted it; desktop asked for
+  the same order on 09-13 (`handoff.md` §57), so `.hero__actions` moved in the
+  markup to sit straight after `.hero__stage` and the `order` declarations are
+  gone. **Do not reintroduce `order` here** — it would put paint order and focus
+  order back out of step. `tests/e2e/hero-mobile.spec.ts` asserts document order
+  and paint order separately, at both widths, for exactly that reason.
 
-- **`.hero__actions` lives OUTSIDE `.hero__copy`, and that is load-bearing.**
-  `order` only reorders siblings, and the stage is a child of `.hero__wrap`;
-  while the actions were nested inside `.hero__copy` no rule could interleave
-  them. Putting them back inside silently kills the phone order — the page still
-  renders, just in the desktop order at every width. The same split, for the
-  same reason, is what the pre-September hero used.
+- **`.hero__wrap` is still `display: flex` below 900px, and removing it changes
+  spacing.** It arrived only so `order` had something to act on and the `order`
+  list is now gone, so it reads like residue. It is not: a flex container's
+  children do not collapse their vertical margins and a block container's do,
+  and every phone gap measured since 2026-09-12 has been the non-collapsing
+  kind. Taking it out re-tightens the whole hero stack with nothing failing.
 
-- **The band's Pause control is reached by Tab AFTER the two buttons although it
-  paints above them on a phone.** Known and accepted: one control, on the
-  breakpoint where tabbing is rarest. Reordering the document to fix it would
-  move the identical mismatch onto desktop, where keyboard use is common.
-  Reading order is unaffected — the slides are decorative with empty alt.
+- **`.hero__actions` lives OUTSIDE `.hero__copy`, and that is still
+  load-bearing.** The band is a child of `.hero__wrap`, so the two can only be
+  adjacent as siblings. Putting the actions back inside `.hero__copy` puts them
+  above the band again at every width.
+
+- **The primary CTA is BELOW the fold on a desktop first screen, since
+  2026-09-13.** 845–902px on 1440×900, 811–869px on 1280×800. It is the price of
+  the band coming first and it was the client's call; `tests/e2e/home.spec.ts`
+  still pins the band itself clearing 950px. **The phone is unaffected** — its
+  CTA clears a 640px fold by 58px and `tests/e2e/hero-mobile.spec.ts` measures
+  it.
+
+- **The floating WhatsApp button clips "CAMPAIGN" at the right end of the
+  control row on an unscrolled 1280×800.** It appeared with the reorder, because
+  the band now lands on the first screen at that size. Decorative label, not a
+  control — the Pause control sits at the row's LEFT end precisely because of
+  this button, and is clear of it. Known, not fixed.
 
 - **The band is full-bleed on a phone but the CONTROL ROW is not.** The negative
   margin on `.hero__stage` takes everything inside it edge to edge, which

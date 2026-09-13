@@ -271,12 +271,13 @@ test.describe('the hero proposition', () => {
     const numeral = await box('.hero__head .section-index');
     expect(Math.round(numeral.x + numeral.width)).toBe(wrapRight);
 
-    // The campaign band spans the wrap, directly under the actions, and is
-    // the first screen's last element on a 950px viewport.
+    // The campaign band spans the wrap, directly under the lede, with the two
+    // actions beneath it — reordered 2026-09-13, so desktop reads the way the
+    // phone has since 09-12. The band still clears a 950px viewport.
     const stage = await box('.hero__stage');
     expect(Math.round(stage.x)).toBe(Math.round(head.x));
     expect(Math.round(stage.x + stage.width)).toBe(wrapRight);
-    expect(stage.y).toBeGreaterThan(actions.y + actions.height);
+    expect(actions.y).toBeGreaterThan(stage.y + stage.height);
     const frame = await box('.hero__frame');
     expect(frame.y + frame.height).toBeLessThanOrEqual(950);
 

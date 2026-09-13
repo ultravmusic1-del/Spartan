@@ -4,9 +4,10 @@
  * review. See docs/superpowers/specs/2026-09-03-landing-redesign-design.md.
  *
  * The shape now: one centred column on the page surface. Masthead, headline,
- * lede, the two actions, then the client's campaign carousel at the wrap's
- * full width — the first screen ends on it — then two division doors side by
- * side and a proof strip of four sourced facts. Symmetrical by construction:
+ * lede, then the client's campaign carousel at the wrap's full width, the two
+ * actions under it (2026-09-13 — the phone has read this way since 09-12 and
+ * desktop now matches), then two division doors side by side and a proof strip
+ * of four sourced facts. Symmetrical by construction:
  * every row is either centred or an even grid, and the only thing that is not
  * is the section numeral, which is a folio in the corner like every other
  * section's.
@@ -134,29 +135,8 @@ const proof = [
 
       </div>
 
-      {/* THE ACTIONS SIT OUTSIDE `.hero__copy`, AND THAT IS WHAT MAKES THE
-          PHONE ORDER EXPRESSIBLE AT ALL.
-
-          On a phone the campaign band goes ABOVE these two buttons (the client's
-          call, 2026-09-12) while on desktop it stays below them. CSS `order`
-          only reorders siblings, and the stage is a child of `.hero__wrap` — so
-          while the actions were a grandchild, nested inside `.hero__copy`, no
-          rule could interleave the two. Lifting them out costs nothing on
-          desktop, where `.hero__actions` centres itself either way, and it does
-          not move them in the document: they were the last thing in
-          `.hero__copy`, so they are still in exactly the same place in reading
-          order. `Hero.test.ts` asserts that order by document position and is
-          untouched by this.
-
-          The same split, for the same reason, is what the pre-September hero
-          used — docs/TRAPS.md records it. */}
-      <div class="hero__actions">
-        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
-        <PillButton href="/enquiry">Request a quote</PillButton>
-      </div>
-
-      {/* THE CAMPAIGN BAND — the client's uploaded banners, closing the first
-          screen. Same stage, same contract as it has always had. */}
+      {/* THE CAMPAIGN BAND — the client's uploaded banners. Same stage, same
+          contract as it has always had. */}
       <div class="hero__stage" data-hero-stage>
         {
           BANNERS.length === 0 ? (
@@ -248,6 +228,26 @@ const proof = [
             </>
           )
         }
+      </div>
+
+      {/* THE ACTIONS FOLLOW THE BAND, AT EVERY WIDTH — client call, 2026-09-13.
+          They sit outside `.hero__copy` because that is what made the phone
+          order expressible on 2026-09-12, and they stay outside it now that
+          desktop wants the same order: the band is a child of `.hero__wrap`,
+          so the two can only be adjacent as siblings.
+
+          THE DOCUMENT ORDER MOVED WITH THEM, deliberately. The 09-12 cut used
+          `order` in a media query precisely so desktop would not inherit a
+          focus order that disagreed with the paint order. Now that both widths
+          paint band-then-buttons, the document can simply say so — and the
+          mismatch the phone was carrying (Pause reached by Tab before the two
+          CTAs it appears under) is gone with it. A screen reader hears
+          headline, lede, the band's pause control, then both CTAs, which is
+          what the page looks like. `Hero.test.ts` and
+          `tests/e2e/hero-mobile.spec.ts` pin the new order at both widths. */}
+      <div class="hero__actions">
+        <SolidButton href="/catalogue">Browse catalogue</SolidButton>
+        <PillButton href="/enquiry">Request a quote</PillButton>
       </div>
 
       {/* THE DIVISION DOORS. The single most-repeated finding in four client
@@ -863,48 +863,21 @@ const proof = [
       justify-content: flex-start;
     }
 
-    /* THE PHONE ORDER IS SET HERE, NOT IN THE DOCUMENT. Taken 2026-09-12: the
-       campaign band moves above the two buttons so it lands directly under the
-       headline, which is where a phone reader's eye already is. Desktop is
-       untouched and keeps the band below them.
+    /* THE ORDER IS THE DOCUMENT'S NOW, at every width — 2026-09-13. This block
+       used to carry an `order` list, because on 2026-09-12 only the phone
+       wanted the band above the two buttons and desktop still wanted it below;
+       `order` was the way to say that without giving desktop a focus order
+       that disagreed with what it paints. Desktop asked for the same order on
+       2026-09-13, so the markup says it once and this block says nothing.
 
-       `.hero__wrap` becomes a flex column purely so `order` has something to
-       act on; every child is a full-width block either way, so nothing else
-       about the stack changes. The orders are written out in full rather than
-       nudging one item, because a single `order: -1` somewhere is unreadable
-       six months later and this list says what the phone layout IS.
-
-       ONE THING IT COSTS: the stage paints before the actions while still
-       sitting after them in the document, so the band's Pause control is
-       reached by Tab AFTER the two buttons although it appears above them.
-       That is one control on the breakpoint where tabbing is rarest, and the
-       alternative — reordering the document — would put the same mismatch on
-       desktop, where keyboard use is common. Reading order is unaffected: the
-       slides are decorative with empty alt, so a screen reader hears headline,
-       lede, both CTAs, then a pause control, which is coherent. */
+       THE FLEX COLUMN STAYS, and it is not left over. `.hero__wrap` is a block
+       on desktop, where adjacent siblings' vertical margins collapse into one;
+       a flex container's children do not collapse. Every gap measured on a
+       phone since 09-12 has been the non-collapsing kind, so removing this
+       would quietly re-tighten the whole stack. */
     .hero__wrap {
       display: flex;
       flex-direction: column;
-    }
-
-    .hero__head {
-      order: 1;
-    }
-
-    .hero__copy {
-      order: 2;
-    }
-
-    .hero__stage {
-      order: 3;
-    }
-
-    .hero__actions {
-      order: 4;
-    }
-
-    .hero__proof {
-      order: 5;
     }
 
     /* EDGE TO EDGE ON A PHONE, AND DELIBERATELY NOT CROPPED. The client asked

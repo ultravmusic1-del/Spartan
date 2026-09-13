@@ -408,19 +408,22 @@ describe('the proposition', () => {
   });
 
   /**
-   * The source order IS the phone layout. The campaign band closes the hero,
-   * after the doors and the proof strip, so the two actions follow the lede
-   * at every width — `tests/e2e/hero-mobile.spec.ts` measures the result.
+   * The source order IS the layout, at every width, from 2026-09-13. The
+   * campaign band follows the lede and the two actions follow the band —
+   * desktop asked for the order the phone has had since 09-12, so the `order`
+   * declarations that used to express it are gone and this assertion is the
+   * only place it is written down. `tests/e2e/hero-mobile.spec.ts` measures
+   * the painted result at both widths.
    */
-  it('stacks headline, actions, the campaign stage, doors, then proof', async () => {
+  it('stacks headline, the campaign stage, actions, doors, then proof', async () => {
     banners.current = [banner(0), banner(1)];
     const html = await renderHero();
     const at = (needle: string) => html.indexOf(needle);
 
     expect(at('<h1')).toBeGreaterThan(-1);
-    expect(at('hero__actions')).toBeGreaterThan(at('<h1'));
-    expect(at('data-hero-stage')).toBeGreaterThan(at('hero__actions'));
-    expect(at('hero__doors')).toBeGreaterThan(at('data-hero-stage'));
+    expect(at('data-hero-stage')).toBeGreaterThan(at('<h1'));
+    expect(at('hero__actions')).toBeGreaterThan(at('data-hero-stage'));
+    expect(at('hero__doors')).toBeGreaterThan(at('hero__actions'));
     expect(at('hero__proof')).toBeGreaterThan(at('hero__doors'));
   });
 

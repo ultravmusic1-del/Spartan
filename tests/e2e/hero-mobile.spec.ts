@@ -61,15 +61,12 @@ test.describe('the hero source order', () => {
     );
 
   /*
-   * THIS ASSERTS PAINT ORDER, AND USED TO ASSERT DOCUMENT ORDER. The change is
-   * the point of the test now, so it is worth saying why.
-   *
-   * Since 2026-09-12 the two orders DIFFER on a phone: the band is lifted above
-   * the buttons by `order` in a media query while staying after them in the
-   * document, because `order` was the only way to do it without giving desktop
-   * the same mismatch. A document-order assertion would therefore have gone on
-   * passing while the phone layout was the exact opposite of what it claimed —
-   * green, and describing nothing.
+   * THIS ASSERTS PAINT ORDER, and it is kept that way even though the document
+   * now agrees with it. Between 2026-09-12 and 09-13 the two DIFFERED on a
+   * phone — the band was lifted above the buttons by `order` in a media query
+   * while staying after them in the document — and a document-order assertion
+   * went on passing while describing the opposite of what the phone showed.
+   * Measuring what is painted is what caught that, so it stays the measure.
    */
   test('puts the campaign band above the CTAs on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -77,34 +74,32 @@ test.describe('the hero source order', () => {
     expect(await painted(page)).toEqual(['headline', 'hero__stage', 'hero__actions']);
   });
 
-  test('and keeps it below them on desktop', async ({ page }) => {
+  test('and above them on desktop too', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
     /*
-     * Unchanged since 2026-09-03, and the reason the phone change is a media
-     * query rather than a new document order: the band closing the hero is what
-     * keeps the primary CTA following the lede directly here.
+     * Changed 2026-09-13 on client request: desktop used to keep the band below
+     * the two buttons. Both widths now read headline, lede, band, buttons.
      */
-    expect(await painted(page)).toEqual(['headline', 'hero__actions', 'hero__stage']);
+    expect(await painted(page)).toEqual(['headline', 'hero__stage', 'hero__actions']);
   });
 
-  test('the document order never moved, so reading order did not either', async ({ page }) => {
+  test('the document order matches what is painted, so focus order does too', async ({ page }) => {
     await page.goto('/');
 
     /*
-     * `.hero__actions` was lifted out of `.hero__copy` to make the phone order
-     * expressible — `order` only reorders siblings. It was the last thing in
-     * `.hero__copy`, so it sits in exactly the same place in the document, and
-     * a screen reader hears headline, lede, both CTAs, then the band's pause
-     * control at every width.
+     * From 2026-09-13 the markup itself puts the band before the actions, so
+     * the `order` declarations are gone and Tab reaches the band's Pause
+     * control before the two CTAs — which is where it appears, at every width.
+     * This assertion is what stops a future `order` reintroducing the split.
      */
     const order = await page.evaluate(() =>
       [...document.querySelectorAll('.hero h1, .hero__stage, .hero__actions')].map((n) =>
         n.tagName === 'H1' ? 'headline' : n.className.split(' ')[0],
       ),
     );
-    expect(order).toEqual(['headline', 'hero__actions', 'hero__stage']);
+    expect(order).toEqual(['headline', 'hero__stage', 'hero__actions']);
   });
 });
 
