@@ -171,7 +171,25 @@ test.describe('selected products', () => {
     // `client:visible` islands hydrate on scroll — docs/TRAPS.md. Scroll the
     // grid into view before counting, or the buttons legitimately do not exist.
     await page.locator('.sp__grid').scrollIntoViewIfNeeded();
-    await expect(page.locator('.sp__grid > li button')).toHaveCount(8);
+    // A phone shows four of the eight (SelectedProducts.astro). A hidden card
+    // is never "visible", so its island never hydrates — count what is shown.
+    const shown = await page.locator('.sp__grid > li:visible').count();
+    expect(shown).toBe((page.viewportSize()?.width ?? 1440) <= 600 ? 4 : 8);
+    await expect(page.locator('.sp__grid > li:visible button')).toHaveCount(shown);
+  });
+
+  test('a phone shows the first two of each division', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const shown = page.locator('.sp__grid > li:visible a.card__link');
+    await expect(shown).toHaveCount(4);
+    const hrefs = await shown.evaluateAll((els) => els.map((el) => el.getAttribute('href')));
+    expect(hrefs).toEqual([
+      '/products/led-floodlights',
+      '/products/slim-led-panels',
+      '/products/grip-guard-gp5',
+      '/products/safety-helmets',
+    ]);
   });
 });
 

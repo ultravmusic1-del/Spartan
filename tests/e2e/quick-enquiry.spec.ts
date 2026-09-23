@@ -90,6 +90,9 @@ test.describe('the compact enquiry forms', () => {
     const form = page.locator('form.cta__box');
     await form.scrollIntoViewIfNeeded();
     await expect(form).toHaveAttribute('data-state', 'idle');
+    // No division is pre-chosen. It used to open on Electricals, which filed
+    // every Safety buyer who skipped it under the wrong division.
+    await expect(form.getByLabel('Division of interest', { exact: true })).toHaveValue('');
 
     const [request] = await Promise.all([
       page.waitForRequest((r) => r.url().includes('/api/enquiry') && r.method() === 'POST'),
@@ -98,6 +101,7 @@ test.describe('the compact enquiry forms', () => {
         await form.getByLabel('Company', { exact: true }).fill('Harbour Works');
         await form.getByLabel('Email', { exact: true }).fill('priya@example.com');
         await form.getByLabel('Division of interest', { exact: true }).selectOption('safety');
+        await form.getByLabel('Message', { exact: true }).fill('Cut-resistant gloves, 200 pairs.');
         await form.getByRole('button', { name: 'Send enquiry' }).click();
       })(),
     ]);
@@ -110,6 +114,7 @@ test.describe('the compact enquiry forms', () => {
     expect(payload.division).toBe('safety');
     expect(payload.name).toBe('Priya Raman');
     expect(payload.website).toBe('');
+    expect(payload.message).toBe('Cut-resistant gloves, 200 pairs.');
 
     await expect(form).toHaveAttribute('data-state', 'sent');
   });

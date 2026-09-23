@@ -39,7 +39,7 @@ const cols = { lg: Math.min(n, 4), md: Math.min(n, 3), sm: Math.min(n, 2) };
       style={`--pg-cols:${cols.lg};--pg-cols-md:${cols.md};--pg-cols-sm:${cols.sm}`}
     >
       {products.map((product) => (
-        <li class="card-surface--rule">
+        <li class="card-surface--rule pg-row">
           <ProductCard product={product} />
         </li>
       ))}
@@ -79,6 +79,32 @@ const cols = { lg: Math.min(n, 4), md: Math.min(n, 3), sm: Math.min(n, 2) };
   .grid > li {
     display: flex;
     background: var(--surface-raised);
+  }
+
+  /* ONE ROW, ONE SET OF LINES, since 2026-09-23. Each cell spans five of the
+     grid's rows — image, category, name, specifications, button — and hands
+     them down through `subgrid`, so every card in a row starts its name and its
+     specifications at the same height. Before this each card laid itself out
+     alone: a card with a variant line ("14"") or shorter specifications started
+     them lower than its neighbours, and a row of four read as four heights.
+     `ProductCard` places its own parts on those five lines; the pairing rules
+     live there under the same `@supports`, and without it both files fall back
+     to the flex layout above. The 1px between cells is still the grid's row
+     gap; inside a cell it is the card's own spacing, set here because a
+     subgrid inherits its gap from the cell. */
+  @supports (grid-template-rows: subgrid) {
+    .grid > li {
+      display: grid;
+      grid-template-rows: subgrid;
+      grid-row: span 5;
+      row-gap: var(--space-4);
+    }
+
+    @media (max-width: 640px) {
+      .grid > li {
+        row-gap: var(--space-3);
+      }
+    }
   }
 
   .empty {

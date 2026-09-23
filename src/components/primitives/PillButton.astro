@@ -29,6 +29,16 @@ interface Props {
   download?: boolean;
   target?: string;
   rel?: string;
+  /**
+   * `square` draws the secondary button the way the hero has since the
+   * 2026-08-29 reviews: square corners, the display face in capitals, a
+   * full-strength outline — the outline counterpart of `SolidButton`. The home
+   * page uses it for every secondary action (2026-09-23) so no section there
+   * mixes a square and a rounded control. The rounded pill stays the default
+   * because it is still the approved design's secondary, and every other page
+   * uses it.
+   */
+  shape?: 'pill' | 'square';
 }
 
 const {
@@ -38,6 +48,7 @@ const {
   download = false,
   target,
   rel,
+  shape = 'pill',
 } = Astro.props;
 const Tag = href ? 'a' : 'button';
 ---
@@ -48,7 +59,7 @@ const Tag = href ? 'a' : 'button';
   download={href && download ? true : undefined}
   target={href ? target : undefined}
   rel={href ? rel : undefined}
-  class:list={['pill', cls]}
+  class:list={['pill', { 'pill--square': shape === 'square' }, cls]}
 >
   <slot /><span class="chev" aria-hidden="true">›</span>
 </Tag>
@@ -82,6 +93,21 @@ const Tag = href ? 'a' : 'button';
   .pill:hover {
     border-color: var(--accent);
     background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  /* Type and padding match SolidButton's, so a solid and a square outline
+     side by side read as one pair. The outline is --text rather than
+     --line-control because at full strength it is what the hero's pair has
+     been measured and signed off with. */
+  .pill--square {
+    border-radius: 0;
+    border-color: var(--text);
+    gap: var(--space-3);
+    padding: 14px 26px;
+    font-family: var(--font-display);
+    font-weight: var(--fw-label);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
   }
 
   /* Brand red is 4.30:1 on this button's white ground, just under the 4.5:1

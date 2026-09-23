@@ -125,6 +125,18 @@ see `handoff.md`). Priorities are P0 highest.
       visible change to the approved design (`design/direction-b-forge.html`
       shows three fields, the form now has four) and a person should sign it off.
 
+- [ ] **Confirm the home CTA's 2026-09-23 changes against the approved design.**
+      Same category as the Name field above: visible departures a person at the
+      client should agree. The form gained an optional Message box (the heading
+      asks "Tell us what you need" and there was nowhere to say it) and its
+      division no longer defaults to Electricals — it opens on "Choose a
+      division" and a choice is required, because a Safety buyer who skipped it
+      was filed under the wrong division. The home page's three secondary
+      buttons are square (`PillButton shape="square"`) to match the hero, where
+      the mockup draws rounded pills; every other page still uses the pill, so
+      either extend the square site-wide or revert it here. A phone also shows
+      four of the eight selected products (`SelectedProducts.astro`).
+
 - [x] **Footer social icons link nowhere.** Done 2026-08-12 — removed, per the
       standing decision below. See Done.
 

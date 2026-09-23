@@ -232,6 +232,54 @@ const fullName = product.variantLabel ? `${product.name} ${product.variantLabel}
     padding: 0 24px 24px;
   }
 
+  /* Inside a `ProductGrid` cell (`.pg-row`) the card joins the row's five
+     shared lines — see ProductGrid for why. Each part is placed on its line
+     explicitly, because the category and the specifications are conditional
+     and an absent one would otherwise let the next part slide up a line. The
+     specifications lose `margin-top: auto`: in a shared track it would push
+     them to the bottom of the tallest neighbour's box, which is the
+     misalignment this exists to remove. The link's bottom padding drops to 8px
+     because the row gap now sits between it and the button; the two together
+     keep the old 24px. A card anywhere else — /catalogue renders its own
+     grid — keeps the flex layout above. */
+  @supports (grid-template-rows: subgrid) {
+    :global(.pg-row) > .card {
+      display: grid;
+      grid-template-rows: subgrid;
+      grid-row: span 5;
+    }
+
+    :global(.pg-row) > .card > .card__link {
+      display: grid;
+      grid-template-rows: subgrid;
+      grid-row: 1 / span 4;
+      gap: inherit;
+      padding-bottom: 8px;
+    }
+
+    :global(.pg-row) .card__media {
+      grid-row: 1;
+    }
+
+    :global(.pg-row) .card__kicker {
+      grid-row: 2;
+      align-self: end;
+    }
+
+    :global(.pg-row) .card__name {
+      grid-row: 3;
+    }
+
+    :global(.pg-row) .card__specs {
+      grid-row: 4;
+      margin-top: 0;
+    }
+
+    :global(.pg-row) > .card > .card__actions {
+      grid-row: 5;
+    }
+  }
+
   @media (max-width: 640px) {
     .card__link {
       padding: 20px;

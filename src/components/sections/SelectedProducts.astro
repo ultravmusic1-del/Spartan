@@ -13,6 +13,13 @@
  * The division tabs went with the old card. They were an inline script (a
  * CSP hash) filtering eight cards into four, and a buyer can see eight cards
  * at once. The eight still come from `src/lib/featured.ts`, four per division.
+ *
+ * A PHONE SHOWS FOUR OF THE EIGHT, since 2026-09-23 — the first two of each
+ * division. One card per row made this section ~3,400px of a ~13,000px page,
+ * and `ProductGrid`'s own comment names "fewer products at this breakpoint" as
+ * the honest lever, not a narrower card. All eight are still in the markup, so
+ * the no-JavaScript and desktop layouts are unchanged; the lede no longer
+ * states a count, because on a phone "8 of 94" would sit above four.
  */
 import SectionHeading from '../primitives/SectionHeading.astro';
 import ProductGrid from '../catalog/ProductGrid.astro';
@@ -28,7 +35,7 @@ const [featured, products] = await Promise.all([getFeaturedProducts(), getProduc
       n="03"
       eyebrow="Selected products"
       title="A cross-section of both divisions."
-      lede={`${featured.length} of ${products.length} products, four from each division, with the specifications printed for each. Add any of them to an enquiry from here.`}
+      lede={`A selection from both divisions, out of ${products.length} products, with the specifications printed for each. Add any of them to an enquiry from here.`}
     >
       <a slot="action" class="sp__all" href="/catalogue">Browse all ›</a>
     </SectionHeading>
@@ -41,6 +48,16 @@ const [featured, products] = await Promise.all([getFeaturedProducts(), getProduc
   .sp {
     background: var(--surface-page);
     padding: var(--section-pad) 0;
+  }
+
+  /* Hides the 3rd, 4th, 7th and 8th cards: `featured.ts` lists four
+     Electricals then four Safety, so the two that remain of each are the first
+     two. `:global` because the list items belong to ProductGrid's scope. */
+  @media (max-width: 600px) {
+    .sp :global(.sp__grid > li:nth-child(4n + 3)),
+    .sp :global(.sp__grid > li:nth-child(4n + 4)) {
+      display: none;
+    }
   }
 
   .sp__all {
