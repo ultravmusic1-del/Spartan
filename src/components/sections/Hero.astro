@@ -307,7 +307,7 @@ const proof = [
     --hero-chrome: var(--header-h);
     position: relative;
     background: var(--surface-page);
-    padding: calc(var(--hero-chrome) + 36px) 0 56px;
+    padding: calc(var(--hero-chrome) + 24px) 0 56px;
   }
 
   /* ------------------------------------------------------------- the head --
@@ -316,16 +316,27 @@ const proof = [
    * space left of the numeral, and the numeral ends on the wrap's right edge
    * — the line every section numeral on the page ends on. */
   .hero__head {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: start;
   }
 
+  /* OUT OF FLOW ON DESKTOP, since 2026-09-24. In the row it made the row as
+     tall as itself — ~84px of numeral beside a ~28px masthead — and that
+     empty band pushed the headline, and with it the campaign band, ~60px
+     down. At 1600 x 730 the band's bottom 51px fell under the fold. Pinned to
+     the head's top-right corner it still ends on the wrap's right edge (the
+     line every section numeral ends on) and now sits beside the headline's
+     first line instead of above it. The headline is centred and at most
+     ~713px wide, so the two never meet at any desktop width — measured from
+     901 to 1920. The phone keeps it in flow, below. */
   .hero__head :global(.section-index) {
-    justify-self: end;
+    position: absolute;
+    top: -0.04em;
+    right: 0;
     font-size: calc(clamp(30px, 4vw, 46px) * 2.6);
     line-height: 0.7;
-    margin-top: -0.04em;
   }
 
   .hero__masthead {
@@ -371,17 +382,20 @@ const proof = [
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-top: var(--space-2);
+    margin-top: var(--space-5);
   }
 
   /* The drawn italic, uppercase, two lines that start and end on the same
      centre. Line one is the claim, line two the promise, in the accent.
      Sized so line two ("READY FOR INDUSTRY.", ~9.9x its font size) holds
-     the measure at 1360: 72px x 9.9 = 713px. */
+     the measure at 1360: 72px x 9.9 = 713px.
+     The `9.4vh` term only bites on a short laptop screen — 69px at 730 tall,
+     the full 72px from 766 — so a wide, short window does not spend its
+     first screen on two lines of headline. */
   .hero__title {
     margin: 0;
     font-family: var(--font-hero);
-    font-size: clamp(38px, 5.2vw, 72px);
+    font-size: clamp(38px, min(5.2vw, 9.4vh), 72px);
     font-weight: 800;
     font-style: italic;
     line-height: 0.92;
@@ -406,7 +420,7 @@ const proof = [
   /* --text-muted, 5.36:1 on white. */
   .hero__lede {
     max-width: 52ch;
-    margin: var(--space-5) 0 0;
+    margin: var(--space-4) 0 0;
     font-size: clamp(16px, 1.2vw, 18px);
     line-height: 1.55;
     color: var(--text-muted);
@@ -455,7 +469,7 @@ const proof = [
   .hero__stage {
     position: relative;
     width: 100%;
-    margin-top: var(--space-10);
+    margin-top: var(--space-8);
     animation: hero-rise 0.5s var(--ease-out) 0.18s both;
   }
 
@@ -841,8 +855,21 @@ const proof = [
       display: none;
     }
 
+    /* Back in flow: here it shares a two-cell row with the masthead and the
+       row is meant to be its height. */
     .hero__head :global(.section-index) {
+      position: static;
+      justify-self: end;
+      margin-top: -0.04em;
       font-size: calc(clamp(30px, 4vw, 46px) * 1.8);
+    }
+
+    .hero__copy {
+      margin-top: var(--space-2);
+    }
+
+    .hero__lede {
+      margin-top: var(--space-5);
     }
 
     .hero__masthead {

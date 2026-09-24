@@ -952,6 +952,18 @@ did not check. Changing one is a regression *you* would be introducing.
   CTA clears a 640px fold by 58px and `tests/e2e/hero-mobile.spec.ts` measures
   it.
 
+  **Tightened 2026-09-24, and the band now fits the first screen whole.** The
+  head row used to be as tall as the "01" numeral (~84px beside a ~28px
+  masthead), which pushed the band to y 457 — its bottom 51px under the fold on
+  a 1600×730 window. The numeral is out of flow on desktop now (pinned to the
+  head's top-right corner, beside the headline) and the gaps are tighter, so the
+  band sits at 388–712 on 1600×730 and 1366×768 and at 392–716 on 1440×900;
+  the CTAs moved up to 782–841 on 1440×900, which puts them above that fold. The
+  headline also carries a `9.4vh` term that only shortens it on screens under
+  766px tall. **Adding height above the band — a taller masthead, a larger lede
+  margin, the numeral back in flow — undoes this, and no test watches a
+  1600×730 fold.** Measure it.
+
 - **The floating WhatsApp button clips "CAMPAIGN" at the right end of the
   control row on an unscrolled 1280×800.** It appeared with the reorder, because
   the band now lands on the first screen at that size. Decorative label, not a
