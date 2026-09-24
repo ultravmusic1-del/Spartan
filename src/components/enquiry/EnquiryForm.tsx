@@ -361,8 +361,18 @@ export default function EnquiryForm({ email }: Props) {
           )}
         </div>
 
-        {!ready ? null : items.length === 0 ? (
-          <div class="ef-list__empty">
+        {/* The empty state renders BEFORE `ready` too, so the server sends it
+            and hydration matches it — the comment on `ready` above always said
+            it did. Until 2026-09-24 this branch rendered `null` there instead,
+            and for a buyer with nothing on the list the ~215px block arrived
+            at hydration and shoved the form down: CLS 0.097 on a phone, the
+            only non-zero CLS on the site, on its only conversion page.
+            `--pending` lets enquiry.astro hide it before paint for a returning
+            buyer whose basket is not empty (`html[data-enquiry]`, set in
+            BaseLayout's head), so that path stays as it was — nothing, then
+            the list — instead of flashing "No products on your list". */}
+        {!ready || items.length === 0 ? (
+          <div class={ready ? 'ef-list__empty' : 'ef-list__empty ef-list__empty--pending'}>
             <p class="ef-list__empty-title">No products on your list.</p>
             <p class="ef-list__empty-note">
               You can still send a general enquiry with the form. Tell us what you are looking for

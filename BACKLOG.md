@@ -711,7 +711,23 @@ The header was added on 2026-08-23.
       artwork cannot fill both, so the first real banner forces a choice:
       letterbox it on the phone, or supply a second crop.
 
-- [ ] **Re-run Lighthouse on all three page types.** The table in `README.md`
+- [ ] **The enquiry page shifts 0.18 on a phone for a returning buyer.** Found
+      2026-09-24 re-running Lighthouse. A buyer who arrives with a saved
+      basket — the drawer's "Review enquiry" path, the site's main route to a
+      sent RFQ — sees the form, then the list lands above it at hydration and
+      pushes it down: CLS 0.180 at 412×823, 0 on desktop. The server cannot
+      know the list's height; it lives in localStorage. The lever is the same
+      one the header badge uses: BaseLayout's head script already reads the
+      basket before paint and could publish its line count
+      (`html[data-enquiry-lines]`), letting `.ef-list` reserve roughly that
+      height. Approximate — a long product name or an open note changes an
+      item's height — so it reduces the shift rather than removing it. It edits
+      an inline script, so `npm run csp` and `vercel.json` go with it. The
+      empty-basket half of this (0.097) was fixed the same day.
+
+- [ ] **Re-run Lighthouse on all three page types.** **Performance half done
+      2026-09-24** against production — see `README.md`. Accessibility, Best
+      Practices and SEO still date from 2026-08-11. The table in `README.md`
       was measured on 2026-08-11 and the footer has changed since — the social
       icons came out, which is site chrome and therefore moves every page.
       §11's lesson was exactly this: the landing redesign restyled `Header` and

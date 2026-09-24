@@ -344,6 +344,22 @@ All three are one chain: `@astrojs/vercel → @vercel/routing-utils → path-to-
 
 ## Lighthouse
 
+**Performance re-measured 2026-09-24, against production** (`spartan-ebon.vercel.app`, so with Vercel's compression and caching), Lighthouse 12.8.2, the same mobile and desktop presets. Performance only — Accessibility, Best Practices and SEO were not re-run and the table further down is still their latest figure. `npx lighthouse` cannot launch Chrome on the Windows development machine (`spawn UNKNOWN`), so the runs drove a Playwright-launched Chromium through Lighthouse's Node API with `--remote-debugging-port`.
+
+| Page | Mobile | Desktop | Mobile LCP | Mobile TBT | CLS |
+|---|---|---|---|---|---|
+| `/` | 100 | 100 | 1.7 s | 0 ms | 0 |
+| `/catalogue/hand-protection` | 100 | 100 | 1.5 s | 0 ms | 0 |
+| `/products/grip-guard-gp5` | 100 | 100 | 1.7 s | 0 ms | 0 |
+| `/catalogue` (all 94) | 100 | — | 1.5 s | 0 ms | 0 |
+| `/enquiry` | 97 | — | 1.7 s | 10 ms | **0.097** |
+
+Every other public page scored 99–100 on mobile. Three things about these numbers:
+
+- **The first Lighthouse run in a freshly launched browser is slow and says nothing about the site.** It scored the home page 96 and 89 (TBT 190–360 ms); ten warm runs straight after scored 100 with TBT 0 ms, and blocking the landing motion script changed nothing once warm. Discard the first run.
+- **The banners replaced the helmet as the home page's heaviest images but not as its LCP**: on a phone the band is 103px tall and the LCP element is the header logo. `image-delivery-insight` calls the 1176px banner variant oversized for a 412px box — the same DPR blind spot described below (412 × 1.75 = 721 device pixels; the next variant down, 700, is smaller than that).
+- **`/enquiry`'s 0.097 was the empty-basket state arriving at hydration** and was fixed the same day (`EnquiryForm.tsx`, the `ready` comment): 0 on phone and desktop since. **A returning buyer with a saved basket still shifts 0.18 on a phone** — the list arrives at hydration above the form, and the server cannot know its height. Open in `BACKLOG.md`.
+
 **Re-measured 2026-08-11, after the landing redesign**, against the built output via `npm run preview`, Lighthouse 12.8.2, headless Chrome. Lighthouse's own mobile preset (Moto G, 412×823 at DPR 1.75, 4× CPU throttle, simulated slow 4G) and desktop preset. Mobile figures are five runs on `/` and three on the other two; every run scored identically, so these are flat numbers rather than ranges.
 
 | Page | Preset | Performance | Accessibility | Best Practices | SEO |
