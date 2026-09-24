@@ -117,11 +117,11 @@ const items: NavItem[] = [
 const current = normalisePath(Astro.url.pathname);
 /*
  * THE PHONE LINK IS CONDITIONAL, and that is not defensive coding — it is the
- * difference between an affordance and a lie. `site.phone` still ships as
+ * difference between an affordance and a lie. `site.phone` shipped as
  * `+971 00 000 0000`, so until 2026-08-29 every page in the site published a
  * `tel:` link that dials nothing. While the number is a placeholder the header
- * offers the contact page, which works; the day a real number lands the phone
- * link comes back with no code change. `isPlaceholderNumber` and the reason
+ * offers the contact page, which works; when the real number landed on
+ * 2026-09-24 the phone link came back with no code change, as intended. `isPlaceholderNumber` and the reason
  * its threshold is four zeros are in src/lib/site-content.phone.test.ts.
  */
 const phoneIsReal = !isPlaceholderNumber(site.phone);

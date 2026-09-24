@@ -283,12 +283,12 @@ export interface OrganizationJsonLdOptions {
 /**
  * Deliberately four properties and no more.
  *
- * `address`, `telephone` and `email` are the obvious additions and all three
- * are still placeholders in src/data/site.json ("Address line, City, Country",
- * "+971 00 000 0000"). Publishing a placeholder address as structured data
- * would put a fabricated location into knowledge panels and map results, which
- * is strictly worse than publishing nothing. Add them here — and a
- * `PostalAddress` node with them — once the client supplies the real details.
+ * `address`, `telephone` and `email` are the obvious additions. They were
+ * placeholders until 2026-09-24 and are real in src/data/site.json now, but
+ * are still not published here: a `PostalAddress` wants the address split into
+ * locality, postal code and country, and a wrong split is a wrong location in
+ * map results. Confirm the split with the client, then add all three —
+ * BACKLOG.md "Real contact details".
  *
  * `sameAs` is absent for the same reason: the footer's social icons have no
  * destinations yet.

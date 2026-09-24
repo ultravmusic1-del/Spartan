@@ -21,8 +21,11 @@ see `handoff.md`). Priorities are P0 highest.
 
 ## P0 — losing leads right now
 
-- [ ] **The header no longer publishes a dead `tel:` link — the number is still
-      missing.** Since 2026-08-29 (`handoff.md` §38) the header renders
+- [x] **The header no longer publishes a dead `tel:` link — the number is still
+      missing.** **Resolved 2026-09-24: the client supplied `+973 6999 0222`**
+      (Bahrain, which settles the market question below). The header now
+      renders `Sales +973 6999 0222` as a `tel:+97369990222` link at every
+      width from 520px up, with no code change, exactly as designed. Since 2026-08-29 (`handoff.md` §38) the header renders
       `Contact sales` pointing at `/contact` while `site.phone` is the
       `+971 00 000 0000` placeholder, and reverts to a real `tel:` link with no
       code change the moment a number is supplied — `isPlaceholderNumber` in
@@ -163,7 +166,19 @@ see `handoff.md`). Priorities are P0 highest.
       Raised with the client 2026-08-13; **not actioned, because turning it off
       is a real change to how the public site behaves and was not asked for.**
       `src/pages/robots.txt.ts` is where it would go.
-- [!] **Real contact details.** Blocked: client. `+971 00 000 0000` renders as a
+- [x] **Real contact details.** **Done 2026-09-24** — the last two arrived
+      from the client: phone `+973 6999 0222` (given as "+ 973 6999 0222"; the
+      space after the plus is dropped, the digits are theirs) and address
+      "Bldg. No: 2513, Road 1535, Hidd 115, Salman Industrial City, Bahrain
+      Investment Wharf". Both are in `src/data/site.json` and reach the header,
+      footer and contact page from there; `npm run verify`'s contact gate goes
+      quiet on its own. **Not yet done: the Organization structured data**
+      (`organizationJsonLd` in `src/lib/seo.ts`) still omits `telephone` and
+      `address`, deliberately, per its comment. Adding them needs the address
+      split into `PostalAddress` fields (locality, postal code, country), and
+      that split should be confirmed rather than guessed. The history below is kept.
+
+      Previously: Blocked: client. `+971 00 000 0000` renders as a
       live `tel:` link in the header of every page; `sales@spartan.example` is
       a dead mailbox. `src/data/site.json`.
 

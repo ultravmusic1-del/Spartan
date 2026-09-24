@@ -537,8 +537,8 @@ let unitSuitePassed = false;
  * a `mailto:` in every footer until 2026-09-11, when the client supplied
  * `Spartan@kavalani.com`. The check stays exactly as it was — it tests the
  * placeholder shape, not that one address — so it goes quiet on its own and
- * would speak up again if the value ever regressed. `+971 00 000 0000` and
- * `Address line, City, Country` are still outstanding.
+ * would speak up again if the value ever regressed. The phone and address
+ * followed on 2026-09-24, so this gate is silent now; it stays for regressions.
  *
  * `whatsapp` is listed as missing rather than placeholder-valued: it is an empty
  * string in site.json, which renders nothing at all, which is the honest state
