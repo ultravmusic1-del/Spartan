@@ -2,6 +2,8 @@
   "phone": "+973 6999 0222",
   "email": "Spartan@kavalani.com",
   "address": "Bldg. No: 2513, Road 1535, Hidd 115, Salman Industrial City, Bahrain Investment Wharf",
+  "addressLocality": "Hidd",
+  "addressCountry": "BH",
   "whatsapp": "+973 3800 0458",
   "established": 2015,
   "industriesPendingClientConfirmation": true,

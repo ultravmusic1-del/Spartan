@@ -248,15 +248,40 @@ describe('requireSite', () => {
 });
 
 describe('organizationJsonLd — what it may claim', () => {
-  it('states only name, url, logo and founding date', () => {
+  it('states only name, url, logo and founding date unless contact facts are passed', () => {
     const ld = organizationJsonLd(SITE, { established: 2015 });
     expect(Object.keys(ld).sort()).toEqual(
       ['@context', '@type', 'foundingDate', 'logo', 'name', 'url'].sort(),
     );
-    // src/data/site.json still holds placeholder contact details. Publishing a
-    // placeholder address as structured data is worse than publishing none.
+    // Nothing is published that the caller did not supply. The home page
+    // passes contact facts only when they are real (src/pages/index.astro).
     expect(ld).not.toHaveProperty('address');
     expect(ld).not.toHaveProperty('telephone');
     expect(ld).not.toHaveProperty('email');
+  });
+
+  it('publishes the real contact facts as given, with a PostalAddress and no postcode', () => {
+    const ld = organizationJsonLd(SITE, {
+      established: 2015,
+      telephone: '+973 6999 0222',
+      email: 'Spartan@kavalani.com',
+      address: {
+        streetAddress:
+          'Bldg. No: 2513, Road 1535, Hidd 115, Salman Industrial City, Bahrain Investment Wharf',
+        addressLocality: 'Hidd',
+        addressCountry: 'BH',
+      },
+    });
+    expect(ld.telephone).toBe('+973 6999 0222');
+    expect(ld.email).toBe('Spartan@kavalani.com');
+    expect(ld.address).toEqual({
+      '@type': 'PostalAddress',
+      streetAddress:
+        'Bldg. No: 2513, Road 1535, Hidd 115, Salman Industrial City, Bahrain Investment Wharf',
+      addressLocality: 'Hidd',
+      addressCountry: 'BH',
+    });
+    // 115 is a Bahraini BLOCK number, not a postcode (see seo.ts).
+    expect(ld.address).not.toHaveProperty('postalCode');
   });
 });

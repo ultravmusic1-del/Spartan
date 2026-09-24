@@ -20,8 +20,12 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 // 72 from the brochure + 13 from the datasheet PDFs (7 industrial fans, 3
-// portable air coolers, 3 consumer fans) + 10 from the campaign banners.
-const TOTAL_PRODUCTS = 94;
+// portable air coolers, 3 consumer fans) + 10 from the campaign banners = 94
+// in the catalogue. 89 PUBLISHED since 2026-09-24: the five whose only picture
+// is `ds-photo-pending.png` (the three air coolers, solar street lights, PVC
+// gloves) are drafts until the client supplies photography, and a draft is on
+// no page. This is the published figure.
+const TOTAL_PRODUCTS = 89;
 /**
  * LISTED, not total. The catalogue holds 15 categories and Electrical
  * Accessories is not one a buyer is offered a route to — it stocks nothing, so
@@ -37,7 +41,10 @@ const LISTED_CATEGORIES = 14;
  * about `src/data/products.json`; if either changes, that test's arithmetic has
  * to be re-derived rather than nudged.
  */
-const HAND_PROTECTION = 12;
+// 11 published of 12: PVC gloves is a draft until photographed (2026-09-24).
+// Re-derived then: "leather" still matches 9, 3 of them here, so the three
+// outcomes below are still 3 / 9 / 11 and still distinguishable.
+const HAND_PROTECTION = 11;
 /** Of the 9 products matching "leather", 3 are in Hand Protection. */
 const LEATHER_IN_HAND_PROTECTION = 3;
 
@@ -165,11 +172,11 @@ test.describe('catalogue index', () => {
      * distinguishable, and therefore what makes this test able to fail.
      *    3 → the filters combine, which is the promise
      *    9 → the search replaced the category filter
-     *   12 → the category filter replaced the search
+     *   11 → the category filter replaced the search
      */
     await page.getByLabel('Search', { exact: true }).fill('leather');
 
-    // False before the search applies — the line reads 12 at this point — and
+    // False before the search applies — the line reads 11 at this point — and
     // true after. `toHaveCount` then retries, so nothing is read off an
     // unsettled page.
     await expect(page.locator('.cf__count')).not.toHaveText(
@@ -227,11 +234,12 @@ test.describe('catalogue index', () => {
     const visible = page.locator('li[data-product]:not([hidden])');
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
 
-    // Hand Protection holds 12: 11 from the brochure — the datasheet products
-    // all landed in `fans` — plus the PVC gloves from the campaign banners.
+    // Hand Protection holds 12 and shows 11: the brochure's 11 — the datasheet
+    // products all landed in `fans` — while the banners' PVC gloves are a
+    // draft until photographed.
     await page.locator('#cf-category').selectOption('hand-protection');
-    await expect(visible).toHaveCount(12);
-    await expect(page.locator('.cf__count')).toHaveText(`Showing 12 of ${TOTAL_PRODUCTS} products`);
+    await expect(visible).toHaveCount(11);
+    await expect(page.locator('.cf__count')).toHaveText(`Showing 11 of ${TOTAL_PRODUCTS} products`);
 
     // Narrowing by division alone.
     await page.getByRole('button', { name: 'Clear filters' }).click();
@@ -240,8 +248,10 @@ test.describe('catalogue index', () => {
     await page.getByRole('radio', { name: 'Spartan Electricals' }).check();
     // 19 brochure products + 13 from the datasheets (7 industrial fans, 3
     // portable air coolers, 3 consumer fans) + 2 from the campaign banners
-    // (solar street lights, the FW-40W orbit fan).
-    await expect(visible).toHaveCount(33);
+    // (solar street lights, the FW-40W orbit fan) = 33, of which 29 are
+    // published: the three air coolers and solar street lights are drafts
+    // until photographed (2026-09-24).
+    await expect(visible).toHaveCount(29);
 
     await page.getByRole('button', { name: 'Clear filters' }).click();
     await expect(visible).toHaveCount(TOTAL_PRODUCTS);
@@ -287,8 +297,8 @@ test.describe('category pages', () => {
     await page.goto('/catalogue/hand-protection');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Hand Protection' })).toBeVisible();
-    await expect(page.locator('ul.grid > li')).toHaveCount(12);
-    await expect(page.locator('.cp__count')).toHaveText('12 products');
+    await expect(page.locator('ul.grid > li')).toHaveCount(11);
+    await expect(page.locator('.cp__count')).toHaveText('11 products');
   });
 
   for (const slug of ['electrical-accessories']) {

@@ -18,6 +18,8 @@
     "catalogue:parity": "node tools/catalogue-parity.mjs",
     "catalogue:seed": "node tools/seed-catalogue.mjs",
     "storage:setup": "node --env-file=.env tools/storage-setup.mjs run",
+    "products:hide": "node --env-file-if-exists=.env tools/product-visibility.mjs hide",
+    "products:show": "node --env-file-if-exists=.env tools/product-visibility.mjs show",
     "test:db:start": "node tools/test-db.mjs start",
     "test:db:stop": "node tools/test-db.mjs stop",
     "normalise": "node tools/normalise-products.mjs",

@@ -3336,7 +3336,7 @@
       { "label": "Net Weight", "value": "16.1 kg" },
       { "label": "Loading Capacity (40HQ)", "value": "269 pcs full unit | 500 pcs CKD" }
     ],
-    "status": "published",
+    "status": "draft",
     "source": { "doc": "SPARTAN - PORTABLE AIR COOLERS.pdf", "page": 2 },
     "order": 12
   },
@@ -3362,7 +3362,7 @@
       { "label": "Net Weight", "value": "42.5 kg" },
       { "label": "Loading Capacity (40HQ)", "value": "80 pcs full unit | 190 pcs CKD" }
     ],
-    "status": "published",
+    "status": "draft",
     "source": { "doc": "SPARTAN - PORTABLE AIR COOLERS.pdf", "page": 3 },
     "order": 13
   },
@@ -3388,7 +3388,7 @@
       { "label": "Net Weight", "value": "52 kg" },
       { "label": "Loading Capacity (40HQ)", "value": "57 pcs full unit | 160 pcs CKD" }
     ],
-    "status": "published",
+    "status": "draft",
     "source": { "doc": "SPARTAN - PORTABLE AIR COOLERS.pdf", "page": 4 },
     "order": 14
   },
@@ -3500,7 +3500,7 @@
         "source": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01"
       }
     ],
-    "status": "published",
+    "status": "draft",
     "source": {
       "doc": "banner: 21072026-001 - Spartan PVC Gloves-Bahrain-01",
       "page": 1
@@ -3801,7 +3801,7 @@
         "source": "banner: 26032026-001 - Solar Lights-Bahrain-01"
       }
     ],
-    "status": "published",
+    "status": "draft",
     "source": {
       "doc": "banner: 26032026-001 - Solar Lights-Bahrain-01",
       "page": 1

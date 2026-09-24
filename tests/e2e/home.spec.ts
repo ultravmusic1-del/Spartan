@@ -143,9 +143,11 @@ test.describe('the category shelf', () => {
     await expect(fansTile).toHaveCount(1);
 
     // The design mockup hardcoded "4 items" here from the pre-datasheet
-    // catalogue. The real count, from getCategories(), is 17 — this is the
-    // assertion that would catch a copy-paste of the mockup's static array.
-    await expect(fansTile.locator('.cg__count')).toHaveText('17 items');
+    // catalogue. The real count, from getCategories(), is 17 in the catalogue
+    // and 14 published — the three portable air coolers are drafts until the
+    // client supplies photography (2026-09-24). This is the assertion that
+    // would catch a copy-paste of the mockup's static array.
+    await expect(fansTile.locator('.cg__count')).toHaveText('14 items');
   });
 });
 
@@ -226,7 +228,8 @@ test.describe('the hero proposition', () => {
     // is what makes changing them deliberate. The year and the manufacturing
     // statement are the only other facts on this site with a source.
     const proof = page.locator('.hero__proof');
-    await expect(proof).toContainText('94');
+    // 89: the published products, not the catalogue's 94 — five are drafts.
+    await expect(proof).toContainText('89');
     await expect(proof).toContainText('15');
     await expect(proof).toContainText('2015');
     await expect(proof).toContainText('India & China');
@@ -257,7 +260,7 @@ test.describe('the hero proposition', () => {
     const text = await doors.allTextContents();
     const numbers = text.map((t) => [...t.matchAll(/(\d+) (categor|product)/g)].map((m) => Number(m[1])));
     expect(numbers[0][0] + numbers[1][0]).toBe(14);
-    expect(numbers[0][1] + numbers[1][1]).toBe(94);
+    expect(numbers[0][1] + numbers[1][1]).toBe(89);
   });
 
   test('centres the composition and closes its edges on the wrap', async ({ page }) => {
@@ -370,7 +373,7 @@ test.describe('header search', () => {
     const shown = page.locator('.cf__count, [data-search]:visible');
     await expect
       .poll(async () => await page.locator('li:not([hidden]) [data-search]').count())
-      .toBeLessThan(94);
+      .toBeLessThan(89);
     expect(await shown.count()).toBeGreaterThan(0);
   });
 

@@ -22,6 +22,14 @@ export interface SiteSettings {
   phone: string;
   email: string;
   address: string;
+  /**
+   * The address's town and ISO country code, split out for structured data
+   * (`organizationJsonLd`). `address` stays the one line a person reads. Both
+   * optional: without them the Organization node carries no address at all,
+   * which is the honest state for an address nobody has confirmed.
+   */
+  addressLocality?: string;
+  addressCountry?: string;
   /** Empty string means "no WhatsApp affordance", which renders nothing at all. */
   whatsapp: string;
   established: number;

@@ -31,7 +31,7 @@ test.describe('prefers-reduced-motion', () => {
       (els) => els.filter((el) => parseFloat(getComputedStyle(el).opacity) < 0.99).length,
     );
     expect(dim).toBe(0);
-    await expect(page.locator('.hero__proof dd').first()).toHaveText('94');
+    await expect(page.locator('.hero__proof dd').first()).toHaveText('89');
   });
 
   test('cancels the hero animations without stranding the copy', async ({
@@ -145,7 +145,7 @@ test.describe('the motion layer', () => {
     // 14 categories, not the catalogue's 15: the strip counts what a buyer can
     // reach, and Electrical Accessories stocks nothing (docs/TRAPS.md).
     const values = await page.locator('.hero__proof dd').allTextContents();
-    expect(values.map((v) => v.trim())).toEqual(['94', '14', '2015', 'India & China']);
+    expect(values.map((v) => v.trim())).toEqual(['89', '14', '2015', 'India & China']);
   });
 });
 

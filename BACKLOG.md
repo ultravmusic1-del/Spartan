@@ -790,7 +790,22 @@ The header was added on 2026-08-23.
       `CATALOGUE_SOURCE=json|postgres` escape hatch rather than pretending
       otherwise.
 
-- [ ] **Make `status: 'draft'` actually hide a product.** `productSchema`
+- [ ] **Five products are hidden until they have photographs.** Since
+      2026-09-24, at the client's request: the three portable air coolers,
+      solar street lights and PVC gloves, whose only picture is
+      `ds-photo-pending.png`, are `status: 'draft'` in both the database and
+      `src/data/products.json` — 94 in the catalogue, 89 on the site. Restore
+      each with `npm run products:show -- <slug>` once its photograph is in
+      (`docs/CONTENT-EDITING.md`, "Hiding a product"). The tests that pin
+      published counts say 89 and will need the restored numbers.
+
+- [x] **Make `status: 'draft'` actually hide a product.** **Found already true
+      2026-09-24**: `publishedProducts()` in `src/lib/catalog.ts` filters on
+      it, so a draft is on no page, count, search or sitemap and its URL is not
+      built — confirmed on a build with five drafts. The entry below predates
+      that filter. Still open from it: the admin form shows Status read-only
+      (its comment says nothing filters, which is no longer so);
+      `npm run products:hide|show` is the switch meanwhile. `productSchema`
       declares it and **nothing filters on it**: neither `src/lib/catalog.ts`
       nor `src/loaders/supabase-catalogue.ts` excludes drafts, so a product set
       to draft still renders publicly. The admin edit form deliberately does not

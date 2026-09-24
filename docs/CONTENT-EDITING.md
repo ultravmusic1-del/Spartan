@@ -112,6 +112,29 @@ Field by field:
 - Put its photograph in `src/assets/products/` first, and use the exact filename in `images`. If the file is missing, the build prints a warning naming the product and the page renders with no image.
 - Product counts, the category grid, related products, the sitemap and search all update by themselves. There is no list to add it to anywhere else.
 
+### Hiding a product, and bringing it back
+
+A hidden product is a `"draft"`. It stays in the catalogue with everything it had, but it's on no page, in no count, search or sitemap, and its own address isn't built. One command switches it either way, in **both** places the catalogue lives: the live database and `src/data/products.json`.
+
+```bash
+npm run products:hide -- pvc-gloves
+npm run products:show -- pvc-gloves
+```
+
+You can name several slugs at once. The live site changes at the **next build**: commit and push `src/data/products.json`, or press **Publish** at `/admin/catalogue`.
+
+**Hidden since 2026-09-24, waiting for photography.** These five have only the `ds-photo-pending.png` placeholder, so they were taken off the site at the client's request until real photographs exist:
+
+| Slug | Product |
+|---|---|
+| `portable-air-cooler-ay-yd2536` | Portable Air Cooler |
+| `portable-air-cooler-ay-yd2512` | Portable Air Cooler |
+| `portable-air-cooler-ay-yd2518` | Portable Air Cooler |
+| `solar-street-lights` | Solar Street Lights |
+| `pvc-gloves` | PVC Gloves |
+
+To bring one back once its photo arrives: put the photo in `src/assets/products/` and name it in that product's `images` (instead of `ds-photo-pending.png`) — in the database too, since production builds from there — then run `npm run products:show -- <slug>`. Showing it again **without** a photo puts the placeholder back on the site. The counts pinned in the tests (89 published, and the per-category numbers in `src/lib/catalog.test.ts` and `tests/e2e/`) go up with it; the tests say which ones.
+
 ---
 
 ## Adding a category

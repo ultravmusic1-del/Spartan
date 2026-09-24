@@ -90,6 +90,18 @@ export interface OrganizationJsonLd {
   logo: string;
   /** Absent when no founding year is supplied — never guessed. */
   foundingDate?: string;
+  /** The three contact facts below are each absent unless supplied. */
+  telephone?: string;
+  email?: string;
+  address?: PostalAddressJsonLd;
+}
+
+export interface PostalAddressJsonLd {
+  '@type': 'PostalAddress';
+  streetAddress: string;
+  addressLocality: string;
+  /** ISO 3166-1 alpha-2. */
+  addressCountry: string;
 }
 
 export interface Crumb {
@@ -278,20 +290,28 @@ export interface OrganizationJsonLdOptions {
    * prevent.
    */
   established?: number;
+  /**
+   * Contact facts, from `getSiteSettings()`. Each is published only when
+   * passed, and the caller passes only real ones — until 2026-09-24 all three
+   * were placeholders, and a placeholder address in structured data puts a
+   * fabricated location into knowledge panels and map results.
+   */
+  telephone?: string;
+  email?: string;
+  address?: Omit<PostalAddressJsonLd, '@type'>;
 }
 
 /**
- * Deliberately four properties and no more.
+ * Name, url, logo and founding date, plus telephone, email and a
+ * PostalAddress when they are supplied (since 2026-09-24).
  *
- * `address`, `telephone` and `email` are the obvious additions. They were
- * placeholders until 2026-09-24 and are real in src/data/site.json now, but
- * are still not published here: a `PostalAddress` wants the address split into
- * locality, postal code and country, and a wrong split is a wrong location in
- * map results. Confirm the split with the client, then add all three —
- * BACKLOG.md "Real contact details".
+ * THE ADDRESS HAS NO postalCode, ON PURPOSE. The client's address reads
+ * "... Hidd 115 ...", and 115 is Hidd's BLOCK number — Bahraini addresses are
+ * building, road and block, not a postcode. Putting 115 in `postalCode` would
+ * be a wrong fact in map results. The street line is the client's own text,
+ * unedited; only the locality (Hidd) and the country (BH) are split out.
  *
- * `sameAs` is absent for the same reason: the footer's social icons have no
- * destinations yet.
+ * `sameAs` is still absent: the footer's social icons have no destinations.
  */
 export function organizationJsonLd(
   siteUrl: string,
@@ -307,5 +327,8 @@ export function organizationJsonLd(
     // bare year is a valid one. Absent when not supplied — see the note on the
     // option: a guessed founding date is a fabricated fact.
     ...(opts.established === undefined ? {} : { foundingDate: String(opts.established) }),
+    ...(opts.telephone ? { telephone: opts.telephone } : {}),
+    ...(opts.email ? { email: opts.email } : {}),
+    ...(opts.address ? { address: { '@type': 'PostalAddress' as const, ...opts.address } } : {}),
   };
 }

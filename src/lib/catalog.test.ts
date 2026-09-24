@@ -30,12 +30,32 @@ describe('catalog repository', () => {
     expect(c.every((x) => x.divisionId === 'electricals')).toBe(true);
   });
 
-  it('returns all 94 products', async () => {
-    expect(await getProducts()).toHaveLength(94);
+  // 94 in the catalogue, 89 published. Since 2026-09-24 the five products
+  // whose only picture is `ds-photo-pending.png` — three portable air
+  // coolers, solar street lights and PVC gloves — are `status: 'draft'`
+  // until the client supplies photography. Set one back to 'published' and
+  // these literals go up with it.
+  it('returns the 89 published products', async () => {
+    expect(await getProducts()).toHaveLength(89);
+  });
+
+  it('leaves the five drafts out of every public read', async () => {
+    const drafts = [
+      'portable-air-cooler-ay-yd2536',
+      'portable-air-cooler-ay-yd2512',
+      'portable-air-cooler-ay-yd2518',
+      'pvc-gloves',
+      'solar-street-lights',
+    ];
+    const listed = new Set((await getProducts()).map((p) => p.slug));
+    for (const slug of drafts) {
+      expect(listed.has(slug)).toBe(false);
+      expect(await getProduct(slug)).toBeUndefined();
+    }
   });
 
   it('filters products by category', async () => {
-    expect(await getProducts({ categoryId: 'hand' })).toHaveLength(12);
+    expect(await getProducts({ categoryId: 'hand' })).toHaveLength(11);
   });
 
   it('filters products by division across its categories', async () => {
@@ -43,12 +63,14 @@ describe('catalog repository', () => {
     // fans, 3 portable air coolers, 3 consumer fans) + 2 from the campaign
     // banners (solar street lights, the FW-40W orbit fan). Safety is 53 brochure
     // products + 8 from the banners: PVC gloves and the seven-SKU spill range.
-    expect(await getProducts({ divisionId: 'electricals' })).toHaveLength(33);
-    expect(await getProducts({ divisionId: 'safety' })).toHaveLength(61);
+    // Published only: the three air coolers and solar street lights (four
+    // Electricals) and PVC gloves (one Safety) are drafts since 2026-09-24.
+    expect(await getProducts({ divisionId: 'electricals' })).toHaveLength(29);
+    expect(await getProducts({ divisionId: 'safety' })).toHaveLength(60);
   });
 
   it('computes productCount on categories', async () => {
-    expect((await getCategory('hand-protection'))?.productCount).toBe(12);
+    expect((await getCategory('hand-protection'))?.productCount).toBe(11);
   });
 
   it('reports zero products for the one remaining expanding category', async () => {

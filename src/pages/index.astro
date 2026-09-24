@@ -10,7 +10,7 @@ import EnquiryCta from '../components/sections/EnquiryCta.astro';
 import SideRails from '../components/sections/SideRails.astro';
 import { getListedCategories, getProducts } from '../lib/catalog';
 import { organizationJsonLd, requireSite } from '../lib/seo';
-import { getSiteSettings } from '../lib/site-content';
+import { getSiteSettings, isPlaceholderNumber } from '../lib/site-content';
 
 const [products, categories] = await Promise.all([getProducts(), getListedCategories()]);
 
@@ -39,15 +39,28 @@ const site = requireSite(Astro.site);
  * node's own `url` property points at, so the markup lives on the page it
  * describes.
  *
- * What it deliberately does not claim — address, telephone, email, sameAs — is
- * documented in src/lib/seo.ts: every one of those is still a placeholder in
- * src/data/site.json, and publishing a placeholder address as structured data
- * would put a fabricated location into map results.
+ * Address, telephone and email joined it on 2026-09-24, when the client's real
+ * details replaced the placeholders; src/lib/seo.ts says why the address has
+ * no postcode. `sameAs` is still absent: there are no social profiles to name.
  */
 const settings = await getSiteSettings();
 const jsonLd = organizationJsonLd(site, {
   logo: '/favicon.png',
   established: settings.established,
+  // Real since 2026-09-24. The guards keep a placeholder from ever reaching
+  // structured data again: the same heuristic the header uses for the phone,
+  // and no address unless its locality and country have been split out.
+  ...(isPlaceholderNumber(settings.phone) ? {} : { telephone: settings.phone }),
+  ...(settings.email ? { email: settings.email } : {}),
+  ...(settings.addressLocality && settings.addressCountry
+    ? {
+        address: {
+          streetAddress: settings.address,
+          addressLocality: settings.addressLocality,
+          addressCountry: settings.addressCountry,
+        },
+      }
+    : {}),
 });
 
 /**
