@@ -711,7 +711,13 @@ The header was added on 2026-08-23.
       artwork cannot fill both, so the first real banner forces a choice:
       letterbox it on the phone, or supply a second crop.
 
-- [ ] **The enquiry page shifts 0.18 on a phone for a returning buyer.** Found
+- [x] **The enquiry page shifts 0.18 on a phone for a returning buyer.** **Done
+      2026-09-24**, the way described below: the head script publishes
+      `--enquiry-lines` and `.ef-list--pending` reserves the measured height.
+      CLS 0 at 360, 412, 768 and 1350 for one to six lines, a wrapped product
+      name included; `tests/e2e/enquiry.spec.ts` fails at 0.28 if the
+      reservation goes. The constants are measured line heights — restyle
+      `.ef-item` and re-measure them (enquiry.astro says how). Found
       2026-09-24 re-running Lighthouse. A buyer who arrives with a saved
       basket — the drawer's "Review enquiry" path, the site's main route to a
       sent RFQ — sees the form, then the list lands above it at hydration and

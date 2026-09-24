@@ -108,6 +108,12 @@ const {
       square before anything is drawn instead. The key is duplicated from
       src/stores/enquiry.ts on purpose — importing the store here would ship it
       twice and defeat the point — so a version bump there must be echoed here.
+
+      `--enquiry-lines` is the basket's line count, for /enquiry: its list
+      arrives at hydration above the form, and on a phone that pushed the form
+      down by the list's whole height (CLS 0.18). The page reserves roughly that
+      height from this number before paint — see `.ef-list--pending` there.
+      Editing this script changes its hash: run `npm run csp`.
     */}
     <script is:inline>
       (function () {
@@ -115,7 +121,11 @@ const {
         d.dataset.js = '1';
         try {
           var raw = localStorage.getItem('spartan.enquiry.v1');
-          if (raw && JSON.parse(raw).length) d.dataset.enquiry = '1';
+          var n = raw ? JSON.parse(raw).length : 0;
+          if (n > 0) {
+            d.dataset.enquiry = '1';
+            d.style.setProperty('--enquiry-lines', String(Math.min(n, 100)));
+          }
         } catch (e) {
           /* Private mode, a full quota or a corrupt basket: no reservation,
              which costs a small shift and nothing else. */

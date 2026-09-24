@@ -279,6 +279,31 @@ const site = await getSiteSettings();
     display: none;
   }
 
+  /* THE RETURNING BUYER'S LIST, RESERVED BEFORE IT ARRIVES — 2026-09-24.
+     The list renders at hydration, so on a phone, where it sits above the form,
+     the form used to drop by the list's whole height (CLS 0.180 at 412x823
+     with two lines). BaseLayout's head script publishes the line count as
+     `--enquiry-lines` before first paint, and until `ready` the list box holds
+     the height that many lines will take.
+
+     THE NUMBERS ARE MEASURED, not derived: rendered heights of the box on this
+     page, 2026-09-24, identical at 360, 390 and 412 and again at 768 to 1350.
+     Box = chrome + lines x line - 21, the last line having no divider below
+     it. Phone (560px and below): 81 + 205n - 21. Wider: 93 + 147n - 21. A
+     product name that wraps adds ~9px a line and a note adds nothing, so the
+     reservation is exact for most baskets and a few pixels short for long
+     names. Restyle `.ef-item` and these go stale with nothing failing but a
+     jump — `tests/e2e/enquiry.spec.ts` measures it. */
+  html[data-enquiry] .ef-list--pending {
+    min-height: calc(93px + var(--enquiry-lines, 1) * 147px - 21px);
+  }
+
+  @media (max-width: 560px) {
+    html[data-enquiry] .ef-list--pending {
+      min-height: calc(81px + var(--enquiry-lines, 1) * 205px - 21px);
+    }
+  }
+
   .ef-list__empty-title {
     font-family: var(--font-display);
     font-size: var(--fs-body);

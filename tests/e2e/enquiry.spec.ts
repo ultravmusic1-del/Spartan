@@ -454,3 +454,59 @@ test('a corrupt basket in localStorage does not break the page', async ({ page }
 
   expect(pageErrors).toEqual([]);
 });
+
+/* ------------------------------------------------------------ layout shift -- */
+
+/*
+ * The list renders at hydration, and on a phone it sits ABOVE the form. Until
+ * 2026-09-24 that dropped the form by the list's whole height as it arrived:
+ * CLS 0.097 with an empty basket and 0.180 with two lines, on the page every
+ * sent enquiry passes through. The empty state now ships from the server, and
+ * a saved basket's height is reserved before paint from `--enquiry-lines`
+ * (BaseLayout's head script). The reservation is a pair of MEASURED constants
+ * in enquiry.astro, so restyling a line goes stale silently — this is what
+ * notices. 0.02 leaves room for a wrapped product name, not for a real jump.
+ */
+test.describe('the enquiry page does not jump while the list loads', () => {
+  const clsOf = async (page: Page) => {
+    await page.goto('/enquiry');
+    await expect(page.getByRole('button', { name: 'Send enquiry' })).toBeEnabled();
+    await expect(page.locator('.ef-list--pending')).toHaveCount(0);
+    return page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          let total = 0;
+          new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) total += (entry as unknown as { value: number }).value;
+          }).observe({ type: 'layout-shift', buffered: true });
+          setTimeout(() => resolve(total), 300);
+        }),
+    );
+  };
+
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1350, height: 940 },
+  ]) {
+    test(`with an empty list at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      expect(await clsOf(page)).toBeLessThan(0.02);
+    });
+
+    test(`with a saved list at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await seedBasket(page, [
+        { slug: 'led-floodlights', name: 'LED Floodlights', qty: 2, note: '' },
+        { slug: 'safety-helmets', name: 'Safety Helmets', qty: 10, note: '' },
+        {
+          slug: 'construction-gum-boots-without-steel-toe',
+          name: 'Construction Gum Boots Without steel toe',
+          qty: 1,
+          note: '',
+        },
+      ]);
+      expect(await clsOf(page)).toBeLessThan(0.02);
+      await expect(page.locator('.ef-item')).toHaveCount(3);
+    });
+  }
+});

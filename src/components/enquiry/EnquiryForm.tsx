@@ -348,7 +348,9 @@ export default function EnquiryForm({ email }: Props) {
 
   return (
     <div class="ef">
-      <section class="ef-list" aria-labelledby="ef-list-title">
+      {/* `--pending` until `ready`: enquiry.astro reserves the saved list's
+          height on it, so the form below does not jump when the list lands. */}
+      <section class={ready ? 'ef-list' : 'ef-list ef-list--pending'} aria-labelledby="ef-list-title">
         <div class="ef-list__bar">
           <h2 class="ef-panel__title" id="ef-list-title">
             Your list
