@@ -965,6 +965,43 @@ const telHref = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
     }
   }
 
+  /* THE SEARCH BOX FITS ITS PROMPT, 1081–1240 — measured 2026-09-24.
+
+     The placeholder, "SEARCH PRODUCTS" at 11px and 0.16em, needs a 178px field
+     once the 28px of padding around it is counted — measured by filling the
+     field with that text and reading scrollWidth, NOT by measuring a detached
+     span, which under-read it by ~10px and produced a first fix that did not
+     work. At 15vw the field is 162px at 1081 and only reaches 178 at ~1190,
+     so across that whole band it read "SEARCH PRODUC" or "SEARCH PRODUCT".
+
+     The row had no room to give it, and was already over-full at the narrow
+     end: at 1081 the phone link ended 15px into the wrap's right padding and
+     the menu was compressed below its natural width, pushing the Categories
+     caret out of its link. navigation.spec.ts asserts page scrollWidth, which
+     none of that changes, so it passed throughout.
+
+     The room comes from air, as the squeeze band above takes it: the menu's
+     four gaps drop from 24px to 16px (32px), the field is fixed at 178, and
+     between 1081 and 1120 the row's own gaps drop to 16px as well. Tracking is
+     untouched, so the prompt still speaks in the masthead's voice. Measured
+     after, 1081 to 1280: no overflow in the field, the menu at its natural
+     width with the caret, nothing past the wrap, every gap 19px or more. */
+  @media (min-width: 1081px) and (max-width: 1240px) {
+    .nav__menu ul {
+      gap: var(--space-4);
+    }
+
+    .nav__search-input {
+      width: 178px;
+    }
+  }
+
+  @media (min-width: 1081px) and (max-width: 1120px) {
+    .nav {
+      gap: var(--space-4);
+    }
+  }
+
   /* Desktop: the menu is on, the trigger is off. */
   @media not all and (max-width: 1080px) {
     .nav__mobile {

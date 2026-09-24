@@ -274,6 +274,43 @@ test.describe('the navigation row still fits', () => {
     expect(panel.x).toBeGreaterThanOrEqual(0);
     expect(panel.x + panel.width).toBeLessThanOrEqual(1081);
   });
+
+  /*
+   * The page-scroll check above passed all through 2026-09 while the search
+   * field read "SEARCH PRODUC" from 1081 to ~1190, the phone link ran 15px into
+   * the wrap's padding at 1081, and the menu was compressed there enough to lose
+   * the Categories caret. None of those scrolls the page. This measures the row
+   * itself. The field is filled with its own placeholder text and scrollWidth
+   * read — a detached span under-measures the field's text and once produced a
+   * fix that did not work (Header.astro, "THE SEARCH BOX FITS ITS PROMPT").
+   */
+  for (const width of [1081, 1100, 1150, 1190, 1240]) {
+    test(`fits the search prompt, the menu and the phone at ${width}px`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== 'desktop', 'the desktop row only exists from 1081px');
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/catalogue');
+      await page.evaluate(() => document.fonts.ready);
+
+      const row = await page.evaluate(() => {
+        const field = document.querySelector<HTMLInputElement>('.nav__search-input')!;
+        field.value = field.placeholder.toUpperCase();
+        const fieldOverflow = field.scrollWidth - field.clientWidth;
+        field.value = '';
+
+        const links = [...document.querySelectorAll<HTMLElement>('.nav__menu .nav__link')];
+        const squeezed = links.some((a) => a.scrollWidth > a.clientWidth + 0.5);
+
+        const wrap = document.querySelector<HTMLElement>('.site-header .wrap')!;
+        const edge = wrap.getBoundingClientRect().right - parseFloat(getComputedStyle(wrap).paddingRight);
+        const tel = document.querySelector('.nav__tel')!.getBoundingClientRect();
+        return { fieldOverflow, squeezed, pastEdge: tel.right - edge };
+      });
+
+      expect(row.fieldOverflow).toBeLessThanOrEqual(0);
+      expect(row.squeezed).toBe(false);
+      expect(row.pastEdge).toBeLessThanOrEqual(0.5);
+    });
+  }
 });
 
 test.describe('the mobile panel', () => {
